@@ -11,6 +11,8 @@ import { Action } from "../common/Action";
 import { Port } from "../common/port";
 import { showSaveNotice, hideSaveNotice } from "./SaveNotice";
 import { OtpFields } from "./OtpFields";
+import { availableFieldKinds, fillFieldKind } from "./fieldFill";
+import { pageDiag } from "./ferryDiagPage";
 import NonReactiveStore from "../store/NonReactiveStore";
 import { Mutation } from "../store/Mutation";
 import { findOpenShadowRoots } from "./shadowDom";
@@ -90,8 +92,8 @@ if (document.body) {
             return;
         }
 
-        // Only proceed if we have a DB to search
-        if (!store?.state.connected || store?.state.ActiveKeePassDatabaseIndex < 0) return;
+        // Nur mit Verbindung zu KeePass; auch bei gesperrter DB, damit nachgeladene Formulare das Gesperrt-Symbol bekommen
+        if (!store?.state.connected) return;
 
         let rescan = shadowFieldsAdded;
         const interestingNodes = ["form", "input", "select"];
@@ -129,6 +131,16 @@ if (document.body) {
 
     function matchFinder(uri: string) {
         Port.postMessage({ findMatches: { uri } });
+        // Gesperrt: nicht von selbst entsperren, sondern Gesperrt-Symbol an den Anmeldefeldern zeigen
+        // (Klick darauf oder aufs Erweiterungssymbol entsperrt); danach selbst neu suchen und ausfüllen
+        pageDiag("anmeldeformular gefunden", {
+            verbunden: !!store?.state.connected,
+            offeneDbs: store?.state.KeePassDatabases?.length ?? null
+        });
+        if (store?.state.connected && store.state.KeePassDatabases.length === 0) {
+            formFilling.lockKeeIcons(startUnlockWaitIfLocked);
+            otpFields.onLocked();
+        }
         startUnlockWaitIfLocked();
     }
 
@@ -356,6 +368,18 @@ if (document.body) {
 
             if (m.action == Action.FillOtp && m.otpCode) {
                 otpFields.fill(m.otpCode, m.otpRemaining, m.otpPeriod);
+            }
+
+            // Popup: welche Felder hat dieser Frame, und einzelnes Feld füllen
+            if (m.action == Action.QueryFields) {
+                Port.postMessage({ queryId: m.queryId, fieldsAvailable: availableFieldKinds(otpFields.hasTarget()) } as AddonMessage);
+            }
+            if (m.action == Action.FillField && m.fillKind) {
+                if (m.fillKind === "otp") {
+                    if (m.otpCode) otpFields.fillFromPopup(m.otpCode, m.otpRemaining, m.otpPeriod);
+                } else {
+                    fillFieldKind(m.fillKind, m.fillValue);
+                }
             }
         });
     }

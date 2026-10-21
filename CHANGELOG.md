@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.2 – 2026-10-21
+
+- New popup design: one flat surface, entry rows instead of cards, consistent Tabler icons, compact notices,
+  actions in the footer; edit and group selection as separate pages with a fixed save bar; redesigned password
+  generator and two-factor setup dialog. Light and dark theme.
+- Edit an entry: add a recovery code, two-factor key, note, custom field or image (paste with Ctrl+V); list and
+  remove additional fields and attachments; everything is applied with a single "Save".
+- Popup: "Fill into page" next to copy for username, password and one-time code.
+- Login field detection like Chromium: `autocomplete`, the last text field before the password field, or a single
+  login-like field in the first step of multi-step logins. No more field icons on name, IBAN or settings fields;
+  no save prompt for forms without a password.
+- Locked database: no automatic Windows Hello prompt any more. Login and code fields show a lock icon; clicking it
+  or the toolbar icon unlocks and then fills. The toolbar icon shows the same lock.
+- One-time codes: split code boxes (one digit per field) are filled, with the validity ring next to them; the code
+  of the right account when several accounts share a site; QR codes inside iframes are recognised; live tooltip.
+- Field icons stay clear of site buttons (e.g. password reveal) and hide when covered by a dialog or panel.
+- Fixed: popup showed old data after editing an entry.
+- Store listing in German and English; outdated Kee translations removed.
+- Plugin: new methods to add text fields, list and remove fields and attachments (with entry history).
+
 ## 1.0.1 – 2026-10-21
 
 - Plugin: the extension from Microsoft Edge Add-ons may connect (ID `ghkhbdnhojpeibdjdlgojfdjhedapmhg`), in

@@ -776,7 +776,7 @@
         "description": "Note to user that the Kee interface does not allow every possible type of edit to an entry."
     },
     "open_full_editor": {
-        "message": "Erweiterten Editor öffnen",
+        "message": "Im KeePass-Editor öffnen",
         "description": "Button action to open the full entry editor in KeePass or Kee Vault. Be sure to imply that the need to click the button is 'unusual', as I have done with the word 'advanced'"
     },
     "where": {
@@ -940,15 +940,15 @@
         "description": "KeePassFerry two-factor setup"
     },
     "otpSetup_hasOtp": {
-        "message": "hat schon einen Einmalcode",
+        "message": "Enthält bereits einen Zwei-Faktor-Schlüssel",
         "description": "KeePassFerry two-factor setup"
     },
     "otpSetup_lastUsed": {
-        "message": "eben verwendet",
+        "message": "Zuletzt verwendet",
         "description": "KeePassFerry two-factor setup"
     },
     "otpSetup_replaceWarning": {
-        "message": "Dieser Eintrag hat schon einen Einmalcode. Der bisherige Schlüssel bleibt in der Eintragshistorie erhalten.",
+        "message": "Dieser Eintrag enthält bereits einen Zwei-Faktor-Schlüssel. Der bisherige Schlüssel bleibt in der Eintragshistorie erhalten.",
         "description": "KeePassFerry two-factor setup"
     },
     "otpSetup_save": {
@@ -964,15 +964,15 @@
         "description": "KeePassFerry two-factor setup"
     },
     "otpSetup_done": {
-        "message": "Gespeichert. Der erste Code wurde auf der Seite eingetragen.",
+        "message": "Der erste Code wurde auf der Seite eingetragen.",
         "description": "KeePassFerry two-factor setup"
     },
     "otpSetup_none": {
-        "message": "Kein passender Eintrag gefunden. Such den Eintrag über das Suchfeld.",
+        "message": "Kein passender Eintrag gefunden. Suche den Eintrag über das Suchfeld.",
         "description": "KeePassFerry two-factor setup"
     },
     "otpSetup_error": {
-        "message": "Speichern hat nicht geklappt. Prüfe bitte, ob KeePass entsperrt ist.",
+        "message": "Der Schlüssel konnte nicht gespeichert werden. Bitte prüfe, ob KeePass entsperrt ist.",
         "description": "KeePassFerry two-factor setup"
     },
     "otpSetup_nothing": {
@@ -988,7 +988,7 @@
         "description": "KeePassFerry toolbar button tooltip"
     },
     "attachment_paste_hint": {
-        "message": "Screenshot einfügen (Strg+V) oder Bild hierher ziehen – wird als Anhang gespeichert",
+        "message": "Screenshot, QR-Code oder Zwei-Faktor-Schlüssel einfügen (Strg+V) oder Bild hierher ziehen",
         "description": "KeePassFerry image attachment"
     },
     "attachment_saving": {
@@ -1285,6 +1285,190 @@
     },
     "ferry_field_icon_locked": {
         "message": "KeePass ist gesperrt – klicken, um zu entsperren",
+        "description": "KeePassFerry"
+    },
+    "otpSetup_doneTitle": {
+        "message": "Schlüssel gespeichert",
+        "description": "KeePassFerry"
+    },
+    "ferry_fill_into_page": {
+        "message": "In die Seite eintragen",
+        "description": "KeePassFerry"
+    },
+    "ferry_totp_detected": {
+        "message": "Zwei-Faktor-Schlüssel erkannt",
+        "description": "KeePassFerry"
+    },
+    "ferry_totp_exists": {
+        "message": "Der Eintrag enthält bereits einen Zwei-Faktor-Schlüssel. Der bisherige bleibt in der Eintragshistorie erhalten.",
+        "description": "KeePassFerry"
+    },
+    "ferry_totp_save": {
+        "message": "Als Zwei-Faktor-Schlüssel speichern",
+        "description": "KeePassFerry"
+    },
+    "ferry_totp_replace": {
+        "message": "Schlüssel ersetzen",
+        "description": "KeePassFerry"
+    },
+    "ferry_totp_as_image": {
+        "message": "Als Bild anhängen",
+        "description": "KeePassFerry"
+    },
+    "ferry_totp_saved": {
+        "message": "Zwei-Faktor-Schlüssel gespeichert.",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_heading": {
+        "message": "Hinzufügen",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_kind_recovery": {
+        "message": "Wiederherstellungscode",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_kind_totp": {
+        "message": "Zwei-Faktor-Schlüssel",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_kind_note": {
+        "message": "Notiz",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_kind_custom": {
+        "message": "Eigenes Feld",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_kind_image": {
+        "message": "Bild",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_name": {
+        "message": "Feldname",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_value": {
+        "message": "Inhalt",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_paste_hint": {
+        "message": "Hier einfügen (Strg+V)",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_protect": {
+        "message": "Geschützt",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_button": {
+        "message": "Hinzufügen",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_saved": {
+        "message": "„$1“ wurde in KeePass gespeichert.",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_failed": {
+        "message": "Speichern nicht möglich. Bitte prüfe, ob KeePass entsperrt ist.",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_maybe_totp": {
+        "message": "Sieht aus wie ein Zwei-Faktor-Schlüssel.",
+        "description": "KeePassFerry"
+    },
+    "ferry_edit_entry_heading": {
+        "message": "Eintrag",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_saved_directly": {
+        "message": "Änderungen werden mit „Speichern“ übernommen.",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_heading": {
+        "message": "Im Eintrag",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_remove": {
+        "message": "Entfernen",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_confirm": {
+        "message": "„$1“ aus dem Eintrag entfernen? Der bisherige Stand bleibt in der Eintragshistorie erhalten.",
+        "description": "KeePassFerry"
+    },
+    "ferry_generator_heading": {
+        "message": "Passwort erzeugen",
+        "description": "KeePassFerry"
+    },
+    "ferry_generator_again": {
+        "message": "Neu erzeugen",
+        "description": "KeePassFerry"
+    },
+    "ferry_generator_show": {
+        "message": "Anzeigen",
+        "description": "KeePassFerry"
+    },
+    "ferry_generator_hide": {
+        "message": "Verbergen",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_kind": {
+        "message": "Art",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_totp_invalid": {
+        "message": "Kein gültiger Zwei-Faktor-Schlüssel (otpauth-Link oder Base32-Schlüssel).",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_totp_replaces": {
+        "message": "Ersetzt den vorhandenen Schlüssel (der bisherige bleibt in der Historie)",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_new": {
+        "message": "Neu",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_removed": {
+        "message": "Wird entfernt",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_undo": {
+        "message": "Rückgängig",
+        "description": "KeePassFerry"
+    },
+    "ferry_edit_entry": {
+        "message": "Eintrag bearbeiten",
+        "description": "KeePassFerry"
+    },
+    "ferry_show_details": {
+        "message": "Details anzeigen",
+        "description": "KeePassFerry"
+    },
+    "ferry_hide_details": {
+        "message": "Details ausblenden",
+        "description": "KeePassFerry"
+    },
+    "ferry_reset_value": {
+        "message": "Ursprünglichen Wert wiederherstellen",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_empty": {
+        "message": "Keine zusätzlichen Felder oder Anhänge.",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_open": {
+        "message": "Hinzufügen oder Strg+V",
+        "description": "KeePassFerry"
+    },
+    "ferry_popup_search_results": {
+        "message": "Suchergebnisse",
+        "description": "KeePassFerry"
+    },
+    "extName": {
+        "message": "KeePassFerry",
+        "description": "KeePassFerry"
+    },
+    "extDescription": {
+        "message": "Anmeldedaten, Einmalcodes und Passkeys aus der eigenen KeePass-Datenbank unter Windows ausfüllen – ohne Cloud und offene Ports.",
         "description": "KeePassFerry"
     }
 }

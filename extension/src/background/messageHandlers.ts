@@ -1,6 +1,7 @@
 import { preparePasskey, finishPasskey, cancelPasskey, signalPasskey, finishSignal } from "./passkeys";
 import { diag } from "./ferryDiag";
 import { handleOtpSetupCandidate, dismissOtpSetup, isOtpSetupPending } from "./otpSetup";
+import { onFieldsAvailable } from "./pageFields";
 import { KeeURL } from "../common/KeeURL";
 import type { AddonMessage } from "../common/AddonMessage";
 import { KeeLog } from "../common/Logger";
@@ -158,10 +159,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
     }
 
     if (msg.findMatches) {
-        // Login-Maske gefunden, KeePass aber gesperrt: Entsperren im Hintergrund anstoßen
-        if (kee.store.state.connected && kee.store.state.KeePassDatabases.length === 0) {
-            kee.requestBackgroundUnlock(this.sender.tab.id, this.sender.url ?? msg.findMatches.uri);
-        }
+        // Gesperrt: kein automatisches Entsperren mehr; die Seite zeigt das Gesperrt-Symbol, ein Klick entsperrt
         kee.tabStates.get(this.sender.tab.id).frames.get(this.sender.frameId).entries = [];
         const result = await kee.findLogins(
             msg.findMatches.uri,
@@ -229,8 +227,13 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             bekannt: submittedKnown
         });
     }
+    // Nur Formulare mit ausgefülltem Passwortfeld sind Anmeldungen (wie Bitwarden); Einstellungs-, Such- oder
+    // Bankformulare ohne Passwort lösen keinen Speichern-Hinweis aus
+    const submittedHasPassword = !!msg.submittedData?.fields?.some((f: any) => f.type === "password" && f.value);
     if (msg.submittedData && submittedKnown) {
         KeeLog.debug("Submitted data matches an existing entry; no save offer");
+    } else if (msg.submittedData && !submittedHasPassword) {
+        KeeLog.debug("Submitted form has no password; no save offer");
     } else if (msg.submittedData) {
         const persistentItem = {
             itemType: "submittedData" as const,
@@ -319,8 +322,9 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         const frameUrl = this.sender.url ?? msg.url;
         try {
             if (kee.store.state.connected && kee.store.state.KeePassDatabases.length === 0) {
-                diag("hintergrund", "otp angefragt, db gesperrt -> entsperren", { klick: !!msg.userInitiated });
-                kee.requestBackgroundUnlock(this.sender.tab.id, frameUrl, !!msg.userInitiated);
+                // Nur nach einem Klick (Symbol am Codefeld) entsperren, nie beim bloßen Erkennen des Felds
+                diag("hintergrund", "otp angefragt, db gesperrt", { klick: !!msg.userInitiated });
+                if (msg.userInitiated) kee.requestBackgroundUnlock(this.sender.tab.id, frameUrl, true);
                 return;
             }
             if (await isOtpSetupPending(this.sender.tab.id, frameUrl)) {
@@ -345,6 +349,9 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         // Nur die vom Browser gemeldete Frame-URL zählt, nicht eine von der Seite behauptete
         // Nicht abwarten: eine gleich folgende Code-Anfrage der Seite wartet selbst auf das Ergebnis
         handleOtpSetupCandidate(this.sender.tab.id, this.sender.url ?? this.sender.tab.url, msg.otpSetup);
+    }
+    if (msg.fieldsAvailable && msg.queryId) {
+        onFieldsAvailable(msg.queryId, msg.fieldsAvailable);
     }
     if (msg.action === Action.DismissOtpSetup) {
         dismissOtpSetup(this.sender.tab.id);

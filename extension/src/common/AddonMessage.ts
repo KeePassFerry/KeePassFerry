@@ -55,7 +55,16 @@ export interface AddonMessage {
         otpUri?: string;
         otpSecret?: string;
         otpQrRects?: { x: number; y: number; w: number; h: number }[];
+        otpQrImages?: string[];
         viewportWidth?: number;
     };
     filledEntry?: { uuid: string; dbFileName: string };
+    // Popup: welche Feldarten die Seite hat, und einzelnes Feld aus dem Popup füllen
+    queryId?: number;
+    fieldsAvailable?: PageFieldKinds;
+    fillKind?: PageFieldKind;
+    fillValue?: string;
 }
+
+export type PageFieldKind = "username" | "password" | "otp";
+export type PageFieldKinds = Record<PageFieldKind, boolean>;

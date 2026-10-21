@@ -5,6 +5,7 @@ import { Action } from "../common/Action";
 import { KeeLog } from "../common/Logger";
 import { Entry } from "../common/model/Entry";
 import type { AddonMessage } from "../common/AddonMessage";
+import { diag } from "./ferryDiag";
 
 /*
 otpSetup.ts: Einrichtung eines Zwei-Faktor-Schlüssels (TOTP) von einer Webseite.
@@ -31,6 +32,7 @@ export interface OtpSetupCandidate {
     dbFileName: string;
     title: string;
     username: string;
+    icon: string;
     hasTotp: boolean;
 }
 
@@ -109,6 +111,36 @@ async function decodeOtpQrFromVisibleTab(
     return null;
 }
 
+// Von der Seite gelieferte Bilder (Daten-URL oder https-Adresse) dekodieren; liefert die erste otpauth-TOTP-URI
+async function decodeOtpQrFromImages(images: string[]): Promise<string> {
+    for (const src of images.slice(0, 4)) {
+        if (!/^(data:image\/|https:)/i.test(src)) continue;
+        try {
+            const blob = await (await fetch(src, { credentials: "include" })).blob();
+            const bitmap = await createImageBitmap(blob);
+            try {
+                const w = Math.min(bitmap.width, 1600);
+                const h = Math.min(bitmap.height, 1600);
+                const canvas = new OffscreenCanvas(w, h);
+                const context = canvas.getContext("2d", { willReadFrequently: true });
+                context.fillStyle = "#fff";
+                context.fillRect(0, 0, w, h);
+                context.drawImage(bitmap, 0, 0, w, h);
+                const image = context.getImageData(0, 0, w, h);
+                const result = jsQR(image.data, w, h, { inversionAttempts: "attemptBoth" });
+                const isOtp = !!result?.data && /^otpauth:\/\/totp\//i.test(result.data);
+                diag("hintergrund", "qr bild geprüft", { art: src.startsWith("data:") ? "daten" : "adresse", w, h, qr: !!result?.data, otpauth: isOtp });
+                if (isOtp) return result.data;
+            } finally {
+                bitmap.close();
+            }
+        } catch (e) {
+            diag("hintergrund", "qr bild fehler", { art: src.startsWith("data:") ? "daten" : "adresse", fehler: String(e) });
+        }
+    }
+    return null;
+}
+
 const sourceRank: Record<Source, number> = { text: 0, qr: 1, uri: 2 };
 
 // Hinweis einer Seite auswerten; bei einem gültigen Fund den Hinweis in der Seite anzeigen
@@ -143,6 +175,7 @@ async function evaluateCandidate(
         otpUri?: string;
         otpSecret?: string;
         otpQrRects?: { x: number; y: number; w: number; h: number }[];
+        otpQrImages?: string[];
         viewportWidth?: number;
     }
 ) {
@@ -158,6 +191,12 @@ async function evaluateCandidate(
         const secret = candidate.otpSecret.replace(/[\s-]/g, "").toUpperCase();
         uri = `otpauth://totp/${encodeURIComponent(domain)}?secret=${secret}&issuer=${encodeURIComponent(domain)}`;
         source = "text";
+    } else if (candidate.otpQrImages?.length) {
+        const data = await decodeOtpQrFromImages(candidate.otpQrImages);
+        if (data) {
+            uri = data;
+            source = "qr";
+        }
     } else if (candidate.otpQrRects?.length) {
         // Höchstens ein Screenshot alle 2 Sekunden je Tab, nur im aktiven Tab
         if (Date.now() - (lastQrScan.get(tabId) ?? 0) < 2000) return;
@@ -240,6 +279,7 @@ export async function getOtpSetupForPopup(tabId: number) {
             dbFileName: e.database.fileName,
             title: e.title,
             username: Entry.getUsernameField(e)?.value ?? "",
+            icon: e.icon?.iconImageData ?? "",
             hasTotp: !!totp?.code
         });
     }
@@ -259,11 +299,21 @@ export async function applyOtpSetup(tabId: number, uuid: string, dbFileName: str
     const result = await kee.KeePassRPC.setTotp(uuid, dbFileName, setup.uri, overwrite);
     if (result?.status === "ok") {
         forgetOtpSetup(tabId);
-        const code = (await kee.KeePassRPC.getTotp(uuid, dbFileName))?.code ?? result.code;
+        // Gewählter Eintrag gilt ab jetzt als benutzt: weitere Code-Anfragen dieser Seite nehmen genau ihn
+        if (!kee.persistentTabStates.get(tabId)) kee.persistentTabStates.set(tabId, { items: [] });
+        kee.persistentTabStates.get(tabId).lastFilledEntry = { uuid, dbFileName, domain: setup.domain, at: Date.now() };
+        const totp = await kee.KeePassRPC.getTotp(uuid, dbFileName);
+        const code = totp?.code ?? result.code;
         if (code) {
             kee.tabStates.get(tabId)?.framePorts?.forEach(port => {
                 try {
-                    port.postMessage({ action: Action.FillOtp, otpCode: code } as AddonMessage);
+                    // Mit Restzeit, damit am Feld der Gültigkeitsring startet
+                    port.postMessage({
+                        action: Action.FillOtp,
+                        otpCode: code,
+                        otpRemaining: totp?.code ? totp.remainingSeconds : undefined,
+                        otpPeriod: totp?.code ? totp.period || 30 : undefined
+                    } as AddonMessage);
                 } catch (e) {
                     // Frame ist weg
                 }

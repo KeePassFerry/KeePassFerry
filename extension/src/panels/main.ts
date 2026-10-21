@@ -1,4 +1,6 @@
 import { MatchedLoginsPanel } from "./MatchedLoginsPanel";
+import "../common/ferry-ui.css";
+import { ferryVuetifyOptions } from "../common/ferryTheme";
 import { FrameState } from "../common/FrameState";
 import { Action } from "../common/Action";
 import { KeeLog } from "../common/Logger";
@@ -44,39 +46,7 @@ async function start() {
                             render: () => h(Panel, {})
                         });
 
-                        const vuetify = createVuetify({
-                            components,
-                            directives,
-                            theme: {
-                                defaultTheme: darkTheme ? "dark" : "light",
-                                themes: {
-                                    dark: {
-                                        dark: true,
-                                        colors: {
-                                            primary: "#1a466b",
-                                            secondary: "#ABB2BF",
-                                            tertiary: "#e66a2b",
-                                            error: "#C34034",
-                                            info: "#2196F3",
-                                            success: "#4CAF50",
-                                            warning: "#FFC107"
-                                        }
-                                    },
-                                    light: {
-                                        dark: false,
-                                        colors: {
-                                            primary: "#1a466b",
-                                            secondary: "#13334e",
-                                            tertiary: "#e66a2b",
-                                            error: "#C34034",
-                                            info: "#2196F3",
-                                            success: "#4CAF50",
-                                            warning: "#FFC107"
-                                        }
-                                    }
-                                }
-                            }
-                        });
+                        const vuetify = createVuetify({ components, directives, ...ferryVuetifyOptions(darkTheme ? "dark" : "light") });
                         piniaInstance.use(IPCPiniaPlugin);
                         vueApp.use(vuetify);
                         vueApp.use(piniaInstance);

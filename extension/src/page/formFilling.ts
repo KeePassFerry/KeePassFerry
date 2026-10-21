@@ -1,4 +1,5 @@
 import { Action } from "../common/Action";
+import { findLoginFields } from "./loginFields";
 import { FilledField } from "./FilledField";
 import { PanelStub, PanelStubOptions } from "./PanelStub";
 import { FormUtils } from "./formsUtils";
@@ -1842,9 +1843,9 @@ export class FormFilling {
         this.keeFieldIcon.removeKeeIconFromAllFields();
     }
 
-    // Datenbank gesperrt: Symbole bleiben, Klick entsperrt
+    // Datenbank gesperrt: Gesperrt-Symbol an erkannten Anmeldefeldern, Klick entsperrt
     public lockKeeIcons(onUnlockRequested: () => void) {
         this.keeFieldIcon.onUnlockRequested = onUnlockRequested;
-        this.keeFieldIcon.lockKeeIcons();
+        this.keeFieldIcon.lockKeeIcons(findLoginFields());
     }
 }

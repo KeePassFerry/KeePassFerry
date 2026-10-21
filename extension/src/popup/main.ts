@@ -10,7 +10,8 @@ import { Port } from "../common/port";
 import { createPinia } from "pinia";
 import { Action } from "../common/Action";
 import "../styles";
-import "./ferry.css";
+import "../common/ferry-ui.css";
+import { ferryVuetifyOptions } from "../common/ferryTheme";
 import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
 import { IPCPiniaPlugin } from "../common/IPCPiniaPlugin";
@@ -49,51 +50,7 @@ async function start() {
                     })
             });
 
-            // KeePassFerry-Farben (wie Einstellungsseite und Passkey-Dialog), abgerundete Bedienelemente
-            const vuetify = createVuetify({
-                components,
-                directives,
-                defaults: {
-                    VCard: { rounded: "lg" },
-                    VBtn: { rounded: "lg" },
-                    VAlert: { rounded: "lg" },
-                    VTextField: { rounded: "lg" },
-                    VSelect: { rounded: "lg" }
-                },
-                theme: {
-                    defaultTheme: configManager.activeTheme,
-                    themes: {
-                        dark: {
-                            dark: true,
-                            colors: {
-                                background: "#0b1120",
-                                surface: "#111827",
-                                primary: "#3b82f6",
-                                secondary: "#334155",
-                                tertiary: "#f97316",
-                                error: "#ef4444",
-                                info: "#38bdf8",
-                                success: "#22c55e",
-                                warning: "#f59e0b"
-                            }
-                        },
-                        light: {
-                            dark: false,
-                            colors: {
-                                background: "#f4f6fb",
-                                surface: "#ffffff",
-                                primary: "#1d4ed8",
-                                secondary: "#e2e8f0",
-                                tertiary: "#ea580c",
-                                error: "#dc2626",
-                                info: "#0284c7",
-                                success: "#16a34a",
-                                warning: "#d97706"
-                            }
-                        }
-                    }
-                }
-            });
+            const vuetify = createVuetify({ components, directives, ...ferryVuetifyOptions(configManager.activeTheme) });
             piniaInstance.use(IPCPiniaPlugin);
             vueApp.use(vuetify);
             vueApp.use(piniaInstance);

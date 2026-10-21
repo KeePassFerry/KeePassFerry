@@ -1,104 +1,56 @@
 <template>
-    <v-hover>
-        <template #default="{ isHovering, props }">
-            <v-card
-            :data-index="dataIndex"
-v-bind="props" ref="card" :tabindex="`${tabindex}`" :elevation="isHovering ? 3 : 0" class="my-2 ferry-entry"
-                :ripple="false" @focusin="focusin" @focusout="focusout"
-                @keyup.context-menu.stop.prevent="showFullDetails" @keyup.arrow-down.stop.prevent="nextInList"
-                @keyup.arrow-up.stop.prevent="prevInList" @keyup.arrow-right.stop.prevent="showFullDetails"
-                @keyup.arrow-left.stop.prevent="hideFullDetails" @keyup.escape.stop.prevent="exitList"
-                @keyup.enter.self.stop.prevent="primaryClickAction" @keyup.enter.ctrl.self.stop.prevent="loadInNewTab">
-                <v-container class="ma-0 pa-0 my-2" :style="titleStyle">
-                            <v-hover>
-                    <v-sheet
-class="mr-3 ml-12 my-0"
-                        :style="`display: flex; align-items:center; justify-content:space-between; ${isHovering ? 'cursor: pointer' : ''}; column-gap:0.5rem;`" @click.left.exact="primaryClickAction"
-                        @click.middle.exact="loadInNewTab" @click.left.ctrl="loadInNewTab"
-                        @click.middle.ctrl="primaryClickAction" @click.right.stop.prevent="showFullDetails">
-                        <v-sheet class="text-truncate">
-                                <v-container fluid class="ma-0 pa-0" style="padding: 0px;">
-                                    <v-row no-gutters class="my-0">
-                                        <v-col class="text-truncate">
-                                            {{ entrySummary.title }}
-                                        </v-col>
-                                    </v-row>
-                                    <v-row no-gutters class="my-0">
-                                        <v-col
-:style="`${expanded ? 'visibility:hidden' : ''}`"
-                                            class="text-truncate text-caption">
-                                            {{ usernameDisplayValue }}
-                                        </v-col>
-                                    </v-row>
-                                </v-container>
-                        </v-sheet>
-                        <v-sheet v-if="isHovering || focussed" class="align-self-center">
-                            <v-btn
-variant="tonal" size="x-small" icon
-                                @click.stop.prevent="toggleFullDetails">
-                                <mdi-chevron-down v-if="!expanded" scale="200" />
-                                <mdi-chevron-up v-if="expanded" scale="200" />
-                            </v-btn>
-                        </v-sheet>
-                    </v-sheet>
-                            </v-hover>
-                </v-container>
-                <v-card-text class="text-truncate" style="cursor: default; padding: 0px;">
-                    <v-slide-y-transition>
-                        <v-container v-if="expanded && !!entrySummary.fullDetails" class="my-0 px-2 pt-1 pb-2">
-                            <Field v-for="f of allFields" :key="f.uuid" :field="f" />
-                            <OtpRow :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
-                            <AttachmentPaste :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
-                            <v-sheet class="my-0" style="display: flex; justify-content: space-between;">
-                                <v-sheet class="text-truncate">
-                                    <v-sheet class="text-truncate my-0" style="flex-wrap: nowrap; display: flex; align-items: center;">
-                                        <v-tooltip
-location="top" :disabled="!entryPathIsLong"
-                                            :open-delay="tooltipDelay" activator="parent">
-                                            <span>{{ fullEntryPath }}</span>
-                                        </v-tooltip>
-                                        <mdi-folder-outline class="mr-2 ferry-meta-icon" />
-                                        <span class="text-truncate text-caption py-1">{{
-                                            entryPath
-                                        }}</span>
-                                    </v-sheet>
-                                    <v-sheet class="text-truncate my-0" style="flex-wrap: nowrap; display: flex; align-items: center;">
-                                        <v-tooltip location="top" :open-delay="tooltipDelay" activator="parent">
-                                            <span>{{ entrySummary.url }}</span>
-                                        </v-tooltip>
-                                        <mdi-web class="mr-2 ferry-meta-icon" />
-                                        <span class="text-truncate text-caption py-1">{{
-                                            entryDomain
-                                        }}</span>
-                                    </v-sheet>
-                                </v-sheet>
-
-                                <v-sheet class="ma-2 shrink">
-                                    <v-btn size="small" variant="tonal" location="bottom left" icon="mdi-pencil" @click="editEntry">
-                                    </v-btn>
-                                </v-sheet>
-                            </v-sheet>
-                            <v-row v-if="isMatchedEntry" justify="space-between" align="center">
-                                <v-col class="text-truncate pt-0 ma-0">
-                                    <v-divider class="mt-4 mx-5"></v-divider>
-                                    <v-checkbox
-:label="$i18n('preferred_matching_entry')"
-                                        :model-value="entrySummary.isPreferredMatch" density="compact" color="primary" hide-details
-                                        @update:model-value="onPreferredEntryClick"></v-checkbox>
-                                </v-col>
-                            </v-row>
-                        </v-container>
-                    </v-slide-y-transition>
-                </v-card-text>
-            </v-card>
-        </template>
-    </v-hover>
+    <div
+        ref="card" class="ferry-entry" :class="{ open: expanded }" :data-index="dataIndex" tabindex="0"
+        @focusin="focusin" @focusout="focusout"
+        @keyup.context-menu.stop.prevent="showFullDetails" @keyup.arrow-down.stop.prevent="nextInList"
+        @keyup.arrow-up.stop.prevent="prevInList" @keyup.arrow-right.stop.prevent="showFullDetails"
+        @keyup.arrow-left.stop.prevent="hideFullDetails" @keyup.escape.stop.prevent="exitList"
+        @keyup.enter.self.stop.prevent="primaryClickAction" @keyup.enter.ctrl.self.stop.prevent="loadInNewTab">
+        <div
+            class="ferry-entry-head" @click.left.exact="primaryClickAction" @click.middle.exact="loadInNewTab"
+            @click.left.ctrl="loadInNewTab" @click.middle.ctrl="primaryClickAction" @click.right.stop.prevent="showFullDetails">
+            <span class="ferry-tile">
+                <img v-if="iconSrc" :src="iconSrc" alt="" />
+                <tabler-key v-else class="ferry-ico" />
+            </span>
+            <span class="ferry-entry-text">
+                <span class="ferry-entry-title">{{ entrySummary.title }}</span>
+                <span class="ferry-entry-sub">
+                    {{ expanded && entrySummary.fullDetails ? metaLine : usernameDisplayValue }}
+                    <v-tooltip v-if="expanded && entrySummary.fullDetails" location="bottom" activator="parent">
+                        {{ fullEntryPath }} · {{ entrySummary.url }}
+                    </v-tooltip>
+                </span>
+            </span>
+            <button
+                v-if="expanded && entrySummary.fullDetails" type="button" class="ferry-ib"
+                :aria-label="$i18n('ferry_edit_entry')" @click.stop="editEntry">
+                <tabler-pencil class="ferry-ico" />
+                <v-tooltip location="top" activator="parent">{{ $i18n("ferry_edit_entry") }}</v-tooltip>
+            </button>
+            <button
+                type="button" class="ferry-ib" :aria-label="expanded ? $i18n('ferry_hide_details') : $i18n('ferry_show_details')"
+                @click.stop="toggleFullDetails">
+                <tabler-chevron-up v-if="expanded" class="ferry-ico" />
+                <tabler-chevron-down v-else class="ferry-ico" />
+            </button>
+        </div>
+        <div v-if="expanded && entrySummary.fullDetails" class="ferry-entry-details">
+            <Field
+                v-for="f of allFields" :key="f.uuid" :field="f" :kind="fillKind(f)"
+                :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
+            <OtpRow :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
+            <v-checkbox
+                v-if="isMatchedEntry" :label="$i18n('preferred_matching_entry')"
+                :model-value="entrySummary.isPreferredMatch" hide-details class="ferry-pref"
+                @update:model-value="onPreferredEntryClick" />
+        </div>
+    </div>
 </template>
 
 <script lang="ts">
 import Field from "./Field.vue";
 import OtpRow from "./OtpRow.vue";
-import AttachmentPaste from "./AttachmentPaste.vue";
 import { AddonMessage } from "../../common/AddonMessage";
 import { Port } from "../../common/port";
 import useStore from "../../store";
@@ -114,7 +66,7 @@ import { mapState } from "pinia";
 import { $STR } from "~/common/DollarPolyfills";
 
 export default {
-    components: { Field, OtpRow, AttachmentPaste },
+    components: { Field, OtpRow },
     props: ["entrySummary", "isFirstInAList", "entryIndex", "frameId", "dataIndex", "startExpanded", "noNavigate"],
     emits: ["move-next-in-list", "move-prev-in-list", "move-out-of-list", "pref-entry-toggle"],
     setup() {
@@ -128,13 +80,14 @@ export default {
     }),
     computed: {
         ...mapState(useStore, ["saveState"]),
-        titleStyle: function () {
-            const e = this.entrySummary as EntrySummary;
-            return (
-                "padding: 0px; background-size:26px; background-position: 13px calc(50% + 0px); background-repeat: no-repeat; background-image:url(data:image/png;base64," +
-                e.icon.iconImageData +
-                ")"
-            );
+        iconSrc: function () {
+            const data = (this.entrySummary as EntrySummary)?.icon?.iconImageData;
+            return data ? "data:image/png;base64," + data : null;
+        },
+        // Aufgeklappt: Gruppe und Domain in einer Zeile statt zwei eigener Zeilen
+        metaLine: function () {
+            const group = (this.entrySummary.fullDetails as Entry)?.parentGroup?.path ?? "";
+            return [group, this.entryDomain].filter(Boolean).join(" · ");
         },
         usernameDisplayValue: function () {
             const e = this.entrySummary as EntrySummary;
@@ -178,6 +131,12 @@ export default {
         }
     },
     methods: {
+        // Benutzername- und Passwortzeile können in die Seite eingetragen werden, andere Felder nicht
+        fillKind(f) {
+            const e = this.entrySummary.fullDetails as Entry;
+            if (f.type === "password") return "password";
+            return f === Entry.getUsernameField(e) ? "username" : null;
+        },
         toggleFullDetails() {
             if (!this.expanded) {
                 this.showFullDetails();
@@ -213,14 +172,17 @@ export default {
             this.updateSaveState(updatedSaveState);
         },
         focusin: function (e) {
-            if (!(this.$refs.card as any).$el.contains(e.relatedTarget)) {
+            if (!(this.$refs.card as HTMLElement).contains(e.relatedTarget)) {
                 this.focussed = true;
             }
         },
         focusout: function (e) {
-            if (!(this.$refs.card as any).$el.contains(e.relatedTarget)) {
+            if (!(this.$refs.card as HTMLElement).contains(e.relatedTarget)) {
                 this.focussed = false;
             }
+        },
+        focusRow: function () {
+            (this.$refs.card as HTMLElement)?.focus();
         },
         async primaryClickAction() {
             // Einträge der aktuellen Seite ohne Formular: nur auf-/zuklappen (Kopieren, Einmalcode), nicht wegnavigieren
@@ -284,37 +246,56 @@ export default {
 
 <style>
 .ferry-entry {
-    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-    transition: border-color 0.15s, box-shadow 0.15s;
-}
-.ferry-entry:hover,
-.ferry-entry:focus-within {
-    border-color: rgba(var(--v-theme-primary), 0.55);
+    border-bottom: 1px solid var(--ferry-line);
+    outline: none;
 }
 .ferry-entry:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: 1px;
+    box-shadow: inset 0 0 0 2px rgb(var(--v-theme-primary));
 }
-/* Symbol links in einer runden Kachel */
-.ferry-entry > .v-container:first-child {
-    position: relative;
+.ferry-entry.open {
+    background: var(--ferry-tint);
 }
-.ferry-entry > .v-container:first-child::before {
-    content: "";
-    position: absolute;
-    left: 8px;
-    top: 50%;
-    width: 36px;
-    height: 36px;
-    margin-top: -18px;
-    border-radius: 10px;
-    background: rgba(var(--v-theme-on-surface), 0.05);
-    pointer-events: none;
+.ferry-entry-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 54px;
+    padding: 8px 8px 8px 12px;
+    cursor: pointer;
 }
-.ferry-meta-icon {
-    opacity: 0.55;
+.ferry-entry:not(.open) .ferry-entry-head:hover {
+    background: var(--ferry-hover);
 }
-.ferry-entry .text-caption {
-    opacity: 0.7;
+.ferry-entry.open .ferry-tile {
+    background: rgb(var(--v-theme-surface));
+}
+.ferry-entry-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+.ferry-entry-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ferry-entry-sub {
+    font-size: 12px;
+    color: var(--ferry-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ferry-entry-details {
+    padding: 0 8px 8px 12px;
+}
+.ferry-pref {
+    margin: 2px 0 0 38px;
+}
+.ferry-pref .v-label {
+    font-size: 12.5px;
 }
 </style>

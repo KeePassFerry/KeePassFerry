@@ -1,6 +1,6 @@
 <template>
-    <div id="searchPanel" class="pb-6 pt-0 pr-0">
-        <v-divider v-show="filteredMatches && filteredMatches.length > 0" class="mt-2" />
+    <div id="searchPanel" class="ferry-list">
+        <div v-show="filteredMatches && filteredMatches.length > 0" class="ferry-caption">{{ $i18n("ferry_popup_this_site") }}</div>
         <Entry
 v-for="(match, index) of filteredMatches" :key="match.entry.uuid" :ref="setNodesA"
             :entrySummary="match.entry" :isFirstInAList="index === 0" :frame-id="frameId"
@@ -13,21 +13,16 @@ v-for="(match, index) of filteredMatches" :key="match.entry.uuid" :ref="setNodes
 
         <!-- Seite ohne Anmeldeformular: Einträge dieser Website, der zuletzt benutzte aufgeklappt (Einmalcode sichtbar) -->
         <template v-if="siteSummaries.length > 0 && !(filteredMatches && filteredMatches.length > 0)">
-            <v-list-subheader class="text-center" style="justify-content: center">
-                {{ $i18n("ferry_popup_this_site") }}
-            </v-list-subheader>
+            <div class="ferry-caption">{{ $i18n("ferry_popup_this_site") }}</div>
             <Entry
 v-for="(entry, index) of siteSummaries" :key="'site-' + entry.uuid"
                 :entrySummary="entry" :isFirstInAList="index === 0" :dataIndex="index"
                 :start-expanded="index === 0" :no-navigate="true" />
         </template>
 
-        <v-divider v-show="deduplicatedSearchResults && deduplicatedSearchResults.length > 0" class="mt-2" />
-        <v-list-subheader
-v-show="deduplicatedSearchResults && deduplicatedSearchResults.length > 0" class="text-center"
-            style="justify-content: center">
-            {{ $i18n("matches_from_other_sites") }}
-        </v-list-subheader>
+        <div v-show="deduplicatedSearchResults && deduplicatedSearchResults.length > 0" class="ferry-caption">
+            {{ currentSearchTerm ? $i18n("ferry_popup_search_results") : $i18n("matches_from_other_sites") }}
+        </div>
 
         <Entry
 v-for="(entry, index) of deduplicatedSearchResults" :key="entry.uuid" :ref="setNodesB"
@@ -125,28 +120,24 @@ export default {
             return parseInt(e.dataIndex) === currentIndex;
                 }
             );
+            const nodes = listName === "listAarray" ? this.aNodes : this.bNodes;
             if (currentIndex < listLength - 1) {
-                // Current treeview implementation seems to have some text node get
-                // focus even after we ask the div to get focus. So we have to skip forward 2 and back 1
-                currentVueNode.$el.nextElementSibling.nextElementSibling.focus();
-            } else if (listName === "listAarray" && this.deduplicatedSearchResults.length > 0) {
-                const firstBListVueNode = this.bNodes.find(
-                    e => parseInt(e.dataIndex) === 0
-                );
-                firstBListVueNode.$el.nextElementSibling.focus();
+                nodes.find(e => parseInt(e.dataIndex) === currentIndex + 1)?.focusRow();
+            } else if (listName === "listAarray" && this.deduplicatedSearchResults?.length > 0) {
+                this.bNodes.find(e => parseInt(e.dataIndex) === 0)?.focusRow();
             }
+            void currentVueNode;
         },
         prevInList(currentIndex: number, listName: string) {
             const currentVueNode = (listName === "listAarray" ? this.aNodes : this.bNodes).find(
                 e => parseInt(e.dataIndex) === currentIndex
             );
+            const nodes = listName === "listAarray" ? this.aNodes : this.bNodes;
+            void currentVueNode;
             if (currentIndex > 0) {
-                currentVueNode.$el.previousElementSibling.focus();
-            } else if (listName === "listBarray" && this.filteredMatches.length > 0) {
-                const lastAListVueNode = this.aNodes.find(
-                    e => parseInt(e.dataIndex) === this.filteredMatches.length - 1
-                );
-                lastAListVueNode.$el.nextElementSibling.focus();
+                nodes.find(e => parseInt(e.dataIndex) === currentIndex - 1)?.focusRow();
+            } else if (listName === "listBarray" && this.filteredMatches?.length > 0) {
+                this.aNodes.find(e => parseInt(e.dataIndex) === this.filteredMatches.length - 1)?.focusRow();
             } else {
                 (document.getElementById("searchBox") as HTMLInputElement).focus();
             }

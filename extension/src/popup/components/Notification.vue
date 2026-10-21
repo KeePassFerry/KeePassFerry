@@ -1,42 +1,41 @@
 <template>
-    <v-card color="yellow-lighten-3">
-        <div style="float: right">
-            <v-btn variant="text" class="ml-4 mr-2 px-2 text-primary" @click="closeNotification(notification.id)">
-                {{ $i18n("close") }}
-                <mdi-close />
-            </v-btn>
+    <div class="ferry-note ferry-notification">
+        <tabler-info-circle class="ferry-ico" />
+        <div class="ferry-note-text">
+            <p v-for="(msg, index) of notification.messages" :key="index">{{ msg }}</p>
+            <div v-if="notification.buttons?.length" class="ferry-notification-actions">
+                <v-btn
+                    v-for="(but, index) of notification.buttons" :id="but.id" :key="index" size="small"
+                    :variant="index === 0 ? 'tonal' : 'text'" color="primary"
+                    @click="dispatchActionResponse(notification.id, but.action, but.values)">
+                    {{ but.label }}
+                    <v-tooltip v-if="but.tooltip" location="top" activator="parent">{{ but.tooltip }}</v-tooltip>
+                </v-btn>
+            </div>
         </div>
-
-        <v-card-text class="text-primary">
-            <p v-for="(msg, index) of notification.messages" :key="index">
-                {{ msg }}
-            </p>
-        </v-card-text>
-        <v-card-actions>
-            <v-row justify="center" align="end" class="mb-1 mt-1">
-                <v-col>
-                    <v-row align="end" class="ml-2 justify-left my-0">
-                        <v-btn
-v-for="(but, index) of notification.buttons" :id="but.id" :key="index" class="mr-4 my-2"
-                            @click="
-                                dispatchActionResponse(
-                                    notification.id,
-                                    but.action,
-                                    but.values
-                                )
-                            ">
-                            <v-tooltip location="top" :disabled="!but.tooltip" :open-delay="tooltipDelay"> <span>{{
-                                but.tooltip
-                            }}</span>
-                            </v-tooltip>
-                            {{ but.label }}
-                        </v-btn>
-                    </v-row>
-                </v-col>
-            </v-row>
-        </v-card-actions>
-    </v-card>
+        <button type="button" class="ferry-ib" :aria-label="$i18n('close')" @click="closeNotification(notification.id)">
+            <tabler-x class="ferry-ico" />
+        </button>
+    </div>
 </template>
+
+<style>
+.ferry-notification {
+    align-items: flex-start;
+}
+.ferry-notification > .ferry-ico {
+    margin-top: 2px;
+}
+.ferry-notification p {
+    margin: 0 0 4px;
+}
+.ferry-notification-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+</style>
 
 <script lang="ts">
 import { ButtonAction } from "../../common/Button";

@@ -1,58 +1,58 @@
 <template>
-    <v-row v-if="field.type === 'password' || field.type === 'text'">
-        <v-col>
-            <v-text-field
-                :label="label"
-                :model-value="field.value"
-                color="primary"
-                variant="outlined"
-                density="comfortable"
-                hide-details="auto"
-                :type="renderType"
-                @update:model-value="valueChanged"
-                @focus="onFocus"
-                @blur="onBlur"
-            >
-                <template #append>
-                    <v-slide-x-transition>
-                        <v-btn v-if="focussed && resettable" size="x-small" variant="text" icon class="ml-1" @click="reset">
-                            <mdi-undo scale="175"/>
-                        </v-btn>
-                    </v-slide-x-transition>
-                    <v-btn
-                        v-if="field.type === 'password'"
-                        size="x-small"
-                        variant="text"
-                        icon
-                        class="ml-1"
-                        @click="revealed = !revealed"
-                    >
-                        <mdi-eye v-if="revealed" scale="175"/>
-                        <mdi-eye-off v-if="!revealed" scale="175"/>
-                    </v-btn>
-                    <v-btn
-                        v-if="field.type === 'password'"
-                        size="x-small"
-                        variant="text"
-                        icon
-                        class="ml-1"
-                        @click="showPasswordGenerator = true"
-                    >
-                        <mdi-flash  scale="175"/>
-                    </v-btn>
-                    <v-btn size="x-small" variant="text" icon class="ml-1" @click="deleteClicked">
-                        <mdi-delete scale="175" />
-                    </v-btn>
-                </template>
-            </v-text-field>
-            <PasswordGenerator
-                v-if="showPasswordGenerator"
-                @dialog-closed="passwordGeneratorClosed"
-                @copy-to-clipboard="copyToClipboard"
-            />
-        </v-col>
-    </v-row>
+    <div v-if="field.type === 'password' || field.type === 'text'" class="ferry-field-editor">
+        <v-text-field
+            :label="label"
+            :model-value="field.value"
+            color="primary"
+            hide-details="auto"
+            :type="renderType"
+            @update:model-value="valueChanged"
+            @focus="onFocus"
+            @blur="onBlur"
+        >
+            <template #append-inner>
+                <button v-if="focussed && resettable" type="button" class="ferry-ib" :aria-label="$i18n('ferry_reset_value')" @mousedown.prevent @click="reset">
+                    <tabler-arrow-back-up class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">{{ $i18n("ferry_reset_value") }}</v-tooltip>
+                </button>
+                <button
+                    v-if="field.type === 'password'" type="button" class="ferry-ib"
+                    :aria-label="revealed ? $i18n('ferry_generator_hide') : $i18n('ferry_generator_show')"
+                    @click="revealed = !revealed">
+                    <tabler-eye-off v-if="revealed" class="ferry-ico" />
+                    <tabler-eye v-else class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">{{ revealed ? $i18n("ferry_generator_hide") : $i18n("ferry_generator_show") }}</v-tooltip>
+                </button>
+                <button
+                    v-if="field.type === 'password'" type="button" class="ferry-ib"
+                    :aria-label="$i18n('ferry_generator_heading')" @click="showPasswordGenerator = true">
+                    <tabler-wand class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">{{ $i18n("ferry_generator_heading") }}</v-tooltip>
+                </button>
+                <button type="button" class="ferry-ib danger" :aria-label="$i18n('ferry_extras_remove')" @click="deleteClicked">
+                    <tabler-trash class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">{{ $i18n("ferry_extras_remove") }}</v-tooltip>
+                </button>
+            </template>
+        </v-text-field>
+        <PasswordGenerator
+            v-if="showPasswordGenerator"
+            @dialog-closed="passwordGeneratorClosed"
+            @copy-to-clipboard="copyToClipboard"
+        />
+    </div>
 </template>
+
+<style>
+.ferry-field-editor {
+    margin-bottom: 8px;
+}
+.ferry-field-editor .v-field__append-inner {
+    gap: 0;
+    padding-top: 0;
+    align-items: center;
+}
+</style>
 
 <script lang="ts">
 import { Field } from "../../common/model/Field";

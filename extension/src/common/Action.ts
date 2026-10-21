@@ -23,5 +23,7 @@ export const enum Action {
     DismissOtpSetup = "dismissOtpSetup",
     QueryUnlocked = "queryUnlocked",
     UnlockState = "unlockState",
-    WebAuthnRequest = "webAuthnRequest"
+    WebAuthnRequest = "webAuthnRequest",
+    QueryFields = "queryFields",
+    FillField = "fillField"
 }

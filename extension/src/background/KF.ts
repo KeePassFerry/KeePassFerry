@@ -1,5 +1,6 @@
 import { offerPendingOtpSetup } from "./otpSetup";
 import { diag } from "./ferryDiag";
+import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
 import { KeeURL } from "../common/KeeURL";
 import { isFirefox } from "webext-detect-page";
 import { PersistentTabState } from "./PersistentTabState";
@@ -421,7 +422,8 @@ class Kee {
         const iconPath = actionConfig.notificationAvailable || actionConfig.saveAvailable ? "/assets/images/highlight-48.png" : "/assets/images/48.png";
         const offline = !actionConfig.connectionAvailable || !actionConfig.dbAvailable;
         const showSave = !offline && actionConfig.saveAvailable;
-        const text = !actionConfig.connectionAvailable ? "OFF" : !actionConfig.dbAvailable ? "🔒" : showSave ? "+" : (actionConfig.matchedEntries > 0 ? actionConfig.matchedEntries.toString() : "");
+        // Gesperrt: Schloss im Symbol selbst (wie am Feld), kein Textabzeichen
+        const text = !actionConfig.connectionAvailable ? "OFF" : !actionConfig.dbAvailable ? "" : showSave ? "+" : (actionConfig.matchedEntries > 0 ? actionConfig.matchedEntries.toString() : "");
         const color = !actionConfig.connectionAvailable ? "red" : !actionConfig.dbAvailable ? "orange" : showSave ? SAVE_BADGE_COLOR : "blue";
         const notRunning = !actionConfig.connectionAvailable;
         const locked = actionConfig.connectionAvailable && !actionConfig.dbAvailable;
@@ -440,10 +442,50 @@ class Kee {
             chrome.action.setTitle({ title: title });
             return;
         }
-        chrome.action.setIcon({ path: iconPath });
+        if (locked) {
+            this.lockedActionIcon()
+                .then(imageData => chrome.action.setIcon({ imageData }))
+                .catch(() => chrome.action.setIcon({ path: iconPath }));
+        } else {
+            chrome.action.setIcon({ path: iconPath });
+        }
         chrome.action.setBadgeText({ text: text });
         chrome.action.setBadgeBackgroundColor({ color: color });
         chrome.action.setTitle({title: title});
+    }
+
+    // Symbol der Symbolleiste für "gesperrt": KeePassFerry-Symbol mit oranger Plakette und weißem Schloss unten rechts
+    private lockedActionIconPromise: Promise<Record<string, ImageData>> = null;
+    private lockedActionIcon(): Promise<Record<string, ImageData>> {
+        if (!this.lockedActionIconPromise) {
+            this.lockedActionIconPromise = (async () => {
+                const blob = await (await fetch(chrome.runtime.getURL("/assets/images/48.png"))).blob();
+                const bitmap = await createImageBitmap(blob);
+                const result: Record<string, ImageData> = {};
+                for (const size of [16, 32]) {
+                    const canvas = new OffscreenCanvas(size, size);
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(bitmap, 0, 0, size, size);
+                    const r = size * 0.3;
+                    const cx = size - r;
+                    const cy = size - r;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r + Math.max(1, size * 0.05), 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = LOCK_COLOR;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawLockGlyph(ctx, cx, cy, r * 1.25);
+                    result[String(size)] = ctx.getImageData(0, 0, size, size);
+                }
+                bitmap.close();
+                return result;
+            })();
+            this.lockedActionIconPromise.catch(() => (this.lockedActionIconPromise = null));
+        }
+        return this.lockedActionIconPromise;
     }
 
     private unlockGlobalPauseUntil = 0;
@@ -525,48 +567,62 @@ class Kee {
     }
 
     // Sucht den passenden Eintrag mit TOTP für eine Seite und liefert den aktuellen Code.
-    // Reihenfolge: zuletzt im Tab ausgefüllter Eintrag (gleiche Domain, < 15 min), dann passende Einträge der Seite.
+    // Ist der zuletzt im Tab ausgefüllte Eintrag bekannt (gleiche Domain, < 15 min), zählt nur dieser.
+    // Sonst nur, wenn genau ein passender Eintrag der Seite ein TOTP hat (mehrere Konten = nicht eindeutig).
     async findTotpCode(tabId: number, url: string): Promise<{ code: string; remainingSeconds: number; period: number }> {
         const domain = KeeURL.fromString(url)?.domainOrIPAddress;
         if (!domain) return null;
 
-        const candidates: { uuid: string; dbFileName: string }[] = [];
-        const last = this.persistentTabStates.get(tabId)?.lastFilledEntry;
-        if (last && last.domain === domain && last.at > Date.now() - 15 * 60 * 1000) {
-            candidates.push({ uuid: last.uuid, dbFileName: last.dbFileName });
-        }
-        const found = await this.KeePassRPC.findLogins(url, null, null, null, null, null);
-        for (const entry of found ?? []) {
-            if (candidates.length >= 5) break;
-            if (!candidates.some(c => c.uuid === entry.uuid)) {
-                candidates.push({ uuid: entry.uuid, dbFileName: entry.database.fileName });
-            }
-        }
-
-        diag("hintergrund", "otp kandidaten", {
-            domain,
-            zuletztBenutzt: last ? { uuid: last.uuid, domain: last.domain, alterSek: Math.round((Date.now() - last.at) / 1000) } : null,
-            kandidaten: candidates.map(c => c.uuid),
-            seitenTreffer: (found ?? []).length
-        });
-        for (const candidate of candidates) {
-            let result: { code: string; remainingSeconds: number; period: number } = null;
+        const getTotp = async (candidate: { uuid: string; dbFileName: string }) => {
             try {
-                result = await this.KeePassRPC.getTotp(candidate.uuid, candidate.dbFileName);
+                const result = await this.KeePassRPC.getTotp(candidate.uuid, candidate.dbFileName);
+                diag("hintergrund", "otp eintrag geprüft", { uuid: candidate.uuid, hatOtp: !!result?.code });
+                return result?.code ? result : null;
             } catch (e) {
                 diag("hintergrund", "otp abfrage fehlgeschlagen", { uuid: candidate.uuid, db: candidate.dbFileName, fehler: String(e) });
-                continue;
+                return null;
             }
-            diag("hintergrund", "otp eintrag geprüft", { uuid: candidate.uuid, hatOtp: !!result?.code });
-            if (!result?.code) continue;
-            // Kurz vor dem Wechsel lieber auf den nächsten Code warten
-            if (result.remainingSeconds <= 2) {
-                await new Promise(resolve => self.setTimeout(resolve, (result.remainingSeconds + 1) * 1000));
-                result = await this.KeePassRPC.getTotp(candidate.uuid, candidate.dbFileName);
+        };
+
+        let chosen: { uuid: string; dbFileName: string } = null;
+        let result: { code: string; remainingSeconds: number; period: number } = null;
+        const last = this.persistentTabStates.get(tabId)?.lastFilledEntry;
+        if (last && last.domain === domain && last.at > Date.now() - 15 * 60 * 1000) {
+            chosen = { uuid: last.uuid, dbFileName: last.dbFileName };
+            result = await getTotp(chosen);
+            diag("hintergrund", "otp kandidaten", {
+                domain,
+                zuletztBenutzt: { uuid: last.uuid, alterSek: Math.round((Date.now() - last.at) / 1000) },
+                hatOtp: !!result
+            });
+        } else {
+            const found = await this.KeePassRPC.findLogins(url, null, null, null, null, null);
+            const withTotp: { candidate: { uuid: string; dbFileName: string }; result: typeof result }[] = [];
+            for (const entry of (found ?? []).slice(0, 10)) {
+                const candidate = { uuid: entry.uuid, dbFileName: entry.database.fileName };
+                const r = await getTotp(candidate);
+                if (r) withTotp.push({ candidate, result: r });
+                if (withTotp.length > 1) break;
             }
-            if (result?.code) return { code: result.code, remainingSeconds: result.remainingSeconds, period: result.period || 30 };
+            diag("hintergrund", "otp kandidaten", {
+                domain,
+                zuletztBenutzt: null,
+                seitenTreffer: (found ?? []).length,
+                mitOtp: withTotp.map(w => w.candidate.uuid)
+            });
+            if (withTotp.length === 1) {
+                chosen = withTotp[0].candidate;
+                result = withTotp[0].result;
+            }
         }
-        return null;
+        if (!result) return null;
+
+        // Kurz vor dem Wechsel lieber auf den nächsten Code warten
+        if (result.remainingSeconds <= 2) {
+            await new Promise(resolve => self.setTimeout(resolve, (result.remainingSeconds + 1) * 1000));
+            result = await getTotp(chosen);
+        }
+        return result ? { code: result.code, remainingSeconds: result.remainingSeconds, period: result.period || 30 } : null;
     }
 
     resetBrowserActionColor() {
@@ -933,7 +989,10 @@ class Kee {
         try {
             const newEntry = await this.KeePassRPC.addLogin(entry, parentUUID, dbFileName);
             const success = this.recordEntrySaveResult("created", newEntry);
-            if (success) clearSubmittedData();
+            if (success) {
+                clearSubmittedData();
+                await this.refreshAfterEntryChange();
+            }
         } catch (e) {
             KeeLog.error(
                 "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
@@ -952,7 +1011,10 @@ class Kee {
         try {
             const changedEntry = await this.KeePassRPC.updateLogin(entry, oldLoginUUID, dbFileName);
             const success = this.recordEntrySaveResult("updated", changedEntry);
-            if (success) clearSubmittedData();
+            if (success) {
+                clearSubmittedData();
+                await this.refreshAfterEntryChange();
+            }
         } catch (e) {
             KeeLog.error(
                 "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
@@ -960,6 +1022,17 @@ class Kee {
             );
             throw e;
         }
+    }
+
+    // Nach dem Ändern eines Eintrags: Datenbankansicht neu laden und die Seite neu nach passenden Einträgen
+    // suchen lassen (sonst zeigen Popup und Feldsymbole die beim Laden der Seite gefundenen, alten Daten)
+    async refreshAfterEntryChange() {
+        try {
+            await this.KeePassRPC.getAllDatabases();
+        } catch (e) {
+            KeeLog.debug("Refresh after entry change failed: " + e);
+        }
+        this.refreshFormStatus(Action.DetectForms);
     }
 
     getAllDatabases() {

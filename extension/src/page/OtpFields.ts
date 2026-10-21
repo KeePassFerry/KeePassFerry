@@ -86,11 +86,11 @@ function isVisible(el: HTMLElement): boolean {
     return style.visibility !== "hidden" && style.display !== "none";
 }
 
-function isEditable(el: HTMLInputElement): boolean {
+export function isEditable(el: HTMLInputElement): boolean {
     return !el.disabled && !el.readOnly && isVisible(el);
 }
 
-function allInputs(): HTMLInputElement[] {
+export function allInputs(): HTMLInputElement[] {
     return [
         ...Array.from(document.querySelectorAll("input")),
         ...findInputsInOpenShadowRoots(document.body)
@@ -129,28 +129,38 @@ function diagScan(target: HTMLInputElement[] | null) {
     }
 }
 
-// Liefert entweder ein einzelnes Feld oder eine Gruppe von Einzelziffernfeldern
-function findOtpTarget(): HTMLInputElement[] | null {
+// Liefert entweder ein einzelnes Feld oder eine Gruppe von Einzelziffernfeldern.
+// allowFilled: auch schon ausgefüllte Felder (Knopf "in die Seite eintragen" im Popup)
+function findOtpTarget(allowFilled = false): HTMLInputElement[] | null {
+    const empty = (el: HTMLInputElement) => allowFilled || !el.value;
     const inputs = allInputs().filter(isEditable);
 
-    const single = inputs.find(el => isOtpField(el) && el.maxLength !== 1 && !el.value);
-    if (single) return [single];
+    // Mehrere Felder mit OTP-Hinweis (z. B. "twoFaCode1" … "twoFaCode6"): je Feld eine Ziffer
+    // (wie Bitwarden: Anzahl der Felder = Codelänge; das prüft fill())
+    const hinted = inputs.filter(el => isOtpField(el) && el.maxLength !== 1);
+    if (hinted.length >= 6 && hinted.length <= 8 && hinted.every(empty)) return hinted;
 
-    // Einzelziffernfelder: gleiche Elternebene, aufeinanderfolgend, maxlength=1
-    const singles = inputs.filter(el => el.maxLength === 1 && TEXT_TYPES.includes((el.getAttribute("type") ?? "").toLowerCase()));
+    // Einzelziffernfelder: maxlength=1 oder schmales Feld ohne Längenangabe (z. B. type=number),
+    // 6 bis 8 Stück auf gleicher Elternebene. Vor dem Einzelfeld prüfen, sonst gilt das erste Kästchen als Codefeld
+    const isDigitBox = (el: HTMLInputElement) =>
+        TEXT_TYPES.includes((el.getAttribute("type") ?? "").toLowerCase()) &&
+        (el.maxLength === 1 || (el.maxLength <= 0 && el.offsetWidth > 0 && el.offsetWidth <= 64));
     const byParent = new Map<Node, HTMLInputElement[]>();
-    for (const el of singles) {
+    for (const el of inputs.filter(isDigitBox)) {
         const key = el.parentElement?.parentElement ?? el.parentElement;
         if (!byParent.has(key)) byParent.set(key, []);
         byParent.get(key).push(el);
     }
+    const grouped = new Set<HTMLInputElement>();
     for (const group of byParent.values()) {
-        if (group.length >= 6 && group.length <= 8 && group.every(el => !el.value)) {
-            if (NOT_TOTP_HINT.test(group.map(hintText).join(" "))) continue;
-            return group;
-        }
+        if (group.length < 6 || group.length > 8) continue;
+        group.forEach(el => grouped.add(el));
+        if (NOT_TOTP_HINT.test(group.map(hintText).join(" "))) continue;
+        if (group.every(empty)) return group;
     }
-    return null;
+
+    const single = inputs.find(el => !grouped.has(el) && isOtpField(el) && el.maxLength !== 1 && empty(el));
+    return single ? [single] : null;
 }
 
 // Begriffe, die auf eine Zwei-Faktor-Einrichtung hindeuten. Nur für den Schlüssel als Text nötig;
@@ -194,25 +204,89 @@ export interface QrRect {
 
 // Sichtbare, annähernd quadratische Bilder/Canvas/SVG als mögliche QR-Codes (Viewport-Koordinaten in CSS-Pixeln).
 // Welche davon wirklich OTP-QR-Codes sind, entscheidet erst der Inhalt (otpauth://totp/...) nach dem Dekodieren.
-function qrCandidateRects(): QrRect[] {
-    const rects: QrRect[] = [];
+function qrCandidateElements(inViewportOnly: boolean): HTMLElement[] {
+    const found: HTMLElement[] = [];
     const nodes = Array.from(document.querySelectorAll("img, canvas, svg")) as HTMLElement[];
     for (const el of nodes) {
         if (el instanceof HTMLImageElement && !el.complete) continue;
         const r = el.getBoundingClientRect();
         if (r.width < 80 || r.width > 800 || r.height < 80) continue;
         if (Math.abs(r.width - r.height) / r.width > 0.15) continue;
-        if (r.bottom <= 0 || r.top >= window.innerHeight || r.right <= 0 || r.left >= window.innerWidth) continue;
+        if (inViewportOnly && (r.bottom <= 0 || r.top >= window.innerHeight || r.right <= 0 || r.left >= window.innerWidth)) continue;
         if (!isVisible(el)) continue;
         // Verschachtelte SVG-Teile nicht doppelt melden
         if (el instanceof SVGElement && el.ownerSVGElement) continue;
-        rects.push({ x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) });
-        if (rects.length >= 8) break;
+        found.push(el);
+        if (found.length >= 8) break;
     }
-    return rects;
+    return found;
 }
 
-function setValue(el: HTMLInputElement, value: string) {
+function qrCandidateRects(): QrRect[] {
+    return qrCandidateElements(true).map(el => {
+        const r = el.getBoundingClientRect();
+        return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) };
+    });
+}
+
+// Bildinhalt als PNG-Daten-URL mit weißem Rand (Ruhezone für den QR-Dekoder); wirft bei fremden Bildern ohne CORS
+async function elementToDataUrl(el: HTMLElement): Promise<string> {
+    let source: CanvasImageSource;
+    let w = 0;
+    let h = 0;
+    if (el instanceof HTMLCanvasElement) {
+        source = el;
+        w = el.width;
+        h = el.height;
+    } else if (el instanceof HTMLImageElement) {
+        source = el;
+        w = el.naturalWidth;
+        h = el.naturalHeight;
+    } else if (el instanceof SVGSVGElement) {
+        const r = el.getBoundingClientRect();
+        const img = new Image();
+        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(el));
+        await img.decode();
+        source = img;
+        w = Math.round(r.width) * 2;
+        h = Math.round(r.height) * 2;
+    }
+    if (!source || !w || !h) return null;
+    const scale = Math.min(1, 1024 / Math.max(w, h));
+    const dw = Math.round(w * scale);
+    const dh = Math.round(h * scale);
+    const pad = Math.round(Math.max(dw, dh) * 0.1);
+    const canvas = document.createElement("canvas");
+    canvas.width = dw + 2 * pad;
+    canvas.height = dh + 2 * pad;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(source, pad, pad, dw, dh);
+    return canvas.toDataURL("image/png");
+}
+
+// QR-Kandidaten als Bilddaten (auch in iframes, deren Lage im Bildschirmfoto unbekannt ist).
+// Nicht auslesbare fremde Bilder gehen als Adresse an den Hintergrund, der sie selbst lädt.
+// Schon geprüfte Elemente mit unveränderter Quelle werden übersprungen.
+async function qrCandidateImages(seen: WeakMap<Element, string>): Promise<string[]> {
+    const images: string[] = [];
+    for (const el of qrCandidateElements(false)) {
+        const signature = el instanceof HTMLImageElement ? el.currentSrc : el instanceof HTMLCanvasElement ? `${el.width}x${el.height}` : el.outerHTML.length.toString();
+        if (seen.get(el) === signature && !(el instanceof HTMLCanvasElement)) continue;
+        seen.set(el, signature);
+        try {
+            const data = await elementToDataUrl(el);
+            if (data) images.push(data);
+        } catch (e) {
+            if (el instanceof HTMLImageElement && /^https:/i.test(el.currentSrc)) images.push(el.currentSrc);
+        }
+        if (images.length >= 4) break;
+    }
+    return images;
+}
+
+export function setValue(el: HTMLInputElement, value: string) {
     el.focus();
     // Über den nativen Setter, damit React/Vue die Änderung mitbekommen
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
@@ -240,6 +314,7 @@ export class OtpFields {
     }
 
     private setupReported = new Set<string>();
+    private qrImagesSeen = new WeakMap<Element, string>();
     private observer: MutationObserver = null;
     private onImageLoad = (e: Event) => {
         if (e.target instanceof HTMLImageElement) this.scanSoon();
@@ -269,20 +344,24 @@ export class OtpFields {
     }
 
     private scan() {
-        this.scanSetup();
+        const setupReported = this.scanSetup();
         const target = findOtpTarget();
         diagScan(target);
         if (!target) return;
         if (this.requestedFor === target[0] && document.contains(target[0])) return;
         this.target = target;
         this.requestedFor = target[0];
-        Port.postMessage({ action: Action.RequestOtp, url: window.location.href } as AddonMessage);
-        this.onCodeRequested();
+        // Erst nach der Einrichtungsmeldung (QR-Auslesen ist asynchron) nach einem Code fragen,
+        // sonst trägt der Hintergrund auf einer Einrichtungsseite den Code eines anderen Schlüssels ein
+        setupReported.finally(() => {
+            Port.postMessage({ action: Action.RequestOtp, url: window.location.href } as AddonMessage);
+            this.onCodeRequested();
+        });
     }
 
     // Hinweise auf eine Zwei-Faktor-Einrichtung melden (je Art einmal pro Seite)
-    private scanSetup() {
-        if (!document.body) return;
+    private scanSetup(): Promise<void> {
+        if (!document.body) return Promise.resolve();
         const report = (key: string, otpSetup: AddonMessage["otpSetup"]) => {
             if (this.setupReported.has(key)) return;
             this.setupReported.add(key);
@@ -293,15 +372,27 @@ export class OtpFields {
         const uri = findOtpauthUri();
         if (uri) {
             report("uri:" + uri, { otpUri: uri });
-            return;
+            return Promise.resolve();
         }
 
-        // 2. QR-Code-Kandidaten: in jeder Sprache, Prüfung im Hintergrund über den Inhalt
+        // 2. QR-Code-Kandidaten: in jeder Sprache, Prüfung im Hintergrund über den Inhalt.
+        // Bilddaten in jedem Frame (z. B. Einstellungen im iframe), Bildschirmfoto-Ausschnitt nur im Hauptframe
         const rects = window.top === window ? qrCandidateRects() : [];
         if (rects.length > 0) {
             const key = "qr:" + rects.map(r => `${r.x},${r.y},${r.w}`).join(";");
             report(key, { otpQrRects: rects, viewportWidth: window.innerWidth });
         }
+        const images = qrCandidateImages(this.qrImagesSeen)
+            .then(images => {
+                if (images.length === 0) return;
+                pageDiag("qr kandidaten", {
+                    hauptframe: window.top === window,
+                    anzahl: images.length,
+                    arten: images.map(i => (i.startsWith("data:") ? "daten" : "adresse"))
+                });
+                report("img:" + images.map(i => i.length + i.slice(-32)).join(";"), { otpQrImages: images });
+            })
+            .catch(() => undefined);
 
         // 3. Schlüssel als Text: nur mit Einrichtungsbegriffen auf der Seite (sonst zu viele Fehltreffer)
         const pageText = (document.body.innerText ?? "").slice(0, 200000);
@@ -309,6 +400,7 @@ export class OtpFields {
             const secret = findSecretText(pageText);
             if (secret) report("text:" + secret, { otpSecret: secret });
         }
+        return images;
     }
 
     // Nach dem Entsperren erneut nach einem OTP-Feld fragen (vorherige Anfrage lief bei gesperrter DB ins Leere)
@@ -317,10 +409,19 @@ export class OtpFields {
     public onLocked() {
         clearInterval(this.countdownTimer);
         this.countdownTimer = null;
+        // Noch kein Symbol (Seite bei gesperrter DB geladen): erkanntes Codefeld bekommt das Gesperrt-Symbol
+        if (!this.iconField?.isConnected) {
+            const target = findOtpTarget(true);
+            if (!target) return;
+            this.target = target;
+            this.showIcon(target);
+        }
         const el = this.iconField;
         if (!el?.isConnected) return;
-        this.icons.setImage(el, KeeFieldIcon.FERRY_ICON_32, 16);
         this.icons.setLabel(el, $STR("ferry_otp_icon_locked"));
+        KeeFieldIcon.lockedIcon().then(image => {
+            if (this.iconField === el && this.countdownTimer === null) this.icons.setImage(el, image, KeeFieldIcon.LOCKED_ICON_WIDTH);
+        });
     }
 
     public rescan() {
@@ -328,11 +429,25 @@ export class OtpFields {
         // Klick aufs Symbol bei gesperrter DB: nach dem Entsperren den Code für dieses Feld holen,
         // auch wenn dort noch ein alter Code steht (normale Suche nimmt nur leere Felder)
         if (this.forceNextFill && this.iconField?.isConnected) {
-            this.target = [this.iconField];
+            this.target = this.iconTarget ?? [this.iconField];
             Port.postMessage({ action: Action.RequestOtp, url: window.location.href, userInitiated: true } as AddonMessage);
             return;
         }
         this.scanSoon();
+    }
+
+    // Für das Popup: hat die Seite ein Codefeld (auch schon ausgefülltes)?
+    public hasTarget(): boolean {
+        return !!findOtpTarget(true);
+    }
+
+    // Knopf "in die Seite eintragen" im Popup: Code eintragen, auch wenn dort schon ein Code steht
+    public fillFromPopup(code: string, remaining?: number, period?: number) {
+        this.target = findOtpTarget(true);
+        if (!this.target) return;
+        this.requestedFor = this.target[0];
+        this.forceNextFill = true;
+        this.fill(code, remaining, period);
     }
 
     public fill(code: string, remaining?: number, period?: number) {
@@ -346,36 +461,41 @@ export class OtpFields {
             erneut: force
         });
         if (!target || !code || !target[0].isConnected) return;
-        if (target.length === 1) {
-            const filled = !target[0].value || force;
-            if (filled) setValue(target[0], code);
-            // Symbol und Zeitkreis sind Zusatz: ein Fehler dort darf das Eintragen nicht verhindern
-            try {
-                this.showIcon(target[0]);
-                if (filled) this.startCountdown(target[0], code, remaining, period);
-            } catch (e) {
-                console.debug("KeePassFerry: OTP icon failed", e);
-            }
-            return;
+        // Einzelziffernfelder: je Feld eine Ziffer, nur wenn die Länge passt
+        if (target.length > 1 && code.length !== target.length) return;
+        const filled = target.every(el => !el.value) || force;
+        if (filled) {
+            if (target.length === 1) setValue(target[0], code);
+            else target.forEach((el, i) => setValue(el, code[i]));
         }
-        if (code.length !== target.length) return;
-        target.forEach((el, i) => setValue(el, code[i]));
+        // Symbol und Zeitkreis sind Zusatz: ein Fehler dort darf das Eintragen nicht verhindern
+        try {
+            this.showIcon(target);
+            if (filled) this.startCountdown(target, code, remaining, period);
+        } catch (e) {
+            console.debug("KeePassFerry: OTP icon failed", e);
+        }
     }
 
     // KeePassFerry-Symbol am Codefeld (schwebend wie bei Benutzer-/Passwortfeldern), sobald ein Einmalcode vorliegt.
-    // Klick auf das Symbol trägt den aktuellen Code (neu) ein.
+    // Bei Einzelziffernfeldern rechts neben dem letzten Feld. Klick auf das Symbol trägt den aktuellen Code (neu) ein.
     private forceNextFill = false;
     private iconField: HTMLInputElement = null;
+    private iconTarget: HTMLInputElement[] = null;
     private icons = new FloatingFieldIcons();
 
-    private showIcon(el: HTMLInputElement) {
-        if (this.iconField === el || el.offsetWidth < 60) return;
+    private showIcon(target: HTMLInputElement[]) {
+        const outside = target.length > 1;
+        const el = target[target.length - 1];
+        this.iconTarget = target;
+        if (this.iconField === el || (!outside && el.offsetWidth < 60)) return;
         if (this.iconField) this.icons.remove(this.iconField);
         this.iconField = el;
         this.icons.add(el, {
             image: KeeFieldIcon.FERRY_ICON_32,
             width: 16,
             label: $STR("ferry_otp_icon_label"),
+            outside,
             onClick: () => {
                 this.forceNextFill = true;
                 Port.postMessage({ action: Action.RequestOtp, url: window.location.href, userInitiated: true } as AddonMessage);
@@ -389,19 +509,21 @@ export class OtpFields {
     private countdownTimer: number = null;
     private keyImage: HTMLImageElement = null;
 
-    private startCountdown(el: HTMLInputElement, code: string, remaining: number, period: number) {
+    private startCountdown(target: HTMLInputElement[], code: string, remaining: number, period: number) {
         clearInterval(this.countdownTimer);
         if (!(remaining > 0) || !(period > 0)) return;
+        const el = this.iconField;
+        const currentValue = () => target.map(f => f.value).join("");
         const endsAt = Date.now() + remaining * 1000;
         const tick = () => {
-            if (!el.isConnected || this.iconField !== el) {
+            if (!el?.isConnected || this.iconField !== el) {
                 clearInterval(this.countdownTimer);
                 return;
             }
             const left = Math.max(0, (endsAt - Date.now()) / 1000);
             if (left <= 0) {
                 clearInterval(this.countdownTimer);
-                if (el.value === code) {
+                if (currentValue() === code) {
                     this.forceNextFill = true;
                     Port.postMessage({ action: Action.RequestOtp, url: window.location.href } as AddonMessage);
                 } else {
@@ -454,6 +576,7 @@ export class OtpFields {
         clearInterval(this.countdownTimer);
         this.icons.clear();
         this.iconField = null;
+        this.iconTarget = null;
         this.observer?.disconnect();
         this.observer = null;
         document.removeEventListener("load", this.onImageLoad, true);

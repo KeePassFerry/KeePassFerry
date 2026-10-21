@@ -1,82 +1,65 @@
 <template>
-    <div>
-        <v-slide-y-transition>
-            <v-container class="my-3 pa-0" style="padding: 0px;">
-                <v-row>
-                    <v-col>
-                        <v-text-field
-:label="$i18n('title')" :model-value="saveState.newEntry.title" variant="outlined"
-                            density="comfortable" hide-details="auto" type="text" autofocus
-                            @update:model-value="setTitle" @focus="onTitleFocus" @blur="onTitleBlur">
-                            <template v-if="titleFocussed && resettableTitle" #append>
-                                    <v-btn size="x-small" variant="text" icon class="ml-1" @click="resetTitle">
-                                        <mdi-undo scale="175" />
-                                    </v-btn>
-                            </template>
-                        </v-text-field>
-                    </v-col>
-                </v-row>
-
+    <div class="ferry-edit">
+        <div class="ferry-pagehead ferry-edit-head">
+            <button type="button" class="ferry-ib" :aria-label="$i18n('cancel')" @click="cancel">
+                <tabler-arrow-left class="ferry-ico" />
+            </button>
+            <span class="ferry-pagehead-title">{{ editingExisting ? $i18n("ferry_edit_entry") : $i18n("create_new_entry") }}</span>
+            <button v-if="editingExisting" type="button" class="ferry-ib" :aria-label="$i18n('open_full_editor')" @click="openFullEntryEditor">
+                <tabler-external-link class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">{{ $i18n("open_full_editor") }}</v-tooltip>
+            </button>
+        </div>
+        <div class="ferry-edit-body">
+            <div class="ferry-group">
+                <div class="ferry-group-title">{{ $i18n("ferry_edit_entry_heading") }}</div>
+                <v-text-field
+                    :label="$i18n('title')" :model-value="saveState.newEntry.title"
+                    hide-details="auto" type="text" autofocus class="mb-2"
+                    @update:model-value="setTitle" @focus="onTitleFocus" @blur="onTitleBlur">
+                    <template v-if="titleFocussed && resettableTitle" #append-inner>
+                        <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_reset_value')" @click="resetTitle">
+                            <tabler-arrow-back-up class="ferry-ico" />
+                        </button>
+                    </template>
+                </v-text-field>
                 <FieldEditor
-v-for="f of saveState.newEntry.fields" :key="f.uuid" :field="f"
+                    v-for="f of saveState.newEntry.fields" :key="f.uuid" :field="f"
                     @field-value-changed="fieldValueChanged" @field-deleted="fieldDeleted" />
-            </v-container>
-        </v-slide-y-transition>
-        <v-alert
-v-if="showURLMismatchWarning" border="top" border-color="primary" type="warning" :icon="false"
-            elevation="1" class="my-3">
-            <v-row dense>
-                <v-col>
+            </div>
+            <div v-if="showURLMismatchWarning" class="ferry-note warn ferry-edit-warn">
+                <tabler-alert-triangle class="ferry-ico" />
+                <div class="ferry-note-text">
                     <p>{{ $i18n("url_mismatch_1") }}</p>
                     <p>{{ $i18n("url_mismatch_2") }}</p>
                     <p>{{ $i18n("url_mismatch_3") }}</p>
-                </v-col>
-            </v-row>
-            <v-row dense>
-                <v-col class="my-0 py-0">
-                    <div>
-                        <v-checkbox
-v-model="differentSiteConfirmation" class="my-0 py-0" hide-details
-                            :label="$i18n('url_mismatch_confirm', entryDomain)" />
-                    </div>
-                </v-col>
-            </v-row>
-        </v-alert>
-        <v-container style="display: flex; width: 100%; justify-content: space-between;">
+                    <v-checkbox v-model="differentSiteConfirmation" hide-details :label="$i18n('url_mismatch_confirm', entryDomain)" />
+                </div>
+            </div>
+            <EntryAddition
+                v-if="editingExisting" ref="addition"
+                :uuid="saveState.newEntry.uuid" :db-file-name="saveState.newEntry.database.fileName"
+                :title="saveState.newEntry.title" @changed="additionsChanged = $event" />
+        </div>
+        <div class="ferry-actionbar ferry-edit-actions">
+            <v-spacer />
             <v-btn variant="text" @click="cancel">
                 {{ $i18n("cancel") }}
             </v-btn>
-            <v-btn
-v-if="!loading && !editingExisting && !skipWhere" color="primary"
-                @click="nextClicked">
+            <v-btn v-if="!loading && !editingExisting && !skipWhere" color="primary" variant="flat" @click="nextClicked">
                 {{ $i18n("next") }}
             </v-btn>
-            <v-btn v-if="!loading && !editingExisting && skipWhere" color="primary" @click="saveEntry">
+            <v-btn v-if="!loading && !editingExisting && skipWhere" color="primary" variant="flat" @click="saveEntry">
                 {{ $i18n("save") }}
             </v-btn>
-            <v-btn v-if="loading" loading disabledcolor="primary"> ......... </v-btn>
+            <v-btn v-if="loading" loading color="primary" variant="flat"> ......... </v-btn>
             <v-btn
-v-if="editingExisting" :disabled="showURLMismatchWarning && !differentSiteConfirmation"
-                color="primary" @click="updateEntry">
-                {{ $i18n("update") }}
+                v-if="editingExisting"
+                :disabled="!hasChanges || (showURLMismatchWarning && !differentSiteConfirmation)"
+                :loading="saving" color="primary" variant="flat" @click="saveAll">
+                {{ $i18n("save") }}
             </v-btn>
-        </v-container>
-        <v-alert
-v-if="editingExisting" border="top" border-color="primary" type="info" :icon="false" elevation="1"
-            class="my-4">
-            <v-row align="center">
-                <v-col class="grow">
-                    {{ $i18n("make_additional_changes_using_full_editor") }}
-                </v-col>
-            </v-row>
-            <v-row align="center">
-                <v-col class="grow">
-                    <v-btn size="small" @click="openFullEntryEditor">
-                        {{ $i18n("open_full_editor") }}
-                    </v-btn>
-                </v-col>
-            </v-row>
-        </v-alert>
+        </div>
     </div>
 </template>
 
@@ -86,6 +69,7 @@ import { Action } from "../../common/Action";
 import { SaveState } from "../../common/SaveState";
 import { Entry } from "../../common/model/Entry";
 import FieldEditor from "./FieldEditor.vue";
+import EntryAddition from "./EntryAddition.vue";
 import { Field } from "../../common/model/Field";
 import { AddonMessage } from "../../common/AddonMessage";
 import { KeeURL } from "../../common/KeeURL";
@@ -101,7 +85,8 @@ import { KeeLog } from "~/common/Logger";
 
 export default {
     components: {
-        FieldEditor
+        FieldEditor,
+        EntryAddition
     },
     emits: ["cancel-clicked", "save-where-clicked"],
     setup() {
@@ -118,7 +103,10 @@ export default {
         preferredGroupUuid: null,
         preferredDb: null,
         primaryFound: false,
-        titleFocussed: true
+        titleFocussed: true,
+        additionsChanged: false,
+        saving: false,
+        originalFieldCount: 0
     }),
     computed: {
         ...mapState(useStore, ["saveState", "KeePassDatabases", "ActiveKeePassDatabaseIndex"]),
@@ -127,6 +115,18 @@ export default {
                 this.saveState.titleResetValue !==
                 this.saveState.newEntry.title
             );
+        },
+        // Titel, Benutzername, Passwort o. Ä. geändert oder ein Feld entfernt
+        entryChanged: function () {
+            const e = (this.saveState as SaveState).newEntry;
+            return (
+                this.saveState.titleResetValue !== e.title ||
+                e.fields.length !== this.originalFieldCount ||
+                e.fields.some(f => f.resetValue !== undefined && f.resetValue !== f.value)
+            );
+        },
+        hasChanges: function () {
+            return this.entryChanged || this.additionsChanged;
         },
         editingExisting: function () {
             const e = (this.saveState as SaveState).newEntry;
@@ -154,6 +154,7 @@ export default {
         }
     },
     async mounted() {
+        this.originalFieldCount = (this.saveState as SaveState).newEntry.fields.length;
         this.preferToSkipWhere = configManager.current.rememberMRUGroup;
         const dbs = this.KeePassDatabases as Database[];
         const { preferredGroupUuid, preferredDb, primaryFound } = this.getPreferredGroup(
@@ -191,9 +192,14 @@ export default {
             Port.postMessage({ action: Action.CreateEntry } as AddonMessage);
             window.close();
         },
-        updateEntry: function () {
-            Port.postMessage({ action: Action.UpdateEntry } as AddonMessage);
-            window.close();
+        // Ein Speichern für alles: erst Hinzugefügtes/Entferntes (direkt im Plugin), dann geänderte Eintragsfelder
+        saveAll: async function () {
+            this.saving = true;
+            const additions = this.$refs.addition as any;
+            const ok = additions ? await additions.commit() : true;
+            if (this.entryChanged) Port.postMessage({ action: Action.UpdateEntry } as AddonMessage);
+            this.saving = false;
+            if (ok) window.close();
         },
         openFullEntryEditor() {
             const entry = (JSON.parse(JSON.stringify(this.saveState)) as SaveState).newEntry;
@@ -315,3 +321,47 @@ export default {
     }
 };
 </script>
+
+<style>
+/* Bearbeiten als eigene Seite: Kopf und Leiste bleiben stehen, dazwischen scrollt der Inhalt */
+.ferry-edit {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+.ferry-edit-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: rgb(var(--v-theme-surface));
+}
+.ferry-edit-body {
+    flex: 1;
+    padding: 0 14px 12px;
+}
+.ferry-edit-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+}
+.ferry-edit-warn {
+    margin: 8px 0 0;
+    align-items: flex-start;
+}
+.ferry-edit-warn p {
+    margin: 0 0 4px;
+}
+/* Gruppen im Bearbeiten-Fenster (auch von EntryAddition genutzt): Überschrift, Trennlinie, keine Kästen */
+.ferry-group {
+    padding: 14px 0 6px;
+}
+.ferry-group + .ferry-group {
+    border-top: 1px solid var(--ferry-line);
+}
+.ferry-group-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ferry-muted);
+    margin-bottom: 10px;
+}
+</style>

@@ -4,6 +4,9 @@ import { type AddonMessage } from "../common/AddonMessage";
 import { MatchedField } from "./MatchedField";
 import { Entry } from "../common/model/Entry";
 import { FloatingFieldIcons } from "./FloatingFieldIcons";
+import { isUsernameField } from "./loginFields";
+import { pageDiag } from "./ferryDiagPage";
+import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
 
 export class KeeFieldIcon {
     constructor(
@@ -31,15 +34,66 @@ export class KeeFieldIcon {
         this.otherFields = null;
     }
 
-    public lockKeeIcons() {
-        const elements = this.icons.elements();
+    // Datenbank gesperrt: vorhandene Symbole auf "gesperrt" stellen und erkannte Anmeldefelder (Passwort,
+    // Benutzer nach loginFields.ts) mit dem Gesperrt-Symbol versehen. Ein Klick entsperrt, nichts geschieht von selbst.
+    public lockKeeIcons(loginFields: HTMLElement[] = []) {
+        const elements = [...this.icons.elements(), ...loginFields.filter(el => !this.icons.has(el) && el.offsetWidth >= 50)];
+        pageDiag("gesperrt-symbole", { vorhanden: this.icons.elements().length, anmeldefelder: loginFields.length, gesetzt: elements.length });
         if (elements.length === 0) return;
         this.locked = true;
-        this.iconWidth = 16;
-        for (const el of elements) {
-            this.icons.setImage(el, KeeFieldIcon.FERRY_ICON_32, 16);
-            this.icons.setLabel(el, $STR("ferry_field_icon_locked"));
+        this.iconWidth = KeeFieldIcon.LOCKED_ICON_WIDTH;
+        KeeFieldIcon.lockedIcon().then(image => {
+            if (!this.locked) return;
+            for (const el of elements) {
+                if (this.icons.has(el)) {
+                    this.icons.setImage(el, image, KeeFieldIcon.LOCKED_ICON_WIDTH);
+                    this.icons.setLabel(el, $STR("ferry_field_icon_locked"));
+                } else if (el.isConnected) {
+                    this.icons.add(el, {
+                        image,
+                        width: KeeFieldIcon.LOCKED_ICON_WIDTH,
+                        label: $STR("ferry_field_icon_locked"),
+                        onClick: () => this.onIconClick(el)
+                    });
+                }
+            }
+        });
+    }
+
+    // Gesperrt-Symbol: KeePassFerry-Symbol mit oranger Plakette und weißem Schloss daneben (wie die Trefferzahl).
+    // Angezeigt 29 × 16 px (Leinwand doppelt so groß für scharfe Darstellung).
+    static readonly LOCKED_ICON_WIDTH = 29;
+    private static lockedIconPromise: Promise<string> = null;
+    public static lockedIcon(): Promise<string> {
+        if (!KeeFieldIcon.lockedIconPromise) {
+            KeeFieldIcon.lockedIconPromise = new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    const pillWidth = 24;
+                    const canvas = document.createElement("canvas");
+                    canvas.width = 32 + 2 + pillWidth;
+                    canvas.height = 32;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, 32, 32);
+                    const x = 34;
+                    const r = 12;
+                    ctx.beginPath();
+                    ctx.moveTo(x + r, 4);
+                    ctx.arcTo(x + pillWidth, 4, x + pillWidth, 28, r);
+                    ctx.arcTo(x + pillWidth, 28, x, 28, r);
+                    ctx.arcTo(x, 28, x, 4, r);
+                    ctx.arcTo(x, 4, x + pillWidth, 4, r);
+                    ctx.closePath();
+                    ctx.fillStyle = LOCK_COLOR;
+                    ctx.fill();
+                    drawLockGlyph(ctx, x + pillWidth / 2, 16, 16);
+                    resolve(canvas.toDataURL());
+                };
+                img.onerror = () => resolve(KeeFieldIcon.FERRY_ICON_32);
+                img.src = KeeFieldIcon.FERRY_ICON_32;
+            });
         }
+        return KeeFieldIcon.lockedIconPromise;
     }
 
     private onIconClick(element: HTMLElement) {
@@ -83,6 +137,8 @@ export class KeeFieldIcon {
         }
         if (field.DOMelement.maxLength > 0 && field.DOMelement.maxLength <= 3) return true;
         if (field.DOMelement.offsetWidth < 50) return true;
+        // Textfelder nur, wenn sie das Benutzerfeld einer Anmeldung sind (Regeln in loginFields.ts)
+        if (field.field.type !== "password" && !isUsernameField(field.DOMelement as HTMLInputElement)) return true;
         return false;
     }
 

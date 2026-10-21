@@ -269,6 +269,33 @@ export class jsonrpcClient {
         return responses?.[0]?.resultWrapper?.result ?? null;
     }
 
+    // Eigene Felder (geschützte ohne Wert) und Anhänge eines Eintrags
+    async getEntryExtras(uuid: string, dbFileName: string): Promise<{
+        fields: { name: string; isProtected: boolean; value: string }[];
+        attachments: { name: string; size: number }[];
+    }> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return null;
+        const responses = await this.kprpcClient.request([sessionManager], "GetEntryExtras", [uuid, dbFileName]);
+        return responses?.[0]?.resultWrapper?.result ?? null;
+    }
+
+    // Eigenes Feld (kind "field") oder Anhang (kind "attachment") entfernen
+    async removeEntryExtra(uuid: string, dbFileName: string, kind: string, name: string): Promise<boolean> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return false;
+        const responses = await this.kprpcClient.request([sessionManager], "RemoveEntryExtra", [uuid, dbFileName, kind, name]);
+        return !!responses?.[0]?.resultWrapper?.result;
+    }
+
+    // Textfeld anlegen (vorhandene Namen bekommen eine Nummer) oder Text an die Notizen hängen; liefert den Feldnamen oder null
+    async addEntryText(uuid: string, dbFileName: string, fieldName: string, value: string, protect: boolean, toNotes: boolean): Promise<string> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return null;
+        const responses = await this.kprpcClient.request([sessionManager], "AddEntryText", [uuid, dbFileName, fieldName, value, protect, toNotes]);
+        return responses?.[0]?.resultWrapper?.result ?? null;
+    }
+
     // Gesperrte Datenbank im Hintergrund entsperren lassen (Schlüsselabfrage/Windows Hello, ohne KeePass-Fenster)
     async requestUnlock(): Promise<string> {
         const sessionManager = this.kprpcClient.getSessionManagerByType(SessionType.Websocket);

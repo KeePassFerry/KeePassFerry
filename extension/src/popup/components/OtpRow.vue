@@ -1,28 +1,30 @@
 <template>
     <div v-if="code" class="ferry-row">
-        <span class="ferry-row-icon otp-ring">
-            <v-progress-circular :model-value="remainingPercent" :size="18" :width="3" :color="remaining <= 5 ? 'error' : 'primary'">
-            </v-progress-circular>
+        <span class="ferry-row-icon">
+            <v-progress-circular :model-value="remainingPercent" :size="18" :width="2.5" :color="ringColor" />
         </span>
         <span class="ferry-row-value otp-code">
-            <v-tooltip location="bottom" :open-delay="tooltipDelay" activator="parent">
-                <span>{{ $i18n("otp_code_tip", [remaining.toString()]) }}</span>
-            </v-tooltip>
             {{ displayCode }}
+            <v-tooltip location="bottom" activator="parent">{{ $i18n("otp_code_tip", [remaining.toString()]) }}</v-tooltip>
         </span>
-        <v-btn size="small" variant="text" icon class="my-0" :color="copied ? 'success' : undefined" @click="copyCode">
-            <v-tooltip location="start" :open-delay="tooltipDelay" activator="parent">
-                <span>{{ $i18n("otp_copy_tip") }}</span>
-            </v-tooltip>
-            <mdi-check v-if="copied" />
-            <mdi-content-copy v-else />
-        </v-btn>
+        <span class="otp-left" :class="ringColor">{{ remaining }} s</span>
+        <button v-if="pageHasField" type="button" class="ferry-ib" :class="{ ok: filled }" :aria-label="$i18n('ferry_fill_into_page')" @click="fillIntoPage">
+            <tabler-check v-if="filled" class="ferry-ico" />
+            <tabler-arrow-bar-to-down v-else class="ferry-ico" />
+            <v-tooltip location="top" activator="parent">{{ $i18n("ferry_fill_into_page") }}</v-tooltip>
+        </button>
+        <button type="button" class="ferry-ib" :class="{ ok: copied }" :aria-label="$i18n('otp_copy_tip')" @click="copyCode">
+            <tabler-check v-if="copied" class="ferry-ico" />
+            <tabler-copy v-else class="ferry-ico" />
+            <v-tooltip location="top" activator="parent">{{ $i18n("otp_copy_tip") }}</v-tooltip>
+        </button>
     </div>
 </template>
 
 <script lang="ts">
 import { copyStringToClipboard } from "../../common/copyStringToClipboard";
 import { tooltipDelay } from "../../common/Timings";
+import { pageFieldKinds, fillPageField } from "../pageFields";
 
 // Zeigt den aktuellen Einmalcode (TOTP) eines Eintrags mit Restlaufzeit und Kopier-Knopf.
 // Der Code kommt über den Hintergrund vom KeePass-Plugin; das Secret bleibt in KeePass.
@@ -34,6 +36,8 @@ export default {
         period: 30,
         timer: null as number,
         copied: false,
+        filled: false,
+        pageHasField: false,
         tooltipDelay: tooltipDelay
     }),
     computed: {
@@ -41,11 +45,15 @@ export default {
             const c = this.code ?? "";
             return c.length === 6 ? c.slice(0, 3) + " " + c.slice(3) : c;
         },
+        ringColor: function () {
+            return this.remaining <= 5 ? "error" : this.remaining <= 10 ? "warning" : "success";
+        },
         remainingPercent: function () {
             return Math.round((this.remaining / this.period) * 100);
         }
     },
     mounted: async function () {
+        pageFieldKinds().then(k => (this.pageHasField = !!k.otp));
         await this.refresh();
         this.timer = window.setInterval(async () => {
             if (!this.code) return;
@@ -82,20 +90,35 @@ export default {
                 this.copied = true;
                 setTimeout(() => (this.copied = false), 1500);
             }
+        },
+        // Den Code holt der Hintergrund frisch (mit Restzeit für den Ring am Feld)
+        fillIntoPage: async function () {
+            if (await fillPageField("otp", this.uuid, this.dbFileName)) {
+                this.filled = true;
+                setTimeout(() => (this.filled = false), 1500);
+            }
         }
     }
 };
 </script>
 
 <style scoped>
-.otp-ring {
-    opacity: 1;
-}
 .otp-code {
-    font-family: "Cascadia Mono", "Consolas", monospace;
-    font-size: 1.05rem;
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 14.5px;
     font-weight: 600;
     letter-spacing: 0.08em;
-    cursor: default;
+}
+.otp-left {
+    font-size: 12px;
+    color: var(--ferry-muted);
+    min-width: 30px;
+    text-align: right;
+}
+.otp-left.warning {
+    color: rgb(var(--v-theme-warning));
+}
+.otp-left.error {
+    color: rgb(var(--v-theme-error));
 }
 </style>

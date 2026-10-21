@@ -1,22 +1,23 @@
 <template>
     <v-text-field
-id="searchBox" single-line density="compact" variant="solo-filled" flat rounded="lg" :placeholder="$i18n('Search_label')" hide-details class="search my-0 py-0"
+id="searchBox" single-line density="compact" variant="solo-filled" flat rounded="lg" clearable :placeholder="$i18n('Search_label')" hide-details class="search my-0 py-0"
         style="" name="cc5704978dc0411591addc66d25c325b" :model-value="currentSearchTerm" autofocus
         @update:model-value="onSearchInput" @keyup.arrow-down.stop.prevent="focusFirstResult"
         @keyup.enter.stop.prevent="focusFirstResult" @keyup.escape.stop.prevent="handleEscape">
         <template #prepend-inner>
-            <mdi-magnify class="search-icon" />
+            <tabler-search class="ferry-ico search-icon" />
         </template>
     </v-text-field>
 </template>
 
 <style>
 .search .search-icon {
-    opacity: 0.55;
+    color: var(--ferry-faint);
     margin-right: 2px;
 }
 .search .v-field {
     font-size: 14px;
+    border-radius: 10px;
 }
 </style>
 
@@ -79,11 +80,13 @@ export default {
         onSearchInput(value) {
             // Think this is OK but if it is actually async then user may have subsequent
             // characters deleted when the change is actually applied
+            // Löschen über das Kreuz liefert null
+            value = value ?? "";
             this.updateCurrentSearchTerm(value);
             this.search.execute(value, this.onSearchComplete.bind(this), []);
         },
         focusFirstResult() {
-            const firstCard = document.querySelector("#searchPanel > .v-card");
+            const firstCard = document.querySelector("#searchPanel .ferry-entry");
             if (firstCard) {
                 (firstCard as HTMLLIElement).focus();
             }

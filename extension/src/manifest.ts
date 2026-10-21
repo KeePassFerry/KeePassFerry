@@ -15,9 +15,10 @@ export async function getManifest() {
     // can also be conditional based on your need
     const manifest: Manifest = {
         manifest_version: 3,
-        name: pkg.displayName || pkg.name,
+        // Übersetzbar (_locales), damit Browser und Store Name und Beschreibung je Sprache zeigen
+        name: "__MSG_extName__",
         version: pkg.version,
-        description: pkg.description,
+        description: "__MSG_extDescription__",
         default_locale: "en",
         version_name: pkg.version,
 

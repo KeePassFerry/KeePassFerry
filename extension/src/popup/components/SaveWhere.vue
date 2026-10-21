@@ -1,47 +1,48 @@
 <template>
-    <div>
-        <v-slide-y-transition>
-            <v-container class="ma-0 pa-0" style="cursor: default; padding: 0; margin: 0">
-                <v-row justify="center" style="cursor: default; padding: 0; margin: 0">
-                    <v-col style="cursor: default; padding: 0; margin: 0" class="text-6 text-center">
-                        {{ $i18n("where") }}
-                    </v-col>
-                </v-row>
-                <v-row style="margin-top: 0px;">
-                    <v-col>
-                        <v-card class="mx-auto" max-width="500">
-                            <v-sheet class="pa-4 pb-1">
-                                <v-text-field
-                                    v-model="debouncedSearchValue" :label="$i18n('Search_label')"
-                                    color="primary" variant="outlined" hide-details="auto" clearable density="compact"
-                                    clear-icon="mdi-close-circle-outline" />
-                            </v-sheet>
-                            <v-card-text>
-                                <Tree
-                                    :items="items" :filter-text="search ?? ''"
-                                    style="max-height: 220px;min-height: 220px;overflow-y: auto;"
-                                    @set-group="(item: GroupListItem) => handleSelect(item)"></tree>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                </v-row>
-                <v-row>
-                    <v-col class="py-0">
-                        <v-checkbox v-model="skipInFuture" :label="$i18n('skip_where_enable_context')"></v-checkbox>
-                    </v-col>
-                </v-row>
-            </v-container>
-        </v-slide-y-transition>
-
-        <v-btn :disabled="!saveEnabled" location="right" color="primary" @click="saveEntry">
-            {{ $i18n("save") }}
-        </v-btn>
-
-        <v-container v-if="displayReason">
-            {{ displayReason }}
-        </v-container>
+    <div class="ferry-edit">
+        <div class="ferry-pagehead ferry-edit-head">
+            <button type="button" class="ferry-ib" :aria-label="$i18n('cancel')" @click="$emit('back')">
+                <tabler-arrow-left class="ferry-ico" />
+            </button>
+            <span class="ferry-pagehead-title">{{ $i18n("where") }}</span>
+        </div>
+        <div class="ferry-edit-body">
+            <v-text-field
+                v-model="debouncedSearchValue" :label="$i18n('Search_label')" hide-details="auto" clearable
+                density="compact" class="mt-3 mb-2">
+                <template #prepend-inner><tabler-search class="ferry-ico" /></template>
+            </v-text-field>
+            <div class="ferry-where-tree">
+                <Tree :items="items" :filter-text="search ?? ''" @set-group="(item: GroupListItem) => handleSelect(item)"></Tree>
+            </div>
+            <v-checkbox v-model="skipInFuture" :label="$i18n('skip_where_enable_context')" hide-details class="mt-2" />
+            <div v-if="displayReason" class="ferry-add-note">{{ displayReason }}</div>
+        </div>
+        <div class="ferry-actionbar ferry-edit-actions">
+            <v-spacer />
+            <v-btn variant="text" @click="$emit('back')">{{ $i18n("cancel") }}</v-btn>
+            <v-btn :disabled="!saveEnabled" color="primary" variant="flat" @click="saveEntry">
+                {{ $i18n("save") }}
+            </v-btn>
+        </div>
     </div>
 </template>
+
+<style>
+.ferry-where-tree {
+    max-height: 300px;
+    min-height: 220px;
+    overflow-y: auto;
+    border: 1px solid var(--ferry-line);
+    border-radius: 10px;
+    padding: 4px 0;
+}
+.ferry-where-tree ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+</style>
 
 <script lang="ts">
 import { Port } from "../../common/port";
@@ -93,6 +94,7 @@ function findDatabaseAndGroupByGroupId(databases: Database[], uuid: string) {
 let selectedItem: any = {};
 
 export default {
+    emits: ["back"],
     components: {
         Tree: GroupSelectorTree
     },

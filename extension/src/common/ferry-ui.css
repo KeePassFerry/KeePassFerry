@@ -1,0 +1,175 @@
+/*
+ferry-ui.css: gemeinsame Bausteine der KeePassFerry-Oberfläche (Popup, Auswahlliste auf der Seite).
+Eine Fläche, Zeilen mit feinen Trennlinien, Symbole einheitlich 18 px (Tabler), Knöpfe 32 px.
+*/
+:root {
+    --ferry-font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --ferry-line: rgba(var(--v-theme-on-surface), 0.09);
+    --ferry-hover: rgba(var(--v-theme-on-surface), 0.045);
+    --ferry-tint: rgba(var(--v-theme-primary), 0.07);
+    --ferry-muted: rgba(var(--v-theme-on-surface), 0.62);
+    --ferry-faint: rgba(var(--v-theme-on-surface), 0.45);
+    --ferry-field: rgb(var(--v-theme-surface-variant));
+}
+
+.v-application,
+.v-application .text-caption,
+.v-application .text-body-2 {
+    font-family: var(--ferry-font) !important;
+}
+.v-application {
+    background: rgb(var(--v-theme-surface)) !important;
+}
+
+/* Knöpfe: normale Schreibweise, keine Schatten */
+.v-btn {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+.v-btn:not(.v-btn--icon) {
+    min-width: 96px;
+}
+
+/* Symbole aus dem Tabler-Satz: einheitliche Größe */
+.ferry-ico {
+    width: 18px;
+    height: 18px;
+    flex: none;
+}
+
+/* Symbolknopf 32 px, ruhig, mit Hover-Fläche */
+.ferry-ib {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ferry-muted);
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.12s, color 0.12s;
+}
+.ferry-ib:hover {
+    background: var(--ferry-hover);
+    color: rgb(var(--v-theme-on-surface));
+}
+.ferry-ib:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: 1px;
+}
+.ferry-ib.ok {
+    color: rgb(var(--v-theme-success));
+}
+.ferry-ib.danger:hover {
+    color: rgb(var(--v-theme-error));
+}
+.ferry-ib:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+.ferry-ib svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Abschnittsüberschrift über Listen */
+.ferry-caption {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ferry-muted);
+    padding: 12px 14px 4px;
+}
+
+/* Symbolkachel für Einträge */
+.ferry-tile {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 9px;
+    background: var(--ferry-field);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ferry-muted);
+    overflow: hidden;
+}
+.ferry-tile img {
+    width: 22px;
+    height: 22px;
+}
+
+/* Gefüllte Eingabefelder: ruhiger Hintergrund, Fokus mit Primärfarbe */
+.v-field--variant-solo-filled {
+    background: var(--ferry-field) !important;
+}
+.v-field--variant-solo-filled.v-field--focused {
+    box-shadow: inset 0 0 0 1.5px rgb(var(--v-theme-primary)) !important;
+}
+.v-field__overlay {
+    opacity: 0 !important;
+}
+
+/* Hinweiszeile (z. B. "Gespeichert") */
+.ferry-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 12px 0;
+    padding: 8px 6px 8px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    background: var(--ferry-tint);
+}
+.ferry-note.success {
+    background: rgba(var(--v-theme-success), 0.1);
+}
+.ferry-note.warn {
+    background: rgba(var(--v-theme-warning), 0.12);
+}
+.ferry-note .ferry-note-text {
+    flex: 1;
+    min-width: 0;
+}
+.ferry-note .ferry-ico {
+    color: rgb(var(--v-theme-primary));
+}
+.ferry-note.success .ferry-ico {
+    color: rgb(var(--v-theme-success));
+}
+.ferry-note.warn .ferry-ico {
+    color: rgb(var(--v-theme-warning));
+}
+
+/* Feste Leiste unten (Abbrechen/Speichern) */
+.ferry-actionbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--ferry-line);
+    background: rgb(var(--v-theme-surface));
+}
+
+/* Kopfzeile von Unterseiten (Zurück, Titel, Aktionen) */
+.ferry-pagehead {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 8px 8px 6px;
+    border-bottom: 1px solid var(--ferry-line);
+}
+.ferry-pagehead-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

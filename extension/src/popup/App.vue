@@ -1,121 +1,99 @@
 <template>
-    <v-app class="">
-        <v-app-bar v-model="showSearchPanel" flat density="comfortable" class="ferry-bar" style="max-width: 400px">
-            <svg class="ferry-logo" viewBox="0 0 128 128" width="30" height="30" aria-hidden="true">
+    <v-app>
+        <div class="ferry-shell">
+            <header v-show="showSearchPanel" class="ferry-top">
+                <svg class="ferry-logo" viewBox="0 0 128 128" width="30" height="30" aria-hidden="true">
                 <rect x="4" y="4" width="120" height="120" rx="28" fill="#15497f" />
                 <circle cx="42" cy="47" r="15" fill="none" stroke="#fff" stroke-width="9" />
                 <path d="M57 47 H100 M88 47 V60 M99 47 V57" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
                 <path d="M18 72 H110 L97 94 Q95 97 91 97 H37 Q33 97 31 94 Z" fill="#22c55e" />
                 <path d="M20 108 q 8.8 -7 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0" fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linecap="round" />
             </svg>
-            <SearchInput />
-        </v-app-bar>
-        <v-main>
-            <v-container fluid class="overflow-auto app_height" style="padding: 8px 12px">
-                <div>
-                    <v-alert v-show="showSaveRecovery" color="secondary" border="top" border-color="primary"
-                        elevation="1" class="mt-2">
-                        <v-row dense>
-                            <v-col>{{ $i18n("unsaved_changes") }}</v-col>
-                        </v-row>
-                        <v-row dense class="py-1" align="start">
-                            <v-col>
-                                <v-btn color="primary" size="small" @click="saveRecover">
-                                    {{ $i18n("continue_saving") }}
-                                </v-btn>
-                            </v-col>
-                            <v-col>
-                                <v-btn variant="text" size="small" @click="saveDiscard">
-                                    {{ $i18n("discard_changes") }}
-                                </v-btn>
-                            </v-col>
-                        </v-row>
-                    </v-alert>
-                    <v-alert v-show="showSaveResult" color="secondary" border="top" border-color="primary"
-                        elevation="1" class="mt-2">
-                        <v-row dense>
-                            <v-col>{{ $i18n("you_recently_saved") }}</v-col>
-                        </v-row>
-                        <v-row dense class="py-1" align="start">
-                            <v-col>
-                                <v-btn size="small" @click="openFullEntryEditor">
-                                    {{ $i18n("open_full_editor") }}
-                                </v-btn>
-                            </v-col>
-                            <v-spacer />
-                        </v-row>
-                    </v-alert>
+                <SearchInput />
+            </header>
 
-                    <div v-if="showEmptyState" class="ferry-empty">
-                        <svg viewBox="0 0 128 128" width="64" height="64" aria-hidden="true" :class="connected ? '' : 'ferry-empty-off'">
-                            <rect x="4" y="4" width="120" height="120" rx="28" fill="#15497f" />
-                            <circle cx="42" cy="47" r="15" fill="none" stroke="#fff" stroke-width="9" />
-                            <path d="M57 47 H100 M88 47 V60 M99 47 V57" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M18 72 H110 L97 94 Q95 97 91 97 H37 Q33 97 31 94 Z" fill="#22c55e" />
-                            <path d="M20 108 q 8.8 -7 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0" fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linecap="round" />
-                        </svg>
-                        <div class="ferry-empty-title">
-                            {{ connected ? $i18n("ferry_status_locked") : $i18n("ferry_status_not_running") }}
-                        </div>
-                        <div class="ferry-empty-text">
-                            {{ connected ? $i18n("ferry_popup_locked_hint") : $i18n("ferry_status_not_running_hint") }}
-                        </div>
-                        <v-btn v-if="connected" color="primary" variant="flat" class="mt-4" @click="requestUnlock">
-                            {{ $i18n("ferry_popup_unlock") }}
-                        </v-btn>
-                    </div>
-                    <div v-if="showNotifications" id="notifications" class="pt-4 mt-2">
-                        <Notification v-for="n of notifications" :key="n.id" :notification="n" />
-                    </div>
-                    <SearchResults v-show="showSearchPanel" :matched-entries-in="cachedMatchedEntries" :site-entries-in="siteEntries" :frame-id="frameId"
-                        @pref-entry-toggle="prefEntryToggle" />
-                    <Save1stParty v-if="showSaveStart && !showSaveWhere" @save-where-clicked="saveWhere"
-                        @cancel-clicked="saveDiscard" />
-                    <SaveWhere v-if="showSaveWhere" :display-reason="displayWhereReason"
-                        :preferred-group-uuid="preferredGroupUuid" />
+            <main class="ferry-body">
+                <div v-show="showSaveRecovery" class="ferry-note warn">
+                    <tabler-alert-triangle class="ferry-ico" />
+                    <span class="ferry-note-text">{{ $i18n("unsaved_changes") }}</span>
+                    <v-btn size="small" variant="text" color="primary" @click="saveRecover">{{ $i18n("continue_saving") }}</v-btn>
+                    <button type="button" class="ferry-ib" :aria-label="$i18n('discard_changes')" @click="saveDiscard">
+                        <tabler-x class="ferry-ico" />
+                        <v-tooltip location="start" activator="parent">{{ $i18n("discard_changes") }}</v-tooltip>
+                    </button>
                 </div>
-            </v-container>
-        </v-main>
+                <div v-show="showSaveResult" class="ferry-note success">
+                    <tabler-circle-check class="ferry-ico" />
+                    <span class="ferry-note-text">{{ $i18n("you_recently_saved") }}</span>
+                    <button type="button" class="ferry-ib" :aria-label="$i18n('open_full_editor')" @click="openFullEntryEditor">
+                        <tabler-external-link class="ferry-ico" />
+                        <v-tooltip location="start" activator="parent">{{ $i18n("open_full_editor") }}</v-tooltip>
+                    </button>
+                    <button type="button" class="ferry-ib" :aria-label="$i18n('close')" @click="lastSaveEntryResult = null">
+                        <tabler-x class="ferry-ico" />
+                    </button>
+                </div>
 
+                <div v-if="showEmptyState" class="ferry-empty">
+                    <svg :class="connected ? '' : 'ferry-empty-off'" viewBox="0 0 128 128" width="64" height="64" aria-hidden="true">
+                <rect x="4" y="4" width="120" height="120" rx="28" fill="#15497f" />
+                <circle cx="42" cy="47" r="15" fill="none" stroke="#fff" stroke-width="9" />
+                <path d="M57 47 H100 M88 47 V60 M99 47 V57" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M18 72 H110 L97 94 Q95 97 91 97 H37 Q33 97 31 94 Z" fill="#22c55e" />
+                <path d="M20 108 q 8.8 -7 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0" fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linecap="round" />
+            </svg>
+                    <div class="ferry-empty-title">
+                        {{ connected ? $i18n("ferry_status_locked") : $i18n("ferry_status_not_running") }}
+                    </div>
+                    <div class="ferry-empty-text">
+                        {{ connected ? $i18n("ferry_popup_locked_hint") : $i18n("ferry_status_not_running_hint") }}
+                    </div>
+                    <v-btn v-if="connected" color="primary" variant="flat" class="mt-5" @click="requestUnlock">
+                        <tabler-lock-open class="ferry-ico mr-2" />
+                        {{ $i18n("ferry_popup_unlock") }}
+                    </v-btn>
+                </div>
+                <div v-if="showNotifications" id="notifications">
+                    <Notification v-for="n of notifications" :key="n.id" :notification="n" />
+                </div>
+                <SearchResults v-show="showSearchPanel" :matched-entries-in="cachedMatchedEntries" :site-entries-in="siteEntries" :frame-id="frameId"
+                    @pref-entry-toggle="prefEntryToggle" />
+                <Save1stParty v-if="showSaveStart && !showSaveWhere" @save-where-clicked="saveWhere"
+                    @cancel-clicked="saveDiscard" />
+                <SaveWhere v-if="showSaveWhere" :display-reason="displayWhereReason"
+                    :preferred-group-uuid="preferredGroupUuid" @back="showSaveWhere = false" />
+            </main>
 
-        <v-btn v-show="showSearchPanel && !showSaveRecovery" position="fixed" location="bottom right" color="primary"
-            rounded="lg" elevation="4" class="ferry-fab"
-            style="bottom: 64px; right: 14px" :class="hasSubmittedData ? 'pulse-button' : ''" icon @click="saveStart">
-            <mdi-plus scale="140" />
-            <v-tooltip location="left" :open-delay="tooltipDelay" activator="parent">
-                <span>{{ $i18n("create_new_entry") }}</span>
-            </v-tooltip>
-        </v-btn>
-
-        <v-footer app height="auto" class="ferry-foot">
-            <div class="ferry-status" :class="statusTone">
-                <span class="ferry-dot" />
-                <span class="ferry-status-text">{{ footerStatus }}</span>
-                <v-tooltip location="top" :open-delay="tooltipDelay" activator="parent">
-                    <span>{{ connectionStatusDetail }}</span>
-                </v-tooltip>
-            </div>
-            <v-spacer />
-            <v-btn v-show="showOpenKeePassButton" id="password-open-keepass"
-                :aria-label="$i18n('Menu_Button_open_keepass_label')" variant="text" size="small" icon
-                @click="openKeePass">
-                <v-img width="20px" height="20px" src="/assets/images/48-keepass.png" />
-                <v-tooltip location="top" :open-delay="tooltipDelay" activator="parent">
-                    <span>{{ $i18n("Menu_Button_open_keepass_label") }}</span></v-tooltip>
-            </v-btn>
-            <v-btn v-show="showSearchPanel" variant="text" size="small" icon
-                :aria-label="$i18n('Menu_Button_copyNewPasswordToClipboard_label')"
-                @click="showPasswordGenerator = true">
-                <mdi-dice-multiple-outline scale="125" />
-                <v-tooltip location="top" :open-delay="tooltipDelay" activator="parent">
-                    <span>{{ $i18n("Menu_Button_copyNewPasswordToClipboard_label") }}</span></v-tooltip>
-            </v-btn>
-            <v-btn variant="text" size="small" icon :aria-label="$i18n('Menu_Button_options_label')" @click="showOptions">
-                <mdi-cog-outline scale="125" />
-                <v-tooltip location="top" :open-delay="tooltipDelay" activator="parent">
-                    <span>{{ $i18n("Menu_Button_options_label") }}</span></v-tooltip>
-            </v-btn>
-        </v-footer>
+            <footer v-show="!showSaveStart && !showSaveWhere" class="ferry-foot">
+                <div class="ferry-status" :class="statusTone">
+                    <span class="ferry-dot" />
+                    <span class="ferry-status-text">{{ footerStatus }}</span>
+                    <v-tooltip location="top" activator="parent">
+                        <span>{{ connectionStatusDetail }}</span>
+                    </v-tooltip>
+                </div>
+                <v-spacer />
+                <button v-show="showSearchPanel && !showSaveRecovery" type="button" class="ferry-ib" :class="hasSubmittedData ? 'pulse-button' : ''"
+                    :aria-label="$i18n('create_new_entry')" @click="saveStart">
+                    <tabler-plus class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">{{ $i18n("create_new_entry") }}</v-tooltip>
+                </button>
+                <button v-show="showSearchPanel" type="button" class="ferry-ib"
+                    :aria-label="$i18n('Menu_Button_copyNewPasswordToClipboard_label')" @click="showPasswordGenerator = true">
+                    <tabler-wand class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_copyNewPasswordToClipboard_label") }}</v-tooltip>
+                </button>
+                <button v-show="showOpenKeePassButton" id="password-open-keepass" type="button" class="ferry-ib"
+                    :aria-label="$i18n('Menu_Button_open_keepass_label')" @click="openKeePass">
+                    <tabler-app-window class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_open_keepass_label") }}</v-tooltip>
+                </button>
+                <button type="button" class="ferry-ib" :aria-label="$i18n('Menu_Button_options_label')" @click="showOptions">
+                    <tabler-settings class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_options_label") }}</v-tooltip>
+                </button>
+            </footer>
+        </div>
         <PasswordGenerator v-if="showPasswordGenerator" :standalone="true" @dialog-closed="passwordGeneratorClosed"
             @copy-to-clipboard="copyToClipboard" />
     </v-app>
@@ -444,75 +422,48 @@ export default {
 <style>
 .text-truncate{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 
-.v-application,
-.v-application .text-caption,
-.v-application .text-body-2 {
-    font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif !important;
-}
-.ferry-empty {
+/* Popup-Rahmen: Kopf, scrollender Inhalt, Fuß; feste Höhe 600 px */
+.ferry-shell {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 72px 28px 0;
-}
-.ferry-empty svg {
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(21, 73, 127, 0.28);
-    margin-bottom: 18px;
-}
-.ferry-empty svg.ferry-empty-off {
-    filter: grayscale(1);
-    opacity: 0.55;
-    box-shadow: none;
-}
-.ferry-empty-title {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 6px;
-}
-.ferry-empty-text {
-    font-size: 13.5px;
-    opacity: 0.7;
-    max-width: 290px;
-}
-.ferry-bar .search .v-field {
-    background: rgba(var(--v-theme-on-surface), 0.055);
-    border-radius: 10px;
-}
-.ferry-bar .search .v-field--focused {
+    height: 600px;
     background: rgb(var(--v-theme-surface));
-    box-shadow: 0 0 0 2px rgb(var(--v-theme-primary));
 }
-.ferry-bar {
-    border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-}
-.ferry-bar .v-toolbar__content {
-    padding: 0 12px;
+.ferry-top {
+    display: flex;
+    align-items: center;
     gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--ferry-line);
 }
 .ferry-logo {
     flex: none;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(21, 73, 127, 0.28);
+}
+.ferry-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    position: relative;
 }
 .ferry-foot {
+    display: flex;
+    align-items: center;
     gap: 2px;
-    padding: 6px 8px 6px 12px !important;
-    border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-    background: rgb(var(--v-theme-surface)) !important;
+    padding: 8px 8px 8px 12px;
+    border-top: 1px solid var(--ferry-line);
 }
 .ferry-status {
     display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
-    max-width: 230px;
+    max-width: 210px;
     padding: 4px 10px 4px 8px;
     border-radius: 999px;
     font-size: 12.5px;
     font-weight: 600;
-    background: rgba(var(--v-theme-on-surface), 0.05);
+    background: var(--ferry-hover);
 }
 .ferry-status-text {
     overflow: hidden;
@@ -520,50 +471,51 @@ export default {
     white-space: nowrap;
 }
 .ferry-dot {
-    width: 9px;
-    height: 9px;
+    width: 8px;
+    height: 8px;
     flex: none;
     border-radius: 50%;
     background: #94a3b8;
 }
-.ferry-status.ok .ferry-dot { background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2); }
-.ferry-status.warn .ferry-dot { background: #d97706; box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2); }
-.ferry-status.off .ferry-dot { background: #94a3b8; box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25); }
+.ferry-status.ok { background: rgba(var(--v-theme-success), 0.1); }
+.ferry-status.ok .ferry-dot { background: rgb(var(--v-theme-success)); }
+.ferry-status.warn { background: rgba(var(--v-theme-warning), 0.12); }
+.ferry-status.warn .ferry-dot { background: rgb(var(--v-theme-warning)); }
 
-.app_height {
-    max-height: calc(570px - var(--v-layout-bottom) - var(--v-layout-top));
-    min-height: calc(570px - var(--v-layout-bottom) - var(--v-layout-top));
-    height: calc(570px - var(--v-layout-bottom) - var(--v-layout-top));
+.ferry-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 96px 28px 0;
+}
+.ferry-empty svg {
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+.ferry-empty svg.ferry-empty-off {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+.ferry-empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.ferry-empty-text {
+    font-size: 13px;
+    color: var(--ferry-muted);
+    max-width: 290px;
 }
 
 .pulse-button {
     animation: pulse 0.5s 2 cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.25s reverse;
 }
-
 @keyframes pulse {
-    0% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    25% {
-        opacity: 1;
-        transform: scale(1.25);
-    }
-
-    50% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    75% {
-        opacity: 1;
-        transform: scale(0.8);
-    }
-
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
+    0% { transform: scale(1); }
+    25% { transform: scale(1.25); }
+    50% { transform: scale(1); }
+    75% { transform: scale(0.85); }
+    100% { transform: scale(1); }
 }
 </style>

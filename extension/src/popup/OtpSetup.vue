@@ -1,7 +1,14 @@
 <template>
     <v-app>
         <v-main>
-            <div class="otp-setup">
+            <div v-if="done" class="otp-done">
+                <tabler-circle-check class="ferry-ico done-icon"/>
+                <div>
+                    <div class="title">{{ $i18n("otpSetup_doneTitle") }}</div>
+                    <div class="subtitle">{{ $i18n("otpSetup_done") }}</div>
+                </div>
+            </div>
+            <div v-else class="otp-setup">
                 <header class="head">
                     <img src="/assets/images/48.png" alt="" class="logo" />
                     <div>
@@ -16,7 +23,7 @@
                     {{ $i18n("otpSetup_nothing") }}
                 </v-alert>
 
-                <template v-else-if="!done">
+                <template v-else>
                     <div class="question">{{ $i18n("otpSetup_choose") }}</div>
 
                     <v-text-field
@@ -29,7 +36,7 @@
                         clearable
                         class="mb-3"
                     >
-                        <template #prepend-inner><mdi-magnify /></template>
+                        <template #prepend-inner><tabler-search class="ferry-ico" /></template>
                     </v-text-field>
 
                     <div class="list">
@@ -39,15 +46,28 @@
                             type="button"
                             class="item"
                             :class="{ selected: isSelected(c) }"
+                            :aria-pressed="isSelected(c)"
                             @click="select(c)"
                         >
-                            <span class="radio" :class="{ on: isSelected(c) }"></span>
+                            <span class="tile">
+                                <img v-if="c.icon" :src="'data:image/png;base64,' + c.icon" alt="" />
+                                <tabler-key v-else class="ferry-ico tile-fallback"/>
+                            </span>
                             <span class="text">
                                 <span class="item-title">{{ c.title || "—" }}</span>
                                 <span class="item-user">{{ c.username }}</span>
                             </span>
-                            <span v-if="c.uuid === setup.lastFilledUuid" class="chip chip-used">{{ $i18n("otpSetup_lastUsed") }}</span>
-                            <span v-if="c.hasTotp" class="chip chip-otp">{{ $i18n("otpSetup_hasOtp") }}</span>
+                            <span v-if="c.uuid === setup.lastFilledUuid" class="badge">
+                                <tabler-history class="ferry-ico" />
+                                <v-tooltip activator="parent" location="top">{{ $i18n("otpSetup_lastUsed") }}</v-tooltip>
+                            </span>
+                            <span v-if="c.hasTotp" class="badge badge-otp">
+                                <tabler-shield-lock class="ferry-ico" />
+                                <v-tooltip activator="parent" location="top">{{ $i18n("otpSetup_hasOtp") }}</v-tooltip>
+                            </span>
+                            <span class="check">
+                                <tabler-circle-check class="ferry-ico" v-if="isSelected(c)"/>
+                            </span>
                         </button>
                         <div v-if="shownEntries.length === 0" class="empty">{{ $i18n("otpSetup_none") }}</div>
                     </div>
@@ -73,10 +93,6 @@
                         </v-btn>
                     </div>
                 </template>
-
-                <v-alert v-else type="success" variant="tonal" density="comfortable" class="mt-3">
-                    {{ $i18n("otpSetup_done") }}
-                </v-alert>
             </div>
         </v-main>
     </v-app>
@@ -95,6 +111,7 @@ interface Candidate {
     dbFileName: string;
     title: string;
     username: string;
+    icon: string;
     hasTotp: boolean;
 }
 
@@ -135,6 +152,7 @@ export default {
                     dbFileName: r.dbFileName,
                     title: r.title,
                     username: r.usernameValue ?? "",
+                    icon: r.icon?.iconImageData ?? known?.icon ?? "",
                     hasTotp: known?.hasTotp ?? false
                 };
             });
@@ -177,7 +195,10 @@ export default {
                 });
                 if (result?.status === "ok") {
                     this.done = true;
-                    window.setTimeout(() => window.close(), 2200);
+                    // Kurze Bestätigung in kleinem Fenster statt der vollen Popup-Höhe
+                    for (const p of ["height", "min-height", "max-height"]) document.body.style.setProperty(p, "auto");
+                    document.body.classList.add("ferry-compact");
+                    window.setTimeout(() => window.close(), 2000);
                 } else if (result?.status === "exists") {
                     // Über die Suche gewählter Eintrag hat schon einen Code: Warnung zeigen, Knopf wird "Ersetzen"
                     this.selected = { ...this.selected, hasTotp: true };
@@ -198,9 +219,29 @@ export default {
 
 <style scoped>
 .otp-setup {
-    width: 380px;
-    padding: 16px 18px 14px;
+    width: 400px;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 16px 14px;
     font-family: "Segoe UI", system-ui, sans-serif;
+}
+.otp-done {
+    width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    font-family: "Segoe UI", system-ui, sans-serif;
+}
+.done-icon {
+    flex: none;
+    font-size: 30px;
+    color: rgb(var(--v-theme-success));
+}
+/* Nur die Liste wächst; Suchfeld, Hinweise und Knöpfe behalten ihre Höhe */
+.otp-setup > :not(.list) {
+    flex: none;
 }
 .head {
     display: flex;
@@ -228,46 +269,74 @@ export default {
 .list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    max-height: 260px;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    padding: 2px;
 }
 .item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
+    flex: none;
     text-align: left;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.14);
+    padding: 8px 10px 8px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
     background: rgb(var(--v-theme-surface));
     color: inherit;
     font: inherit;
     cursor: pointer;
-    transition: border-color 0.15s, background-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
 }
 .item:hover {
-    border-color: rgba(var(--v-theme-primary), 0.6);
+    border-color: rgba(var(--v-theme-primary), 0.55);
 }
 .item.selected {
     border-color: rgb(var(--v-theme-primary));
-    background: rgba(var(--v-theme-primary), 0.08);
+    box-shadow: 0 0 0 1px rgb(var(--v-theme-primary));
+    background: rgba(var(--v-theme-primary), 0.05);
 }
 .item:focus-visible {
     outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: 2px;
+    outline-offset: 1px;
 }
-.radio {
-    width: 16px;
-    height: 16px;
+.tile {
+    width: 36px;
+    height: 36px;
     flex: none;
-    border-radius: 50%;
-    border: 2px solid rgba(var(--v-theme-on-surface), 0.45);
+    border-radius: 10px;
+    background: rgba(var(--v-theme-on-surface), 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.radio.on {
-    border-color: rgb(var(--v-theme-primary));
-    background: radial-gradient(circle, rgb(var(--v-theme-primary)) 45%, transparent 50%);
+.tile img {
+    width: 26px;
+    height: 26px;
+}
+.tile-fallback {
+    opacity: 0.55;
+}
+.badge {
+    flex: none;
+    display: inline-flex;
+    font-size: 18px;
+    opacity: 0.6;
+}
+.badge-otp {
+    opacity: 0.75;
+    color: rgb(var(--v-theme-primary));
+}
+.check {
+    flex: none;
+    width: 22px;
+    display: inline-flex;
+    justify-content: center;
+    font-size: 22px;
+    color: rgb(var(--v-theme-primary));
 }
 .text {
     display: flex;
@@ -288,20 +357,6 @@ export default {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.chip {
-    flex: none;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 999px;
-}
-.chip-used {
-    background: rgba(22, 163, 74, 0.14);
-    color: #15803d;
-}
-.chip-otp {
-    background: rgba(245, 158, 11, 0.16);
-    color: #b45309;
-}
 .empty {
     font-size: 13px;
     opacity: 0.7;
@@ -312,5 +367,14 @@ export default {
     justify-content: flex-end;
     gap: 8px;
     margin-top: 14px;
+    flex: none;
+}
+</style>
+
+<style>
+/* Bestätigung: Vuetify-Mindesthöhe (100vh) aufheben, damit das Popup auf den Inhalt schrumpft */
+body.ferry-compact .v-application__wrap,
+body.ferry-compact .v-application {
+    min-height: 0 !important;
 }
 </style>

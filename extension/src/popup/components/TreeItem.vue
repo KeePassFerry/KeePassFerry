@@ -2,12 +2,11 @@
     <li>
         <div>
             <v-list-item :style="indentStyle" :active="item.selected" density="comfortable" @click="$emit('select', item)">
-                <v-btn
-                    v-if="hasVisibleChildren" icon size="1.5rem" color="secondary"
-                    style="margin-left:0rem; margin-right: 0.5rem;" @click.stop="toggleExpand">
-                    <mdi-chevron-up v-if="isExpanded" scale="150" />
-                    <mdi-chevron-down v-if="!(isExpanded)" scale="150" />
-                </v-btn>
+                <button v-if="hasVisibleChildren" type="button" class="ferry-ib" style="margin-right: 4px" @click.stop="toggleExpand">
+                    <tabler-chevron-down v-if="isExpanded" class="ferry-ico" />
+                    <tabler-chevron-right v-else class="ferry-ico" />
+                </button>
+                <tabler-folder class="ferry-ico" style="color: var(--ferry-faint); margin-right: 8px; vertical-align: -3px" />
                 <span>{{ item.text }}</span>
             </v-list-item>
             <v-item-group v-if="hasVisibleChildren" v-model="isExpanded">

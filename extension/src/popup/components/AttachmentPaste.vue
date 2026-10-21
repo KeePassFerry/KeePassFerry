@@ -1,7 +1,7 @@
 <template>
     <div
         class="paste-zone"
-        :class="{ active: dragOver, done: !!savedName, failed: failed }"
+        :class="{ active: dragOver, failed: failed, choice: !!totpUri }"
         tabindex="0"
         role="button"
         :aria-label="$i18n('attachment_paste_hint')"
@@ -13,27 +13,45 @@
             <v-progress-circular indeterminate :size="18" :width="2" color="primary" />
             <span>{{ $i18n("attachment_saving") }}</span>
         </template>
-        <template v-else-if="savedName">
-            <img v-if="previewUrl" :src="previewUrl" alt="" class="thumb" />
-            <span class="msg">{{ $i18n("attachment_saved", [savedName, Math.max(1, Math.round(savedSize / 1024)).toString()]) }}</span>
+        <template v-else-if="totpUri">
+            <tabler-shield-lock class="ferry-ico icon key"/>
+            <div class="choice-body">
+                <div class="msg strong">{{ $i18n("ferry_totp_detected") }}</div>
+                <div class="choice-actions">
+                    <v-btn size="small" variant="flat" color="primary" rounded="lg" @click="saveTotp">
+                        {{ $i18n("ferry_totp_save") }}
+                    </v-btn>
+                    <v-btn v-if="pendingImage" size="small" variant="text" @click="saveImageInstead">
+                        {{ $i18n("ferry_totp_as_image") }}
+                    </v-btn>
+                    <v-btn size="small" variant="text" @click="resetChoice">{{ $i18n("otpSetup_cancel") }}</v-btn>
+                </div>
+            </div>
         </template>
         <template v-else-if="failed">
             <span class="msg">{{ $i18n("attachment_failed") }}</span>
         </template>
         <template v-else>
-            <mdi-image-plus-outline class="icon" />
+            <tabler-photo-plus class="ferry-ico icon"/>
             <span class="msg">{{ $i18n("attachment_paste_hint") }}</span>
         </template>
     </div>
 </template>
 
 <script lang="ts">
-// Einfügezone im aufgeklappten Eintrag: Strg+V oder Ablegen eines Bildes speichert es als Anhang des Eintrags
-// (z. B. Screenshot der Sicherheitsfragen). Speichern über den Hintergrund zum KeePass-Plugin.
+import jsQR from "jsqr";
+
+// Einfügezone im Bearbeiten-Fenster: Strg+V oder Ablegen.
+// - Bild: verkleinern und als Anhang vormerken (z. B. Screenshot der Sicherheitsfragen)
+// - QR-Code (Bild) oder Schlüssel als Text (otpauth-Link, Base32): Angebot, ihn als Zwei-Faktor-Schlüssel vorzumerken
+// Gespeichert wird erst mit "Speichern" (EntryAddition).
 const MAX_BYTES = 20 * 1024 * 1024;
 // Kleine Anhänge halten die Datenbank schlank (KeePassium-AutoFill auf dem iPhone hat wenig Speicher)
 const MAX_DIMENSION = 1600;
 const TARGET_BYTES = 120 * 1024;
+const OTPAUTH_RE = /^otpauth:\/\/totp\/\S+$/i;
+// Base32-Schlüssel, auch in Gruppen ("JBSW Y3DP EHPK 3PXP …"), mindestens 16 Zeichen
+const SECRET_RE = /^[A-Z2-7]{16,128}=*$/;
 
 // Bild verkleinern und als JPEG speichern (KeePass zeigt JPEG direkt an, WebP nicht).
 // Qualität und notfalls Größe werden schrittweise reduziert, bis das Ziel erreicht ist.
@@ -64,41 +82,125 @@ async function compressImage(file: File): Promise<Blob> {
     }
 }
 
+// otpauth-TOTP-URI aus einem Bild mit QR-Code, sonst null
+async function decodeOtpQr(file: File): Promise<string> {
+    const bitmap = await createImageBitmap(file);
+    try {
+        const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+        const w = Math.max(1, Math.round(bitmap.width * scale));
+        const h = Math.max(1, Math.round(bitmap.height * scale));
+        const canvas = new OffscreenCanvas(w, h);
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(bitmap, 0, 0, w, h);
+        const result = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "attemptBoth" });
+        return result?.data && OTPAUTH_RE.test(result.data) ? result.data : null;
+    } finally {
+        bitmap.close();
+    }
+}
+
 export default {
-    props: ["uuid", "dbFileName"],
+    // initialFile: schon eingefügtes Bild (Bearbeiten-Fenster wechselt beim Einfügen eines Bildes hierher)
+    props: ["uuid", "dbFileName", "title", "initialFile"],
+    emits: ["staged-image", "staged-totp"],
     data: () => ({
         dragOver: false,
         saving: false,
         savedName: null as string,
         savedSize: 0,
         failed: false,
-        previewUrl: null as string
+        previewUrl: null as string,
+        totpUri: null as string,
+        totpExists: false,
+        totpSaved: false,
+        pendingImage: null as File
     }),
     mounted: function () {
         window.addEventListener("paste", this.onPaste);
+        if (this.initialFile) this.handleImage(this.initialFile);
     },
     unmounted: function () {
         window.removeEventListener("paste", this.onPaste);
         if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
     },
     methods: {
+        // Schlüssel als Text in eine otpauth-URI umwandeln; Bezeichnung = Titel des Eintrags
+        uriFromText: function (text: string): string {
+            const t = (text ?? "").trim();
+            if (OTPAUTH_RE.test(t)) return t;
+            // Base32 ist einheitlich groß (oder klein) geschrieben; gemischte Schreibung ("fNYWa-gokWT")
+            // sind z. B. Wiederherstellungscodes und kein Zwei-Faktor-Schlüssel
+            if (/[a-z]/.test(t) && /[A-Z]/.test(t)) return null;
+            const secret = t.replace(/[\s-]/g, "").toUpperCase();
+            if (!SECRET_RE.test(secret)) return null;
+            const label = encodeURIComponent(this.title || "KeePass");
+            return `otpauth://totp/${label}?secret=${secret.replace(/=+$/, "")}&issuer=${label}`;
+        },
         onPaste: function (e: ClipboardEvent) {
-            // Nur Bilder abfangen; Text (z. B. in die Suche) wird normal eingefügt
             const file = Array.from(e.clipboardData?.items ?? [])
                 .find(i => i.kind === "file" && i.type.startsWith("image/"))
                 ?.getAsFile();
-            if (!file) return;
+            if (file) {
+                e.preventDefault();
+                this.handleImage(file);
+                return;
+            }
+            // Text in ein Eingabefeld (z. B. Suche) normal einfügen
+            const target = e.target as HTMLElement;
+            if (target?.closest?.("input, textarea, [contenteditable]")) return;
+            const uri = this.uriFromText(e.clipboardData?.getData("text/plain"));
+            if (!uri) return;
             e.preventDefault();
-            this.save(file);
+            this.offerTotp(uri, null);
         },
         onDrop: function (e: DragEvent) {
             this.dragOver = false;
             const file = Array.from(e.dataTransfer?.files ?? []).find(f => f.type.startsWith("image/"));
-            if (file) this.save(file);
+            if (file) {
+                this.handleImage(file);
+                return;
+            }
+            const uri = this.uriFromText(e.dataTransfer?.getData("text/plain"));
+            if (uri) this.offerTotp(uri, null);
         },
-        save: async function (file: File) {
+        handleImage: async function (file: File) {
+            let uri: string = null;
+            try {
+                uri = await decodeOtpQr(file);
+            } catch (e) {
+                uri = null;
+            }
+            if (uri) this.offerTotp(uri, file);
+            else this.save(file);
+        },
+        offerTotp: function (uri: string, image: File) {
             this.failed = false;
             this.savedName = null;
+            this.totpSaved = false;
+            this.totpExists = false;
+            this.totpUri = uri;
+            this.pendingImage = image;
+        },
+        resetChoice: function () {
+            this.totpUri = null;
+            this.pendingImage = null;
+            this.totpExists = false;
+        },
+        saveImageInstead: function () {
+            const file = this.pendingImage;
+            this.resetChoice();
+            if (file) this.save(file);
+        },
+        // Zwei-Faktor-Schlüssel aus dem QR-Code vormerken; gespeichert wird mit "Speichern" im Bearbeiten-Fenster
+        saveTotp: function () {
+            this.$emit("staged-totp", this.totpUri);
+            this.resetChoice();
+        },
+        // Bild verkleinern und vormerken; gespeichert wird mit "Speichern" im Bearbeiten-Fenster
+        save: async function (file: File) {
+            this.failed = false;
             if (file.size > MAX_BYTES) {
                 this.failed = true;
                 return;
@@ -106,28 +208,19 @@ export default {
             this.saving = true;
             try {
                 const compressed = await compressImage(file);
-                this.savedSize = compressed.size;
                 const buffer = new Uint8Array(await compressed.arrayBuffer());
                 let binary = "";
                 for (let i = 0; i < buffer.length; i += 0x8000) {
                     binary += String.fromCharCode(...buffer.subarray(i, i + 0x8000));
                 }
-                const name = await chrome.runtime.sendMessage({
-                    keepassferry: "addImageAttachment",
-                    uuid: this.uuid,
-                    dbFileName: this.dbFileName,
+                this.$emit("staged-image", {
                     // Eingefügte Bilder heißen meist "image.png"; dann vergibt das Plugin Datum und Uhrzeit.
                     // Die Endung passt das Plugin an den tatsächlichen Typ (JPEG) an.
                     fileName: file.name && file.name !== "image.png" ? file.name : "",
-                    data: btoa(binary)
+                    data: btoa(binary),
+                    size: compressed.size,
+                    previewUrl: URL.createObjectURL(compressed)
                 });
-                if (name) {
-                    this.savedName = name;
-                    if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
-                    this.previewUrl = URL.createObjectURL(compressed);
-                } else {
-                    this.failed = true;
-                }
             } catch (e) {
                 this.failed = true;
             }
@@ -158,6 +251,13 @@ export default {
     border-color: rgb(var(--v-theme-primary));
     background: rgba(var(--v-theme-primary), 0.06);
 }
+.paste-zone.choice {
+    align-items: flex-start;
+    border-style: solid;
+    border-color: rgba(var(--v-theme-primary), 0.6);
+    background: rgba(var(--v-theme-primary), 0.05);
+    color: inherit;
+}
 .paste-zone.done {
     border-style: solid;
     border-color: rgba(22, 163, 74, 0.6);
@@ -171,6 +271,28 @@ export default {
 .icon {
     font-size: 20px;
     flex: none;
+}
+.icon.key {
+    color: rgb(var(--v-theme-primary));
+    margin-top: 1px;
+}
+.icon.ok {
+    color: rgb(var(--v-theme-success));
+}
+.choice-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.choice-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+.strong {
+    font-weight: 600;
 }
 .thumb {
     width: 44px;

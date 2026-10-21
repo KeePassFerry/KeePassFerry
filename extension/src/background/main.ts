@@ -1,5 +1,6 @@
 import { diag } from "./ferryDiag";
-import { getOtpSetupForPopup, applyOtpSetup, forgetOtpSetup } from "./otpSetup";
+import { getOtpSetupForPopup, applyOtpSetup, forgetOtpSetup, parseOtpauth } from "./otpSetup";
+import { queryPageFields, fillPageField } from "./pageFields";
 import { isFirefox } from "webext-detect-page";
 import { kee } from "./KF";
 import { commandManager } from "./commands";
@@ -246,12 +247,40 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 return result;
             });
             break;
+        case "getEntryExtras":
+            work = kee.KeePassRPC.getEntryExtras(msg.uuid, msg.dbFileName);
+            break;
+        case "removeEntryExtra":
+            work = kee.KeePassRPC.removeEntryExtra(msg.uuid, msg.dbFileName, msg.kind, msg.name);
+            break;
+        case "addEntryText":
+            work = kee.KeePassRPC.addEntryText(msg.uuid, msg.dbFileName, msg.fieldName ?? "", msg.value ?? "", !!msg.protect, !!msg.toNotes);
+            break;
+        case "setTotp":
+            // Aus dem Popup eingefügter Schlüssel/QR-Code; nur gültige otpauth-TOTP-URIs
+            work = parseOtpauth(msg.uri ?? "")
+                ? kee.KeePassRPC.setTotp(msg.uuid, msg.dbFileName, msg.uri, !!msg.overwrite)
+                : Promise.resolve({ status: "invalid" });
+            break;
+        case "pageFields":
+            work = queryPageFields(kee.foregroundTabId);
+            break;
+        case "fillField":
+            work = fillPageField(kee.foregroundTabId, msg.kind, msg.uuid, msg.dbFileName, msg.value);
+            break;
         case "resetPairing":
             work = kee.KeePassRPC.kprpcClient.nativeSessionManager.resetPairing().then(() => true);
             break;
         default:
             sendResponse(null);
             return;
+    }
+    // Änderungen an Einträgen aus dem Popup: Ansicht und Seitentreffer auffrischen
+    if (["setTotp", "addEntryText", "removeEntryExtra", "addImageAttachment", "applyOtpSetup"].includes(request)) {
+        work = work.then(async result => {
+            await kee.refreshAfterEntryChange();
+            return result;
+        });
     }
     work.then(result => sendResponse(result)).catch(() => sendResponse(null));
     return true;

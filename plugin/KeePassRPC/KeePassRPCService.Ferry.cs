@@ -72,6 +72,150 @@ namespace KeePassFerry
 
     public partial class KeePassRPCService
     {
+        private const int MaxEntryTextLength = 64 * 1024;
+
+        /// <summary>
+        /// Legt ein Textfeld im Eintrag an (z. B. Wiederherstellungscode) oder hängt den Text an die Notizen an.
+        /// Vorhandene Felder werden nicht überschrieben: ein belegter Name bekommt eine Nummer ("Name (2)").
+        /// Vorher wandert der alte Stand in die Eintragshistorie. Gibt den Feldnamen zurück ("Notes" bei Notizen) oder null.
+        /// </summary>
+        [JsonRpcMethod]
+        public string AddEntryText(string uuid, string dbFileName, string fieldName, string value, bool protect, bool toNotes)
+        {
+            if (!EnsureDBisOpen()) return null;
+            if (string.IsNullOrEmpty(uuid) || string.IsNullOrEmpty(value) || value.Length > MaxEntryTextLength) return null;
+
+            PwDatabase db = SelectDatabase(dbFileName);
+            if (db == null) return null;
+            PwEntry entry = GetRootPwGroup(db).FindEntry(new PwUuid(MemUtil.HexStringToByteArray(uuid)), true);
+            if (entry == null) return null;
+
+            string name;
+            ProtectedString text;
+            if (toNotes)
+            {
+                name = PwDefs.NotesField;
+                string notes = entry.Strings.ReadSafe(PwDefs.NotesField);
+                string label = string.IsNullOrWhiteSpace(fieldName) ? "" : fieldName.Trim() + ": ";
+                string added = label + value.Trim();
+                text = new ProtectedString(db.MemoryProtection.ProtectNotes,
+                    notes.Length > 0 ? notes.TrimEnd() + Environment.NewLine + Environment.NewLine + added : added);
+            }
+            else
+            {
+                name = UniqueStringName(entry, SafeFieldName(fieldName));
+                if (name == null) return null;
+                text = new ProtectedString(protect, value.Trim());
+            }
+
+            entry.CreateBackup(db);
+            entry.Strings.Set(name, text);
+            entry.Touch(true);
+            _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), db);
+            return name;
+        }
+
+        /// <summary>
+        /// Eigene Textfelder (ohne Standard- und interne Felder) und Anhänge eines Eintrags, für die Liste
+        /// "Im Eintrag gespeichert" im Bearbeiten-Fenster. Werte geschützter Felder werden nicht mitgeschickt.
+        /// </summary>
+        [JsonRpcMethod]
+        public EntryExtras GetEntryExtras(string uuid, string dbFileName)
+        {
+            if (!EnsureDBisOpen()) return null;
+            PwDatabase db;
+            PwEntry entry = FindFerryEntry(uuid, dbFileName, out db);
+            if (entry == null) return null;
+
+            var fields = new System.Collections.Generic.List<EntryExtraField>();
+            foreach (var kv in entry.Strings)
+            {
+                if (IsReservedStringName(kv.Key)) continue;
+                fields.Add(new EntryExtraField
+                {
+                    name = kv.Key,
+                    isProtected = kv.Value.IsProtected,
+                    value = kv.Value.IsProtected ? null : kv.Value.ReadString()
+                });
+            }
+            var attachments = new System.Collections.Generic.List<EntryExtraAttachment>();
+            foreach (var kv in entry.Binaries)
+                attachments.Add(new EntryExtraAttachment { name = kv.Key, size = (int)kv.Value.Length });
+            return new EntryExtras { fields = fields.ToArray(), attachments = attachments.ToArray() };
+        }
+
+        /// <summary>
+        /// Entfernt ein eigenes Textfeld (kind "field") oder einen Anhang (kind "attachment").
+        /// Vorher wandert der alte Stand in die Eintragshistorie. Standard- und interne Felder bleiben unberührt.
+        /// </summary>
+        [JsonRpcMethod]
+        public bool RemoveEntryExtra(string uuid, string dbFileName, string kind, string name)
+        {
+            if (!EnsureDBisOpen() || string.IsNullOrEmpty(name)) return false;
+            PwDatabase db;
+            PwEntry entry = FindFerryEntry(uuid, dbFileName, out db);
+            if (entry == null) return false;
+
+            if (kind == "field")
+            {
+                if (IsReservedStringName(name) || !entry.Strings.Exists(name)) return false;
+                entry.CreateBackup(db);
+                entry.Strings.Remove(name);
+            }
+            else if (kind == "attachment")
+            {
+                if (entry.Binaries.Get(name) == null) return false;
+                entry.CreateBackup(db);
+                entry.Binaries.Remove(name);
+            }
+            else return false;
+
+            entry.Touch(true);
+            _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), db);
+            return true;
+        }
+
+        private PwEntry FindFerryEntry(string uuid, string dbFileName, out PwDatabase db)
+        {
+            db = SelectDatabase(dbFileName);
+            if (db == null || string.IsNullOrEmpty(uuid)) return null;
+            return GetRootPwGroup(db).FindEntry(new PwUuid(MemUtil.HexStringToByteArray(uuid)), true);
+        }
+
+        // Feldname ohne Steuerzeichen, höchstens 64 Zeichen; Standard- und interne Felder sind tabu
+        private static string SafeFieldName(string requested)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (char c in (requested ?? "").Trim())
+                if (!char.IsControl(c)) sb.Append(c);
+            string name = sb.ToString().Trim();
+            if (name.Length > 64) name = name.Substring(0, 64).Trim();
+            return name.Length == 0 ? "Notiz" : name;
+        }
+
+        private static bool IsReservedStringName(string name)
+        {
+            return PwDefs.IsStandardField(name)
+                || name.Equals(Totp.OtpField, StringComparison.OrdinalIgnoreCase)
+                || name.StartsWith("TimeOtp-", StringComparison.OrdinalIgnoreCase)
+                || name.StartsWith("HmacOtp-", StringComparison.OrdinalIgnoreCase)
+                || name.StartsWith("KPRPC", StringComparison.OrdinalIgnoreCase)
+                || name.StartsWith("KPEX_", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string UniqueStringName(PwEntry entry, string name)
+        {
+            for (int i = 1; i < 100; i++)
+            {
+                string candidate = i == 1 ? name : name + " (" + i + ")";
+                if (!IsReservedStringName(candidate) && !entry.Strings.Exists(candidate)) return candidate;
+            }
+            return null;
+        }
+    }
+
+    public partial class KeePassRPCService
+    {
         private const int MaxAttachmentBytes = 20 * 1024 * 1024;
 
         /// <summary>
@@ -337,6 +481,25 @@ namespace KeePassFerry
             });
             return result;
         }
+    }
+
+    public class EntryExtras
+    {
+        public EntryExtraField[] fields;
+        public EntryExtraAttachment[] attachments;
+    }
+
+    public class EntryExtraField
+    {
+        public string name;
+        public bool isProtected;
+        public string value;
+    }
+
+    public class EntryExtraAttachment
+    {
+        public string name;
+        public int size;
     }
 
     public class SetTotpResult
