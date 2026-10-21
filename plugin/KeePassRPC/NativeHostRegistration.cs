@@ -19,9 +19,11 @@ namespace KeePassFerry
         // Früherer Host-Name (Entwicklungsstand bis 21.10.2026), wird beim Registrieren entfernt
         private const string LegacyHostName = "de.blacksun80.keepassferry";
 
-        // Erweiterungs-IDs, die den Host starten dürfen (Entwicklungs-ID aus dem Manifest-Schlüssel)
+        // Erweiterungs-IDs, die den Host starten dürfen: Microsoft Edge Add-ons (Store) und Entwicklungs-ID
+        // aus dem Manifest-Schlüssel (entpackt geladene Erweiterung)
         private static readonly string[] AllowedChromiumOrigins =
         {
+            "chrome-extension://ghkhbdnhojpeibdjdlgojfdjhedapmhg/",
             "chrome-extension://pjafpdemjepcjioimoicjogcmkijighm/"
         };
 

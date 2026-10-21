@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 – 2026-10-21
+
+- Plugin: the extension from Microsoft Edge Add-ons may connect (ID `ghkhbdnhojpeibdjdlgojfdjhedapmhg`), in
+  addition to the unpacked developer build. Install this plugin version before installing the extension from the store.
+
 ## 1.0.0 – 2026-10-21
 
 First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).

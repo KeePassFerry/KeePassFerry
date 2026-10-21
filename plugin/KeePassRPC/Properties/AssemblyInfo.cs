@@ -18,7 +18,7 @@ using System.Runtime.InteropServices;
 [assembly: Guid("5D1C7E3A-9B42-4F6E-8A1D-3C7B2E9F4A61")]
 
 // Assembly version information
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: AssemblyInformationalVersion("1.0.0")]
+[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyFileVersion("1.0.1.0")]
+[assembly: AssemblyInformationalVersion("1.0.1")]
 // Produktversion von KeePassFerry. Die Protokollversion (PluginVersion in KeePassRPCExt.cs) ist davon unabhängig.
