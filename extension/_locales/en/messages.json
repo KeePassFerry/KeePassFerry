@@ -1220,7 +1220,7 @@
     "description": "KeePassFerry"
   },
   "ferry_welcome_step1_text": {
-    "message": "Copy the “KeePassFerry” folder into the “Plugins” folder of KeePass Password Safe 2 and restart KeePass.",
+    "message": "Download and run the setup. It finds KeePass, closes it briefly and installs the plugin. For the portable KeePass version, select the KeePass folder.",
     "description": "KeePassFerry"
   },
   "ferry_welcome_step2_title": {
@@ -1228,7 +1228,7 @@
     "description": "KeePassFerry"
   },
   "ferry_welcome_step2_text": {
-    "message": "The connection is established automatically. Later, KeePassFerry unlocks your database in the background when needed, e.g. with Windows Hello.",
+    "message": "The connection is established automatically. If the database is locked, unlock it by clicking the lock icon, e.g. with Windows Hello.",
     "description": "KeePassFerry"
   },
   "ferry_welcome_step3_title": {
@@ -1521,6 +1521,14 @@
   },
   "ferry_setting_browserSaving_hint": {
     "message": "Avoids duplicate save prompts from Edge and KeePassFerry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_welcome_download": {
+    "message": "Download KeePassFerry for KeePass",
+    "description": "KeePassFerry"
+  },
+  "ferry_welcome_download_other": {
+    "message": "Other versions and ZIP file",
     "description": "KeePassFerry"
   }
 }

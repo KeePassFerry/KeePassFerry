@@ -1220,7 +1220,7 @@
         "description": "KeePassFerry"
     },
     "ferry_welcome_step1_text": {
-        "message": "Kopiere den Ordner „KeePassFerry“ in den Unterordner „Plugins“ von KeePass Password Safe 2 und starte KeePass neu.",
+        "message": "Lade das Setup herunter und führe es aus. Es findet KeePass selbst, beendet es kurz und installiert das Plugin. Bei der portablen KeePass-Version wählst du den KeePass-Ordner aus.",
         "description": "KeePassFerry"
     },
     "ferry_welcome_step2_title": {
@@ -1228,7 +1228,7 @@
         "description": "KeePassFerry"
     },
     "ferry_welcome_step2_text": {
-        "message": "Die Verbindung baut sich von selbst auf. Später entsperrt KeePassFerry deine Datenbank bei Bedarf im Hintergrund, z. B. mit Windows Hello.",
+        "message": "Die Verbindung baut sich von selbst auf. Ist die Datenbank gesperrt, entsperrst du sie mit einem Klick auf das Schloss-Symbol, z. B. per Windows Hello.",
         "description": "KeePassFerry"
     },
     "ferry_welcome_step3_title": {
@@ -1521,6 +1521,14 @@
     },
     "ferry_setting_browserSaving_hint": {
         "message": "Verhindert doppelte Speichern-Abfragen von Edge und KeePassFerry.",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_download": {
+        "message": "KeePassFerry für KeePass herunterladen",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_download_other": {
+        "message": "Andere Versionen und ZIP-Datei",
         "description": "KeePassFerry"
     }
 }

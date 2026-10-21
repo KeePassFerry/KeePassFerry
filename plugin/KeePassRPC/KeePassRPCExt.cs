@@ -38,10 +38,10 @@ namespace KeePassFerry
         // version information
         public static readonly Version PluginVersion = new Version(2, 0, 2);
 
-        // Noch kein eigenes Repository mit version.info: keine Update-Prüfung (Kees Datei würde falsche Versionen melden)
+        // KeePass prüft hier auf neue Plugin-Versionen (Zeile "KeePassFerry:1.2.3", wie der AssemblyTitle)
         public override string UpdateUrl
         {
-            get { return null; }
+            get { return "https://raw.githubusercontent.com/KeePassFerry/KeePassFerry/main/version.txt"; }
         }
 
         private BackgroundWorker _BackgroundWorker; // used to invoke main thread from other threads
@@ -99,7 +99,6 @@ namespace KeePassFerry
                 _host = host;
 
                 // Update-Prüfung erst mit eigener signierter version.info (Kees Schlüssel unten gehört zu Kees Datei)
-                if (UpdateUrl != null) UpdateCheckEx.SetFileSigKey(UpdateUrl, "<RSAKeyValue><Modulus>t2jki5ttRkT7D110Q5n/ZdgFZ7JGdlRDme0NvcG1Uz7CnGF40NOqWtuzW4a9p0xUN05I5JegaJ20Nu6ejuxMfOhn0jUALHYe6F2wn4yGbPHJvXLXYyc3fU7W75eWJwQabup2vKhrAjvPMSQfy05JgPcfDmLk0txuKkrPO0u3d9ZzZsYrW+GLyJAQAT9Lt87A04iQsPxB30gXv4JX7iOqtKVsWfKEzanX/zuA5XB8JEd2I7bh2u0AgUA2rnwjSkI01tb6BheruwWm5GLZhe+k/wQkgiTxLAi/HNX9BjebWvVgd7B2OpDWAq4QFLrdSlBqT8d+V1IuJeztcjKhe5lHxHDiE6/5ajmBs4/c0EmKN7bXC+fF7xbVLa+aiKQCW7rzldXx0aqP/6/+VYAXrre55nIWzuArciLT43G1DzDRTyWz+KtNm9CYd07bn1QA9a3bvQxpuM3KSo2fyfBQTcxapBNDoMnM4gKUNd3rTdDmC0j2bHN9Ikyef9ohWzgIkmLleh8Ey1TpGbWS3Y2B3AD2bmqxWgzUBUMkenmp1GglHtc448BuusPPAcibIntZMQqmaHoJ1zeNJQKGNUKCJFjbe/aeHBm/jJ7izPfR8W27D+NMhdvFOZjprmh1AVa97yQ5Zqbh1zH/gsL0XCEuNOobVaVjAsOBhXMiFnl4U4sjknE=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>");
 
                 _BackgroundWorker = new BackgroundWorker();
                 _BackgroundWorker.WorkerReportsProgress = true;

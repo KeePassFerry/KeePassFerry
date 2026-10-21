@@ -27,6 +27,8 @@ jobs:
           $hostV = ([xml](Get-Content host/KeePassFerryHost/KeePassFerryHost.csproj -Raw)).Project.PropertyGroup.Version
           "package.json=$pkg AssemblyInfo=$asm Host=$hostV"
           if ($pkg -ne $asm -or $pkg -ne $hostV) { throw "Versionen stimmen nicht überein" }
+          # Update-Prüfung von KeePass liest version.txt aus main
+          if (-not (Select-String version.txt -Pattern "^KeePassFerry:$([regex]::Escape($pkg))$" -Quiet)) { throw "version.txt nennt nicht $pkg" }
           if ("${{ github.ref_type }}" -eq "tag") {
             $tag = "${{ github.ref_name }}".TrimStart("v")
             if ($tag -ne $pkg) { throw "Tag v$tag passt nicht zur Version $pkg" }
@@ -88,7 +90,24 @@ jobs:
           Copy-Item NOTICE.md "$plug/NOTICE.md"
           Compress-Archive -Path $plug -DestinationPath "$out/KeePassFerry-Plugin-$env:VERSION.zip"
           Compress-Archive -Path extension/extension/* -DestinationPath "$out/KeePassFerry-Extension-$env:VERSION.zip"
-          Get-ChildItem $out -Filter *.zip | ForEach-Object {
+
+      - name: Setup bauen (Inno Setup)
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
+          & $iscc "/DAppVersion=$env:VERSION" "/DSourceDir=..\release\KeePassFerry" installer\KeePassFerry.iss
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if (-not (Test-Path "release/KeePassFerry-Setup-$env:VERSION.exe")) { throw "Setup nicht gebaut" }
+          # Fester Name für den Link .../releases/latest/download/KeePassFerry-Setup.exe (Willkommensseite)
+          Copy-Item "release/KeePassFerry-Setup-$env:VERSION.exe" "release/KeePassFerry-Setup.exe"
+
+      - name: Prüfsummen
+        shell: pwsh
+        run: |
+          $out = "release"
+          Get-ChildItem $out -File | Where-Object { $_.Extension -in ".zip", ".exe" } | ForEach-Object {
             "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
           } | Out-File "$out/SHA256SUMS.txt" -Encoding ascii
           Get-Content "$out/SHA256SUMS.txt"
@@ -109,6 +128,7 @@ jobs:
           name: KeePassFerry-${{ env.VERSION }}
           path: |
             release/*.zip
+            release/*.exe
             release/SHA256SUMS.txt
 
       - name: GitHub-Release anlegen
@@ -118,6 +138,8 @@ jobs:
           name: KeePassFerry ${{ env.VERSION }}
           body_path: release/NOTES.md
           files: |
+            release/KeePassFerry-Setup-${{ env.VERSION }}.exe
+            release/KeePassFerry-Setup.exe
             release/KeePassFerry-Plugin-${{ env.VERSION }}.zip
             release/KeePassFerry-Extension-${{ env.VERSION }}.zip
             release/SHA256SUMS.txt

@@ -43,9 +43,12 @@ Browser extension ──native messaging──▶ KeePassFerryHost.exe ──nam
 
 ## Installation
 
-1. Download `KeePassFerry-Plugin-<version>.zip` from the [latest release](https://github.com/KeePassFerry/KeePassFerry/releases/latest).
-2. Close KeePass and extract the folder `KeePassFerry` into the `Plugins` folder of KeePass
-   (e.g. `C:\Program Files\KeePass Password Safe 2\Plugins\KeePassFerry`). Start KeePass.
+1. Download and run [`KeePassFerry-Setup.exe`](https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/KeePassFerry-Setup.exe).
+   It finds your KeePass installation (or lets you choose the folder of a portable KeePass), closes KeePass if
+   needed and installs the plugin. Uninstall via *Settings → Apps*.
+   Alternatively extract the folder `KeePassFerry` from `KeePassFerry-Plugin-<version>.zip` into the `Plugins`
+   folder of KeePass while KeePass is closed.
+2. Start KeePass and open your database. KeePass reports new plugin versions through its own update check.
 3. Install the browser extension from
    [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg).
    For testing a release build: extract `KeePassFerry-Extension-<version>.zip`, open `edge://extensions`, enable
@@ -84,7 +87,7 @@ Not affiliated with Kee Vault Ltd or the KeePass project.
 ### Deutsch
 
 KeePassFerry verbindet Edge/Chrome sicher mit KeePass 2 unter Windows: Anmeldedaten, Einmalcodes und Passkeys
-aus der eigenen Datenbank, Entsperren per Windows Hello, ohne offene Ports und ohne Cloud. Installation: Plugin-ZIP
-aus dem [neuesten Release](https://github.com/KeePassFerry/KeePassFerry/releases/latest) in den `Plugins`-Ordner von
-KeePass entpacken, Erweiterung aus [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg)
+aus der eigenen Datenbank, Entsperren per Windows Hello, ohne offene Ports und ohne Cloud. Installation:
+[`KeePassFerry-Setup.exe`](https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/KeePassFerry-Setup.exe)
+ausführen (findet KeePass selbst), Erweiterung aus [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg)
 installieren, beim ersten Verbinden den Prüfcode in KeePass bestätigen.

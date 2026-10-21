@@ -33,6 +33,14 @@
                     <div>
                         <h3>{{ $i18n("ferry_welcome_step1_title") }}</h3>
                         <p>{{ $i18n("ferry_welcome_step1_text") }}</p>
+                        <p v-if="!(status?.hostRunning || status?.connected)" class="download">
+                            <a class="btn primary" href="https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/KeePassFerry-Setup.exe">
+                                {{ $i18n("ferry_welcome_download") }}
+                            </a>
+                            <a class="link" href="https://github.com/KeePassFerry/KeePassFerry/releases/latest" target="_blank" rel="noopener">
+                                {{ $i18n("ferry_welcome_download_other") }}
+                            </a>
+                        </p>
                     </div>
                 </div>
                 <div class="step" :class="{ done: status?.connected || status?.pairingCode }">
@@ -229,4 +237,7 @@ html, body, #main, .v-application {
     cursor: pointer;
 }
 .btn.primary { background: var(--w-accent); color: #fff; }
+.step .download { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 10px; }
+.download .btn { text-decoration: none; display: inline-block; }
+.download .link { color: var(--w-accent); font-size: 13.5px; }
 </style>
