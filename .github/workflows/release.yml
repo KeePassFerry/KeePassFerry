@@ -39,6 +39,7 @@ jobs:
           $dir = Join-Path $env:USERPROFILE "KeePassDEV"
           $url = "https://downloads.sourceforge.net/project/keepass/KeePass%202.x/$env:KEEPASS_VERSION/KeePass-$env:KEEPASS_VERSION.zip"
           curl.exe -L --fail --retry 3 -A "Wget/1.21" -o keepass.zip $url
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           Expand-Archive keepass.zip -DestinationPath $dir -Force
           New-Item -ItemType Directory -Force (Join-Path $dir "Plugins") | Out-Null
           if (-not (Test-Path (Join-Path $dir "KeePass.exe"))) { throw "KeePass.exe fehlt" }
@@ -47,15 +48,19 @@ jobs:
 
       - name: Plugin bauen
         shell: pwsh
-        run: msbuild plugin/KeePassRPC/KeePassRPC.csproj -t:Build -p:Configuration=Release -p:TargetFrameworkVersion=v4.8 -v:minimal -nologo
+        run: |
+          msbuild plugin/KeePassRPC/KeePassRPC.csproj -t:Build -p:Configuration=Release -p:TargetFrameworkVersion=v4.8 -v:minimal -nologo
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - name: Host bauen
         shell: pwsh
-        run: dotnet build host/KeePassFerryHost -c Release -nologo
+        run: |
+          dotnet build host/KeePassFerryHost -c Release -nologo
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: extension/package-lock.json
 
@@ -63,8 +68,11 @@ jobs:
         working-directory: extension
         shell: pwsh
         run: |
-          npm ci
+          npm ci --no-audit --no-fund
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           npm run build-chrome:prod
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if (-not (Test-Path extension/manifest.json)) { throw "Erweiterung nicht gebaut" }
 
       - name: Pakete schnüren
         shell: pwsh
