@@ -9,7 +9,7 @@
     <RootNamespace>KeePassFerryHost</RootNamespace>
     <Product>KeePassFerry</Product>
     <Description>Native messaging host between the KeePassFerry browser extension and the KeePassFerry KeePass plugin</Description>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 

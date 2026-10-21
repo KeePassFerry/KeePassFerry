@@ -46,9 +46,6 @@ class NetworkAuth {
             }
 
             const loginItem = document.createElement("li");
-            loginItem.className = "";
-            loginItem.style.backgroundImage =
-                "url(data:image/png;base64," + entry.icon.iconImageData + ")";
             loginItem.dataset.filename = entry.database.fileName;
             loginItem.dataset.formIndex = entry.formIndex != null ? entry.formIndex.toString() : "";
             loginItem.dataset.entryIndex = i.toString();
@@ -60,10 +57,25 @@ class NetworkAuth {
             ]);
             loginItem.tabIndex = i == 0 ? 0 : -1;
 
-            loginItem.textContent = $STRF("matchedLogin_label", [
-                usernameDisplayValue,
-                entry.title
-            ]);
+            // Zeile wie im Popup: Symbolkachel, Titel, darunter Benutzername und Gruppe
+            const tile = document.createElement("span");
+            tile.className = "tile";
+            if (entry.icon?.iconImageData) {
+                const img = document.createElement("img");
+                img.alt = "";
+                img.src = "data:image/png;base64," + entry.icon.iconImageData;
+                tile.appendChild(img);
+            }
+            const text = document.createElement("span");
+            text.className = "text";
+            const title = document.createElement("span");
+            title.className = "title";
+            title.textContent = entry.title;
+            const sub = document.createElement("span");
+            sub.className = "sub";
+            sub.textContent = usernameDisplayValue + " · " + entry.parentGroup.path;
+            text.append(title, sub);
+            loginItem.append(tile, text);
 
             loginItem.addEventListener("keydown", this.keyboardNavHandler, false);
             loginItem.addEventListener(
@@ -125,6 +137,8 @@ let networkAuth: NetworkAuth;
 async function setupNetworkAuthDialog() {
     await configManager.load();
     KeeLog.attachConfig(configManager.current);
+    const theme = configManager.current.theme;
+    if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
     networkAuth = new NetworkAuth();
     chrome.runtime.onMessage.addListener(message => {
         if (message && message.action && message.action === "NetworkAuth_matchedEntries") {

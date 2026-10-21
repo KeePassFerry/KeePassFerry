@@ -1,18 +1,14 @@
 import { kprpcClient } from "./kprpcClient";
-import { EventSessionManager } from "./EventSession";
-import type { VaultMessage } from "../common/VaultMessage";
 import { SessionType } from "../common/SessionType";
 import { PasswordProfile } from "../common/model/PasswordProfile";
 import { KeeLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
-import { Config } from "../common/config";
 import { NativeSessionManager } from "./NativeSession";
 import { DatabaseDto, EntryDto } from "../common/model/KPRPCDTOs";
 import { Database } from "../common/model/Database";
 import { Entry } from "../common/model/Entry";
 import { DatabaseSummary } from "../common/model/DatabaseSummary";
 import BackgroundStore from "../store/BackgroundStore";
-import { configSyncManager } from "./ConfigSyncManager";
 import { kee } from "./KF";
 
 /*
@@ -28,18 +24,6 @@ export class jsonrpcClient {
         this.kprpcClient.startNativeSessionManager();
     }
 
-    startEventSession(sessionId: string, features: string[], messageToWebPage) {
-        return this.kprpcClient.startEventSession(sessionId, features, messageToWebPage);
-    }
-
-    closeEventSession() {
-        this.kprpcClient.closeEventSession();
-    }
-
-    eventSessionMessageFromPage(data: VaultMessage) {
-        return this.kprpcClient.eventSessionMessageFromPage(data);
-    }
-
     sessionManagerForFilename(dbFileName: string) {
         // Pfadschreibweise kann abweichen (Groß-/Kleinschreibung, / statt \); ohne Treffer die native Verbindung
         const norm = (s: string) => (s ?? "").replace(/\//g, "\\").toLowerCase();
@@ -51,10 +35,6 @@ export class jsonrpcClient {
     sessionManagerForPasswordProfile(profile: string) {
         const sessionType = this.store.state.PasswordProfiles.find(p => p.name === profile).sessionType;
         return this.kprpcClient.getSessionManagerByType(sessionType);
-    }
-
-    public get eventSessionManagerIsActive(): boolean {
-        return this.kprpcClient.getSessionManagerByType(SessionType.Event).isActive();
     }
 
     public get websocketSessionManagerIsActive(): boolean {
@@ -83,37 +63,14 @@ export class jsonrpcClient {
         );
     }
 
-    selectAndFocusDatabase(vaultFileName: string, keepassFilename: string) {
-        let sessionManager: EventSessionManager | NativeSessionManager;
-        const smEvent = this.kprpcClient.getSessionManagerByType(SessionType.Event);
-        const smWebsocket = this.kprpcClient.getSessionManagerByType(SessionType.Websocket);
-        if (smEvent.isActive() && smWebsocket.isActive()) {
-            if (vaultFileName && !keepassFilename) {
-                sessionManager = smEvent;
-            } else if (keepassFilename && !vaultFileName) {
-                sessionManager = smWebsocket;
-            } else {
-                sessionManager = smEvent;
-            }
-        } else if (smEvent.isActive()) {
-            sessionManager = smEvent;
-        } else if (smWebsocket.isActive()) {
-            sessionManager = smWebsocket;
-        }
+    selectAndFocusDatabase(keepassFilename: string) {
+        const sessionManager = this.kprpcClient.getPrimarySessionManager();
         if (!sessionManager) {
             KeeLog.info("No active session found");
             return null;
         }
-        if (sessionManager instanceof NativeSessionManager) {
-            this.kprpcClient.request([sessionManager], "OpenAndFocusDatabase", [
-                keepassFilename,
-                false
-            ]);
-        }
-
-        return sessionManager instanceof EventSessionManager
-            ? SessionType.Event
-            : SessionType.Websocket;
+        this.kprpcClient.request([sessionManager], "OpenAndFocusDatabase", [keepassFilename, false]);
+        return SessionType.Websocket;
     }
 
     selectDB(fileName: string, requestFocusReturn: boolean, sessionType: SessionType) {
@@ -124,11 +81,6 @@ export class jsonrpcClient {
         // Requesting return focus is default behaviour for ChangeDatabase so we know if we want to
         // suppress that behaviour we must use the OpenAndFocusDatabase feature.
         if (!requestFocusReturn) {
-            // Sanity check
-            if (sessionManager instanceof EventSessionManager) {
-                KeeLog.error("Kee Vault does not support OpenAndFocusDatabase feature");
-                return;
-            }
             this.kprpcClient.request([sessionManager], "OpenAndFocusDatabase", [
                 fileName,
                 requestFocusReturn
@@ -202,21 +154,13 @@ export class jsonrpcClient {
 
         // If we have been asked to search in a specific DB filename (possibly implicitly by
         // user settings) we can search in just that session, otherwise we search them all
-        const potentialSessionManagers: (NativeSessionManager | EventSessionManager)[] = [];
+        const potentialSessionManagers: NativeSessionManager[] = [];
         if (dbFileName) potentialSessionManagers.push(this.sessionManagerForFilename(dbFileName));
         else {
             potentialSessionManagers.push(...this.kprpcClient.getManagersForActiveSessions());
         }
 
-        const sessionManagers = potentialSessionManagers.filter(
-            sm =>
-                (sm instanceof EventSessionManager &&
-                    this.store.state.KeePassDatabases.some(db => db.sessionType == SessionType.Event)) ||
-                (sm instanceof NativeSessionManager &&
-                    this.store.state.KeePassDatabases.some(
-                        db => db.sessionType == SessionType.Websocket
-                    ))
-        );
+        const sessionManagers = potentialSessionManagers.filter(() => this.store.state.KeePassDatabases.length > 0);
 
         if (sessionManagers.length <= 0) {
             return [];
@@ -367,13 +311,9 @@ export class jsonrpcClient {
             null
         );
         const dbs: Database[] = [];
-        sessionResponses.sort(s => (s.sessionType === SessionType.Event ? -1 : 1));
         for (const sessionResponse of sessionResponses) {
             if (sessionResponse.resultWrapper.result !== null) {
-                const recievedDBs =
-                    sessionResponse.sessionType === SessionType.Event
-                        ? sessionResponse.resultWrapper.result.dbs
-                        : sessionResponse.resultWrapper.result;
+                const recievedDBs = sessionResponse.resultWrapper.result;
                 for (const db of recievedDBs as Array<DatabaseDto>) {
                     if (!db) {
                         KeeLog.warn("Missing db for sessiontype: " + sessionResponse.sessionType);
@@ -389,23 +329,9 @@ export class jsonrpcClient {
                         KeeLog.warn("Database with duplicate file name found. Ignoring.");
                     }
                 }
-                if (sessionResponse.sessionType === SessionType.Event) {
-                    configSyncManager.updateFromRemoteConfig(
-                        sessionResponse.resultWrapper.result.config
-                    );
-                }
             }
         }
         kee.updateKeePassDatabases(dbs);
-    }
-
-    updateAddonSettings(settings: Partial<Config>, version: number) {
-        const sessionManager = this.kprpcClient.getSessionManagerByType(SessionType.Event);
-        if (!sessionManager) {
-            return;
-        }
-
-        this.kprpcClient.request([sessionManager], "UpdateAddonSettings", [settings, version]);
     }
 
     async getPasswordProfiles() {
@@ -417,7 +343,6 @@ export class jsonrpcClient {
             null
         );
         const profiles: PasswordProfile[] = [];
-        sessionResponses.sort(s => (s.sessionType === SessionType.Event ? -1 : 1));
         for (const sessionResponse of sessionResponses) {
             if (sessionResponse.resultWrapper.result !== null) {
                 for (const profileName of sessionResponse.resultWrapper.result as string[]) {

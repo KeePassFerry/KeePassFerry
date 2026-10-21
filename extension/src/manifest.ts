@@ -85,13 +85,13 @@ export async function getManifest() {
             "unlimitedStorage",
             "idle",
             "nativeMessaging",
-            "scripting" // new requirement for MV3 to support reliable enabling of Kee Vault website and in-page assistance for tabs already open when extension is installed/updated
+            "scripting" // Inhaltsskripte in schon offene Tabs laden (nach Installation/Update)
         ] as any, // type error - doesn't support webRequestAuthProvider
 
         // As of 2024 host permission management is still chaotic across Firefox and Chrome but if
         // they can ever come up with the promised solution for optional per-site management, we
         // could look into requesting "optional_host_permissions": ["<all_urls>"] and
-        // host_permissions: ["*://*.kee.pm/*", "*://*.keevault.pm/*"] to give end users more
+        // host_permissions to give end users more
         // options for risk management.
         host_permissions: ["<all_urls>"],
 

@@ -107,7 +107,7 @@ export class PanelStub {
             iframe.style.setProperty("border", "none", "important");
             iframe.style.setProperty("border-radius", "14px", "important");
         } else {
-            iframe.style.setProperty("border", "2px solid #1a466b", "important");
+            iframe.style.setProperty("border", "1px solid rgba(15, 23, 42, 0.14)", "important");
             iframe.style.setProperty("border-radius", "8px", "important");
         }
 

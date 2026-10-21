@@ -6,6 +6,7 @@ import { Entry } from "../common/model/Entry";
 import { FloatingFieldIcons } from "./FloatingFieldIcons";
 import { isUsernameField } from "./loginFields";
 import { pageDiag } from "./ferryDiagPage";
+import { configManager } from "../common/ConfigManager";
 import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
 
 export class KeeFieldIcon {
@@ -37,6 +38,7 @@ export class KeeFieldIcon {
     // Datenbank gesperrt: vorhandene Symbole auf "gesperrt" stellen und erkannte Anmeldefelder (Passwort,
     // Benutzer nach loginFields.ts) mit dem Gesperrt-Symbol versehen. Ein Klick entsperrt, nichts geschieht von selbst.
     public lockKeeIcons(loginFields: HTMLElement[] = []) {
+        if (configManager.current.ferryShowFieldIcons === false) return;
         const elements = [...this.icons.elements(), ...loginFields.filter(el => !this.icons.has(el) && el.offsetWidth >= 50)];
         pageDiag("gesperrt-symbole", { vorhanden: this.icons.elements().length, anmeldefelder: loginFields.length, gesetzt: elements.length });
         if (elements.length === 0) return;
@@ -112,6 +114,8 @@ export class KeeFieldIcon {
     ) {
         this.passwordFields = passwordFields;
         this.otherFields = otherFields;
+        // Einstellung "Symbole in Eingabefeldern" aus: Auswahl nur über das Popup
+        if (configManager.current.ferryShowFieldIcons === false) return;
 
         if (entries.length > 1) {
             this.getLabelledIcon(entries.length > 9 ? "9+" : entries.length.toString());

@@ -1470,5 +1470,57 @@
   "extDescription": {
     "message": "Fill logins, one-time codes and passkeys from your own KeePass database on Windows – no cloud, no open ports.",
     "description": "KeePassFerry"
+  },
+  "ferry_features_heading": {
+    "message": "KeePassFerry",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_autoFillOtp": {
+    "message": "Fill one-time codes automatically",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_autoFillOtp_hint": {
+    "message": "Off: the code field only shows the icon; clicking it fills the code.",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_detectOtpSetup": {
+    "message": "Detect two-factor setup",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_detectOtpSetup_hint": {
+    "message": "Offers to save a QR code or key shown on the page in the matching entry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_passkeys": {
+    "message": "Passkeys with KeePassFerry",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_passkeys_hint": {
+    "message": "Off: passkey requests from websites go to Edge or Windows.",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_fieldIcons": {
+    "message": "Show icons in input fields",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_fieldIcons_hint": {
+    "message": "Off: choose entries only via the KeePassFerry toolbar icon.",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_autoUnlock": {
+    "message": "Unlock a locked database immediately",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_autoUnlock_hint": {
+    "message": "Starts Windows Hello as soon as a login page is detected. Off: only after clicking the lock icon.",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_browserSaving": {
+    "message": "Turn off Edge's password saving",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_browserSaving_hint": {
+    "message": "Avoids duplicate save prompts from Edge and KeePassFerry.",
+    "description": "KeePassFerry"
   }
 }

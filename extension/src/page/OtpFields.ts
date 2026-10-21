@@ -5,6 +5,8 @@ import { findInputsInOpenShadowRoots } from "./shadowDom";
 import { KeeFieldIcon } from "./keeFieldIcon";
 import { FloatingFieldIcons } from "./FloatingFieldIcons";
 import { pageDiag } from "./ferryDiagPage";
+import { configManager } from "../common/ConfigManager";
+import { pageCodeChannel } from "./codeChannel";
 
 /*
 OtpFields.ts erkennt Eingabefelder für Einmalcodes (TOTP) und füllt den Code ein,
@@ -351,6 +353,14 @@ export class OtpFields {
         if (this.requestedFor === target[0] && document.contains(target[0])) return;
         this.target = target;
         this.requestedFor = target[0];
+        // Einstellung "Einmalcodes automatisch eintragen" aus, oder der Code kommt laut Seite per SMS/E-Mail:
+        // nur das Symbol zeigen, ein Klick holt den App-Code
+        const channel = pageCodeChannel();
+        pageDiag("codefeld herkunft", { herkunft: channel });
+        if (configManager.current.ferryAutoFillOtp === false || channel === "other") {
+            setupReported.finally(() => this.showIcon(target));
+            return;
+        }
         // Erst nach der Einrichtungsmeldung (QR-Auslesen ist asynchron) nach einem Code fragen,
         // sonst trägt der Hintergrund auf einer Einrichtungsseite den Code eines anderen Schlüssels ein
         setupReported.finally(() => {
@@ -361,7 +371,7 @@ export class OtpFields {
 
     // Hinweise auf eine Zwei-Faktor-Einrichtung melden (je Art einmal pro Seite)
     private scanSetup(): Promise<void> {
-        if (!document.body) return Promise.resolve();
+        if (!document.body || configManager.current.ferryDetectOtpSetup === false) return Promise.resolve();
         const report = (key: string, otpSetup: AddonMessage["otpSetup"]) => {
             if (this.setupReported.has(key)) return;
             this.setupReported.add(key);
@@ -485,6 +495,7 @@ export class OtpFields {
     private icons = new FloatingFieldIcons();
 
     private showIcon(target: HTMLInputElement[]) {
+        if (configManager.current.ferryShowFieldIcons === false) return;
         const outside = target.length > 1;
         const el = target[target.length - 1];
         this.iconTarget = target;

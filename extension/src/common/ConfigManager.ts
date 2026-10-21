@@ -78,6 +78,12 @@ defaultConfig.theme = null;
 defaultConfig.hideConfirmationAfterSave = false;
 defaultConfig.mustShowReleaseNotesAtStartup = false;
 defaultConfig.ferryDiagnostics = false;
+defaultConfig.ferryAutoFillOtp = true;
+defaultConfig.ferryDetectOtpSetup = true;
+defaultConfig.ferryPasskeys = true;
+defaultConfig.ferryShowFieldIcons = true;
+defaultConfig.ferryAutoUnlock = false;
+defaultConfig.ferryDisableBrowserPasswordSaving = true;
 defaultConfig.autoFillFieldsWithExistingValue = false;
 
 export class ConfigManager {
@@ -181,6 +187,21 @@ export class ConfigManager {
         if (this.current.KPRPCStoredKeys == null) {
             this.current.KPRPCStoredKeys = {};
             saveNeeded = true;
+        }
+        // Neue KeePassFerry-Einstellungen fehlen in gespeicherten Konfigurationen älterer Versionen
+        const ferryDefaults = {
+            ferryAutoFillOtp: true,
+            ferryDetectOtpSetup: true,
+            ferryPasskeys: true,
+            ferryShowFieldIcons: true,
+            ferryAutoUnlock: false,
+            ferryDisableBrowserPasswordSaving: true
+        };
+        for (const [key, value] of Object.entries(ferryDefaults)) {
+            if ((this.current as any)[key] === undefined) {
+                (this.current as any)[key] = value;
+                saveNeeded = true;
+            }
         }
         if (saveNeeded) this.save();
     }

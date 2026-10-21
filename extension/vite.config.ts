@@ -102,12 +102,10 @@ export default defineConfig(({ command }) => ({
             input: {
                 settings: r("src/settings/index.html"),
                 popup: r("src/popup/index.html"),
-                srp: r("src/dialogs/SRP.html"),
                 networkAuth: r("src/dialogs/NetworkAuth.html"),
                 vuePanels: r("src/panels/panels.html"),
                 legacyPanels: r("src/panels/panelsLegacy.html"),
-                installNotes: r("src/install-notes/index.html"),
-                updateNotes: r("src/release-notes/update-notes.html")
+                installNotes: r("src/install-notes/index.html")
             }
             // This needs an absolute URL so is unlikely to be much
             // use within an extension

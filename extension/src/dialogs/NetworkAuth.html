@@ -1,20 +1,142 @@
 <!DOCTYPE html>
-
-<html>
-  <head>
+<html lang="de">
+<head>
     <meta charset="utf-8">
-    <link href="../../assets/styles/bootstrap.min.css" type="text/css" rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/styles/NetworkAuth.css"/>
-    <title>Kee</title>
+    <title>KeePassFerry</title>
     <link rel="icon" href="/assets/images/64.png"/>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #ffffff;
+            --text: #1f2937;
+            --muted: rgba(31, 41, 55, 0.62);
+            --line: rgba(31, 41, 55, 0.1);
+            --hover: rgba(31, 41, 55, 0.05);
+            --tile: #f1f3f6;
+            --primary: #2563eb;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg: #17191e;
+                --text: #e5e7eb;
+                --muted: rgba(229, 231, 235, 0.62);
+                --line: rgba(229, 231, 235, 0.12);
+                --hover: rgba(229, 231, 235, 0.06);
+                --tile: #24272e;
+                --primary: #60a5fa;
+            }
+        }
+        :root[data-theme="dark"] {
+            --bg: #17191e;
+            --text: #e5e7eb;
+            --muted: rgba(229, 231, 235, 0.62);
+            --line: rgba(229, 231, 235, 0.12);
+            --hover: rgba(229, 231, 235, 0.06);
+            --tile: #24272e;
+            --primary: #60a5fa;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 14px/1.45 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        }
+        main {
+            max-width: 520px;
+            margin: 48px auto;
+            padding: 0 16px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        header img {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+        }
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        #network_auth_instructions {
+            color: var(--muted);
+            margin: 0 0 18px;
+            overflow-wrap: anywhere;
+        }
+        #network_auth_choose {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            border-top: 1px solid var(--line);
+        }
+        li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            cursor: pointer;
+            outline: none;
+        }
+        li:hover {
+            background: var(--hover);
+        }
+        li:focus-visible {
+            box-shadow: inset 0 0 0 2px var(--primary);
+        }
+        .tile {
+            width: 34px;
+            height: 34px;
+            flex: none;
+            border-radius: 9px;
+            background: var(--tile);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tile img {
+            width: 22px;
+            height: 22px;
+        }
+        .text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .title {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sub {
+            font-size: 12.5px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
 </head>
-<body class="container-fluid">
-    <div id="i18n_root" style="display:none" id="MainContainer">
-        <h3 data-i18n="network_authentication"></h3>
-        <div id="network_auth_instructions"></div>
+<body>
+    <main id="i18n_root" style="display:none">
+        <header>
+            <img src="/assets/images/64.png" alt="">
+            <h1 data-i18n="network_authentication"></h1>
+        </header>
+        <p id="network_auth_instructions"></p>
         <div id="network_auth_choose" data-i18n="network_auth_choose"></div>
-    </div>
-    <script type="module" src="./NetworkAuth.ts" ></script>
+    </main>
+    <script type="module" src="./NetworkAuth.ts"></script>
 </body>
-
 </html>

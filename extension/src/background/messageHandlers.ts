@@ -8,12 +8,9 @@ import { KeeLog } from "../common/Logger";
 import { KeeNotification } from "../common/KeeNotification";
 import { Action } from "../common/Action";
 import { configManager } from "../common/ConfigManager";
-import type { VaultMessage } from "../common/VaultMessage";
-import { VaultAction } from "../common/VaultAction";
 import { Entry } from "../common/model/Entry";
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
 import { kee } from "./KF";
-import { accountManager } from "./AccountManager";
 
 
 // callbacks for messaging / ports
@@ -32,7 +29,7 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
     }
     if (msg.loadUrlUpgradeKee) {
         chrome.tabs.create({
-            url: "https://www.kee.pm/upgrade-kprpc"
+            url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest"
         });
     }
     if (msg.action == Action.GetPasswordProfiles) {
@@ -159,7 +156,11 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
     }
 
     if (msg.findMatches) {
-        // Gesperrt: kein automatisches Entsperren mehr; die Seite zeigt das Gesperrt-Symbol, ein Klick entsperrt
+        // Gesperrt: die Seite zeigt das Gesperrt-Symbol, ein Klick entsperrt. Nur mit Einstellung
+        // "sofort entsperren" stößt schon das Erkennen der Anmeldemaske Windows Hello an (mit Bremsen)
+        if (configManager.current.ferryAutoUnlock && kee.store.state.connected && kee.store.state.KeePassDatabases.length === 0) {
+            kee.requestBackgroundUnlock(this.sender.tab.id, this.sender.url ?? msg.findMatches.uri);
+        }
         kee.tabStates.get(this.sender.tab.id).frames.get(this.sender.frameId).entries = [];
         const result = await kee.findLogins(
             msg.findMatches.uri,
@@ -324,7 +325,9 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             if (kee.store.state.connected && kee.store.state.KeePassDatabases.length === 0) {
                 // Nur nach einem Klick (Symbol am Codefeld) entsperren, nie beim bloßen Erkennen des Felds
                 diag("hintergrund", "otp angefragt, db gesperrt", { klick: !!msg.userInitiated });
-                if (msg.userInitiated) kee.requestBackgroundUnlock(this.sender.tab.id, frameUrl, true);
+                if (msg.userInitiated || configManager.current.ferryAutoUnlock) {
+                    kee.requestBackgroundUnlock(this.sender.tab.id, frameUrl, !!msg.userInitiated);
+                }
                 return;
             }
             if (await isOtpSetupPending(this.sender.tab.id, frameUrl)) {
@@ -422,42 +425,6 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         if (this.sender.frameId === 0) {
             kee.deleteTabState(this.sender.tab.id);
         }
-    }
-}
-
-export function vaultMessageHandler(this: chrome.runtime.Port, msg: VaultMessage) {
-    if (msg.mutation) {
-        kee.store.onRemoteMessage(this, msg.mutation);
-    }
-
-    let result;
-    if (KeeLog && KeeLog.debug) {
-        KeeLog.debug("In background script, received message from vault script.");
-    }
-    switch (msg.action) {
-        case VaultAction.Init:
-            result = kee.KeePassRPC.startEventSession(
-                msg.sessionId,
-                msg.features,
-                msgToPage => this.postMessage(msgToPage)
-            );
-            if (result) {
-                this.postMessage(result);
-            }
-            return;
-        case VaultAction.MessageToClient:
-            result = kee.KeePassRPC.eventSessionMessageFromPage(msg);
-            if (result) {
-                this.postMessage(result);
-            }
-            return;
-        case VaultAction.FocusRequired:
-            chrome.tabs.update(this.sender.tab.id, { active: true });
-            chrome.windows.update(this.sender.tab.windowId, { focused: true });
-            return;
-        case VaultAction.AccountChanged:
-            accountManager.processNewTokens(msg.tokens);
-            return;
     }
 }
 

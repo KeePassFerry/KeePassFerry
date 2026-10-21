@@ -1470,5 +1470,57 @@
     "extDescription": {
         "message": "Anmeldedaten, Einmalcodes und Passkeys aus der eigenen KeePass-Datenbank unter Windows ausfüllen – ohne Cloud und offene Ports.",
         "description": "KeePassFerry"
+    },
+    "ferry_features_heading": {
+        "message": "KeePassFerry",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_autoFillOtp": {
+        "message": "Einmalcodes automatisch eintragen",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_autoFillOtp_hint": {
+        "message": "Aus: Am Codefeld erscheint nur das Symbol, ein Klick darauf trägt den Code ein.",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_detectOtpSetup": {
+        "message": "Zwei-Faktor-Einrichtung erkennen",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_detectOtpSetup_hint": {
+        "message": "Bietet an, einen QR-Code oder Schlüssel von der Seite im passenden Eintrag zu speichern.",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_passkeys": {
+        "message": "Passkeys mit KeePassFerry",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_passkeys_hint": {
+        "message": "Aus: Passkey-Anfragen der Websites gehen an Edge bzw. Windows.",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_fieldIcons": {
+        "message": "Symbole in Eingabefeldern anzeigen",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_fieldIcons_hint": {
+        "message": "Aus: Einträge wählst du nur über das KeePassFerry-Symbol in der Symbolleiste.",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_autoUnlock": {
+        "message": "Bei gesperrter Datenbank sofort entsperren",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_autoUnlock_hint": {
+        "message": "Startet Windows Hello, sobald eine Anmeldeseite erkannt wird. Aus: erst nach einem Klick auf das Schloss-Symbol.",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_browserSaving": {
+        "message": "Passwortspeicherung von Edge abschalten",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_browserSaving_hint": {
+        "message": "Verhindert doppelte Speichern-Abfragen von Edge und KeePassFerry.",
+        "description": "KeePassFerry"
     }
 }

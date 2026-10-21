@@ -1,4 +1,5 @@
 import { kee } from "./KF";
+import { configManager } from "../common/ConfigManager";
 import { KeeURL } from "../common/KeeURL";
 import { KeeLog } from "../common/Logger";
 import { Entry } from "../common/model/Entry";
@@ -66,6 +67,8 @@ async function ensureUnlocked(tabId: number, url: string): Promise<boolean> {
 }
 
 export async function preparePasskey(sender: chrome.runtime.MessageSender, kind: "create" | "get", payload: any) {
+    // Einstellung "Passkeys mit KeePassFerry" aus: Anfrage geht an Browser bzw. Windows
+    if (configManager.current.ferryPasskeys === false) return { result: "fallback" };
     const frameUrl = sender.url ?? "";
     let origin: URL;
     try {
@@ -254,6 +257,7 @@ async function declinedIds(): Promise<Record<string, number>> {
 }
 
 export async function signalPasskey(sender: chrome.runtime.MessageSender, kind: string, payload: any) {
+    if (configManager.current.ferryPasskeys === false) return { result: "fallback" };
     const frameUrl = sender.url ?? "";
     const rpId = String(payload?.rpId ?? "");
     if (!rpIdAllowed(frameUrl, rpId)) return { result: "security" };

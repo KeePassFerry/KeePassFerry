@@ -11,7 +11,6 @@ import { commandManager } from "./commands";
 import {
     browserPopupMessageHandler,
     pageMessageHandler,
-    vaultMessageHandler,
     iframeMessageHandler
 } from "./messageHandlers";
 import { TabState } from "../common/TabState";
@@ -21,9 +20,7 @@ import { configManager } from "../common/ConfigManager";
 import { KeeLog } from "../common/Logger";
 import type { AddonMessage } from "../common/AddonMessage";
 import { FrameState } from "../common/FrameState";
-import type { VaultMessage } from "../common/VaultMessage";
 import { KeeNotification } from "../common/KeeNotification";
-import { VaultProtocol } from "../common/VaultProtocol";
 import { SessionType } from "../common/SessionType";
 import { Action } from "../common/Action";
 import { Database } from "../common/model/Database";
@@ -31,7 +28,6 @@ import { Entry } from "../common/model/Entry";
 import { SaveEntryResult } from "../common/SaveEntryResult";
 import BackgroundStore from "~/store/BackgroundStore";
 import { Mutation } from "~/store/Mutation";
-import { accountManager } from "./AccountManager";
 import { KeeBrowserActionIconConfiguration } from "../common/KeeBrowserActionIconConfiguration";
 
 const SAVE_BADGE_COLOR = "#16a34a";
@@ -55,7 +51,6 @@ class Kee {
     urlToOpenOnStartup: string;
 
     browserPopupPort: Partial<chrome.runtime.Port>;
-    vaultPort: Partial<chrome.runtime.Port>;
     onPortConnected: (p: chrome.runtime.Port) => void;
 
     networkAuth: NetworkAuth;
@@ -92,7 +87,6 @@ class Kee {
 
             //TODO:f: Maybe try to tidy up these ports too? Should already be dealt with elsewhere and they are a bit more complex because some things expect them to always exist as at least a stub.
             if (this.browserPopupPort !== excludedPort) tryPostMessage(this.browserPopupPort, mutationObj);
-            if (this.vaultPort !== excludedPort) tryPostMessage(this.vaultPort, mutationObj);
 
             const foregroundTabState = this.tabStates.get(this.foregroundTabId);
             if (foregroundTabState) {
@@ -123,8 +117,6 @@ class Kee {
 
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.browserPopupPort = { postMessage: _msg => { } };
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        this.vaultPort = { postMessage: _msg => { } };
         this.onPortConnected = async function (p: chrome.runtime.Port) {
             if (KeeLog && KeeLog.debug) KeeLog.debug(p.name + " port connected");
             let name = p.name;
@@ -249,37 +241,6 @@ class Kee {
                     }
                     break;
                 }
-                case "vault": {
-                    p.onMessage.addListener(vaultMessageHandler.bind(p));
-                    //TODO: below is too complex.? Maybe can close over the tabid/frameid or something?
-                    /* Potentially could/should call messageCloseSession() when the port is disconnected but
-                     earlier experience suggests disconnection does not occur before a new port is connected in Firefox due to a
-                     bug (works fine in Chrome) so we would risk closing the freshly opened session instead.
-                    p.onDisconnect.addListener(this.messageCloseSession();)
-                    */
-                    //TODO: Test again in Firefox to see if behaviour is now reliable enough. If not, enable the listener only for Chromium.
-                    // Or maybe can pass the port metadata in case we can workaround the bug using some of that data?
-                    // p.onDisconnect.addListener(port => {
-                    //     // Only take action if the port we received this on is the same as the one we are currently tracking as active. This helps us to tidy up after the user closes the Kee Vault tab or navigates away from the site
-                    //     //but ensures we don't close newly opened connections when an old port is closed (such as during page refreshes, extension updates, etc.)
-                    //     if (port == this.vaultPort) {
-                    //     // eslint-disable-next-line @typescript-eslint/no-empty-function
-                    //     this.vaultPort = { postMessage: _msg => { } };
-                    //     this.KeePassRPC.closeEventSession();
-                    //     }
-                    // });
-
-                    const connectMessage = {
-                        initialState: this.store.state,
-                        frameId: p.sender.frameId,
-                        tabId: p.sender.tab.id,
-                        isForegroundTab: p.sender.tab.id === this.foregroundTabId
-                    } as VaultMessage;
-
-                    this.vaultPort = p;
-                    p.postMessage(connectMessage);
-                    break;
-                }
                 case "iframe": {
                     p.onMessage.addListener(iframeMessageHandler.bind(p));
                     p.onDisconnect.addListener(() => {
@@ -327,26 +288,16 @@ class Kee {
     async init(): Promise<boolean> {
         this._keeBrowserStartup();
 
-        // This listener is called when a new account is logged in to within Kee Vault. It
-        // does not require an active KPRPC event session for delivery
-        accountManager.addListener(() => {
-            // If there is a vault port available but no active session, we poke the content script to
-            // reinitialise the connection if it now looks likely that it will succeed (as a result of
-            // a new account being logged in to which has the required multi-session feature).
-            // We don't bother with the WebSocket equivalent because that will automatically be tried
-            // regularly anyway.
-            // We also don't worry about kicking people off from active sessions if their license expires.
-            if (
-                accountManager.featureEnabledMultiSessionTypes &&
-                !this.KeePassRPC.eventSessionManagerIsActive
-            ) {
-                this.inviteKeeVaultConnection();
+        // Edges eigene Passwortspeicherung nur abschalten, wenn gewünscht (Einstellung, Standard an)
+        try {
+            if (configManager.current.ferryDisableBrowserPasswordSaving !== false) {
+                await chrome.privacy.services.passwordSavingEnabled.set({ value: false });
+            } else {
+                await chrome.privacy.services.passwordSavingEnabled.clear({});
             }
-        });
-
-        await chrome.privacy.services.passwordSavingEnabled.set({
-            value: false
-        });
+        } catch (e) {
+            KeeLog.warn("Could not change the browser's password saving setting: " + e);
+        }
 
         if (chrome.runtime.lastError != null) {
             KeeLog.warn(
@@ -536,20 +487,11 @@ class Kee {
         return result;
     }
 
-    // Lässt das Badge einige Sekunden blinken, damit "Speichern möglich" auffällt
+    // "Speichern möglich": ruhiges "+" am Symbol; auffällig ist der Hinweis auf der Seite, kein Blinken mehr
     startSaveAttention() {
         if (this.saveAttentionTimer !== null) clearInterval(this.saveAttentionTimer);
-        let ticks = 0;
-        chrome.action.setBadgeBackgroundColor({ color: SAVE_BADGE_COLOR });
-        this.saveAttentionTimer = self.setInterval(() => {
-            ticks++;
-            chrome.action.setBadgeText({ text: ticks % 2 === 1 ? "" : "+" });
-            if (ticks >= 12) {
-                clearInterval(this.saveAttentionTimer);
-                this.saveAttentionTimer = null;
-                this.configureBrowserActionIcon();
-            }
-        }, 450);
+        this.saveAttentionTimer = null;
+        this.configureBrowserActionIcon();
     }
 
     // Schickt den Speichern-Hinweis an den obersten Frame des Tabs, falls noch nicht weggeklickt
@@ -719,14 +661,6 @@ class Kee {
         }
     }
 
-    inviteKeeVaultConnection() {
-        if (this.vaultPort) {
-            this.vaultPort.postMessage({
-                protocol: VaultProtocol.Reconnect
-            } as VaultMessage);
-        }
-    }
-
     updateKeePassDatabases(newDatabases: Database[]) {
         //TODO:5: To improve performance we might need to determine if anything
         // has actually changed before doing the dispatches and poking the
@@ -841,25 +775,7 @@ class Kee {
     // if the MRU database is known, open that but otherwise send empty string which will cause user
     // to be prompted to choose a DB to open
     getKeePassFileNameToOpen() {
-        let databaseFileName = configManager.current.keePassDBToOpen;
-        if (databaseFileName == "" || this.isKeeVaultFileName(databaseFileName)) {
-            databaseFileName = configManager.current.keePassMRUDB;
-        }
-        return !this.isKeeVaultFileName(databaseFileName) ? databaseFileName : "";
-    }
-
-    getVaultFileNameToOpen() {
-        let databaseFileName = configManager.current.keePassDBToOpen;
-        if (databaseFileName == "" || !this.isKeeVaultFileName(databaseFileName)) {
-            databaseFileName = configManager.current.keePassMRUDB;
-        }
-        return this.isKeeVaultFileName(databaseFileName) ? databaseFileName : "";
-    }
-
-    isKeeVaultFileName(name: string) {
-        if (name.indexOf("-") === -1) return false;
-        if (name.indexOf("/") >= 0 || name.indexOf("\\") >= 0) return false;
-        return true;
+        return configManager.current.keePassDBToOpen || configManager.current.keePassMRUDB || "";
     }
 
     openKeePass() {
@@ -887,28 +803,7 @@ class Kee {
     }
 
     async loginToPasswordManager() {
-        const sessionType = await this.selectAndFocusDatabase(
-            this.getVaultFileNameToOpen(),
-            this.getKeePassFileNameToOpen()
-        );
-        if (sessionType !== SessionType.Websocket) {
-            const vaultTabs = await chrome.tabs.query({
-                url: [
-                    "https://keevault.pm/*",
-                    "https://app-beta.kee.pm/*",
-                    "https://app-dev.kee.pm/*"
-                ]
-            });
-            if (vaultTabs && vaultTabs[0]) {
-                chrome.tabs.update(vaultTabs[0].id, { active: true });
-                chrome.windows.update(vaultTabs[0].windowId, { focused: true });
-            } else {
-                chrome.tabs.create({
-                    url: "https://keevault.pm/",
-                    active: true
-                });
-            }
-        }
+        await this.selectAndFocusDatabase(this.getKeePassFileNameToOpen());
     }
 
     recordEntrySaveResult(saveType: "updated" | "created", entry?: Entry) {
@@ -968,9 +863,9 @@ class Kee {
         }
     }
 
-    selectAndFocusDatabase(vaultFileName: string, keepassFilename: string) {
+    selectAndFocusDatabase(keepassFilename: string) {
         try {
-            return this.KeePassRPC.selectAndFocusDatabase(vaultFileName, keepassFilename);
+            return this.KeePassRPC.selectAndFocusDatabase(keepassFilename);
         } catch (e) {
             KeeLog.error(
                 "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
@@ -1201,16 +1096,6 @@ class Kee {
                     framePort.postMessage({ action: Action.GeneratePassword });
                     return;
                 }
-            }
-            // Focussed on a Kee Vault tab or other tab we are not allowed to inject content scripts into
-            if (this.vaultPort) {
-                this.vaultPort.postMessage({
-                    protocol: VaultProtocol.ShowGenerator
-                } as VaultMessage);
-                chrome.tabs.update(this.vaultPort.sender.tab.id, {
-                    active: true
-                });
-                chrome.windows.update(this.vaultPort.sender.tab.windowId, { focused: true });
             }
         }
     }

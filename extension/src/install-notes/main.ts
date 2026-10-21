@@ -9,6 +9,7 @@ import { setup as i18nSetup } from "../common/i18n";
 import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
 import { IPCPiniaPlugin } from "../common/IPCPiniaPlugin";
+import { ferryVuetifyOptions } from "../common/ferryTheme";
 
 let vueApp: App<Element>;
 let store: KeeStore;
@@ -26,39 +27,7 @@ async function start() {
             render: () => h(Root, {})
         });
 
-        const vuetify = createVuetify({
-            components,
-            directives,
-            theme: {
-                defaultTheme: configManager.activeTheme,
-                themes: {
-                    dark: {
-                        dark: true,
-                        colors: {
-                            primary: "#1a466b",
-                            secondary: "#ABB2BF",
-                            tertiary: "#e66a2b",
-                            error: "#C34034",
-                            info: "#2196F3",
-                            success: "#4CAF50",
-                            warning: "#FFC107"
-                        }
-                    },
-                    light: {
-                        dark: false,
-                        colors: {
-                            primary: "#1a466b",
-                            secondary: "#13334e",
-                            tertiary: "#e66a2b",
-                            error: "#C34034",
-                            info: "#2196F3",
-                            success: "#4CAF50",
-                            warning: "#FFC107"
-                        }
-                    }
-                }
-            }
-        });
+        const vuetify = createVuetify({ components, directives, ...ferryVuetifyOptions(configManager.activeTheme) });
         piniaInstance.use(IPCPiniaPlugin);
         vueApp.use(vuetify);
         vueApp.use(piniaInstance);

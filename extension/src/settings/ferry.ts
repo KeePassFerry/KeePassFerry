@@ -16,6 +16,16 @@ type Status = {
     databases: string[];
 };
 
+// Eigene Passwortspeicherung von Edge: abschalten (KeePassFerry übernimmt) oder wieder freigeben
+async function applyBrowserPasswordSaving(disable: boolean) {
+    try {
+        if (disable) await chrome.privacy.services.passwordSavingEnabled.set({ value: false });
+        else await chrome.privacy.services.passwordSavingEnabled.clear({});
+    } catch (e) {
+        // Richtlinie des Administrators o. Ä.
+    }
+}
+
 function applyTheme(theme: string) {
     if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
     else delete document.documentElement.dataset.theme;
@@ -25,6 +35,16 @@ async function setupTheme() {
     await configManager.load();
     applyTheme(configManager.current.theme ?? "");
     document.getElementById("pref_theme_desc")?.addEventListener("change", e => applyTheme((e.target as HTMLSelectElement).value));
+
+    // KeePassFerry-Schalter (data-ferry-setting = Name in der Konfiguration)
+    for (const input of Array.from(document.querySelectorAll<HTMLInputElement>("input[data-ferry-setting]"))) {
+        const key = input.dataset.ferrySetting;
+        input.checked = !!(configManager.current as any)[key];
+        input.addEventListener("change", async () => {
+            configManager.setASAP({ [key]: input.checked } as any);
+            if (key === "ferryDisableBrowserPasswordSaving") await applyBrowserPasswordSaving(input.checked);
+        });
+    }
 
     // Diagnoseprotokoll (Entwicklung)
     const diag = document.getElementById("ferryDiagnostics") as HTMLInputElement;

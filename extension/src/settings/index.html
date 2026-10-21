@@ -33,6 +33,7 @@
         <div class="layout">
             <nav class="sidenav" id="ferryNav">
                 <a href="#panelConnection" data-panel="panelConnection"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span data-i18n="ferry_connection_heading"></span></a>
+                <a href="#panelFerry" data-panel="panelFerry"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="3.5"/><path d="M11.5 12H20m-3 0v3m-3-3v2"/></svg><span data-i18n="ferry_features_heading"></span></a>
                 <a href="#panelFillingEntries" data-panel="panelFillingEntries"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7m8-3-4 4-2-2"/></svg><span data-i18n="pref_FillingEntries_heading"></span></a>
                 <a href="#panelFindingEntries" data-panel="panelFindingEntries"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg><span data-i18n="pref_FindingEntries_heading"></span></a>
                 <a href="#panelSavingEntries" data-panel="panelSavingEntries"><svg viewBox="0 0 24 24"><path d="M6 4h10l3 3v13H5V4zm2 0v5h7V4M8 20v-6h8v6"/></svg><span data-i18n="pref_SavingEntries_heading"></span></a>
@@ -136,6 +137,28 @@
                             </div>
                         </section>
 
+                        <section class="card" id="panelFerry">
+                            <h2 data-i18n="ferry_features_heading"></h2>
+                            <div class="checkbox">
+                                <label class="setting"><span class="setting-text"><span data-i18n="ferry_setting_autoFillOtp"></span><span class="hint" data-i18n="ferry_setting_autoFillOtp_hint"></span></span><input type="checkbox" class="switch" data-ferry-setting="ferryAutoFillOtp" /></label>
+                            </div>
+                            <div class="checkbox">
+                                <label class="setting"><span class="setting-text"><span data-i18n="ferry_setting_detectOtpSetup"></span><span class="hint" data-i18n="ferry_setting_detectOtpSetup_hint"></span></span><input type="checkbox" class="switch" data-ferry-setting="ferryDetectOtpSetup" /></label>
+                            </div>
+                            <div class="checkbox">
+                                <label class="setting"><span class="setting-text"><span data-i18n="ferry_setting_passkeys"></span><span class="hint" data-i18n="ferry_setting_passkeys_hint"></span></span><input type="checkbox" class="switch" data-ferry-setting="ferryPasskeys" /></label>
+                            </div>
+                            <div class="checkbox">
+                                <label class="setting"><span class="setting-text"><span data-i18n="ferry_setting_fieldIcons"></span><span class="hint" data-i18n="ferry_setting_fieldIcons_hint"></span></span><input type="checkbox" class="switch" data-ferry-setting="ferryShowFieldIcons" /></label>
+                            </div>
+                            <div class="checkbox">
+                                <label class="setting"><span class="setting-text"><span data-i18n="ferry_setting_autoUnlock"></span><span class="hint" data-i18n="ferry_setting_autoUnlock_hint"></span></span><input type="checkbox" class="switch" data-ferry-setting="ferryAutoUnlock" /></label>
+                            </div>
+                            <div class="checkbox">
+                                <label class="setting"><span class="setting-text"><span data-i18n="ferry_setting_browserSaving"></span><span class="hint" data-i18n="ferry_setting_browserSaving_hint"></span></span><input type="checkbox" class="switch" data-ferry-setting="ferryDisableBrowserPasswordSaving" /></label>
+                            </div>
+                        </section>
+
                         <section class="card" id="panelFindingEntries">
                             <h2 data-i18n="pref_FindingEntries_heading"></h2>
                             <div class="checkbox">
@@ -159,9 +182,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="checkbox nonSiteSpecificField">
-                                <label class="setting"><span class="setting-text"><span data-i18n="pref_animateWhenOfferingSave_label"></span></span><input type="checkbox" class="switch" id="pref_animateWhenOfferingSave_label" /></label>
                             </div>
                             <div class="checkbox nonSiteSpecificField">
                                 <label class="setting"><span class="setting-text"><span data-i18n="show_confirmation_after_save"></span></span><input type="checkbox" class="switch" id="pref_showConfirmationAfterSave_label" /></label>
@@ -310,10 +330,6 @@
                             </div>
                             <div class="checkbox">
                                 <label class="setting"><span class="setting-text"><span data-i18n="ferry_diag_label"></span><span class="hint" data-i18n="ferry_diag_hint"></span></span><input type="checkbox" class="switch" id="ferryDiagnostics" /></label>
-                            </div>
-                            <!-- Native Messaging braucht keinen Port; Feld bleibt nur für den gemeinsamen Einstellungscode -->
-                            <div hidden>
-                                <input id="pref_keePassRPCPort_label" type="number" min="1" max="65535" step="1">
                             </div>
                         </section>
 

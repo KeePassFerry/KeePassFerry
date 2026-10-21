@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.3 – 2026-10-22
+
+- New settings section "KeePassFerry": fill one-time codes automatically, detect two-factor setup, passkeys with
+  KeePassFerry, show icons in input fields, unlock a locked database immediately (off by default), turn off Edge's
+  password saving (previously always on).
+- One-time codes are no longer filled into fields for codes sent by SMS, e-mail or WhatsApp (detected from the page
+  text); the icon still allows filling the app code on demand.
+- Network authentication dialog redesigned; install page uses the new theme.
+- No more "What's new" page after updates (the old Kee page advertised Kee Vault).
+- Removed the leftover Kee Vault integration, SRP pairing and old Kee pages; the toolbar no longer blinks when
+  offering to save (the page notice replaces it).
+
 ## 1.0.2 – 2026-10-21
 
 - New popup design: one flat surface, entry rows instead of cards, consistent Tabler icons, compact notices,

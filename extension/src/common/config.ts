@@ -98,4 +98,11 @@ export class Config {
     autoFillFieldsWithExistingValue: boolean;
     // KeePassFerry: Diagnoseprotokoll (Ereignisse ohne Inhalte) über das Plugin in eine Datei schreiben
     ferryDiagnostics: boolean;
+    // KeePassFerry-Funktionen (Einstellungen > KeePassFerry)
+    ferryAutoFillOtp: boolean;
+    ferryDetectOtpSetup: boolean;
+    ferryPasskeys: boolean;
+    ferryShowFieldIcons: boolean;
+    ferryAutoUnlock: boolean;
+    ferryDisableBrowserPasswordSaving: boolean;
 }

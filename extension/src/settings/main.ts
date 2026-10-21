@@ -61,10 +61,6 @@ function loadInitialConfig() {
         : null;
     (document.getElementById("pref_rememberMRUGroup_label") as HTMLInputElement).checked =
         configManager.current.rememberMRUGroup ? configManager.current.rememberMRUGroup : null;
-    (document.getElementById("pref_animateWhenOfferingSave_label") as HTMLInputElement).checked =
-        configManager.current.animateWhenOfferingSave
-            ? configManager.current.animateWhenOfferingSave
-            : null;
     (document.getElementById("pref_showConfirmationAfterSave_label") as HTMLInputElement).checked =
         !configManager.current.hideConfirmationAfterSave ? true : null;
 
@@ -91,10 +87,6 @@ function loadInitialConfig() {
         configManager.current.currentSearchTermTimeout
             ? configManager.current.currentSearchTermTimeout.toString()
             : "";
-    (document.getElementById("pref_keePassRPCPort_label") as HTMLInputElement).value = configManager
-        .current.KeePassRPCWebSocketPort
-        ? configManager.current.KeePassRPCWebSocketPort.toString()
-        : "";
 
     (document.getElementById("pref_keePassDBToOpen_label") as HTMLInputElement).value =
         configManager.current.keePassDBToOpen;
@@ -138,9 +130,6 @@ function setupInputListeners() {
         .getElementById("pref_rememberMRUGroup_label")
         .addEventListener("change", saveRememberMRUGroup);
     document
-        .getElementById("pref_animateWhenOfferingSave_label")
-        .addEventListener("change", saveAnimateWhenOfferingSaveUpdated);
-    document
         .getElementById("pref_showConfirmationAfterSave_label")
         .addEventListener("change", saveShowConfirmationAfterSaveUpdated);
     document
@@ -158,7 +147,6 @@ function setupInputListeners() {
     document
         .getElementById("pref_currentSearchTermTimeout_label")
         .addEventListener("change", saveCurrentSearchTermTimeout);
-    document.getElementById("pref_keePassRPCPort_label").addEventListener("change", saveKPRPCPort);
 
     document
         .getElementById("pref_keePassDBToOpen_label")
@@ -1050,15 +1038,6 @@ function saveRememberMRUGroup(e) {
     });
 }
 
-function saveAnimateWhenOfferingSaveUpdated(e) {
-    e.preventDefault();
-    configManager.setASAP({
-        animateWhenOfferingSave: (
-            document.getElementById("pref_animateWhenOfferingSave_label") as HTMLInputElement
-        ).checked
-    });
-}
-
 function saveShowConfirmationAfterSaveUpdated(e) {
     e.preventDefault();
     configManager.setASAP({
@@ -1118,14 +1097,6 @@ function saveCurrentSearchTermTimeout(e) {
                 .value
         )
     });
-}
-
-function saveKPRPCPort(e) {
-    e.preventDefault();
-    configManager.current.KeePassRPCWebSocketPort = parseInt(
-        (document.getElementById("pref_keePassRPCPort_label") as HTMLInputElement).value
-    );
-    configManager.save().then(() => chrome.runtime.sendMessage({ action: "KPRPC_Port_Change" }));
 }
 
 function saveKPRPCDBToOpen(e) {
