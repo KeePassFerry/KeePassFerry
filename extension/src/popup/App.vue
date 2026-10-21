@@ -1,0 +1,569 @@
+<template>
+    <v-app class="">
+        <v-app-bar v-model="showSearchPanel" flat density="comfortable" class="ferry-bar" style="max-width: 400px">
+            <svg class="ferry-logo" viewBox="0 0 128 128" width="30" height="30" aria-hidden="true">
+                <rect x="4" y="4" width="120" height="120" rx="28" fill="#15497f" />
+                <circle cx="42" cy="47" r="15" fill="none" stroke="#fff" stroke-width="9" />
+                <path d="M57 47 H100 M88 47 V60 M99 47 V57" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M18 72 H110 L97 94 Q95 97 91 97 H37 Q33 97 31 94 Z" fill="#22c55e" />
+                <path d="M20 108 q 8.8 -7 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0" fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linecap="round" />
+            </svg>
+            <SearchInput />
+        </v-app-bar>
+        <v-main>
+            <v-container fluid class="overflow-auto app_height" style="padding: 8px 12px">
+                <div>
+                    <v-alert v-show="showSaveRecovery" color="secondary" border="top" border-color="primary"
+                        elevation="1" class="mt-2">
+                        <v-row dense>
+                            <v-col>{{ $i18n("unsaved_changes") }}</v-col>
+                        </v-row>
+                        <v-row dense class="py-1" align="start">
+                            <v-col>
+                                <v-btn color="primary" size="small" @click="saveRecover">
+                                    {{ $i18n("continue_saving") }}
+                                </v-btn>
+                            </v-col>
+                            <v-col>
+                                <v-btn variant="text" size="small" @click="saveDiscard">
+                                    {{ $i18n("discard_changes") }}
+                                </v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-alert>
+                    <v-alert v-show="showSaveResult" color="secondary" border="top" border-color="primary"
+                        elevation="1" class="mt-2">
+                        <v-row dense>
+                            <v-col>{{ $i18n("you_recently_saved") }}</v-col>
+                        </v-row>
+                        <v-row dense class="py-1" align="start">
+                            <v-col>
+                                <v-btn size="small" @click="openFullEntryEditor">
+                                    {{ $i18n("open_full_editor") }}
+                                </v-btn>
+                            </v-col>
+                            <v-spacer />
+                        </v-row>
+                    </v-alert>
+
+                    <div v-if="showEmptyState" class="ferry-empty">
+                        <svg viewBox="0 0 128 128" width="64" height="64" aria-hidden="true" :class="connected ? '' : 'ferry-empty-off'">
+                            <rect x="4" y="4" width="120" height="120" rx="28" fill="#15497f" />
+                            <circle cx="42" cy="47" r="15" fill="none" stroke="#fff" stroke-width="9" />
+                            <path d="M57 47 H100 M88 47 V60 M99 47 V57" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M18 72 H110 L97 94 Q95 97 91 97 H37 Q33 97 31 94 Z" fill="#22c55e" />
+                            <path d="M20 108 q 8.8 -7 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0" fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linecap="round" />
+                        </svg>
+                        <div class="ferry-empty-title">
+                            {{ connected ? $i18n("ferry_status_locked") : $i18n("ferry_status_not_running") }}
+                        </div>
+                        <div class="ferry-empty-text">
+                            {{ connected ? $i18n("ferry_popup_locked_hint") : $i18n("ferry_status_not_running_hint") }}
+                        </div>
+                        <v-btn v-if="connected" color="primary" variant="flat" class="mt-4" @click="requestUnlock">
+                            {{ $i18n("ferry_popup_unlock") }}
+                        </v-btn>
+                    </div>
+                    <div v-if="showNotifications" id="notifications" class="pt-4 mt-2">
+                        <Notification v-for="n of notifications" :key="n.id" :notification="n" />
+                    </div>
+                    <SearchResults v-show="showSearchPanel" :matched-entries-in="cachedMatchedEntries" :site-entries-in="siteEntries" :frame-id="frameId"
+                        @pref-entry-toggle="prefEntryToggle" />
+                    <Save1stParty v-if="showSaveStart && !showSaveWhere" @save-where-clicked="saveWhere"
+                        @cancel-clicked="saveDiscard" />
+                    <SaveWhere v-if="showSaveWhere" :display-reason="displayWhereReason"
+                        :preferred-group-uuid="preferredGroupUuid" />
+                </div>
+            </v-container>
+        </v-main>
+
+
+        <v-btn v-show="showSearchPanel && !showSaveRecovery" position="fixed" location="bottom right" color="primary"
+            rounded="lg" elevation="4" class="ferry-fab"
+            style="bottom: 64px; right: 14px" :class="hasSubmittedData ? 'pulse-button' : ''" icon @click="saveStart">
+            <mdi-plus scale="140" />
+            <v-tooltip location="left" :open-delay="tooltipDelay" activator="parent">
+                <span>{{ $i18n("create_new_entry") }}</span>
+            </v-tooltip>
+        </v-btn>
+
+        <v-footer app height="auto" class="ferry-foot">
+            <div class="ferry-status" :class="statusTone">
+                <span class="ferry-dot" />
+                <span class="ferry-status-text">{{ footerStatus }}</span>
+                <v-tooltip location="top" :open-delay="tooltipDelay" activator="parent">
+                    <span>{{ connectionStatusDetail }}</span>
+                </v-tooltip>
+            </div>
+            <v-spacer />
+            <v-btn v-show="showOpenKeePassButton" id="password-open-keepass"
+                :aria-label="$i18n('Menu_Button_open_keepass_label')" variant="text" size="small" icon
+                @click="openKeePass">
+                <v-img width="20px" height="20px" src="/assets/images/48-keepass.png" />
+                <v-tooltip location="top" :open-delay="tooltipDelay" activator="parent">
+                    <span>{{ $i18n("Menu_Button_open_keepass_label") }}</span></v-tooltip>
+            </v-btn>
+            <v-btn v-show="showSearchPanel" variant="text" size="small" icon
+                :aria-label="$i18n('Menu_Button_copyNewPasswordToClipboard_label')"
+                @click="showPasswordGenerator = true">
+                <mdi-dice-multiple-outline scale="125" />
+                <v-tooltip location="top" :open-delay="tooltipDelay" activator="parent">
+                    <span>{{ $i18n("Menu_Button_copyNewPasswordToClipboard_label") }}</span></v-tooltip>
+            </v-btn>
+            <v-btn variant="text" size="small" icon :aria-label="$i18n('Menu_Button_options_label')" @click="showOptions">
+                <mdi-cog-outline scale="125" />
+                <v-tooltip location="top" :open-delay="tooltipDelay" activator="parent">
+                    <span>{{ $i18n("Menu_Button_options_label") }}</span></v-tooltip>
+            </v-btn>
+        </v-footer>
+        <PasswordGenerator v-if="showPasswordGenerator" :standalone="true" @dialog-closed="passwordGeneratorClosed"
+            @copy-to-clipboard="copyToClipboard" />
+    </v-app>
+</template>
+
+<script lang="ts">
+import Notification from "./components/Notification.vue";
+import SearchInput from "./components/SearchInput.vue";
+import SearchResults from "./components/SearchResults.vue";
+import Save1stParty from "./components/Save1stParty.vue";
+import SaveWhere from "./components/SaveWhere.vue";
+import PasswordGenerator from "../common/components/PasswordGenerator.vue";
+import { Port } from "../common/port";
+import { Action } from "../common/Action";
+import { KeeLog } from "../common/Logger";
+import { SaveState } from "../common/SaveState";
+import { Entry } from "../common/model/Entry";
+import { supplementEntryState } from "./supplementEntryState";
+import { fetchFavicon, getFaviconUrl } from "./favicon";
+import { autoRecoveryTimeMs, manualRecoveryPromptTimeMs, tooltipDelay } from "../common/Timings";
+import { SaveEntryResult } from "../common/SaveEntryResult";
+import { Field } from "../common/model/Field";
+import { Locator } from "../common/model/Locator";
+import { copyStringToClipboard } from "../common/copyStringToClipboard";
+import { configManager } from "../common/ConfigManager";
+import { AddonMessage } from "../common/AddonMessage";
+import useStore from "../store";
+import { mapState } from "pinia";
+import punycode from "punycode/";
+
+export default {
+    components: {
+        Notification: Notification,
+        SearchResults: SearchResults,
+        SearchInput: SearchInput,
+        Save1stParty: Save1stParty,
+        SaveWhere: SaveWhere,
+        PasswordGenerator: PasswordGenerator
+    },
+    props: ["matchedEntries", "siteEntries", "frameId"],
+    setup() {
+        const { updateSaveState, updateSaveEntryResult } = useStore();
+        return { updateSaveState, updateSaveEntryResult };
+    },
+    data: function () {
+        return {
+            // We can't use the Vuex property directly because when it changes it causes
+            // the app to re-render from scratch, destroying the user input that triggered
+            // the datestamp change. Instead we can watch for changes and only modify this
+            // value in a set of circumstances that meet our requirements.
+            // Also note that Chromium and Firefox extensions behave differently - Chrome
+            // persists strings to represent the Date whereas Firefox persists a valid
+            // Date object. Hence every place where this is used, you must wrap the
+            // variable in a new Date(...) call before comparing against other Dates
+            saveLastActiveAt: null,
+            showSaveWhere: false,
+            displayWhereReason: null,
+            preferredGroupUuid: "",
+
+            cachedMatchedEntries: this.matchedEntries,
+
+            // imported constants are only available in Vue if we assign them to data
+            tooltipDelay: tooltipDelay,
+            manualRecoveryPromptTimeMs: manualRecoveryPromptTimeMs,
+            autoRecoveryTimeMs: autoRecoveryTimeMs,
+            showPasswordGenerator: false,
+            lastSaveEntryResult: null
+        };
+    },
+    computed: {
+        ...mapState(useStore, [
+            "showGeneratePasswordLink",
+            "saveState",
+            "showMatchedLogins",
+            "showOpenKeePassButton",
+            "connectionStatus",
+            "connectionStatusDetail",
+            "connected",
+            "databaseIsOpen",
+            "notifications",
+            "showNotifications",
+            "connectedWebsocket",
+            "saveEntryResult"
+        ]),
+        statusTone: function () {
+            if (this.connected && this.databaseIsOpen) return "ok";
+            if (this.connected) return "warn";
+            return "off";
+        },
+        showSaveStart: function () {
+            return new Date(this.saveLastActiveAt) > new Date(Date.now() - this.autoRecoveryTimeMs);
+        },
+        showSaveRecovery: function () {
+            KeeLog.debug(`showSaveRecovery ${this.showSaveStart} : ${new Date(this.saveLastActiveAt)} ${new Date(Date.now() - this.manualRecoveryPromptTimeMs
+            )} : ${new Date(this.saveLastActiveAt) > new Date(Date.now() - this.manualRecoveryPromptTimeMs)}`);
+            return (
+                !this.showSaveStart &&
+                new Date(this.saveLastActiveAt) >
+                new Date(Date.now() - this.manualRecoveryPromptTimeMs)
+            );
+        },
+        footerStatus: function () {
+            if (this.connected && this.databaseIsOpen) return this.connectionStatus;
+            if (this.connected) return this.$i18n("ferry_footer_locked");
+            return this.$i18n("ferry_footer_offline");
+        },
+        showEmptyState: function () {
+            return !this.databaseIsOpen && !this.showSaveStart && !this.showSaveRecovery && !this.showNotifications;
+        },
+        showSearchPanel: function () {
+            return this.databaseIsOpen && !this.showSaveStart;
+        },
+        hasSubmittedData: function () {
+            return (this.saveState as SaveState)?.submittedData?.fields?.length > 0;
+        },
+        showSaveResult: function () {
+            return this.lastSaveEntryResult && !this.showSaveStart;
+        }
+    },
+    watch: {
+        saveState: {
+            handler: function (newState: SaveState, oldState: SaveState) {
+                //TODO:f: For some reason the old and new state are always identical.
+                // So we now always update the last active date but this may have
+                // some side-effect we're yet to find. Perhaps the watch only
+                // gets called as a response to a reflected message from the
+                // background so it has already been changed locally.
+                if (newState?.newEntry?.uuid !== oldState?.newEntry?.uuid) {
+                    KeeLog.debug("savestate watch modified");
+                } else {
+                    KeeLog.debug("savestate watch not modified");
+                }
+                this.saveLastActiveAt = newState.lastActiveAt;
+            },
+            deep: true
+        }
+    },
+    mounted: async function () {
+        this.saveLastActiveAt = this.saveState?.lastActiveAt;
+
+        const discardRequired = this.handleLastSaveResult();
+
+        // Clear the newEntry if it is beyond our maximum recovery time
+        // This frees up memory but more importantly allows the watch for saveState to
+        // set the appropriate last active datetime when the user attempts to re-edit
+        // the same entry as most recently.
+        if (
+            discardRequired ||
+            this.saveState?.lastActiveAt <=
+            new Date(Date.now() - this.manualRecoveryPromptTimeMs)
+        ) {
+            KeeLog.debug("discarding upon mount");
+            this.saveDiscard();
+        }
+
+        // Aus dem Speichern-Hinweis der Seite geöffnet: gleich den Speichern-Dialog zeigen
+        if (new URLSearchParams(window.location.search).get("save") === "1") {
+            // Die übermittelten Daten können kurz nach dem Start eintreffen
+            for (let i = 0; i < 20 && !this.hasSubmittedData; i++) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            if (this.hasSubmittedData && !this.showSaveStart) {
+                await this.saveStart();
+            }
+        }
+
+        const favIconUrl = await getFaviconUrl();
+        if (!favIconUrl) return;
+        const favicon = await fetchFavicon(favIconUrl);
+        if (!favicon) return;
+
+        const updatedSaveState = Object.assign({}, JSON.parse(JSON.stringify(this.saveState)));
+        updatedSaveState.favicon = favicon;
+        this.updateSaveState(updatedSaveState);
+    },
+    methods: {
+        showOptions: () => {
+            chrome.runtime.openOptionsPage();
+            window.close();
+        },
+        saveStart: async function () {
+            const currentTab = (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
+            if (!currentTab) return;
+            const entryTemplate = {
+                URLs: [currentTab.url],
+                title: currentTab.title,
+                fields: [
+                    new Field({
+                        name: "KeePass username",
+                        type: "text",
+                        locators: [
+                            new Locator({
+                                type: "text"
+                            })
+                        ]
+                    }),
+                    new Field({
+                        name: "KeePass password",
+                        type: "password",
+                        locators: [
+                            new Locator({
+                                type: "password"
+                            })
+                        ]
+                    })
+                ]
+            };
+            const ss = JSON.parse(JSON.stringify(this.saveState as SaveState));
+            const updatedSaveState = Object.assign({}, ss);
+            updatedSaveState.newEntry = supplementEntryState(new Entry(entryTemplate), ss);
+            updatedSaveState.titleResetValue = updatedSaveState.newEntry.title;
+            updatedSaveState.lastActiveAt = new Date();
+            updatedSaveState.showURLMismatchWarning = false;
+            KeeLog.debug("updating saveState");
+            this.updateSaveState(updatedSaveState);
+            //this.saveLastActiveAt = updatedSaveState.lastActiveAt;
+        },
+        saveRecover: function () {
+            const ss = JSON.parse(JSON.stringify(this.saveState as SaveState));
+            const updatedSaveState = Object.assign({}, ss);
+            updatedSaveState.lastActiveAt = new Date();
+            this.updateSaveState(updatedSaveState);
+
+            // Normally we ignore active datetime changes but user has explicitly requested this
+            this.saveLastActiveAt = updatedSaveState.lastActiveAt;
+        },
+        saveDiscard: function () {
+            const ss = JSON.parse(JSON.stringify(this.saveState as SaveState));
+            const updatedSaveState = Object.assign({}, ss);
+            updatedSaveState.newEntry = new Entry({});
+            updatedSaveState.titleResetValue = null;
+            updatedSaveState.lastActiveAt = null;
+            updatedSaveState.showURLMismatchWarning = false;
+            updatedSaveState.favicon = null;
+            this.updateSaveState(updatedSaveState);
+            //this.saveLastActiveAt = updatedSaveState.lastActiveAt;
+        },
+        saveWhere: function (displayWhereReason: string, preferredGroupUuid: string) {
+            this.displayWhereReason = displayWhereReason;
+            this.preferredGroupUuid = preferredGroupUuid;
+            this.showSaveWhere = true;
+        },
+        requestUnlock: async function () {
+            try {
+                await chrome.runtime.sendMessage({ keepassferry: "requestUnlock" });
+            } catch (e) {
+                KeeLog.warn("Unlock request failed: " + e);
+            }
+            window.close();
+        },
+        openKeePass: function () {
+            KeeLog.debug("open KeePass requested");
+            if (this.connectedWebsocket) {
+                Port.postMessage({ action: Action.OpenKeePass });
+            } else {
+                KeeLog.info("KeePass no longer connected so taking no action");
+            }
+            window.close();
+        },
+        handleLastSaveResult: function () {
+            const lastResult = this.saveEntryResult as SaveEntryResult;
+
+            if (!lastResult?.result) return false;
+
+            if (lastResult.result === "created" || lastResult.result === "updated") {
+                if (!configManager.current.hideConfirmationAfterSave) {
+                    this.lastSaveEntryResult = lastResult;
+                }
+                this.updateSaveEntryResult({
+                    result: null,
+                    receivedAt: new Date()
+                } as SaveEntryResult);
+                return true;
+            } else {
+                this.updateSaveEntryResult({
+                    result: null,
+                    receivedAt: new Date()
+                } as SaveEntryResult);
+                return false;
+            }
+        },
+        passwordGeneratorClosed: function () {
+            this.showPasswordGenerator = false;
+        },
+        copyToClipboard: async function (payload) {
+            if (payload?.value) await copyStringToClipboard(payload.value);
+        },
+        prefEntryToggle: async function (payload: any) {
+            if (payload?.uuid) {
+                const currentTab = (
+                    await chrome.tabs.query({
+                        active: true,
+                        currentWindow: true
+                    })
+                )[0];
+                if (!currentTab) return;
+                const url = new URL(currentTab.url);
+                url.hostname = punycode.toUnicode(url.hostname);
+                configManager.togglePreferredEntryUuid(payload.uuid, url.href);
+                const conf = configManager.siteConfigFor(url.href);
+                this.cachedMatchedEntries = this.cachedMatchedEntries.map(me => {
+                    me.isPreferredMatch = conf.preferredEntryUuid === me.uuid ? true : false;
+                    return me;
+                });
+                Port.postMessage({ action: Action.DetectForms } as AddonMessage);
+                // hacky, but changing the cachedMatchedEntries value does not appear to trigger
+                // any reactive behaviour a couple of components down at the actual checkbox
+                // so closing the window avoids user seeing out of date information.
+                window.close();
+            }
+        },
+        openFullEntryEditor: function () {
+            Port.postMessage({
+                loginEditor: {
+                    uuid: this.lastSaveEntryResult.uuid,
+                    DBfilename: this.lastSaveEntryResult.fileName
+                }
+            } as AddonMessage);
+            this.lastSaveEntryResult = null;
+            window.close();
+        }
+    }
+};
+</script>
+
+<style>
+.text-truncate{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+
+.v-application,
+.v-application .text-caption,
+.v-application .text-body-2 {
+    font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif !important;
+}
+.ferry-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 72px 28px 0;
+}
+.ferry-empty svg {
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(21, 73, 127, 0.28);
+    margin-bottom: 18px;
+}
+.ferry-empty svg.ferry-empty-off {
+    filter: grayscale(1);
+    opacity: 0.55;
+    box-shadow: none;
+}
+.ferry-empty-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.ferry-empty-text {
+    font-size: 13.5px;
+    opacity: 0.7;
+    max-width: 290px;
+}
+.ferry-bar .search .v-field {
+    background: rgba(var(--v-theme-on-surface), 0.055);
+    border-radius: 10px;
+}
+.ferry-bar .search .v-field--focused {
+    background: rgb(var(--v-theme-surface));
+    box-shadow: 0 0 0 2px rgb(var(--v-theme-primary));
+}
+.ferry-bar {
+    border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+.ferry-bar .v-toolbar__content {
+    padding: 0 12px;
+    gap: 10px;
+}
+.ferry-logo {
+    flex: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(21, 73, 127, 0.28);
+}
+.ferry-foot {
+    gap: 2px;
+    padding: 6px 8px 6px 12px !important;
+    border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    background: rgb(var(--v-theme-surface)) !important;
+}
+.ferry-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 230px;
+    padding: 4px 10px 4px 8px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background: rgba(var(--v-theme-on-surface), 0.05);
+}
+.ferry-status-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ferry-dot {
+    width: 9px;
+    height: 9px;
+    flex: none;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+.ferry-status.ok .ferry-dot { background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2); }
+.ferry-status.warn .ferry-dot { background: #d97706; box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2); }
+.ferry-status.off .ferry-dot { background: #94a3b8; box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25); }
+
+.app_height {
+    max-height: calc(570px - var(--v-layout-bottom) - var(--v-layout-top));
+    min-height: calc(570px - var(--v-layout-bottom) - var(--v-layout-top));
+    height: calc(570px - var(--v-layout-bottom) - var(--v-layout-top));
+}
+
+.pulse-button {
+    animation: pulse 0.5s 2 cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.25s reverse;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    25% {
+        opacity: 1;
+        transform: scale(1.25);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    75% {
+        opacity: 1;
+        transform: scale(0.8);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+</style>

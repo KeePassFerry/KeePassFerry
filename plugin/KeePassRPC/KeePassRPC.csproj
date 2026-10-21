@@ -1,0 +1,599 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <LangVersion>5</LangVersion>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{4C1BB6F8-D2CD-49C2-9053-21705681356C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>KeePassFerry</RootNamespace>
+    <AssemblyName>KeePassFerry</AssemblyName>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleasePLGX|AnyCPU' ">
+    <OutputPath>bin\ReleasePLGX\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'teast|AnyCPU'">
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Analyse|AnyCPU'">
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DomainPublicSuffix">
+      <HintPath>.\DomainPublicSuffix.dll</HintPath>
+    </Reference>
+    <Reference Include="Jayrock, Version=0.9.12915.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Jayrock.dll</HintPath>
+    </Reference>
+    <Reference Include="Jayrock.Json, Version=0.9.12915.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Jayrock.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="KeePass">
+      <HintPath Condition="'$(OS)' == 'Windows_NT'">$(USERPROFILE)\KeePassDEV\KeePass.exe</HintPath>
+      <HintPath Condition="'$(OS)' != 'Windows_NT'">$(home)/keepass-dev/KeePass.exe</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BigInteger.cs" />
+    <Compile Include="DatabaseConfig.cs" />
+    <Compile Include="DpiFix.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="Forms\FerryPairingForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AuthForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AuthForm.Designer.cs">
+      <DependentUpon>AuthForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\DatabaseSettingsUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\DatabaseSettingsUserControl.Designer.cs">
+      <DependentUpon>DatabaseSettingsUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\KeeEntryUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\KeeEntryUserControl.Designer.cs">
+      <DependentUpon>KeeEntryUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\KeeFieldForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\KeeFieldForm.Designer.cs">
+      <DependentUpon>KeeFieldForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\KeeGroupUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\KeeGroupUserControl.Designer.cs">
+      <DependentUpon>KeeGroupUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\KeeMAMOverride.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\KeeMAMOverride.Designer.cs">
+      <DependentUpon>KeeMAMOverride.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\KeeMultiEntryUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\KeeMultiEntryUserControl.Designer.cs">
+      <DependentUpon>KeeMultiEntryUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\KeeURLForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\KeeURLForm.Designer.cs">
+      <DependentUpon>KeeURLForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\KeyCreationSimpleForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\KeyCreationSimpleForm.designer.cs">
+      <DependentUpon>KeyCreationSimpleForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\LocationManager.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\LocationManager.Designer.cs">
+      <DependentUpon>LocationManager.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\WelcomeForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\WelcomeForm.Designer.cs">
+      <DependentUpon>WelcomeForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="IconCache.cs" />
+    <Compile Include="JsonRpc\ClientMetadata.cs" />
+    <Compile Include="JsonRpc\IJsonRpcClientMetadataProperty.cs" />
+    <Compile Include="JsonRpc\IJsonRpcRequestLifetimeNotice.cs" />
+    <Compile Include="JsonRpc\KprpcJsonRpcDispatcher.cs" />
+    <Compile Include="JsonRpc\KprpcJsonRpcService.cs" />
+    <Compile Include="ClientTransport.cs" />
+    <Compile Include="FerryCrypto.cs" />
+    <Compile Include="SecureChannel.cs" />
+    <Compile Include="KeePassRPCClient.cs" />
+    <Compile Include="KeePassRPCExt.cs">
+    </Compile>
+    <Compile Include="NativeHostRegistration.cs" />
+    <Compile Include="NativePipeServer.cs" />
+    <Compile Include="KeePassRPCService.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Forms\OptionsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\OptionsForm.Designer.cs">
+      <DependentUpon>OptionsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="KeePassRPCService.DTOV1.cs" />
+    <Compile Include="KeePassRPCService.DTOV2.cs" />
+    <Compile Include="KeePassRPCService.JSONRPC.cs" />
+    <Compile Include="KeePassRPCService.Ferry.cs" />
+    <Compile Include="KeePassRPCService.Passkeys.cs" />
+    <Compile Include="Totp.cs" />
+    <Compile Include="FerryText.cs" />
+    <Compile Include="FerryForeground.cs" />
+    <Compile Include="KeyChallengeResponse.cs" />
+    <Compile Include="KeyContainerClass.cs" />
+    <Compile Include="MatchAccuracyMethod.cs" />
+    <Compile Include="Models\DataExchange\ApplicationMetadata.cs" />
+    <Compile Include="Models\DataExchange\AuthenticationResult.cs" />
+    <Compile Include="Models\DataExchange\Configuration.cs" />
+    <Compile Include="Models\DataExchange\Database.cs" />
+    <Compile Include="Models\DataExchange\Utilities.cs" />
+    <Compile Include="Models\DataExchange\Entry.cs" />
+    <Compile Include="Models\DataExchange\Error.cs" />
+    <Compile Include="Models\DataExchange\ErrorCode.cs" />
+    <Compile Include="Models\DataExchange\Group.cs" />
+    <Compile Include="Models\DataExchange\JSONRPCContainer.cs" />
+    <Compile Include="Models\DataExchange\KeyParams.cs" />
+    <Compile Include="Models\DataExchange\KPRPCMessage.cs" />
+    <Compile Include="Models\DataExchange\LightEntry.cs" />
+    <Compile Include="Models\DataExchange\LoginSearchType.cs" />
+    <Compile Include="Models\DataExchange\MatchAccuracy.cs" />
+    <Compile Include="Models\DataExchange\MatchAccuracyEnum.cs" />
+    <Compile Include="Models\DataExchange\Signal.cs" />
+    <Compile Include="Models\DataExchange\SRPParams.cs" />
+    <Compile Include="Models\DataExchange\V2\Database2.cs" />
+    <Compile Include="Models\DataExchange\V2\DatabasesAndIcons.cs" />
+    <Compile Include="Models\DataExchange\V2\Entry2.cs" />
+    <Compile Include="Models\DataExchange\V2\Group2.cs" />
+    <Compile Include="Models\DataExchange\V2\Icon.cs" />
+    <Compile Include="Models\DataExchange\V2\LightEntry2.cs" />
+    <Compile Include="Models\GuidService.cs" />
+    <Compile Include="Models\IGuidService.cs" />
+    <Compile Include="Models\Persistent\EntryConfigv1.cs" />
+    <Compile Include="Models\Persistent\EntryConfigv2.cs" />
+    <Compile Include="Models\Shared\EntryAutomationBehaviour.cs" />
+    <Compile Include="Models\Shared\EntryMatcher.cs" />
+    <Compile Include="Models\Shared\EntryMatcherConfig.cs" />
+    <Compile Include="Models\Shared\EntryMatcherType.cs" />
+    <Compile Include="Models\Shared\Field.cs" />
+    <Compile Include="Models\Shared\FieldMatcherConfig.cs" />
+    <Compile Include="Models\Shared\FieldMatcherType.cs" />
+    <Compile Include="Models\Shared\FormField.cs" />
+    <Compile Include="Models\Shared\FieldMatcher.cs" />
+    <Compile Include="Models\Shared\FormFieldType.cs" />
+    <Compile Include="Models\Shared\MatchAction.cs" />
+    <Compile Include="Models\Shared\MatcherLogic.cs" />
+    <Compile Include="Models\Shared\FieldType.cs" />
+    <Compile Include="Models\Shared\PlaceholderHandling.cs" />
+    <Compile Include="Models\Shared\ResolvedField.cs" />
+    <Compile Include="Native.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="RPCClientManagers.cs" />
+    <Compile Include="SecureEdit.cs" />
+    <Compile Include="SRP.cs" />
+    <Compile Include="URLSummary.cs" />
+    <Compile Include="Utils.cs" />
+    <Compile Include="DPIScaledToolStripMenuItem.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="IconConverter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 2.0 %28x86%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.0">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.0 %28x86%29</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Forms\AuthForm.resx">
+      <DependentUpon>AuthForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\DatabaseSettingsUserControl.resx">
+      <DependentUpon>DatabaseSettingsUserControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\KeeEntryUserControl.resx">
+      <DependentUpon>KeeEntryUserControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\KeeFieldForm.resx">
+      <DependentUpon>KeeFieldForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\KeeGroupUserControl.resx">
+      <DependentUpon>KeeGroupUserControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\KeeMAMOverride.resx">
+      <DependentUpon>KeeMAMOverride.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\KeeMultiEntryUserControl.resx">
+      <DependentUpon>KeeMultiEntryUserControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\KeeURLForm.resx">
+      <DependentUpon>KeeURLForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\KeyCreationSimpleForm.resx">
+      <DependentUpon>KeyCreationSimpleForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\LocationManager.resx">
+      <DependentUpon>LocationManager.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\OptionsForm.resx">
+      <DependentUpon>OptionsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\WelcomeForm.resx">
+      <DependentUpon>WelcomeForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="KeePassRPCDiagram.cd" />
+    <None Include="Resources\buttonGradient.png" />
+    <None Include="Resources\buttonGradientHover.png" />
+    <None Include="Resources\kprpc.ico" />
+    <None Include="Resources\vkprpckey64.png" />
+    <None Include="Resources\vkprpckey16.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <PostBuildEvent>
+      echo POSTBUILDSTEP for $(ProjectName)
+
+      set KPDir=$(USERPROFILE)\KeePassDEV\
+      set KPPDir=%25KPDir%25plugins\
+      set KPPTempDir=%25KPPDir%25$(TargetName)
+
+      IF NOT "$(ConfigurationName)"=="Debug" Goto :NotDebug
+      REM In debug mode we want to move the generated DLLs and PDBs to the plugins
+      REM directory so we can easily set breakpoints, etc.
+
+      REM delete the PLGX from any previous ReleasePLGX build
+      del /Q "%25KPPDir%25$(TargetName).plgx"
+      REM if errorlevel 1 goto BuildEventFailed
+      echo Release plgx deleted
+
+      REM copy output DLLs to KeePass plugins directory
+      copy "$(TargetName).dll" "%25KPPDir%25\$(TargetName).dll"
+      copy "$(TargetName).pdb" "%25KPPDir%25\$(TargetName).pdb"
+      if errorlevel 1 goto BuildEventFailed
+      copy "Jayrock.dll" "%25KPPDir%25\Jayrock.dll"
+      copy "Jayrock.Json.dll" "%25KPPDir%25\Jayrock.Json.dll"
+      copy "DomainPublicSuffix.dll" "%25KPPDir%25\DomainPublicSuffix.dll"
+      if errorlevel 1 goto BuildEventFailed
+      echo Debug DLLs copied to plugins directory
+
+      goto BuildEventOK
+
+      :NotDebug
+      REM Release (KeePassFerry-Pakete per GitHub Actions): nur bauen, nichts kopieren
+      IF "$(ConfigurationName)"=="Release" goto BuildEventOK
+      IF NOT "$(ConfigurationName)"=="ReleasePLGX" Goto :NotReleasePlgx
+      REM In release mode we want to make sure that we are working with the PLGX version.
+      REM This prevents debugging so should only be used when packaging a plgx file for
+      REM distribution.
+
+      REM delete the DLLs from any previous Debug build
+      del /Q "%25KPPDir%25$(TargetName).dll"
+      if errorlevel 1 goto BuildEventFailed
+      del /Q "%25KPPDir%25\Jayrock.dll"
+      del /Q "%25KPPDir%25\Jayrock.Json.dll"
+      del /Q "%25KPPDir%25\DomainPublicSuffix.dll"
+      if errorlevel 1 goto BuildEventFailed
+      echo Debug DLLs deleted
+
+      REM create temporary directory
+      rmdir /S /Q "%25KPPTempDir%25"
+      mkdir "%25KPPTempDir%25"
+      if errorlevel 1 goto BuildEventFailed
+      echo Temporary directory created
+
+      REM copy relevant project files to temporary directory
+      REM (for simple KeePass plugins you may need to
+      REM copy only *.cs files and .csproj file)
+      copy "Jayrock.dll" "%25KPPTempDir%25\Jayrock.dll"
+      copy "Jayrock.Json.dll" "%25KPPTempDir%25\Jayrock.Json.dll"
+      copy "DomainPublicSuffix.dll" "%25KPPTempDir%25\DomainPublicSuffix.dll"
+      if errorlevel 1 goto BuildEventFailed
+      copy "$(ProjectDir)*.cs" "%25KPPTempDir%25"
+      if errorlevel 1 goto BuildEventFailed
+      copy "$(ProjectDir)$(ProjectName).csproj" "%25KPPTempDir%25\$(TargetName).csproj"
+      if errorlevel 1 goto BuildEventFailed
+      mkdir "%25KPPTempDir%25\Forms"
+      copy "$(ProjectDir)Forms\*.cs" "%25KPPTempDir%25\Forms"
+      copy "$(ProjectDir)Forms\*.resx" "%25KPPTempDir%25\Forms"
+      if errorlevel 1 goto BuildEventFailed
+      mkdir "%25KPPTempDir%25\Models"
+      mkdir "%25KPPTempDir%25\Models\DataExchange"
+      mkdir "%25KPPTempDir%25\Models\DataExchange\V2"
+      mkdir "%25KPPTempDir%25\Models\Persistent"
+      mkdir "%25KPPTempDir%25\Models\Shared"
+      copy "$(ProjectDir)Models\DataExchange\"*.cs "%25KPPTempDir%25\Models\DataExchange"
+      copy "$(ProjectDir)Models\DataExchange\V2\"*.cs "%25KPPTempDir%25\Models\DataExchange\V2"
+      copy "$(ProjectDir)Models\Persistent\"*.cs "%25KPPTempDir%25\Models\Persistent"
+      copy "$(ProjectDir)Models\Shared\"*.cs "%25KPPTempDir%25\Models\Shared"
+      copy "$(ProjectDir)Models\"*.cs "%25KPPTempDir%25\Models"
+      if errorlevel 1 goto BuildEventFailed
+      mkdir "%25KPPTempDir%25\JsonRpc"
+      copy "$(ProjectDir)JsonRpc\"*.cs "%25KPPTempDir%25\JsonRpc"
+      if errorlevel 1 goto BuildEventFailed
+
+      mkdir "%25KPPTempDir%25\Properties"
+      copy "$(ProjectDir)Properties\AssemblyInfo.cs" "%25KPPTempDir%25\Properties\AssemblyInfo.cs"
+      copy "$(ProjectDir)Properties\Resources.resx" "%25KPPTempDir%25\Properties\Resources.resx"
+      copy "$(ProjectDir)Properties\Resources.Designer.cs" "%25KPPTempDir%25\Properties\Resources.Designer.cs"
+      mkdir "%25KPPTempDir%25\Resources"
+      copy "$(ProjectDir)Resources\*.png" "%25KPPTempDir%25\Resources"
+      copy "$(ProjectDir)Resources\*.ico" "%25KPPTempDir%25\Resources"
+      if errorlevel 1 goto BuildEventFailed
+      echo Files copied to temporary directory
+
+      REM create the PLGX
+      "%25KPDir%25KeePass.exe" --plgx-create "%25KPPTempDir%25" --plgx-prereq-kp:2.48
+      if errorlevel 1 goto BuildEventFailed
+      echo PLGX created
+
+      REM delete the temporary directory and its contents
+      rem rmdir /S /Q "%25KPPTempDir%25"
+      if errorlevel 1 goto BuildEventFailed
+      echo Temporary directory deleted
+
+      goto BuildEventOK
+
+
+      :NotReleasePlgx
+      echo Invalid configuration selected. Please choose a different build configuration
+      echo or modify the post-build script to add support for this configuration.
+
+      :BuildEventFailed
+      echo POSTBUILDSTEP for $(ProjectName) FAILED
+      exit 1
+
+      :BuildEventOK
+      echo POSTBUILDSTEP for $(ProjectName) COMPLETED OK</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
+    <PostBuildEvent>
+      #!/bin/bash
+      echo POSTBUILDSTEP for $(ProjectName)
+
+      export KPDir="${HOME}/keepass-dev/"
+      export KPPDir=${KPDir}Plugins/
+      export KPPTempDir="${KPPDir}$(TargetName)"
+            
+      # delete the PLGX from any previous ReleasePLGX build
+      rm -f "${KPPDir}$(TargetName).plgx"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED; exit 1; fi
+      echo Release plgx deleted
+
+      # copy output DLLs to KeePass plugins directory
+      cp "$(TargetName).dll" "${KPPDir}$(TargetName).dll"
+      cp "$(TargetName).pdb" "${KPPDir}$(TargetName).pdb"
+      
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED; exit 1; fi
+            
+      cp "Jayrock.dll" "${KPPDir}Jayrock.dll"
+      cp "Jayrock.Json.dll" "${KPPDir}Jayrock.Json.dll"
+      cp "DomainPublicSuffix.dll" "${KPPDir}DomainPublicSuffix.dll"
+      
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED; exit 1; fi
+            
+      echo Debug DLLs copied to plugins directory
+
+      echo POSTBUILDSTEP for $(ProjectName) COMPLETED OK</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(OS)' != 'Windows_NT' AND '$(ConfigurationName)' == 'ReleasePLGX'">
+    <PostBuildEvent>
+      #!/bin/bash
+      echo POSTBUILDSTEP for $(ProjectName)
+
+      export KPDir="${HOME}/keepass-dev/"
+      export KPPDir=${KPDir}Plugins/
+      export KPPTempDir="${KPPDir}$(TargetName)"
+
+      echo KPDir: ${KPDir}
+      echo KPPDir: ${KPPDir}
+      echo KPPTempDir: ${KPPTempDir}
+            
+      rm -f "${KPPDir}$(TargetName).dll"
+      rm -f "${KPPDir}$(TargetName).pdb"
+      rm -f "${KPPDir}Jayrock.dll"
+      rm -f "${KPPDir}Jayrock.Json.dll"
+      rm -f "${KPPDir}DomainPublicSuffix.dll"
+      echo Debug DLLs deleted
+      
+      # create temporary directory
+      rm -rf "${KPPTempDir}"
+      mkdir "${KPPTempDir}"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - prep temp dir; exit 1; fi
+      echo Temporary directory created
+      
+      # copy relevant project files to temporary directory
+      # (for simple KeePass plugins you may need to
+      # copy only *.cs files and .csproj file)
+      cp "Jayrock.dll" "${KPPTempDir}\Jayrock.dll"
+      cp "Jayrock.Json.dll" "${KPPTempDir}\Jayrock.Json.dll"
+      cp "DomainPublicSuffix.dll" "${KPPTempDir}\DomainPublicSuffix.dll"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - copy DLL deps; exit 1; fi
+            
+      cp "$(ProjectDir)"*.cs "${KPPTempDir}"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - copy source files; exit 1; fi
+      cp "$(ProjectDir)$(ProjectName).csproj" "${KPPTempDir}\$(TargetName).csproj"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - copy csproj; exit 1; fi
+            
+      mkdir "${KPPTempDir}\Forms"
+      cp "$(ProjectDir)Forms\"*.cs "${KPPTempDir}\Forms"
+      cp "$(ProjectDir)Forms\"*.resx "${KPPTempDir}\Forms"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - copy forms sources; exit 1; fi
+            
+      mkdir "${KPPTempDir}\Models"
+      mkdir "${KPPTempDir}\Models\DataExchange"
+      mkdir "${KPPTempDir}\Models\DataExchange\V2"
+      mkdir "${KPPTempDir}\Models\Persistent"
+      mkdir "${KPPTempDir}\Models\Shared"
+      cp "$(ProjectDir)Models\DataExchange\"*.cs "${KPPTempDir}\Models\DataExchange"
+      cp "$(ProjectDir)Models\DataExchange\V2\"*.cs "${KPPTempDir}\Models\DataExchange\V2"
+      cp "$(ProjectDir)Models\Persistent\"*.cs "${KPPTempDir}\Models\Persistent"
+      cp "$(ProjectDir)Models\Shared\"*.cs "${KPPTempDir}\Models\Shared"
+      cp "$(ProjectDir)Models\"*.cs "${KPPTempDir}\Models"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - copy Models sources; exit 1; fi
+            
+      mkdir "${KPPTempDir}\JsonRpc"
+      cp "$(ProjectDir)JsonRpc\"*.cs "${KPPTempDir}\JsonRpc"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - copy JsonRpc sources; exit 1; fi
+            
+      mkdir "${KPPTempDir}\Properties"
+      cp "$(ProjectDir)Properties\AssemblyInfo.cs" "${KPPTempDir}\Properties\AssemblyInfo.cs"
+      cp "$(ProjectDir)Properties\Resources.resx" "${KPPTempDir}\Properties\Resources.resx"
+      cp "$(ProjectDir)Properties\Resources.Designer.cs" "${KPPTempDir}\Properties\Resources.Designer.cs"
+      mkdir "${KPPTempDir}\Resources"
+      cp "$(ProjectDir)Resources\"*.png "${KPPTempDir}\Resources"
+      cp "$(ProjectDir)Resources\"*.ico "${KPPTempDir}\Resources"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - copy properties and resources; exit 1; fi
+            
+      echo Files copied to temporary directory
+
+      # create the PLGX
+      "${KPDir}KeePass.exe" --plgx-create "${KPPTempDir}" --plgx-prereq-kp:2.48
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - create PLGX; exit 1; fi
+      echo PLGX created
+
+      rm -rf "${KPPTempDir}"
+      if [ $? = 1 ]; then echo POSTBUILDSTEP for $(ProjectName) FAILED - temp dir tidy up; exit 1; fi
+      echo Temporary directory deleted
+            
+      echo POSTBUILDSTEP for $(ProjectName) COMPLETED OK</PostBuildEvent>
+  </PropertyGroup>
+</Project>

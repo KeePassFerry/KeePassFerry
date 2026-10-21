@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- KeePassFerry Feld-Icon: reduziertes Zeichen (Schlüssel auf blauem Grund) für Eingabefelder, 16 px Anzeige -->
+  <rect x="1" y="1" width="30" height="30" rx="8" fill="#15497f"/>
+  <circle cx="11" cy="16" r="4.6" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <path d="M15.6 16 H26 M22.5 16 V20 M25.6 16 V19" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

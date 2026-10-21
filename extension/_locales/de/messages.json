@@ -1,0 +1,1290 @@
+{
+    "black_list": {
+        "message": "Ausschlussliste",
+        "description": "List of items that cause behaviour to be disabled if they match. For example, the list of names of form fields that prevent Kee from searching for logins for the form containing that field."
+    },
+    "conn_display_description": {
+        "message": "Ein Browser-Add-on, dass eine sichere und automatische Anmeldung zu den meisten Webseiten ermöglicht.",
+        "description": "A brief description of Kee that gets presented to users to help them decide if they want to allow the connection to KeePass to be permitted."
+    },
+    "conn_invalid_message": {
+        "message": "KeePassFerry hat einen ungültigen Befehl an deine Passwortdatenbank gesendet.",
+        "description": "A form of internal technical error. This can help user's to identify the type of problem they are experiencing."
+    },
+    "conn_setup_client_sl_low": {
+        "message": "KeePassFerry hat ein Sicherheitsniveau angefordert, das KeePass als zu niedrig ablehnt. Starte die Kopplung mit einem höheren Sicherheitsniveau neu.",
+        "description": ""
+    },
+    "conn_setup_enter_password_title": {
+        "message": "KeePassFerry koppeln",
+        "description": "Heading of the popup that asks the user to authorise the connection to KeePass by typing in a password."
+    },
+    "conn_setup_enter_password": {
+        "message": "Gib das Passwort aus dem Fenster „Authorise a new connection“ ein. Du musst es dir nicht merken. Wenn du dich vertippst, kannst du es gleich noch einmal versuchen.",
+        "description": ""
+    },
+    "conn_setup_expired": {
+        "message": "Der Sicherheitsschlüssel wurde zu lange verwendet.",
+        "description": "The KeePassRPC server has detected that the secret key used for communication has expired and the user must therefore re-authenticate."
+    },
+    "conn_setup_failed": {
+        "message": "KeePass hat die Verbindung abgelehnt, vermutlich wegen eines falschen Verbindungspassworts.",
+        "description": "The most likely cause for this error is that the user typed in the wrong password. Otherwise it's likely to be a bug in the KPRPC protocol, which we would have expected to see some evidence of over the past 5 years."
+    },
+    "conn_setup_invalid_param": {
+        "message": "KeePassFerry hat einen ungültigen Parameter gesendet. Details: $1",
+        "description": "This probably indicates a bug in Kee - we sent something to KeePassRPC that it wasn't expecting."
+    },
+    "conn_setup_missing_param": {
+        "message": "KeePassFerry konnte einen erforderlichen Parameter nicht übertragen. Details: $1",
+        "description": "This probably indicates a bug in Kee - we failed to send some information to KeePassRPC that it required."
+    },
+    "conn_setup_restart": {
+        "message": "KeePassFerry muss die Kopplung neu starten.",
+        "description": "A technical error occurred during the attempt to authorise the link between Kee and KeePassRPC so we need to notify the user that they will need to re-authenticate"
+    },
+    "conn_setup_retype_password": {
+        "message": "Bitte bei Aufforderung ein neues Passwort eingeben.",
+        "description": "The user needs to re-authorise the connection to KeePass by typing in the new KeePassRPC password they're being shown by KeePass."
+    },
+    "conn_setup_server_sl_low": {
+        "message": "KeePassFerry hat die Verbindung abgelehnt, weil das Sicherheitsniveau von KeePass zu niedrig ist. Starte die Kopplung mit einem höheren Sicherheitsniveau neu.",
+        "description": ""
+    },
+    "conn_setup_client_features_missing": {
+        "message": "KeePassFerry muss aktualisiert werden, um mit diesem KeePass-Plugin zu arbeiten. Prüfe, ob du die aktuelle Version der Browsererweiterung verwendest.",
+        "description": "The KeePassRPC server requires features from Kee that this version does not contain."
+    },
+    "conn_setup_server_features_missing": {
+        "message": "Das KeePassFerry-Plugin in KeePass muss aktualisiert werden, damit die Verbindung möglich ist. Installiere die aktuelle Version des Plugins. Anleitung: $1",
+        "description": "The KeePassRPC server does not offer some features that this version of Kee requires."
+    },
+    "conn_sl_high_label": {
+        "message": "Beim Start meines Webbrowsers oder von KeePass jedes Mal nach einem neuen Verbindungspasswort fragen",
+        "description": "Checkbox label to enable high security connection mode when authorising a connection to KeePassRPC"
+    },
+    "conn_sl_high": {
+        "message": "Hoch",
+        "description": ""
+    },
+    "conn_sl_low": {
+        "message": "Niedrig",
+        "description": ""
+    },
+    "conn_sl_medium": {
+        "message": "Mittel",
+        "description": ""
+    },
+    "conn_sl_server_min_desc": {
+        "message": "Damit verhinderst du, dass KeePassFerry sich mit KeePass verbindet, wenn das Sicherheitsniveau zu niedrig eingestellt ist. Das tatsächlich verwendete Niveau siehst du in den Optionen von KeePass.",
+        "description": ""
+    },
+    "conn_sl_server_min": {
+        "message": "Niedrigstes akzeptables KeePass-Sicherheitsniveau",
+        "description": ""
+    },
+    "conn_sl_desc": {
+        "message": "Mit den folgenden Einstellungen legst du fest, wie die Verbindung zwischen Browser und KeePass abgesichert wird. Lies vor einer Änderung bitte die zugehörige Hilfe.",
+        "description": ""
+    },
+    "conn_sl_link": {
+        "message": "Mehr über diese Einstellungen und die Verbindung zwischen Browser und KeePass findest du in der Anleitung.",
+        "description": "Link text to guide user to the manual to get more information about the security of the link to KeePass."
+    },
+    "conn_unknown_error": {
+        "message": "Beim Verbinden mit deiner Passwortdatenbank ist ein unerwarteter Fehler aufgetreten.",
+        "description": "Something went wrong with the KeePassRPC link but we have no idea what."
+    },
+    "conn_unknown_protocol": {
+        "message": "KeePassFerry hat ein ungültiges Protokoll gemeldet.",
+        "description": "Technical error in the communication between Kee and KeePassRPC. Not clear how user could resolve this or if they'll ever see it but it might happen."
+    },
+    "form_id": {
+        "message": "Formular-ID",
+        "description": ""
+    },
+    "form_name": {
+        "message": "Formularname",
+        "description": ""
+    },
+    "further_info_may_follow": {
+        "message": "Weitere Informationen werden folgen: $1",
+        "description": "Phrase used to prefix extra information about a variety of different messages that may or may not be available in the replacement string, usually relating to technical errors and often rendered in the Kee log rather than in a user-facing place."
+    },
+    "matched_logins_label": {
+        "message": "Passende Zugangsdaten",
+        "description": "Header for panels/sections that contain the logins which Kee matched for this page/form"
+    },
+    "pref_Advanced_heading": {
+        "message": "Erweitert",
+        "description": ""
+    },
+    "pref_ConnectionSecurity_heading": {
+        "message": "Verbindungssicherheit",
+        "description": "Heading for panel that contains settings for the security of the connection between Kee and KeePass."
+    },
+    "pref_ConnectionSecurity_explain_change": {
+        "message": "Nach einer Änderung dieser Einstellungen fragt KeePassFerry eventuell nach einem neuen Verbindungspasswort. Zum Ändern selbst brauchst du es nicht: Einstellung anpassen und oben bestätigen.",
+        "description": "Explains what happens if user changes settings for the security of the connection between Kee and KeePass."
+    },
+    "srp_connect": {
+        "message": "Verbinden",
+        "description": "Button action to authorise the connection between Kee and KeePassRPC. Displayed when the user has entered a password and not changed any connection security settings."
+    },
+    "srp_save_connect": {
+        "message": "Speichern und verbinden",
+        "description": "Button action to authorise the connection between Kee and KeePassRPC and save new connection options. Displayed when the user has entered a password and changed connection security settings."
+    },
+    "pref_DoNothing_desc": {
+        "message": "Nichts tun",
+        "description": "Label for configuring Kee to take no action. Specific context may vary but will relate to auto filling and/or submitting"
+    },
+    "pref_FillAndSubmitForm_desc": {
+        "message": "Ausfüllen und absenden",
+        "description": ""
+    },
+    "pref_FillForm_desc": {
+        "message": "Formular ausfüllen",
+        "description": ""
+    },
+    "pref_FillingEntries_heading": {
+        "message": "Einträge ausfüllen",
+        "description": "Heading for section of options panel which contains settings relating to how Kee behaves when filling entries into forms"
+    },
+    "pref_FindingEntries_heading": {
+        "message": "Einträge finden",
+        "description": "Heading for section of options panel which contains settings relating to how Kee behaves when finding entries for a website"
+    },
+    "pref_Logging_heading": {
+        "message": "Fehlerbericht schreiben",
+        "description": "The output of text information that reports on the inner-workings of Kee."
+    },
+    "pref_SavingEntries_heading": {
+        "message": "Eintrag speichern",
+        "description": "Heading for section of options panel which contains settings relating to how Kee behaves when saving new entries"
+    },
+    "pref_autoFillFormsWithMultipleMatches_label": {
+        "message": "Auch ausführen, wenn mehrere passende Einträge gefunden werden",
+        "description": "In reference to the Automatic form filling option, this checkbox option allows the user to say whether they want their selected action to be taken even when there is more than one matching entry."
+    },
+    "pref_autoFillFieldsWithExistingValue_label": {
+        "message": "Auch Felder ausfüllen, die schon Text enthalten",
+        "description": "This checkbox option allows the user to say whether they want fields to be auto-filled if they already have a value. It doesn't affect manual fill requests."
+    },
+    "pref_keePassDBToOpen_label": {
+        "message": "Diese Datenbank beim Öffnen von KeePass verwenden",
+        "description": ""
+    },
+    "pref_keePassRPCPort_label": {
+        "message": "Mit KeePass über diesen TCP/IP-Port kommunizieren",
+        "description": ""
+    },
+    "pref_keePassRPCPortWarning_label": {
+        "message": "Hinweis: Ändere diese Einstellung auch in der Datei KeePass.config.xml, sonst kann KeePassFerry nicht zuverlässig mit KeePass kommunizieren.",
+        "description": "Displayed to the user near the setting for changing the KeePassRPC port"
+    },
+    "pref_logLevel_desc": {
+        "message": "Ausführlichkeit des Protokolls",
+        "description": ""
+    },
+    "pref_logLevelDebugging_label": {
+        "message": "Fehlersuche",
+        "description": "Logging level for the most verbose information about Kee's operation"
+    },
+    "pref_logLevelInformation_label": {
+        "message": "Information",
+        "description": "Logging level for important information about Kee's operation"
+    },
+    "pref_logLevelWarnings_label": {
+        "message": "Warnungen",
+        "description": "Logging level for potential problems"
+    },
+    "pref_logLevelErrors_label": {
+        "message": "Fehler",
+        "description": "Logging level for problems"
+    },
+    "pref_notifyBarRequestPasswordSave_label": {
+        "message": "Speichern neuer Passwörter anbieten",
+        "description": ""
+    },
+    "pref_animateWhenOfferingSave_label": {
+        "message": "Symbol hervorheben, wenn ein Eintrag gespeichert werden kann",
+        "description": "Option to enable or disable the animation of the Kee icon that displays when an entry is available for saving from the main popup panel"
+    },
+    "pref_rememberMRUDB_label": {
+        "message": "Zuletzt verwendete KeePass-Datenbank merken",
+        "description": ""
+    },
+    "pref_preferToSkipWhere_label": {
+        "message": "Neue Einträge ohne Nachfrage in der zuletzt verwendeten Gruppe speichern",
+        "description": "Whether Kee will save new entries to the group most recently chosen by the user without presenting them with the usual Where group chooser interface"
+    },
+    "pref_saveFavicons_label": {
+        "message": "Website-Symbol (Favicon) mitspeichern",
+        "description": "Whether or not Kee will save the website's icon when a new entry is saved"
+    },
+    "pref_searchAllOpenDBs_label": {
+        "message": "Alle geöffneten KeePass-Datenbanken durchsuchen",
+        "description": ""
+    },
+    "pref_when_kee_chooses_standard_form_desc": {
+        "message": "Wenn KeePassFerry passende Zugangsdaten für ein Anmeldeformular findet",
+        "description": "Context/label for user when changing setting relating to auto-fill/submit behaviour. A list of potential actions will be displayed immediately after this string and the user can select their preferred behaviour from that list."
+    },
+    "pref_when_user_chooses_desc": {
+        "message": "Wenn du einen passenden Eintrag auswählst",
+        "description": "Context/label for user when changing setting relating to manual fill/submit behaviour. A list of potential actions will be displayed immediately after this string and the user can select their preferred behaviour from that list."
+    },
+    "site_options_invisible_tip_desc": {
+        "message": "Hinweis: Die Namen und IDs sind manchmal nicht dieselben wie die angezeigten Beschreibungen auf der Webseite. Diese sind im Quellcode der Webseite.",
+        "description": "Explains that the configuration settings might not be what the casual user expects"
+    },
+    "site_options_list_explain_desc": {
+        "message": "Passt ein Formular zu einer der Positivlisten, füllt KeePassFerry es immer aus. Passt es zu einer der Ausschlusslisten, füllt KeePassFerry es nie aus. Passt es zu beiden, wird es ebenfalls nicht ausgefüllt.",
+        "description": "Explains how Kee chooses which forms to fill in"
+    },
+    "pref_Finding_forms_heading": {
+        "message": "Formulare finden",
+        "description": "Settings heading for how Kee finds forms it is (or isn't) interested in filling in with entries from the password manager"
+    },
+    "site_options_valid_form_intro_desc": {
+        "message": "KeePassFerry füllt passende KeePass-Einträge in alle Formulare ein, die ein Passwortfeld haben. Unten kannst du dieses Verhalten anpassen.",
+        "description": "Explains how Kee chooses which forms to fill in"
+    },
+    "text_field_id": {
+        "message": "Textfeld-ID",
+        "description": ""
+    },
+    "text_field_name": {
+        "message": "Textfeld-Name",
+        "description": ""
+    },
+    "white_list": {
+        "message": "Positivliste",
+        "description": "List of items that cause behaviour to be enabled if they match. For example, the list of names of form fields that force Kee to search for logins for the form containing that field."
+    },
+    "Help_Centre_Button_label": {
+        "message": "Hilfe-Zentrum",
+        "description": ""
+    },
+    "cancel": {
+        "message": "Abbrechen",
+        "description": ""
+    },
+    "Logins_Context_Edit_Login_label": {
+        "message": "Log-in-Daten bearbeiten...",
+        "description": ""
+    },
+    "Menu_Button_copyNewPasswordToClipboard_label": {
+        "message": "Neues Passwort generieren...",
+        "description": ""
+    },
+    "Menu_Button_fillCurrentDocument_label": {
+        "message": "Passende Log-in-Daten finden",
+        "description": ""
+    },
+    "Menu_Button_options_label": {
+        "message": "Einstellungen",
+        "description": "Link to the add-on's settings"
+    },
+    "Menu_Button_open_keepass_label": {
+        "message": "KeePass öffnen",
+        "description": "Action button to launch, unlock and/or focus KeePass"
+    },
+    "Menu_Button_open_kee_vault_label": {
+        "message": "Kee Vault öffnen",
+        "description": "Action button to launch, unlock and/or focus Kee Vault"
+    },
+    "Search_label": {
+        "message": "Suchen...",
+        "description": ""
+    },
+    "PasswordProfilesExplanation_label": {
+        "message": "Weitere Passwortprofile legst du in KeePass an.",
+        "description": ""
+    },
+    "copy_password_label": {
+        "message": "Passwort kopieren",
+        "description": ""
+    },
+    "copy_username_label": {
+        "message": "Benutzernamen kopieren",
+        "description": ""
+    },
+    "copy": {
+        "message": "Kopieren",
+        "description": "Prefixed before a field name and id to indicate to the user that when they click here the value for that field will be copied to the clipboard. Displayed before (left) of the field name with a space between this string and the field name."
+    },
+    "copy_value_to_clipboard": {
+        "message": "Wert in die Zwischenablage kopieren",
+        "description": "Indicates to the user that when they click here the value for that field will be copied to the clipboard."
+    },
+    "click_to_reveal_hide": {
+        "message": "Zum Ein- / Ausblenden klicken",
+        "description": "Indicates to the user that when they click here the value of the protected field will be displayed or hidden (toggled)."
+    },
+    "no_name": {
+        "message": "Kein Name",
+        "description": "Used in place of a field name when the specific field has no name. Will be surrounded by [ square brackets ]"
+    },
+    "matches_from_other_sites": {
+        "message": "Passendes von anderen Seiten",
+        "description": "Search results section header."
+    },
+    "create_new_entry": {
+        "message": "Neuen Eintrag erstellen",
+        "description": "Create new entry"
+    },
+    "showing_options_for": {
+        "message": "Optionen anzeigen für",
+        "description": "label for a group of radio buttons that allows the user to change the scope of the settings they are changing - e.g. all websites or just one specific website"
+    },
+    "all_websites": {
+        "message": "Alle Websites",
+        "description": ""
+    },
+    "a_specific_website": {
+        "message": "Eine bestimmte Website",
+        "description": ""
+    },
+    "current_website": {
+        "message": "Aktuelle Webseite",
+        "description": ""
+    },
+    "website": {
+        "message": "Webseite",
+        "description": ""
+    },
+    "website_options_search_placeholder": {
+        "message": "z. B. www.google.de",
+        "description": "A placeholder for the search box where the user searches for the settings that apply to a specific website (per-site settings)"
+    },
+    "website_options_search_tooltip": {
+        "message": "z. B. www.google.de (Bitte NICHT https:// oder andere Protokolle angeben)",
+        "description": "Tooltip/title for the search box where the user searches for the settings that apply to a specific website (per-site settings)"
+    },
+    "generatePassword_copied": {
+        "message": "Ein neues Passwort wurde in die Zwischenablage kopiert.",
+        "description": ""
+    },
+    "generatePassword_instructions": {
+        "message": "Den zu erstellenden Passworttyp wählen:",
+        "description": ""
+    },
+    "generatePassword_done_1": {
+        "message": "Passwort generiert.",
+        "description": ""
+    },
+    "generatePassword_done_2": {
+        "message": "Füge es in ein Feld „Neues Passwort“ oder an beliebiger Stelle ein.",
+        "description": ""
+    },
+    "loggedIn_tip": {
+        "message": "Du bist an deiner Datenbank „$1“ angemeldet.",
+        "description": "Tells the user they are logged into a Kee Vault or KeePass database (and gives its name, if any)"
+    },
+    "loggedInMultiple_tip": {
+        "message": "Du bist an der Datenbank „$1“ angemeldet. „$2“ ist aktiv.",
+        "description": "Tells the user they have more than one KeePass database open and tells them which one is active/selected"
+    },
+    "multiplePasswordSourcesEnabled": {
+        "message": "$1 Passwortquellen aktiviert",
+        "description": "Tells the user how many password databases they have open and unlocked"
+    },
+    "matchedLogin_label": {
+        "message": "$1 - $2",
+        "description": "<username> <seperator> <entry title>"
+    },
+    "matchedLogin_tip": {
+        "message": "$1 in der $2-Gruppe ($3)",
+        "description": "Tooltip displayed over a matched login in the list of matched logins. Params: 1: entry title, 2: group name, 3: username"
+    },
+    "noUsername_partial_tip": {
+        "message": "Kein Benutzername",
+        "description": ""
+    },
+    "notifyBarLaunchKeePass_label": {
+        "message": "Du bist nicht an deiner Passwortdatenbank angemeldet.",
+        "description": ""
+    },
+    "notifyBarLaunchKeePassButton_tip": {
+        "message": "Starte KeePass, um KeePassFerry zu verwenden.",
+        "description": ""
+    },
+    "notifyBarLoginToKeePassButton_tip": {
+        "message": "Entsperre deine KeePass-Datenbank, um KeePassFerry zu verwenden.",
+        "description": ""
+    },
+    "save": {
+        "message": "Speichern",
+        "description": ""
+    },
+    "savePasswordText": {
+        "message": "Soll KeePassFerry dieses Passwort speichern?",
+        "description": ""
+    },
+    "update": {
+        "message": "Aktualisieren",
+        "description": ""
+    },
+    "close": {
+        "message": "Schließen",
+        "description": "Action user can click on to close/dismiss a panel or other user interface element"
+    },
+    "autoclose_countdown": {
+        "message": "Automatisch in $1 Sekunden schließen",
+        "description": "Label for a user interface element which allows the user to disable the auto-close functionality. Also tells the user how many seconds are remaining before the auto-close functionality triggers."
+    },
+    "autoclose_cancelled": {
+        "message": "Automatisches Schließen abgebrochen",
+        "description": "Tells the user that the panel auto-close functionality has been disabled for this panel."
+    },
+    "add": {
+        "message": "Hinzufügen",
+        "description": "Action button for user to add an item to a collection. E.g. add an entry to the list of site-specific settings overrides"
+    },
+    "edit": {
+        "message": "Bearbeiten",
+        "description": "Action button for user to edit an item within a collection. E.g. edit an entry within the list of site-specific settings overrides"
+    },
+    "delete": {
+        "message": "Löschen",
+        "description": "Action button for user to delete an item within a collection. E.g. delete an entry within the list of site-specific settings overrides"
+    },
+    "site_specific_settings_checkbox_explanation": {
+        "message": "Für jeden Abschnitt unten gelten die Einstellungen von „Alle Websites“, außer du aktivierst das Kästchen daneben.",
+        "description": "Explains to the user how the site-specific settings can be enabled and what happens in the default situation"
+    },
+    "site_properties": {
+        "message": "Seiteneigenschaften",
+        "description": "Site properties"
+    },
+    "enter_valid_regex": {
+        "message": "Einen gültigen regulären Ausdruck eingeben oder einen anderen Typ auswählen",
+        "description": "Validation error message displayed to user when they have configured the properties of a site specific configuration to be a regular expression (Regex) but supplied a website value that is not a valid regex"
+    },
+    "site_properties_weight_warning": {
+        "message": "Prüfe bei dieser erweiterten Funktion sorgfältig die Gewichtung der anderen Konfigurationen.",
+        "description": "Warning to users that the match weighting feature of site-specific config is an advanced feature"
+    },
+    "target": {
+        "message": "Ziel",
+        "description": "For differentiating which part of a URL will be matched - e.g domain, hostname or complete page address"
+    },
+    "method": {
+        "message": "Methode",
+        "description": "For differentiating how a text string will be matched - e.g exact, prefix or regex"
+    },
+    "weight": {
+        "message": "Gewichtung",
+        "description": "A number that can be compared to others in order to decide which associated configuration takes precendence."
+    },
+    "yes": {
+        "message": "Ja",
+        "description": "Yes"
+    },
+    "no": {
+        "message": "Nein",
+        "description": "No"
+    },
+    "site_specific_settings_inherit": {
+        "message": "Die gleiche Einstellung wie für alle Webseiten verwenden",
+        "description": "Option for user to say that they want to use whatever the setting is for the top-level settings for all websites, rather than overriding it with a setting for this specific site."
+    },
+    "password": {
+        "message": "Passwort",
+        "description": "Amazingly, didn't have a need for this translation until v2.0 ;-)"
+    },
+    "conn_setup_client_sl_low_resolution": {
+        "message": "Unter Verwendung eines höheren Sicherheitsniveaus verbinden",
+        "description": "Button that will change the security level Kee attempts to use when connecting to the KeePassRPC server."
+    },
+    "learn_more": {
+        "message": "Mehr erfahren",
+        "description": "Action/button/link to send the user to somewhere that they can read more about a topic/concept"
+    },
+    "dont_show_again": {
+        "message": "Nachricht nicht mehr anzeigen",
+        "description": "Button user can click on to cause a message to hide and not reappear"
+    },
+    "upgrade_kee": {
+        "message": "KeePassFerry aktualisieren",
+        "description": "Button user can click on to load a web page with instructions on how to upgrade Kee"
+    },
+    "pref_when_one_matching_network_login": {
+        "message": "Automatisch anmelden, wenn genau eine passende Netzwerkanmeldung (z. B. HTTP-Authentifizierung) gefunden wird",
+        "description": "When the user selects this option, they will be shown the popup dialog with all matching entries for network authentication, unless there is only one match. If not enabled, the user will always see the list of matching logins."
+    },
+    "network_authentication": {
+        "message": "Netzwerkanmeldung",
+        "description": "Heading for popup dialog displayed when HTTP Auth or a proxy requires authentication."
+    },
+    "network_auth_proxy_description": {
+        "message": "Ein Proxy verlangt eine Anmeldung, bevor du auf $1 zugreifen kannst.",
+        "description": "Instructions for popup dialog displayed when a proxy requires authentication."
+    },
+    "network_auth_http_auth_description": {
+        "message": "Eine Website verlangt eine Anmeldung, bevor du auf $1 zugreifen kannst. Die Website meldet: $2",
+        "description": "Instructions for popup dialog displayed when a site requires authentication using HTTP Auth."
+    },
+    "network_auth_choose": {
+        "message": "Ein Anmeldeformular aus der Liste unten auswählen oder dieses Fenster zur händischen Eingabe der Anmeldeinformation schließen.",
+        "description": "Instructions for popup dialog displayed when a site or proxy requires network authentication."
+    },
+    "welcome_to_kee": {
+        "message": "Willkommen bei KeePassFerry",
+        "description": "Header for release notes page. May have a version suffix added to it. E.g. Welcome to Kee 2.0"
+    },
+    "introduction_to_kee": {
+        "message": "KeePassFerry füllt Anmeldeformulare automatisch aus. Das spart Zeit und schützt dich vor gefälschten Seiten.",
+        "description": "Top-level description of what Kee does. Focuses on the most obvious/desirable features that are specific to Kee, rather than generic to the concept of a password manager."
+    },
+    "all_sites_permissions_required_start": {
+        "message": "Dein Browser verlangt einen zusätzlichen Schritt, bevor KeePassFerry arbeiten kann. Wenn du vorher mehr wissen möchtest, lies darüber",
+        "description": "First part of a paragraph that contains 2 links. The first, directly follows this text (a space character is inserted either side of the link) is a link to information about why open source is important for a password manager."
+    },
+    "all_sites_permissions_required_why_open_source_link_text": {
+        "message": "Warum es wichtig ist, Open Source zu sein",
+        "description": "Text for a link to information about why open source is important for a password manager. A space character will be inserted either side of the link."
+    },
+    "all_sites_permissions_required_middle": {
+        "message": "und alle Details findest du unter",
+        "description": "Middle part of the paragraph - surrounded by the two links."
+    },
+    "all_sites_permissions_required_permissions_link_text": {
+        "message": "Berechtigungen",
+        "description": "Text for a link to information about the extension permissions we require and why. A space character will be inserted either side of the link."
+    },
+    "all_sites_permissions_required_end": {
+        "message": "die wir auf unserer Website benötigen.",
+        "description": "Final part of the paragraph, directly preceded by the link to our website page about extension permissions."
+    },
+    "continue": {
+        "message": "fortfahren",
+        "description": "Call to action to proceed with the next step in a process. E.g. asking the browser UI to prompt the user with a new question."
+    },
+    "recommend_action_button_should_be_pinned": {
+        "message": "Weil du KeePassFerry auf den meisten Websites brauchst, empfehlen wir, das Symbol an die Symbolleiste anzuheften:",
+        "description": "Recommends that the user might want to pin the extension to the main toolbar. A screenshot demonstrating this will be displayed directly below (English in the screenshot so not ideal but it's the icons that matter most)."
+    },
+    "kee_works_with_a_password_manager": {
+        "message": "Die Zugangsdaten, die KeePassFerry für dich einträgt, liegen sicher in KeePass hinter einem einzigen Master-Passwort.",
+        "description": "Explains that Kee stores passwords in a password manager that users access through a single password."
+    },
+    "recommend_start_with_kee_vault": {
+        "message": "Wir empfehlen Ihnen, unseren Passwort-Manager Kee Vault auszuprobieren. Es kostet nach einer kostenlosen Testversion nur etwa 20£ pro Jahr, synchronisiert und sichert Ihre Passwörter nahtlos auf allen Ihren Geräten und ist Open Source, genau wie KeePassFerry.",
+        "description": "Recommend the quick and easy option for new users to increase likelihood of long-term usage of a password manager."
+    },
+    "recommend_start_with_kee_vault2": {
+        "message": "Wir bieten auch Apps an, mit denen Sie sich auf Ihren iOS- und Android-Geräten bei anderen Apps und Websites anmelden können.",
+        "description": "Further details about the Kee Vault service."
+    },
+    "kee_still_supports_keepass": {
+        "message": "KeePassFerry arbeitet mit KeePass Password Safe 2 und dem KeePassFerry-Plugin.",
+        "description": "Reassures users that nothing has changed regarding the support of KeePass as a password management source."
+    },
+    "load_kee_vault_now": {
+        "message": "Kee Vault jetzt laden",
+        "description": "Call To Action button text. On click, the Kee Vault app will load and focus in a new tab."
+    },
+    "you_can_use_KeePass_instead": {
+        "message": "Richte dazu KeePass Password Safe 2 mit dem KeePassFerry-Plugin ein.",
+        "description": "Explains that Kee also works with KeePass so they can choose to configure that if they prefer to avoid all financial expenditure."
+    },
+    "table_summarises_differences": {
+        "message": "Die folgende Tabelle fasst die Hauptunterschiede zusammen.",
+        "description": "Introduces the summary table that will help users choose a password manager to start with."
+    },
+    "installation_required": {
+        "message": "Installation erforderlich",
+        "description": "States that the user will need to install components on their computer"
+    },
+    "access_from_multiple_devices": {
+        "message": "Zugriff von mehreren Desktop- und mobilen Geräten",
+        "description": "Covers web browsers and mobiles, laptops, tablets, etc."
+    },
+    "shared_preferences": {
+        "message": "Gemeinsame Einstellungen",
+        "description": "Labels the process of synchronising browser extension and password manager configuration options/preferences across multiple locations."
+    },
+    "yes_configure_once": {
+        "message": "Ja, einmalig konfigurieren",
+        "description": "Supports synchronising browser extension and password manager configuration options/preferences"
+    },
+    "no_configure_multiple": {
+        "message": "Nein, in jedem benutzten Webbrowser oder Gerät konfigurieren",
+        "description": "Does not support synchronising browser extension and password manager configuration options/preferences"
+    },
+    "difficulty": {
+        "message": "Schwierigkeit",
+        "description": "How hard or easy it is to complete a task"
+    },
+    "difficulty_kee_vault": {
+        "message": "Einfach",
+        "description": "Indicates that it is easy to get started with Kee Vault"
+    },
+    "difficulty_keepass": {
+        "message": "Mittel (hart auf Mac-Computern)",
+        "description": "Indicates that more work is required to get started with KeePass"
+    },
+    "keepass_sync_config_explanation": {
+        "message": "Für KeePass kann eine Teillösung für den Zugriff auf mehrere Geräte manuell mit Drittanbieterdiensten konfiguriert werden, von denen einige kostenpflichtig sind. Jedes Gerät muss vorab vorbereitet und konfiguriert werden.",
+        "description": ""
+    },
+    "point_user_to_keepass_install_instructions_start": {
+        "message": "Eine Anleitung zur Installation von KeePass und dem KeePassFerry-Plugin findest du in unserer",
+        "description": "Left part of a sentence that contains a link to the community forum in the middle. For new installations"
+    },
+    "point_user_to_keepass_install_instructions_end": {
+        "message": ".",
+        "description": "Right part of a sentence that contains a link to the community forum in the middle. For new installations"
+    },
+    "point_user_to_tutorial_link_text": {
+        "message": "interaktive Tutorial,",
+        "description": "Name of the link to the interactive tutorial page"
+    },
+    "point_user_to_forum_link_text": {
+        "message": "Community-Forum",
+        "description": "Name of the link to the community forum"
+    },
+    "notification_raised_title": {
+        "message": "KeePassFerry hat eine Benachrichtigung für dich",
+        "description": "Title of a transient native notification displayed on the user's screen to alert them to a notification in the Kee browser action popup."
+    },
+    "notification_yellow_background": {
+        "message": "Das KeePassFerry-Symbol wird hervorgehoben, wenn eine neue Benachrichtigung vorliegt.",
+        "description": "Part of the message within a transient native notification displayed on the user's screen to alert them to a notification in the Kee browser action popup."
+    },
+    "notification_only_shown_some_times": {
+        "message": "Diese ergänzende Pop-up-Benachrichtigung wird nur einige Male angezeigt.",
+        "description": "Appended to the message of a transient native notification displayed on the user's screen when we show the message only a handful of times before assuming they have learnt the contents of the message."
+    },
+    "notification_save_password_tip": {
+        "message": "Öffne KeePassFerry über das Symbol in der Symbolleiste und klicke auf +.",
+        "description": "Part of the message within a transient native notification displayed on the user's screen to tell them how to save a password"
+    },
+    "loading": {
+        "message": "Laden...",
+        "description": "Holding message to be displayed when Kee has to display something to the user to indicate that the requested information or interface element will be displayed shortly."
+    },
+    "version_upgrade_heading_changes": {
+        "message": "Neuerungen in Version",
+        "description": "Heading for the list of changes in a version of Kee. A space and the current version number will be suffixed at the end of this string."
+    },
+    "pref_currentSearchTermTimeout_label": {
+        "message": "Suchbegriff im Popup vergessen nach (Sekunden)",
+        "description": "Setting label to adjust how long the search text a user typed will remain cached, essentially persisting the popup search results for a short time."
+    },
+    "other_technical_improvements": {
+        "message": "Andere technische Verbesserungen",
+        "description": "Heading for the list of additional technical changes in a version of Kee. The changes themselves may be too technical to be worth translating but it's useful if the user knows what the section of the page is about."
+    },
+    "reliability_improvements": {
+        "message": "Verbesserung der Zuverlässigkeit",
+        "description": "Heading for text that explains we have made improvements to the reliability of some aspect of Kee"
+    },
+    "new_icon": {
+        "message": "Neues Icon",
+        "description": "Heading for text that explains we have a new icon / branding"
+    },
+    "kee_vault_announcement_1": {
+        "message": "Kee Vault ist ein neuer Open-Source-Passwortmanager. Er wird in Ihrem Webbrowser ausgeführt, sodass keine Installation erforderlich ist.",
+        "description": "Introduction to what Kee Vault is"
+    },
+    "kee_vault_announcement_2": {
+        "message": "Es funktioniert auf jedem modernen Gerät oder Webbrowser, auch wenn dieser offline ist. Nachdem Sie Ihre vorhandene KeePass-Datenbank importiert haben, können Sie von überall aus auf Ihren Kee Vault zugreifen, wobei Ihre Änderungen und Konfigurationseinstellungen automatisch an jedes Ihrer Geräte und Browser gesendet werden.",
+        "description": "Outlines a few benefits of Kee Vault compared to KeePass"
+    },
+    "kee_vault_announcement_3": {
+        "message": "Seit KeePassFerry Version 3.0 können Sie Kee Vault anstelle der Desktopanwendung KeePass verwenden. Dabei werden alle vorhandenen KeePassFerry-Funktionen wie das Ausfüllen und Speichern von Formularen sowie das Suchen und Generieren von Passwörtern unterstützt.",
+        "description": "Explains that Kee v3 works with Kee Vault"
+    },
+    "pref_automatic": {
+        "message": "Automatisch",
+        "description": "Group of settings that relate to the actions that Kee can take automatically when filling entries"
+    },
+    "pref_manual": {
+        "message": "Manuell",
+        "description": "Group of settings that relate to the actions that Kee takes when the user explicitly asks Kee to fill an entry"
+    },
+    "pref_fill_override_hint": {
+        "message": "Für einzelne Einträge kannst du das Verhalten in KeePass abweichend festlegen.",
+        "description": "Statement to inform the user that they are able to override the associated (automatic) behaviour on a per-entry basis via Kee Vault or KeePass."
+    },
+    "pref_fill_override_option": {
+        "message": "Abweichende Einstellung „Automatisch absenden“ eines Eintrags gilt auch hier",
+        "description": "Checkbox option to allow the user to override the associated (manual) behaviour on a per-entry basis via Kee Vault or KeePass."
+    },
+    "next": {
+        "message": "Weiter",
+        "description": "Action button for user to advance to the next step in a multi-step process. E.g. to confirm username and password for a new entry and load the panel that allows selection of where to save the new entry."
+    },
+    "title": {
+        "message": "Titel",
+        "description": "E.g. the title of an entry."
+    },
+    "username": {
+        "message": "Benutzername",
+        "description": "Use the most generic and common term available for the primary sign-in identifier for an account. In practice may be an email address, number, surname, username, etc. but in all cases this will refer to the string the user has stored in the entry's primary Username field."
+    },
+    "enabled": {
+        "message": "Aktiviert",
+        "description": "Indicates that a boolean option such as a checkbox is in an enabled/on/true state"
+    },
+    "disabled": {
+        "message": "Deaktiviert",
+        "description": "Indicates that a boolean option such as a checkbox is in an disabled/off/false state"
+    },
+    "unsaved_changes": {
+        "message": "Du hast nicht gespeicherte Änderungen.",
+        "description": "Shown to user when the popup is opened and a new or existing entry is part-way through being edited from a recent popup session. Note that very recent popup sessions are automatically 'continued' without the user needing to consider this information."
+    },
+    "continue_saving": {
+        "message": "Speichern fortsetzen",
+        "description": "Action for user to continue editing the same entry that was being edited when the popup recently closed."
+    },
+    "discard_changes": {
+        "message": "Änderungen verwerfen",
+        "description": "Action for user to abandon the changes to the entry that were in progress when the popup recently closed."
+    },
+    "password_profile_hint": {
+        "message": "Wähle die Regeln für das neue Passwort, z. B. Länge und erlaubte Zeichen. Neue Profile legst du in KeePass an.",
+        "description": "Explains what a password profile is and how to create new ones."
+    },
+    "password_profile": {
+        "message": "Passwortprofil",
+        "description": "Name of the profiles used by KeePass and Kee Vault to construct new random passwords."
+    },
+    "url_mismatch_1": {
+        "message": "Dieser Eintrag ist für eine andere Seite.",
+        "description": "1st sentence of a warning message to notify the user that updating the entry will enable its use on a new website."
+    },
+    "url_mismatch_2": {
+        "message": "Wenn du mit dieser Aktualisierung fortfährst, werden diese Zugangsdaten auch auf dieser Seite eingetragen.",
+        "description": "2nd sentence of a warning message to notify the user that updating the entry will enable its use on a new website."
+    },
+    "url_mismatch_3": {
+        "message": "Prüfe, dass dich hier niemand dazu bringen will, dein Passwort preiszugeben!",
+        "description": "3rd sentence of a warning message to notify the user that updating the entry will enable its use on a new website."
+    },
+    "url_mismatch_confirm": {
+        "message": "Ich verstehe das Risiko. Diese Anmeldeinformationen mit $1 teilen.",
+        "description": "Label for a confirmation checkbox for the user to affirm that they want to enable the use of an entry on a new website."
+    },
+    "make_additional_changes_using_full_editor": {
+        "message": "Zusätzliche Änderungen können mit dem vollständigen Editor vorgenommen werden.",
+        "description": "Note to user that the Kee interface does not allow every possible type of edit to an entry."
+    },
+    "open_full_editor": {
+        "message": "Erweiterten Editor öffnen",
+        "description": "Button action to open the full entry editor in KeePass or Kee Vault. Be sure to imply that the need to click the button is 'unusual', as I have done with the word 'advanced'"
+    },
+    "where": {
+        "message": "Wo?",
+        "description": "Brief question to the user to introduce the section in the popup where they can select where their entry will be saved (which database, group, etc.)"
+    },
+    "will_be_copied_to_clipboard": {
+        "message": "Das neue Passwort wird in die Zwischenablage kopiert.",
+        "description": ""
+    },
+    "password_will_be_set_on_field": {
+        "message": "Das Passwortfeld wird auf dieses Passwort gesetzt.",
+        "description": ""
+    },
+    "also_copy_to_clipboard": {
+        "message": "Auch in die Zwischenablage kopieren",
+        "description": "Explains that enabling this option will copy the value to the clipboard in addition to the default behaviour"
+    },
+    "generator_action_copy": {
+        "message": "Kopieren",
+        "description": "Action button to copy to the clipboard a value such as a newly generated password"
+    },
+    "generator_action_apply": {
+        "message": "Anwenden",
+        "description": "Action button to apply a change such as a newly generated password. Resulting alterations are not persisted immediately."
+    },
+    "generator_action_apply_and_copy": {
+        "message": "Weiter und kopieren",
+        "description": "Action button to both copy and apply a change such as a newly generated password. Resulting alterations are not persisted immediately."
+    },
+    "skip_where_reason_domain_entry_exists": {
+        "message": "Diese Frage wird angezeigt, weil bereits ein Eintrag für diese Domain vorhanden ist",
+        "description": "Explains why user is being asked where to save a new entry despite having previously requested to not be asked."
+    },
+    "skip_where_reason_group_not_found": {
+        "message": "Diese Frage erscheint, weil die Gruppe, in der du zuletzt gespeichert hast, nicht gefunden wurde. Sie wurde vielleicht gelöscht oder ausgeblendet, oder die Datenbank ist gerade gesperrt.",
+        "description": "Explains why user is being asked where to save a new entry despite having previously requested to not be asked."
+    },
+    "skip_where_enable_context": {
+        "message": "Neue Einträge immer hier speichern",
+        "description": "Description of checkbox that when enabled will change a setting such that the user is not prompted where to save future entries they create."
+    },
+    "list_version_upgrade_4_0": {
+        "message": "Unterstützung für die neuesten Webbrowser (MV3);Schnellere Verbindung zu KeePass auf einigen Systemen (erfordert KeePassRPC.plgx v2+);Viele Fehlerbehebungen und wahrscheinlich einige neue Fehler eingeführt",
+        "description": "Changes for the version number in the string key name. Multiple items MUST be separated by a semicolon (;). Do not use a semi-colon except as a list-item (new line) separator."
+    },
+    "release_details_for_keepass_available_on_forum": {
+        "message": "Weitere Details findest du in den Versionshinweisen:",
+        "description": "Statement - preceding a link - to notify users that there is a corresponding topic on the community forum that was posted just before this version was submitted to the web browser extension stores for review. Specifically this one calls out that it affects KeePass users (due to KeePassRPC.plgx related information)"
+    },
+    "thanks_for_beta_testing": {
+        "message": "Danke, dass du die Testversion von KeePassFerry ausprobierst! Rückmeldungen und gefundene Fehler helfen, KeePassFerry für alle besser zu machen.",
+        "description": "Message thanking the user for being a Kee beta tester"
+    },
+    "beta_testing_is_good": {
+        "message": "Testerinnen und Tester nutzen einige dieser Verbesserungen schon seit einiger Zeit.",
+        "description": "Brief highlight of one of the benefits of being a Kee beta tester"
+    },
+    "join_the_community_cta": {
+        "message": "Mach mit!",
+        "description": "Call to action to join a community. Initially for beta testing but could be reused for other purposes such as the community forum in future."
+    },
+    "ignore_case": {
+        "message": "Groß-/Kleinschreibung ignorieren",
+        "description": "Enabling this setting will cause a case-insensitive comparison to be made (e.g. when looking for matching names and IDs of forms to fill in)"
+    },
+    "ignore_case_explanation_finding_forms": {
+        "message": "Zum Beispiel passt „suchen“ in einer Liste dann zu „suchen“, „Suchen“ und „SUCHEN“. Lass diese Option am besten aktiviert, außer du hast sehr spezielle Anforderungen.",
+        "description": "Describes the ignore case setting when used for configuring the include and exclude lists for finding forms."
+    },
+    "theme": {
+        "message": "Hell oder dunkel",
+        "description": "The visual theme applied to the extension's user interface. As per convention, the values refer to the predominant shade - i.e. the background colour"
+    },
+    "dark": {
+        "message": "Dunkel",
+        "description": "Black colour or similar; Darkened visual appearance"
+    },
+    "light": {
+        "message": "Hell",
+        "description": "White colour or similar; Bright visual appearance"
+    },
+    "system_preference": {
+        "message": "Wie das System",
+        "description": "The user's configured preference/setting in their system. System is vague because different browsers will implement it in different ways so it could relate to either the user's operating system, their web browser or both."
+    },
+    "theme_system_preference_explanation": {
+        "message": "Nicht jedes System übernimmt die Darstellung automatisch. Bei Bedarf wählst du sie hier selbst.",
+        "description": "Explains what the Theme preference does and why"
+    },
+    "pref_Appearance_heading": {
+        "message": "Darstellung",
+        "description": "Heading for settings/options that relate to the visual appearance of the extension"
+    },
+    "pref_hidden_options_present_explanation": {
+        "message": "KeePassFerry verwaltet für diese Seite zusätzliche Optionen automatisch, deshalb kannst du sie nicht löschen.",
+        "description": "Notification and explanation to user that one or more hidden settings are present for the configuration of a specific site"
+    },
+    "preferred_matching_entry": {
+        "message": "Bevorzugter passender Eintrag",
+        "description": "Label for toggle between preferred status for the specific matched entry the toggle is displayed upon."
+    },
+    "show_confirmation_after_save": {
+        "message": "Bestätigung anzeigen, nachdem ein Eintrag gespeichert wurde",
+        "description": "Label for option to display a confirmation message in the main popup after user has created or updated an entry."
+    },
+    "you_recently_saved": {
+        "message": "Du hast kürzlich einen Eintrag gespeichert",
+        "description": "A confirmation message after user has created or updated an entry."
+    },
+    "KB_shortcut_simple_2_desc": {
+        "message": "In KeePass anmelden / Passende Anmeldungen auswählen / Liste der passenden Anmeldungen anzeigen",
+        "description": "Description of keyboard shortcut setting for the primary action - exact behaviour depends on state when executed"
+    },
+    "saveNotice_title": {
+        "message": "Zugangsdaten in KeePass speichern?",
+        "description": "KeePassFerry save notice"
+    },
+    "saveNotice_text": {
+        "message": "Die soeben eingegebenen Zugangsdaten sind noch nicht in KeePass gespeichert.",
+        "description": "KeePassFerry save notice"
+    },
+    "saveNotice_save": {
+        "message": "Speichern …",
+        "description": "KeePassFerry save notice"
+    },
+    "saveNotice_dismiss": {
+        "message": "Nicht jetzt",
+        "description": "KeePassFerry save notice"
+    },
+    "otp_code_tip": {
+        "message": "Einmalcode, noch $1 Sekunden gültig",
+        "description": "KeePassFerry one-time code"
+    },
+    "otp_copy_tip": {
+        "message": "Einmalcode kopieren",
+        "description": "KeePassFerry one-time code"
+    },
+    "otpNotice_title": {
+        "message": "Zwei-Faktor-Schlüssel gefunden",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpNotice_text": {
+        "message": "Speichere den Schlüssel für $1 in KeePass. Danach trägt KeePassFerry die Einmalcodes automatisch ein.",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpNotice_save": {
+        "message": "In KeePass speichern …",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_heading": {
+        "message": "Zwei-Faktor-Schlüssel speichern",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_choose": {
+        "message": "Zu welchem Eintrag gehört der Schlüssel?",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_search": {
+        "message": "Anderen Eintrag suchen",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_hasOtp": {
+        "message": "hat schon einen Einmalcode",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_lastUsed": {
+        "message": "eben verwendet",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_replaceWarning": {
+        "message": "Dieser Eintrag hat schon einen Einmalcode. Der bisherige Schlüssel bleibt in der Eintragshistorie erhalten.",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_save": {
+        "message": "Speichern",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_replace": {
+        "message": "Ersetzen",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_cancel": {
+        "message": "Abbrechen",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_done": {
+        "message": "Gespeichert. Der erste Code wurde auf der Seite eingetragen.",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_none": {
+        "message": "Kein passender Eintrag gefunden. Such den Eintrag über das Suchfeld.",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_error": {
+        "message": "Speichern hat nicht geklappt. Prüfe bitte, ob KeePass entsperrt ist.",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "otpSetup_nothing": {
+        "message": "Auf dieser Seite wurde kein Zwei-Faktor-Schlüssel gefunden.",
+        "description": "KeePassFerry two-factor setup"
+    },
+    "action_keepass_not_running": {
+        "message": "KeePassFerry – keine Verbindung zu KeePass. Starte KeePass.",
+        "description": "KeePassFerry toolbar button tooltip"
+    },
+    "action_unlock_keepass": {
+        "message": "KeePass ist gesperrt – klicken, um zu entsperren",
+        "description": "KeePassFerry toolbar button tooltip"
+    },
+    "attachment_paste_hint": {
+        "message": "Screenshot einfügen (Strg+V) oder Bild hierher ziehen – wird als Anhang gespeichert",
+        "description": "KeePassFerry image attachment"
+    },
+    "attachment_saving": {
+        "message": "Wird gespeichert …",
+        "description": "KeePassFerry image attachment"
+    },
+    "attachment_saved": {
+        "message": "Als Anhang gespeichert: $1 ($2 KB)",
+        "description": "KeePassFerry image attachment"
+    },
+    "attachment_failed": {
+        "message": "Das Bild konnte nicht gespeichert werden (nur Bilder bis 20 MB, KeePass muss entsperrt sein).",
+        "description": "KeePassFerry image attachment"
+    },
+    "pairing_title": {
+        "message": "KeePassFerry mit KeePass koppeln",
+        "description": "KeePassFerry secure channel"
+    },
+    "pairing_message": {
+        "message": "KeePass zeigt jetzt einen Prüfcode. Stimmt er mit $1 überein, klicke in KeePass auf „Verbinden“.",
+        "description": "KeePassFerry secure channel"
+    },
+    "pairing_denied": {
+        "message": "Die Kopplung wurde in KeePass abgelehnt. KeePassFerry fragt in einer Minute erneut.",
+        "description": "KeePassFerry secure channel"
+    },
+    "security_warning_title": {
+        "message": "KeePassFerry: Sicherheitswarnung",
+        "description": "KeePassFerry secure channel"
+    },
+    "security_server_key_changed": {
+        "message": "Die KeePass-Gegenstelle weist sich mit einem anderen Schlüssel aus als bisher. KeePassFerry verbindet sich deshalb nicht. Falls du KeePass oder das Plugin neu eingerichtet hast, setze die Kopplung in den Einstellungen zurück.",
+        "description": "KeePassFerry secure channel"
+    },
+    "passkey_create_heading": {
+        "message": "Passkey in KeePass speichern",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_create_question": {
+        "message": "In welchem Eintrag soll der Passkey gespeichert werden?",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_new_entry": {
+        "message": "Neuen Eintrag anlegen",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_no_username": {
+        "message": "ohne Benutzernamen",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_just_used": {
+        "message": "eben verwendet",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_has_passkey": {
+        "message": "hat schon einen Passkey",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_replace_warning": {
+        "message": "Dieser Eintrag hat schon einen Passkey. Er wird ersetzt, der bisherige bleibt in der Eintragshistorie erhalten.",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_save": {
+        "message": "Speichern",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_replace": {
+        "message": "Ersetzen",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_cancel": {
+        "message": "Abbrechen",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_other_device": {
+        "message": "Anderes Gerät verwenden",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_get_heading": {
+        "message": "Mit Passkey anmelden",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_get_question_one": {
+        "message": "Mit diesem Passkey aus KeePass anmelden:",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_get_question_many": {
+        "message": "Welchen Passkey aus KeePass möchtest du verwenden?",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_sign_in": {
+        "message": "Anmelden",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_signal_heading": {
+        "message": "Passkey nicht mehr gültig",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_signal_question_one": {
+        "message": "Die Website meldet, dass es diesen Passkey bei ihr nicht mehr gibt. Möchtest du ihn aus KeePass entfernen?",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_signal_question_many": {
+        "message": "Die Website meldet, dass es diese Passkeys bei ihr nicht mehr gibt. Wähle den Passkey, den du aus KeePass entfernen möchtest.",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_signal_recycle": {
+        "message": "Der Eintrag enthält nur diesen Passkey und wird in den Papierkorb verschoben.",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_signal_fields": {
+        "message": "Nur der Passkey wird entfernt. Benutzername, Passwort und alle weiteren Daten bleiben erhalten, der bisherige Stand liegt in der Eintragshistorie.",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_signal_remove": {
+        "message": "Entfernen",
+        "description": "KeePassFerry passkeys"
+    },
+    "passkey_signal_keep": {
+        "message": "Behalten",
+        "description": "KeePassFerry passkeys"
+    },
+    "ferry_settings_title": {
+        "message": "Einstellungen",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_connection_heading": {
+        "message": "Verbindung",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_unknown": {
+        "message": "Status wird ermittelt …",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_connected": {
+        "message": "Mit KeePass verbunden",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_locked": {
+        "message": "KeePass ist gesperrt",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_locked_hint": {
+        "message": "Sobald eine Seite Zugangsdaten braucht, fragt KeePass nach Windows Hello bzw. deinem Master-Passwort.",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_blocked": {
+        "message": "Verbindung pausiert",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_blocked_hint": {
+        "message": "Die Kopplung wurde abgelehnt oder KeePass meldet einen anderen Schlüssel als bisher. Wenn das von dir ausging (z. B. KeePass neu eingerichtet), setze die Kopplung zurück.",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_no_host": {
+        "message": "KeePassFerry-Plugin nicht gefunden",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_no_host_hint": {
+        "message": "Installiere das KeePassFerry-Plugin in KeePass und starte KeePass einmal, damit sich die Verbindung einrichtet.",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_not_running": {
+        "message": "KeePass läuft nicht",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_status_not_running_hint": {
+        "message": "Starte KeePass. Die Verbindung wird dann automatisch hergestellt.",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_reset_pairing": {
+        "message": "Kopplung zurücksetzen",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_reset_pairing_hint": {
+        "message": "Erzeugt einen neuen Schlüssel für diesen Browser. KeePass fragt danach erneut mit einem Prüfcode nach.",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_reset_pairing_button": {
+        "message": "Zurücksetzen",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_reset_pairing_confirm": {
+        "message": "Kopplung mit KeePass wirklich zurücksetzen? Du bestätigst danach in KeePass einen neuen Prüfcode.",
+        "description": "KeePassFerry settings"
+    },
+    "ferry_more_actions": {
+        "message": "Weitere Aktionen",
+        "description": "KeePassFerry"
+    },
+    "ferry_status_pairing": {
+        "message": "Kopplung in KeePass bestätigen",
+        "description": "KeePassFerry"
+    },
+    "ferry_status_pairing_hint": {
+        "message": "KeePass zeigt einen Prüfcode. Klicke dort nur auf „Verbinden“, wenn er $1 lautet.",
+        "description": "KeePassFerry"
+    },
+    "ferry_popup_locked_hint": {
+        "message": "Entsperre deine Datenbank, damit KeePassFerry Zugangsdaten vorschlagen kann.",
+        "description": "KeePassFerry"
+    },
+    "ferry_popup_unlock": {
+        "message": "Entsperren",
+        "description": "KeePassFerry"
+    },
+    "ferry_footer_locked": {
+        "message": "Gesperrt",
+        "description": "KeePassFerry"
+    },
+    "ferry_footer_offline": {
+        "message": "Nicht verbunden",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_intro": {
+        "message": "KeePassFerry verbindet deinen Browser direkt mit KeePass: Zugangsdaten, Einmalcodes und Passkeys kommen sicher aus deiner Datenbank, ohne offene Netzwerkports.",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_permission_title": {
+        "message": "Zugriff auf Websites erlauben",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_permission_text": {
+        "message": "Damit KeePassFerry Anmeldeformulare erkennen und ausfüllen kann, braucht die Erweiterung Zugriff auf die Websites, die du besuchst. Deine Daten verlassen dabei nie deinen Computer.",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_step1_title": {
+        "message": "KeePassFerry-Plugin in KeePass installieren",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_step1_text": {
+        "message": "Kopiere den Ordner „KeePassFerry“ in den Unterordner „Plugins“ von KeePass Password Safe 2 und starte KeePass neu.",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_step2_title": {
+        "message": "KeePass starten und entsperren",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_step2_text": {
+        "message": "Die Verbindung baut sich von selbst auf. Später entsperrt KeePassFerry deine Datenbank bei Bedarf im Hintergrund, z. B. mit Windows Hello.",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_step3_title": {
+        "message": "Prüfcode vergleichen und verbinden",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_step3_text": {
+        "message": "Beim ersten Mal zeigen Browser und KeePass denselben 6-stelligen Code. Stimmt er überein, klicke in KeePass auf „Verbinden“.",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_ready": {
+        "message": "Alles bereit",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_ready_hint": {
+        "message": "KeePassFerry ist mit KeePass verbunden. Du kannst diese Seite schließen.",
+        "description": "KeePassFerry"
+    },
+    "ferry_welcome_pin": {
+        "message": "Tipp: Hefte KeePassFerry an die Symbolleiste an. Klicke dazu auf das Puzzleteil-Symbol (Erweiterungen) und dann auf das Symbol neben KeePassFerry.",
+        "description": "KeePassFerry"
+    },
+    "passkey_from_keepass": {
+        "message": "Passkey in KeePass",
+        "description": "KeePassFerry"
+    },
+    "ferry_popup_this_site": {
+        "message": "Für diese Website",
+        "description": "KeePassFerry"
+    },
+    "ferry_field_icon_label": {
+        "message": "KeePassFerry: passende Zugangsdaten anzeigen",
+        "description": "KeePassFerry"
+    },
+    "ferry_otp_icon_label": {
+        "message": "KeePassFerry: aktuellen Einmalcode eintragen",
+        "description": "KeePassFerry"
+    },
+    "ferry_diag_label": {
+        "message": "Diagnoseprotokoll schreiben",
+        "description": "KeePassFerry"
+    },
+    "ferry_diag_hint": {
+        "message": "Für die Fehlersuche: KeePassFerry protokolliert Abläufe (erkannte Felder, Entscheidungen) in Dokumente\\KeePassFerry\\diagnose.log. Passwörter, Codes und Feldinhalte werden nie protokolliert.",
+        "description": "KeePassFerry"
+    },
+    "ferry_otp_icon_remaining": {
+        "message": "Code noch $1 s gültig – klicken, um einen neuen Code einzutragen",
+        "description": "KeePassFerry"
+    },
+    "ferry_otp_icon_locked": {
+        "message": "KeePass ist gesperrt – klicken, um zu entsperren und den aktuellen Code einzutragen",
+        "description": "KeePassFerry"
+    },
+    "ferry_field_icon_locked": {
+        "message": "KeePass ist gesperrt – klicken, um zu entsperren",
+        "description": "KeePassFerry"
+    }
+}

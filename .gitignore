@@ -1,0 +1,25 @@
+# Private Arbeitsdaten (nie veröffentlichen)
+/testdaten/
+/installiert/
+/referenz/
+/CLAUDE.md
+*.pem
+*.kdbx
+*.key
+
+# Build-Ausgaben
+bin/
+obj/
+/extension/extension/
+/extension/node_modules/
+/extension/*.zip
+/release/
+*.pdb
+*.plgx
+
+# Werkzeuge
+.vs/
+*.user
+*.suo
+.idea/
+*.log

@@ -1,0 +1,115 @@
+# Baut Plugin, Host und Erweiterung und veröffentlicht ein GitHub-Release.
+# Auslöser: Tag "v1.2.3" (muss zur Version in extension/package.json passen) oder manuell (nur Build, kein Release).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  KEEPASS_VERSION: "2.61.1"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version bestimmen und prüfen
+        shell: pwsh
+        run: |
+          $pkg = (Get-Content extension/package.json -Raw | ConvertFrom-Json).version
+          $asm = (Select-String plugin/KeePassRPC/Properties/AssemblyInfo.cs -Pattern 'AssemblyInformationalVersion\("([^"]+)"\)').Matches[0].Groups[1].Value
+          $hostV = ([xml](Get-Content host/KeePassFerryHost/KeePassFerryHost.csproj -Raw)).Project.PropertyGroup.Version
+          "package.json=$pkg AssemblyInfo=$asm Host=$hostV"
+          if ($pkg -ne $asm -or $pkg -ne $hostV) { throw "Versionen stimmen nicht überein" }
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $tag = "${{ github.ref_name }}".TrimStart("v")
+            if ($tag -ne $pkg) { throw "Tag v$tag passt nicht zur Version $pkg" }
+          }
+          "VERSION=$pkg" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: KeePass als Build-Referenz laden
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:USERPROFILE "KeePassDEV"
+          $url = "https://downloads.sourceforge.net/project/keepass/KeePass%202.x/$env:KEEPASS_VERSION/KeePass-$env:KEEPASS_VERSION.zip"
+          curl.exe -L --fail --retry 3 -A "Wget/1.21" -o keepass.zip $url
+          Expand-Archive keepass.zip -DestinationPath $dir -Force
+          New-Item -ItemType Directory -Force (Join-Path $dir "Plugins") | Out-Null
+          if (-not (Test-Path (Join-Path $dir "KeePass.exe"))) { throw "KeePass.exe fehlt" }
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Plugin bauen
+        shell: pwsh
+        run: msbuild plugin/KeePassRPC/KeePassRPC.csproj -t:Build -p:Configuration=Release -p:TargetFrameworkVersion=v4.8 -v:minimal -nologo
+
+      - name: Host bauen
+        shell: pwsh
+        run: dotnet build host/KeePassFerryHost -c Release -nologo
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Erweiterung bauen
+        working-directory: extension
+        shell: pwsh
+        run: |
+          npm ci
+          npm run build-chrome:prod
+
+      - name: Pakete schnüren
+        shell: pwsh
+        run: |
+          $out = "release"
+          $plug = "$out/KeePassFerry"
+          New-Item -ItemType Directory -Force $plug | Out-Null
+          $bin = "plugin/KeePassRPC/bin/Release"
+          foreach ($f in "KeePassFerry.dll", "Jayrock.dll", "Jayrock.Json.dll", "DomainPublicSuffix.dll") { Copy-Item "$bin/$f" $plug }
+          $hostBin = "host/KeePassFerryHost/bin/Release/net48"
+          Copy-Item "$hostBin/KeePassFerryHost.exe", "$hostBin/KeePassFerryHost.exe.config" $plug
+          Copy-Item plugin/LICENSE "$plug/LICENSE.txt"
+          Copy-Item NOTICE.md "$plug/NOTICE.md"
+          Compress-Archive -Path $plug -DestinationPath "$out/KeePassFerry-Plugin-$env:VERSION.zip"
+          Compress-Archive -Path extension/extension/* -DestinationPath "$out/KeePassFerry-Extension-$env:VERSION.zip"
+          Get-ChildItem $out -Filter *.zip | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
+          } | Out-File "$out/SHA256SUMS.txt" -Encoding ascii
+          Get-Content "$out/SHA256SUMS.txt"
+
+      - name: Versionshinweise aus CHANGELOG.md
+        shell: pwsh
+        run: |
+          $lines = Get-Content CHANGELOG.md
+          $start = ($lines | Select-String -Pattern "^## $([regex]::Escape($env:VERSION))\b").LineNumber
+          if (-not $start) { throw "Kein Abschnitt '## $env:VERSION' in CHANGELOG.md" }
+          $rest = $lines[$start..($lines.Count - 1)]
+          $end = ($rest | Select-String -Pattern "^## ").LineNumber | Select-Object -First 1
+          $notes = if ($end) { $rest[0..($end - 2)] } else { $rest }
+          $notes | Out-File release/NOTES.md -Encoding utf8
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KeePassFerry-${{ env.VERSION }}
+          path: |
+            release/*.zip
+            release/SHA256SUMS.txt
+
+      - name: GitHub-Release anlegen
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: KeePassFerry ${{ env.VERSION }}
+          body_path: release/NOTES.md
+          files: |
+            release/KeePassFerry-Plugin-${{ env.VERSION }}.zip
+            release/KeePassFerry-Extension-${{ env.VERSION }}.zip
+            release/SHA256SUMS.txt

@@ -1,0 +1,142 @@
+import { App as VueApp, createApp, h } from "vue";
+import { createVuetify } from "vuetify";
+import App from "./App.vue";
+import OtpSetup from "./OtpSetup.vue";
+import useStore, { KeeStore } from "../store";
+import { KeeLog } from "../common/Logger";
+import { configManager } from "../common/ConfigManager";
+import { AddonMessage } from "../common/AddonMessage";
+import { Port } from "../common/port";
+import { createPinia } from "pinia";
+import { Action } from "../common/Action";
+import "../styles";
+import "./ferry.css";
+import * as components from "vuetify/components";
+import * as directives from "vuetify/directives";
+import { IPCPiniaPlugin } from "../common/IPCPiniaPlugin";
+
+const piniaInstance = createPinia();
+let vueApp: VueApp<Element>;
+let store: KeeStore;
+
+async function start() {
+    await configManager.load();
+    KeeLog.debug("popup starting");
+    KeeLog.attachConfig(configManager.current);
+    Port.startup("browserPopup");
+
+    Port.raw.onMessage.addListener(function (m: AddonMessage) {
+        KeeLog.debug("In browser popup script, received message from background script.");
+
+        if (m.initialState) {
+
+        try {
+            vueApp = createApp({
+                mounted: function () {
+                    // This can wait until after the popup app has rendered, at least until there is
+                    // some way to launch in password generation mode
+                    Port.postMessage({
+                        action: Action.GetPasswordProfiles
+                    });
+                },
+                // ?otp=1: aus dem Seitenhinweis "Zwei-Faktor-Schlüssel gefunden" geöffnet
+                render: () => new URLSearchParams(window.location.search).get("otp") === "1"
+                    ? h(OtpSetup)
+                    : h(App, {
+                        matchedEntries: !m.entries ? null : m.entries,
+                        siteEntries: (m as any).siteEntries ?? null,
+                        frameId: m.frameId
+                    })
+            });
+
+            // KeePassFerry-Farben (wie Einstellungsseite und Passkey-Dialog), abgerundete Bedienelemente
+            const vuetify = createVuetify({
+                components,
+                directives,
+                defaults: {
+                    VCard: { rounded: "lg" },
+                    VBtn: { rounded: "lg" },
+                    VAlert: { rounded: "lg" },
+                    VTextField: { rounded: "lg" },
+                    VSelect: { rounded: "lg" }
+                },
+                theme: {
+                    defaultTheme: configManager.activeTheme,
+                    themes: {
+                        dark: {
+                            dark: true,
+                            colors: {
+                                background: "#0b1120",
+                                surface: "#111827",
+                                primary: "#3b82f6",
+                                secondary: "#334155",
+                                tertiary: "#f97316",
+                                error: "#ef4444",
+                                info: "#38bdf8",
+                                success: "#22c55e",
+                                warning: "#f59e0b"
+                            }
+                        },
+                        light: {
+                            dark: false,
+                            colors: {
+                                background: "#f4f6fb",
+                                surface: "#ffffff",
+                                primary: "#1d4ed8",
+                                secondary: "#e2e8f0",
+                                tertiary: "#ea580c",
+                                error: "#dc2626",
+                                info: "#0284c7",
+                                success: "#16a34a",
+                                warning: "#d97706"
+                            }
+                        }
+                    }
+                }
+            });
+            piniaInstance.use(IPCPiniaPlugin);
+            vueApp.use(vuetify);
+            vueApp.use(piniaInstance);
+            vueApp.config.globalProperties.$chrome = chrome;
+            vueApp.config.globalProperties.$i18n = chrome.i18n.getMessage;
+            store = useStore();
+
+            store.$patch(m.initialState);
+
+            vueApp.mount("#main");
+            //TODO:f: Sometimes popup size is wrong initially. Possibly only when in dev
+            // mode and it's much slower to load everything? In any case, might be
+            // affected by timing of when we mount the main app to the popup DOM
+            // Each time I've seen it, it's an extra 16px right and bottom.
+            // (footer padding = 8px each side; extra width and height = 16px.
+            // I changed default from 16px 8px so height is unchanged.)
+
+            // This maybe could be moved to onMounted once all vuex state is changed before this popup is opened.
+            window.setTimeout(() => {
+                window.focus();
+                const sb = $("#searchBox");
+                if (sb) sb.focus();
+                window.scrollTo(0, 0);
+            }, 50);
+        } catch (e) {
+            KeeLog.error("Failed to create user interface.", e);
+        }
+        }
+        if (m.mutation) {
+            store.onRemoteMessage(Port.raw, m.mutation);
+            return;
+        }
+
+        if (store?.connected && m.findMatchesResult) {
+            store.updateSearchResultWithFullDetails(
+                JSON.parse(JSON.stringify(m.findMatchesResult[0]))
+            );
+        }
+    });
+
+    KeeLog.info("popup ready");
+}
+
+(async () => {
+    await start();
+})();

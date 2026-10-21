@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- KeePassFerry: Fähre (Rumpf) bringt einen Schlüssel über die Wellen -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e5fa8"/>
+      <stop offset="1" stop-color="#0b3463"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#bg)"/>
+  <!-- Schlüssel -->
+  <circle cx="42" cy="47" r="15" fill="none" stroke="#ffffff" stroke-width="9"/>
+  <path d="M57 47 H100 M88 47 V60 M99 47 V57" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Rumpf der Fähre -->
+  <path d="M18 72 H110 L97 94 Q95 97 91 97 H37 Q33 97 31 94 Z" fill="#22c55e"/>
+  <!-- Wellen -->
+  <path d="M20 108 q 8.8 -7 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0" fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linecap="round"/>
+</svg>

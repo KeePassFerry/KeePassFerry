@@ -1,0 +1,26 @@
+/* KeePassFerry: gemeinsame Feinheiten für das Popup (Vuetify) */
+.v-btn {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-weight: 600;
+}
+.v-btn--variant-elevated {
+    box-shadow: none;
+}
+.v-field--variant-outlined {
+    border-radius: 10px;
+}
+.v-alert {
+    border-radius: 12px !important;
+}
+.v-input__append .v-btn--variant-text,
+.v-field__append-inner .v-btn--variant-text {
+    opacity: 0.65;
+}
+.v-input__append .v-btn--variant-text:hover {
+    opacity: 1;
+}
+/* Suchfeld: eigene Hintergrundfarbe statt Vuetify-Überlagerung */
+.ferry-bar .search .v-field__overlay {
+    opacity: 0 !important;
+}
