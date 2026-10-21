@@ -9,6 +9,10 @@
 #ifndef SourceDir
   #define SourceDir "..\release\KeePassFerry"
 #endif
+; Store-Seiten der Erweiterung; leer = (noch) nicht im Store, Häkchen erscheint dann nicht
+#define EdgeStoreUrl "https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg"
+#define ChromeStoreUrl ""
+#define FirefoxStoreUrl ""
 
 [Setup]
 AppId={{6E0F2F4B-6C55-4B6E-9A8E-4E4C1F1E8A2D}
@@ -55,8 +59,21 @@ en.NoKeePassExe=No KeePass.exe was found in this folder. Please select the KeePa
 de.FinishHint=Starten Sie KeePass und öffnen Sie Ihre Datenbank. Beim ersten Verbinden zeigen KeePass und der Browser denselben sechsstelligen Code – bestätigen Sie ihn in KeePass.
 en.FinishHint=Start KeePass and open your database. When connecting for the first time, KeePass and the browser show the same six-digit code – confirm it in KeePass.
 
+de.AddToEdge=KeePassFerry in Microsoft Edge hinzufügen (öffnet die Store-Seite)
+en.AddToEdge=Add KeePassFerry to Microsoft Edge (opens the store page)
+de.AddToChrome=KeePassFerry in Google Chrome hinzufügen (öffnet die Store-Seite)
+en.AddToChrome=Add KeePassFerry to Google Chrome (opens the store page)
+de.AddToFirefox=KeePassFerry in Firefox hinzufügen (öffnet die Add-on-Seite)
+en.AddToFirefox=Add KeePassFerry to Firefox (opens the add-on page)
+
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}\Plugins\KeePassFerry"; Flags: ignoreversion recursesubdirs
+
+[Run]
+; Letzte Seite: je installiertem Browser ein Häkchen; öffnet die Store-Seite in genau diesem Browser (als normaler Benutzer)
+Filename: "{code:BrowserExe|msedge}"; Parameters: """{#EdgeStoreUrl}"""; Description: "{cm:AddToEdge}"; Flags: postinstall nowait skipifsilent runasoriginaluser; Check: OfferBrowser('msedge', '{#EdgeStoreUrl}')
+Filename: "{code:BrowserExe|chrome}"; Parameters: """{#ChromeStoreUrl}"""; Description: "{cm:AddToChrome}"; Flags: postinstall nowait skipifsilent runasoriginaluser unchecked; Check: OfferBrowser('chrome', '{#ChromeStoreUrl}')
+Filename: "{code:BrowserExe|firefox}"; Parameters: """{#FirefoxStoreUrl}"""; Description: "{cm:AddToFirefox}"; Flags: postinstall nowait skipifsilent runasoriginaluser unchecked; Check: OfferBrowser('firefox', '{#FirefoxStoreUrl}')
 
 [UninstallDelete]
 Type: dirifempty; Name: "{app}\Plugins\KeePassFerry"
@@ -81,6 +98,25 @@ begin
     else
       Result := ExpandConstant('{commonpf}\KeePass Password Safe 2');
   end;
+end;
+
+// Pfad eines installierten Browsers über "App Paths" (msedge, chrome, firefox); leer, wenn nicht installiert
+function BrowserExe(Name: String): String;
+var
+  Path: String;
+begin
+  Result := '';
+  if RegQueryStringValue(HKLM, 'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\' + Name + '.exe', '', Path) or
+     RegQueryStringValue(HKCU, 'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\' + Name + '.exe', '', Path) then
+  begin
+    Path := RemoveQuotes(Path);
+    if FileExists(Path) then Result := Path;
+  end;
+end;
+
+function OfferBrowser(Name, StoreUrl: String): Boolean;
+begin
+  Result := (StoreUrl <> '') and (BrowserExe(Name) <> '');
 end;
 
 procedure InitializeWizard;

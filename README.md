@@ -9,6 +9,12 @@
   logins, one-time codes and passkeys from your own KeePass database — no open ports, no cloud.
 </p>
 
+<p align="center">
+  <a href="https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/KeePassFerry-Setup.exe"><b>Download setup for KeePass</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg"><b>Get it for Microsoft Edge</b></a>
+</p>
+
 ---
 
 ## Features
