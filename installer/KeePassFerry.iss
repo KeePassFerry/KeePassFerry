@@ -42,7 +42,9 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 SetupIconFile=..\branding\keepassferry.ico
-UninstallDisplayIcon={app}\Plugins\KeePassFerry\KeePassFerryHost.exe
+; Deinstallationsprogramm im Plugin-Ordner, nicht neben dem von KeePass; es trägt das KeePassFerry-Symbol
+UninstallFilesDir={app}\Plugins\KeePassFerry
+UninstallDisplayIcon={uninstallexe}
 UninstallDisplayName=KeePassFerry (KeePass-Plugin)
 LicenseFile={#SourceDir}\LICENSE.txt
 VersionInfoVersion={#AppVersion}
@@ -87,6 +89,7 @@ Type: dirifempty; Name: "{app}\Plugins\KeePassFerry"
 [Code]
 var
   KeePassRunningAtStart: Boolean;
+  PreviousUninstaller: String;
 
 // Läuft KeePass.exe gerade? (WMI; bei Fehlern: nein)
 function IsKeePassRunning: Boolean;
@@ -103,11 +106,41 @@ begin
   end;
 end;
 
+// Deinstallationsprogramm einer früheren Installation (laut Registry), sonst leer
+function RegisteredUninstaller: String;
+var
+  Key, Value: String;
+begin
+  Result := '';
+  Key := 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{6E0F2F4B-6C55-4B6E-9A8E-4E4C1F1E8A2D}_is1';
+  if RegQueryStringValue(HKLM, Key, 'UninstallString', Value) or
+     RegQueryStringValue(HKLM, 'SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{6E0F2F4B-6C55-4B6E-9A8E-4E4C1F1E8A2D}_is1', 'UninstallString', Value) or
+     RegQueryStringValue(HKCU, Key, 'UninstallString', Value) then
+    Result := RemoveQuotes(Value);
+end;
+
 // Vor dem Beenden durch den Restart Manager merken, ob KeePass lief
 function InitializeSetup: Boolean;
 begin
   KeePassRunningAtStart := IsKeePassRunning;
+  PreviousUninstaller := RegisteredUninstaller;
   Result := True;
+end;
+
+// Versionen bis 1.0.4 legten das Deinstallationsprogramm in den KeePass-Ordner (unins001.exe o. ä.).
+// Nur genau dieses, laut Registry unser eigenes, wird entfernt; das von KeePass (unins000.exe) bleibt unberührt.
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Old: String;
+begin
+  if CurStep <> ssPostInstall then Exit;
+  Old := PreviousUninstaller;
+  if (Old = '') or (CompareText(Old, ExpandConstant('{uninstallexe}')) = 0) then Exit;
+  if CompareText(RemoveBackslash(ExtractFileDir(Old)), RemoveBackslash(ExpandConstant('{app}'))) <> 0 then Exit;
+  if Pos('unins', Lowercase(ExtractFileName(Old))) <> 1 then Exit;
+  DeleteFile(Old);
+  DeleteFile(ChangeFileExt(Old, '.dat'));
+  DeleteFile(ChangeFileExt(Old, '.msg'));
 end;
 
 function KeePassWasRunning: Boolean;
