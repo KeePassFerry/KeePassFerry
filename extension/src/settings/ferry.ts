@@ -14,6 +14,8 @@ type Status = {
     blockedUntil: number;
     hostError: string;
     databases: string[];
+    pluginVersion?: string;
+    pluginOutdated?: boolean;
 };
 
 // Eigene Passwortspeicherung von Edge: abschalten (KeePassFerry übernimmt) oder wieder freigeben
@@ -73,10 +75,14 @@ async function refreshStatus() {
         tone = "off";
         t = $STR("ferry_status_unknown");
         d = "";
+    } else if (s.connected && s.pluginOutdated) {
+        tone = "warn";
+        t = $STR("ferry_plugin_update_title");
+        d = $STR("ferry_plugin_update_message");
     } else if (s.connected && s.databases.length > 0) {
         tone = "ok";
         t = $STR("ferry_status_connected");
-        d = s.databases.join(" · ");
+        d = s.databases.join(" · ") + (s.pluginVersion ? " · " + $STRF("ferry_plugin_version", [s.pluginVersion]) : "");
     } else if (s.pairingCode) {
         tone = "warn";
         t = $STR("ferry_status_pairing");

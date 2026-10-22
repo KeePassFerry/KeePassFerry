@@ -677,13 +677,49 @@ Technical detail: " + ex.Message);
             {
                 //TODO: Remove DPIScaledToolStripMenuItem after 2023 if no DPI regressions found 
                 //ToolStripMenuItem tsmi = new DPIScaledToolStripMenuItem("KeePassRPC (Kee) Options...");
-                ToolStripMenuItem tsmi = new ToolStripMenuItem(FerryText.T("KeePassFerry-Optionen …", "KeePassFerry options …"));
+                ToolStripMenuItem tsmi = new ToolStripMenuItem("KeePassFerry");
                 tsmi.Image = Resources.KPRPC64;
-                tsmi.Click += OnToolsOptions;
+                ToolStripMenuItem options = new ToolStripMenuItem(FerryText.T("Optionen …", "Options …"));
+                options.Click += OnToolsOptions;
+                ToolStripMenuItem update = new ToolStripMenuItem(FerryText.T("Nach Updates suchen …", "Check for updates …"));
+                update.Click += OnCheckForUpdates;
+                tsmi.DropDownItems.Add(options);
+                tsmi.DropDownItems.Add(update);
                 return tsmi;
             }
 
             return null;
+        }
+
+        // Menü "Nach Updates suchen": neueste Version zeigen und auf Wunsch per Setup aktualisieren
+        private void OnCheckForUpdates(object sender, EventArgs e)
+        {
+            string latest = FerryUpdater.LatestVersion();
+            string installed = FerryUpdater.InstalledVersion;
+            if (latest == null)
+            {
+                MessageBox.Show(FerryText.T("Die neueste Version konnte nicht abgerufen werden. Bitte prüfe die Internetverbindung.",
+                    "Could not retrieve the latest version. Please check your internet connection."), "KeePassFerry",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!FerryUpdater.IsNewer(latest, installed))
+            {
+                MessageBox.Show(FerryText.T("KeePassFerry " + installed + " ist aktuell.", "KeePassFerry " + installed + " is up to date."),
+                    "KeePassFerry", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            if (MessageBox.Show(FerryText.T(
+                    "KeePassFerry " + latest + " ist verfügbar (installiert: " + installed + ").\r\n\r\nJetzt aktualisieren? KeePass wird dafür kurz beendet und danach wieder gestartet. Speichere vorher offene Änderungen.",
+                    "KeePassFerry " + latest + " is available (installed: " + installed + ").\r\n\r\nUpdate now? KeePass will close briefly and restart. Save open changes first."),
+                    "KeePassFerry", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            string result = FerryUpdater.Run(false);
+            if (result != "started" && result != "cancelled")
+            {
+                MessageBox.Show(FerryText.T("Das Update konnte nicht gestartet werden (" + result + "). Lade das Setup bitte von GitHub herunter.",
+                    "The update could not be started (" + result + "). Please download the setup from GitHub."), "KeePassFerry",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         /// <summary>

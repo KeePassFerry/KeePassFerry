@@ -72,6 +72,20 @@ namespace KeePassFerry
 
     public partial class KeePassRPCService
     {
+        /// <summary>
+        /// Plugin per Setup aktualisieren (Knopf "Jetzt aktualisieren" in der Erweiterung). Lädt das neueste Setup
+        /// von GitHub, prüft die Prüfsumme und startet es still; KeePass wird dabei beendet und neu gestartet.
+        /// Ergebnis siehe FerryUpdater.Run.
+        /// </summary>
+        [JsonRpcMethod]
+        public string StartPluginUpdate()
+        {
+            return FerryUpdater.Run(true);
+        }
+    }
+
+    public partial class KeePassRPCService
+    {
         private const int MaxEntryTextLength = 64 * 1024;
 
         /// <summary>

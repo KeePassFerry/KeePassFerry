@@ -1,6 +1,7 @@
 import { diag } from "./ferryDiag";
 import { getOtpSetupForPopup, applyOtpSetup, forgetOtpSetup, parseOtpauth } from "./otpSetup";
 import { queryPageFields, fillPageField } from "./pageFields";
+import { pluginIsOutdated, pluginVersionFrom } from "../common/FeatureFlags";
 import { isFirefox } from "webext-detect-page";
 import { kee } from "./KF";
 import { commandManager } from "./commands";
@@ -211,10 +212,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             work = kee.KeePassRPC.addImageAttachment(msg.uuid, msg.dbFileName, msg.fileName ?? "", msg.data ?? "");
             break;
         case "connectionStatus":
-            work = kee.KeePassRPC.kprpcClient.nativeSessionManager.status().then(s => ({
-                ...s,
-                databases: kee.store.state.KeePassDatabases.map(db => db.name || db.fileName)
-            }));
+            work = kee.KeePassRPC.kprpcClient.nativeSessionManager.status().then(s => {
+                const features = kee.KeePassRPC.kprpcClient.nativeSessionManager.features();
+                return {
+                    ...s,
+                    databases: kee.store.state.KeePassDatabases.map(db => db.name || db.fileName),
+                    pluginVersion: s.connected ? pluginVersionFrom(features) : null,
+                    pluginOutdated: s.connected ? pluginIsOutdated(features) : false
+                };
+            });
             break;
         case "requestUnlock":
             work = chrome.tabs.query({ active: true, lastFocusedWindow: true }).then(async ([tab]) => {

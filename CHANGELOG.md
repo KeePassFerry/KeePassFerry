@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.4 – 2026-10-22
+
+- Windows setup (`KeePassFerry-Setup.exe`): finds KeePass, installs the plugin into `Plugins\KeePassFerry`, closes
+  and restarts KeePass if needed, and offers to open the browser extension's store page for each installed browser.
+- KeePass menu "KeePassFerry" with "Options …" and "Check for updates …"; KeePass's own update check now knows
+  KeePassFerry.
+- The plugin reports its version to the extension. If the plugin is older than the extension (the store only
+  updates the extension), the popup shows a notice with "Update now": the plugin downloads the setup from the
+  GitHub release, verifies its SHA-256 checksum and installs it.
+- Welcome page with a download button for the setup and updated installation steps.
+- Settings: new icons and colours, consistent with the popup.
+
 ## 1.0.3 – 2026-10-22
 
 - New settings section "KeePassFerry": fill one-time codes automatically, detect two-factor setup, passkeys with

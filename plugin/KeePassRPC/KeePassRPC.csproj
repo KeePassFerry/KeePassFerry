@@ -219,6 +219,7 @@
     <Compile Include="Totp.cs" />
     <Compile Include="FerryText.cs" />
     <Compile Include="FerryForeground.cs" />
+    <Compile Include="FerryUpdater.cs" />
     <Compile Include="KeyChallengeResponse.cs" />
     <Compile Include="KeyContainerClass.cs" />
     <Compile Include="MatchAccuracyMethod.cs" />

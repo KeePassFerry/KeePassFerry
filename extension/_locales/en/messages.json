@@ -1530,5 +1530,25 @@
   "ferry_welcome_download_other": {
     "message": "Other versions and ZIP file",
     "description": "KeePassFerry"
+  },
+  "ferry_plugin_update_title": {
+    "message": "New version for KeePass available",
+    "description": "KeePassFerry"
+  },
+  "ferry_plugin_update_message": {
+    "message": "The KeePassFerry plugin in KeePass is older than this extension. “Update now” downloads and installs the setup; KeePass closes briefly and restarts.",
+    "description": "KeePassFerry"
+  },
+  "ferry_plugin_update_button": {
+    "message": "Update now",
+    "description": "KeePassFerry"
+  },
+  "ferry_plugin_version": {
+    "message": "plugin $1",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_unsupported": {
+    "message": "Fields and attachments require a newer KeePassFerry version in KeePass.",
+    "description": "KeePassFerry"
   }
 }

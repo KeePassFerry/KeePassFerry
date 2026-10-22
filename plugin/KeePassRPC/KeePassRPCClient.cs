@@ -72,7 +72,19 @@ namespace KeePassFerry
 
         };
 
-        internal static string[] FeaturesOfferedToClients { get { return featuresOffered; } }
+        // Zusätzlich die Produktversion des Plugins ("KEEPASSFERRY_VERSION_1.2.3"): Die Erweiterung erkennt daran ein
+        // veraltetes Plugin und bittet um ein Update (der Store aktualisiert nur die Erweiterung)
+        internal static string[] FeaturesOfferedToClients
+        {
+            get
+            {
+                var version = (System.Reflection.AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(
+                    System.Reflection.Assembly.GetExecutingAssembly(), typeof(System.Reflection.AssemblyInformationalVersionAttribute));
+                var list = new System.Collections.Generic.List<string>(featuresOffered);
+                if (version != null) list.Add("KEEPASSFERRY_VERSION_" + version.InformationalVersion);
+                return list.ToArray();
+            }
+        }
 
         private static string[] featuresRequired = {
 

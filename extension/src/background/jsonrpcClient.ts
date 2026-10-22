@@ -213,6 +213,15 @@ export class jsonrpcClient {
         return responses?.[0]?.resultWrapper?.result ?? null;
     }
 
+    // Plugin per Setup aktualisieren; "started", "uptodate", "download_failed", "checksum_mismatch", "cancelled",
+    // "start_failed" oder null (Plugin kennt die Methode nicht)
+    async startPluginUpdate(): Promise<string> {
+        const sessionManager = this.kprpcClient.getPrimarySessionManager();
+        if (!sessionManager) return null;
+        const responses = await this.kprpcClient.request([sessionManager], "StartPluginUpdate", []);
+        return responses?.[0]?.resultWrapper?.result ?? null;
+    }
+
     // Eigene Felder (geschützte ohne Wert) und Anhänge eines Eintrags
     async getEntryExtras(uuid: string, dbFileName: string): Promise<{
         fields: { name: string; isProtected: boolean; value: string }[];

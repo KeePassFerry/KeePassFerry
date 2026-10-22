@@ -1530,5 +1530,25 @@
     "ferry_welcome_download_other": {
         "message": "Andere Versionen und ZIP-Datei",
         "description": "KeePassFerry"
+    },
+    "ferry_plugin_update_title": {
+        "message": "Neue Version für KeePass verfügbar",
+        "description": "KeePassFerry"
+    },
+    "ferry_plugin_update_message": {
+        "message": "Das KeePassFerry-Plugin in KeePass ist älter als diese Erweiterung. „Jetzt aktualisieren“ lädt das Setup und installiert es; KeePass wird dafür kurz beendet und wieder gestartet.",
+        "description": "KeePassFerry"
+    },
+    "ferry_plugin_update_button": {
+        "message": "Jetzt aktualisieren",
+        "description": "KeePassFerry"
+    },
+    "ferry_plugin_version": {
+        "message": "Plugin $1",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_unsupported": {
+        "message": "Für Felder und Anhänge braucht KeePassFerry in KeePass eine neuere Version.",
+        "description": "KeePassFerry"
     }
 }

@@ -27,14 +27,15 @@
                 </v-tooltip>
             </button>
         </div>
-        <div v-if="!rows.length && !adding" class="ferry-extra-empty">{{ $i18n("ferry_extras_empty") }}</div>
+        <div v-if="unsupported" class="ferry-extra-empty">{{ $i18n("ferry_extras_unsupported") }}</div>
+        <div v-else-if="!rows.length && !adding" class="ferry-extra-empty">{{ $i18n("ferry_extras_empty") }}</div>
 
-        <button v-if="!adding" type="button" class="ferry-add-open" @click="openAdd">
+        <button v-if="!adding && !unsupported" type="button" class="ferry-add-open" @click="openAdd">
             <tabler-plus class="ferry-ico" />
             {{ $i18n("ferry_add_open") }}
         </button>
 
-        <div v-else class="ferry-add-form">
+        <div v-else-if="adding" class="ferry-add-form">
             <div class="ferry-add-head">
                 <span class="ferry-add-title">{{ $i18n("ferry_add_heading") }}</span>
                 <button type="button" class="ferry-ib" :aria-label="$i18n('cancel')" @click="closeAdd">
@@ -74,7 +75,7 @@
                 </div>
             </template>
         </div>
-        <div class="ferry-add-note">{{ $i18n("ferry_add_saved_directly") }}</div>
+        <div v-if="!unsupported" class="ferry-add-note">{{ $i18n("ferry_add_saved_directly") }}</div>
     </div>
     <div v-if="error" class="ferry-hint err">{{ error }}</div>
 </template>
@@ -119,6 +120,8 @@ export default {
         protect: true,
         pendingImage: null as File,
         adding: false,
+        // Älteres Plugin ohne GetEntryExtras/AddEntryText: Bereich nur mit Hinweis
+        unsupported: false,
         existing: [] as Row[],
         staged: [] as Row[],
         error: null as string
@@ -235,6 +238,7 @@ export default {
         loadExisting: async function () {
             try {
                 const r = await chrome.runtime.sendMessage({ keepassferry: "getEntryExtras", uuid: this.uuid, dbFileName: this.dbFileName });
+                this.unsupported = !r;
                 const list: Row[] = [];
                 for (const f of r?.fields ?? []) {
                     list.push({

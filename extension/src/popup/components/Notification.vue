@@ -65,6 +65,9 @@ export default {
                 case "loadUrlUpgradeKee":
                     pm({ loadUrlUpgradeKee: true });
                     break;
+                case "startPluginUpdate":
+                    pm({ startPluginUpdate: true });
+                    break;
                 case "disableNotifyWhenEntryUpdated":
                     configManager.current.notifyWhenEntryUpdated = false;
                     configManager.save();

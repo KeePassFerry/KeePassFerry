@@ -21,6 +21,8 @@ export interface AddonMessage {
     tabId?: number;
     frameId?: number;
     loadUrlUpgradeKee?: boolean;
+    // Hinweis "Plugin veraltet": Update über das Plugin starten (Setup laden und ausführen)
+    startPluginUpdate?: boolean;
     addNotification?: KeeNotification;
     removeNotification?: string;
     findMatches?: { uri?: string; uuid?: string; DBfilename?: string };

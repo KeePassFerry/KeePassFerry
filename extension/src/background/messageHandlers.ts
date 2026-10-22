@@ -27,6 +27,14 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
     if (msg.removeNotification) {
         kee.removeUserNotifications((n: KeeNotification) => n.id != msg.removeNotification);
     }
+    if (msg.startPluginUpdate) {
+        // Plugins vor 1.0.4 kennen StartPluginUpdate nicht (Ergebnis null): dann die Download-Seite öffnen
+        const result = await kee.KeePassRPC.startPluginUpdate();
+        diag("hintergrund", "plugin-update", { ergebnis: result });
+        if (result !== "started" && result !== "cancelled" && result !== "uptodate") {
+            chrome.tabs.create({ url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest" });
+        }
+    }
     if (msg.loadUrlUpgradeKee) {
         chrome.tabs.create({
             url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest"

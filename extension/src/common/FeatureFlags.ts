@@ -1,3 +1,25 @@
+// Kleinste Plugin-Version, mit der diese Erweiterung vollständig zusammenarbeitet. Bei Änderungen am Plugin, die die
+// Erweiterung voraussetzt, hier erhöhen: ältere Plugins bekommen dann den Hinweis "bitte aktualisieren".
+export const MIN_PLUGIN_VERSION = "1.0.4";
+
+// Version aus der Fähigkeitsliste des Plugins ("KEEPASSFERRY_VERSION_1.2.3"); null bei Plugins vor 1.0.4
+export function pluginVersionFrom(features: string[]): string {
+    const flag = (features ?? []).find(f => f.startsWith("KEEPASSFERRY_VERSION_"));
+    return flag ? flag.substring("KEEPASSFERRY_VERSION_".length) : null;
+}
+
+// true, wenn das Plugin älter als MIN_PLUGIN_VERSION ist (oder seine Version nicht meldet)
+export function pluginIsOutdated(features: string[]): boolean {
+    const v = pluginVersionFrom(features);
+    if (!v) return true;
+    const a = v.split(".").map(n => parseInt(n, 10) || 0);
+    const b = MIN_PLUGIN_VERSION.split(".").map(n => parseInt(n, 10) || 0);
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) < (b[i] ?? 0);
+    }
+    return false;
+}
+
 export class FeatureFlags {
     public static readonly offered: string[] = [
         // Full feature set as of KeeFox 1.6
