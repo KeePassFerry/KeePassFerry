@@ -103,7 +103,7 @@ jobs:
           $manifest.PSObject.Properties.Remove("key")
           $manifest | ConvertTo-Json -Depth 20 | Set-Content "$ext/manifest.json" -Encoding utf8NoBOM
           New-Item -ItemType Directory -Force "$out/store" | Out-Null
-          Compress-Archive -Path "$ext/*" -DestinationPath "$out/store/KeePassFerry-Edge-Store-$env:VERSION.zip"
+          Compress-Archive -Path "$ext/*" -DestinationPath "$out/store/KeePassFerry-Store-$env:VERSION.zip"
 
       - name: Setup bauen (Inno Setup)
         shell: pwsh

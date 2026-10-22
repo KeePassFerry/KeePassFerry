@@ -11,7 +11,7 @@
 #endif
 ; Store-Seiten der Erweiterung; leer = (noch) nicht im Store, Häkchen erscheint dann nicht
 #define EdgeStoreUrl "https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg"
-#define ChromeStoreUrl ""
+#define ChromeStoreUrl "https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga"
 #define FirefoxStoreUrl ""
 
 [Setup]
@@ -80,7 +80,7 @@ Source: "{#SourceDir}\*"; DestDir: "{app}\Plugins\KeePassFerry"; Flags: ignoreve
 Filename: "{app}\KeePass.exe"; Description: "{cm:StartKeePass}"; Flags: postinstall nowait runasoriginaluser; Check: KeePassWasRunning
 ; Letzte Seite: je installiertem Browser ein Häkchen; öffnet die Store-Seite in genau diesem Browser (als normaler Benutzer)
 Filename: "{code:BrowserExe|msedge}"; Parameters: """{#EdgeStoreUrl}"""; Description: "{cm:AddToEdge}"; Flags: postinstall nowait skipifsilent runasoriginaluser; Check: OfferBrowser('msedge', '{#EdgeStoreUrl}')
-Filename: "{code:BrowserExe|chrome}"; Parameters: """{#ChromeStoreUrl}"""; Description: "{cm:AddToChrome}"; Flags: postinstall nowait skipifsilent runasoriginaluser unchecked; Check: OfferBrowser('chrome', '{#ChromeStoreUrl}')
+Filename: "{code:BrowserExe|chrome}"; Parameters: """{#ChromeStoreUrl}"""; Description: "{cm:AddToChrome}"; Flags: postinstall nowait skipifsilent runasoriginaluser; Check: OfferBrowser('chrome', '{#ChromeStoreUrl}')
 Filename: "{code:BrowserExe|firefox}"; Parameters: """{#FirefoxStoreUrl}"""; Description: "{cm:AddToFirefox}"; Flags: postinstall nowait skipifsilent runasoriginaluser unchecked; Check: OfferBrowser('firefox', '{#FirefoxStoreUrl}')
 
 [UninstallDelete]

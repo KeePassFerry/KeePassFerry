@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.6 – 2026-10-22
+
+- Google Chrome: the plugin accepts the KeePassFerry extension from the Chrome Web Store; the setup offers to open
+  its store page for Chrome as well.
+- Extension manifest uses paths without a leading `./` (required by the Chrome Web Store).
+
 ## 1.0.5 – 2026-10-22
 
 - KeePass shows KeePassFerry everywhere instead of Kee: new options window (save behaviour, paired browsers with

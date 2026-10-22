@@ -24,6 +24,7 @@ namespace KeePassFerry
         private static readonly string[] AllowedChromiumOrigins =
         {
             "chrome-extension://ghkhbdnhojpeibdjdlgojfdjhedapmhg/",
+            "chrome-extension://fhciciajogahdkbmeliechblahlhpmga/",
             "chrome-extension://pjafpdemjepcjioimoicjogcmkijighm/"
         };
 
