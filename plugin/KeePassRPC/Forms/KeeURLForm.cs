@@ -31,6 +31,7 @@ namespace KeePassFerry.Forms
         public KeeURLForm(bool match, bool block, string regExURL, string url, List<string> otherKeys)
         {
             InitializeComponent();
+            FerryText.Localize(this);
             Icon = Resources.KPRPCico;
             Match = match;
             Block = block;
@@ -62,14 +63,9 @@ namespace KeePassFerry.Forms
             checkBoxRegEx.Checked = RegEx;
 
             if (_editing)
-                Text = "Edit URL";
+                Text = FerryText.L("Edit URL");
             else
-                Text = "Add URL";
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            
+                Text = FerryText.L("Add URL");
         }
 
         private void buttonOK_Click(object sender, EventArgs e)
@@ -81,7 +77,7 @@ namespace KeePassFerry.Forms
 
             if (OtherKeys.Contains(URL))
             {
-                MessageBox.Show(this, "A rule for '" + URL + "' has already been added.");
+                MessageBox.Show(this, string.Format(FerryText.L("A rule for '{0}' has already been added."), URL), "KeePassFerry");
                 DialogResult = DialogResult.None;
                 return;
             }
@@ -104,7 +100,7 @@ namespace KeePassFerry.Forms
                 }
                 catch (ArgumentException ex)
                 {
-                    MessageBox.Show(this, "'" + URL + "' is not a valid regular expression. Details: " + ex.Message, "Invalid regular expression", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(this, string.Format(FerryText.L("'{0}' is not a valid regular expression. Details: {1}"), URL, ex.Message), FerryText.L("Invalid regular expression"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     DialogResult = DialogResult.None;
                 }
             }

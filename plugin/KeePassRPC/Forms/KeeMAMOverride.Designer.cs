@@ -68,7 +68,6 @@ namespace KeePassFerry.Forms
             this.buttonCancel.TabIndex = 6;
             this.buttonCancel.Text = "Cancel";
             this.buttonCancel.UseVisualStyleBackColor = true;
-            this.buttonCancel.Click += new System.EventHandler(this.button2_Click);
             // 
             // label1
             // 

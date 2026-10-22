@@ -27,12 +27,26 @@ namespace KeePassFerry.Forms
         private EntryConfigv2 _conf;
         private DatabaseConfig _dbConf;
 
+        // Angezeigte Werte (übersetzt); Anzeige und Auswertung verwenden dieselben Texte
+        private static readonly string TDefault = FerryText.L("Default");
+        private static readonly string TNever = FerryText.L("Never");
+        private static readonly string TAlways = FerryText.L("Always");
+        private static readonly string TNormal = FerryText.L("Normal");
+        private static readonly string TRegEx = FerryText.L("RegEx");
+        private static readonly string TMatch = FerryText.L("Match");
+        private static readonly string TBlock = FerryText.L("Block");
+        private static readonly string TUserName = FerryText.L("KeePass username");
+        private static readonly string TPassword = FerryText.L("KeePass password");
+        private static readonly string TEnabled = FerryText.L("Enabled");
+        private static readonly string TDisabled = FerryText.L("Disabled");
+
         public KeeEntryUserControl(KeePassFerryExt keePassRPCPlugin, PwEntry entry,
             CustomListViewEx advancedListView, PwEntryForm pwEntryForm, ProtectedStringDictionary strings, StringDictionaryEx customData)
         {
             KeePassRPCPlugin = keePassRPCPlugin;
             _entry = entry;
             InitializeComponent();
+            FerryText.Localize(this);
             _pwEntryForm = pwEntryForm;
             _strings = strings;
             _cd = customData;
@@ -120,7 +134,7 @@ namespace KeePassFerry.Forms
             if (defaultRadioButton != null)
             {
                 toolTipRealm.SetToolTip(defaultRadioButton,
-                    "This is the default behaviour for new entries. Change in the Database Settings dialog.");
+                    FerryText.L("This is the default behaviour for new entries. Change in the Database Settings dialog."));
             }
 
             listNormalURLs = new List<string>();
@@ -148,15 +162,15 @@ namespace KeePassFerry.Forms
                         value = "********";
                     if (field.ValuePath == PwDefs.UserNameField)
                     {
-                        value = "KeePass username";
+                        value = TUserName;
                     }
                     if (field.ValuePath == PwDefs.PasswordField)
                     {
-                        value = "KeePass password";
+                        value = TPassword;
                     }
                     if (field.Type == FieldType.Toggle)
                     {
-                        value = field.Value == "KEEFOX_CHECKED_FLAG_TRUE" ? "Enabled" : "Disabled";
+                        value = field.Value == "KEEFOX_CHECKED_FLAG_TRUE" ? TEnabled : TDisabled;
                     }
                     
                     // null checks shouldn't be necessary but seems to be bugs in Mono runtime sometimes relating to GetValueOrDefault so being over-cautious here
@@ -178,15 +192,15 @@ namespace KeePassFerry.Forms
 
             ReadURLStrings();
 
-            comboBoxAutoSubmit.Text = "Use Kee setting";
-            comboBoxAutoFill.Text = "Use Kee setting";
+            comboBoxAutoSubmit.Text = TDefault;
+            comboBoxAutoFill.Text = TDefault;
 
             _currentAutomationBehaviour = _conf.Behaviour.GetValueOrDefault(EntryAutomationBehaviour.Default);
             changeBehaviourState(_currentAutomationBehaviour);
 
             comboBoxAutoSubmit.SelectedIndexChanged += comboBoxAutoSubmit_SelectedIndexChanged;
             comboBoxAutoFill.SelectedIndexChanged += comboBoxAutoFill_SelectedIndexChanged;            
-            string realmTooltip = "Set this to the realm (what the \"site says\") in the HTTP authentication popup dialog box for a more accurate match";
+            string realmTooltip = FerryText.L("Set this to the realm (what the \"site says\") in the HTTP authentication popup dialog box for a more accurate match");
             toolTipRealm.SetToolTip(textBoxKeeRealm, realmTooltip);
             toolTipRealm.SetToolTip(labelRealm, realmTooltip);
         }
@@ -204,50 +218,40 @@ namespace KeePassFerry.Forms
 
         private void comboBoxAutoFill_SelectedIndexChanged(object sender, EventArgs e)
         {
-            switch (comboBoxAutoFill.Text)
+            string fill = comboBoxAutoFill.Text;
+            string submit = comboBoxAutoSubmit.Text;
+            if (fill == TDefault)
+                changeBehaviourState(submit == TNever ? EntryAutomationBehaviour.NeverAutoSubmit : EntryAutomationBehaviour.Default);
+            else if (fill == TNever)
+                changeBehaviourState(EntryAutomationBehaviour.NeverAutoFillNeverAutoSubmit);
+            else if (fill == TAlways)
             {
-                case "Use Kee setting":
-                    if (comboBoxAutoSubmit.Text == "Never")
-                        changeBehaviourState(EntryAutomationBehaviour.NeverAutoSubmit);
-                    else
-                        changeBehaviourState(EntryAutomationBehaviour.Default);
-                    break;
-                case "Never":
-                    changeBehaviourState(EntryAutomationBehaviour.NeverAutoFillNeverAutoSubmit);
-                    break;
-                case "Always":
-                    if (comboBoxAutoSubmit.Text == "Never")
-                        changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFillNeverAutoSubmit);
-                    else if (comboBoxAutoSubmit.Text == "Always")
-                        changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFillAlwaysAutoSubmit);
-                    else
-                        changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFill);
-                    break;
+                if (submit == TNever)
+                    changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFillNeverAutoSubmit);
+                else if (submit == TAlways)
+                    changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFillAlwaysAutoSubmit);
+                else
+                    changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFill);
             }
         }
 
         private void comboBoxAutoSubmit_SelectedIndexChanged(object sender, EventArgs e)
         {
-            switch (comboBoxAutoSubmit.Text)
+            string fill = comboBoxAutoFill.Text;
+            string submit = comboBoxAutoSubmit.Text;
+            if (submit == TDefault)
+                changeBehaviourState(fill == TAlways ? EntryAutomationBehaviour.AlwaysAutoFill : EntryAutomationBehaviour.Default);
+            else if (submit == TNever)
             {
-                case "Use Kee setting": 
-                    if (comboBoxAutoFill.Text == "Always") 
-                        changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFill); 
-                    else
-                        changeBehaviourState(EntryAutomationBehaviour.Default);
-                    break;
-                case "Never":
-                    if (comboBoxAutoFill.Text == "Always")
-                        changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFillNeverAutoSubmit);
-                    else if (comboBoxAutoFill.Text == "Never")
-                        changeBehaviourState(EntryAutomationBehaviour.NeverAutoFillNeverAutoSubmit);
-                    else
-                        changeBehaviourState(EntryAutomationBehaviour.NeverAutoSubmit);
-                    break;
-                case "Always":
-                    changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFillAlwaysAutoSubmit);
-                    break;
+                if (fill == TAlways)
+                    changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFillNeverAutoSubmit);
+                else if (fill == TNever)
+                    changeBehaviourState(EntryAutomationBehaviour.NeverAutoFillNeverAutoSubmit);
+                else
+                    changeBehaviourState(EntryAutomationBehaviour.NeverAutoSubmit);
             }
+            else if (submit == TAlways)
+                changeBehaviourState(EntryAutomationBehaviour.AlwaysAutoFillAlwaysAutoSubmit);
         }
 
         private EntryAutomationBehaviour _currentAutomationBehaviour = EntryAutomationBehaviour.Default;
@@ -258,43 +262,43 @@ namespace KeePassFerry.Forms
             {
                 case EntryAutomationBehaviour.AlwaysAutoFill:
                     _conf.Behaviour = EntryAutomationBehaviour.AlwaysAutoFill;
-                    comboBoxAutoFill.Text = "Always";
-                    comboBoxAutoSubmit.Text = "Use Kee setting";
+                    comboBoxAutoFill.Text = TAlways;
+                    comboBoxAutoSubmit.Text = TDefault;
                     comboBoxAutoFill.Enabled = true;
                     comboBoxAutoSubmit.Enabled = true;
                     break;
                 case EntryAutomationBehaviour.NeverAutoSubmit:
                     _conf.Behaviour = EntryAutomationBehaviour.NeverAutoSubmit;
-                    comboBoxAutoFill.Text = "Use Kee setting";
-                    comboBoxAutoSubmit.Text = "Never";
+                    comboBoxAutoFill.Text = TDefault;
+                    comboBoxAutoSubmit.Text = TNever;
                     comboBoxAutoFill.Enabled = true;
                     comboBoxAutoSubmit.Enabled = true;
                     break;
                 case EntryAutomationBehaviour.AlwaysAutoFillAlwaysAutoSubmit:
                     _conf.Behaviour = EntryAutomationBehaviour.AlwaysAutoFillAlwaysAutoSubmit;
-                    comboBoxAutoSubmit.Text = "Always";
-                    comboBoxAutoFill.Text = "Always";
+                    comboBoxAutoSubmit.Text = TAlways;
+                    comboBoxAutoFill.Text = TAlways;
                     comboBoxAutoFill.Enabled = false;
                     comboBoxAutoSubmit.Enabled = true;
                     break;
                 case EntryAutomationBehaviour.NeverAutoFillNeverAutoSubmit:
                     _conf.Behaviour = EntryAutomationBehaviour.NeverAutoFillNeverAutoSubmit;
-                    comboBoxAutoFill.Text = "Never";
-                    comboBoxAutoSubmit.Text = "Never";
+                    comboBoxAutoFill.Text = TNever;
+                    comboBoxAutoSubmit.Text = TNever;
                     comboBoxAutoSubmit.Enabled = false;
                     comboBoxAutoFill.Enabled = true;
                     break;
                 case EntryAutomationBehaviour.AlwaysAutoFillNeverAutoSubmit:
                     _conf.Behaviour = EntryAutomationBehaviour.AlwaysAutoFillNeverAutoSubmit;
-                    comboBoxAutoFill.Text = "Always";
-                    comboBoxAutoSubmit.Text = "Never";
+                    comboBoxAutoFill.Text = TAlways;
+                    comboBoxAutoSubmit.Text = TNever;
                     comboBoxAutoSubmit.Enabled = true;
                     comboBoxAutoFill.Enabled = true;
                     break;
                 case EntryAutomationBehaviour.Default:
                     _conf.Behaviour = null;
-                    comboBoxAutoFill.Text = "Use Kee setting";
-                    comboBoxAutoSubmit.Text = "Use Kee setting";
+                    comboBoxAutoFill.Text = TDefault;
+                    comboBoxAutoSubmit.Text = TDefault;
                     comboBoxAutoSubmit.Enabled = true;
                     comboBoxAutoFill.Enabled = true;
                     break;
@@ -324,25 +328,25 @@ namespace KeePassFerry.Forms
                     if (kfurlf.Match && !kfurlf.RegEx)
                     {
                         listNormalURLs.Add(kfurlf.URL);
-                        ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, "Normal", "Match" });
+                        ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, TNormal, TMatch });
                         AddURLListItem(lvi);
                     }
                     if (kfurlf.Block && !kfurlf.RegEx)
                     {
                         listNormalBlockedURLs.Add(kfurlf.URL);
-                        ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, "Normal", "Block" });
+                        ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, TNormal, TBlock });
                         AddURLListItem(lvi);
                     }
                     if (kfurlf.Match && kfurlf.RegEx)
                     {
                         listRegExURLs.Add(kfurlf.URL);
-                        ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, "RegEx", "Match" });
+                        ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, TRegEx, TMatch });
                         AddURLListItem(lvi);
                     }
                     if (kfurlf.Block && kfurlf.RegEx)
                     {
                         listRegExBlockedURLs.Add(kfurlf.URL);
-                        ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, "RegEx", "Block" });
+                        ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, TRegEx, TBlock });
                         AddURLListItem(lvi);
                     }
                     UpdateURLStrings();
@@ -369,13 +373,13 @@ namespace KeePassFerry.Forms
                     if (kfurlf.ShowDialog() == DialogResult.OK)
                     {
                         // remove the old URL data
-                        if (lvsicSel[i].SubItems[1].Text == "Normal" && lvsicSel[i].SubItems[2].Text == "Match")
+                        if (lvsicSel[i].SubItems[1].Text == TNormal && lvsicSel[i].SubItems[2].Text == TMatch)
                             listNormalURLs.Remove(lvsicSel[i].Text);
-                        else if (lvsicSel[i].SubItems[1].Text == "Normal" && lvsicSel[i].SubItems[2].Text == "Block")
+                        else if (lvsicSel[i].SubItems[1].Text == TNormal && lvsicSel[i].SubItems[2].Text == TBlock)
                             listNormalBlockedURLs.Remove(lvsicSel[i].Text);
-                        else if (lvsicSel[i].SubItems[1].Text == "RegEx" && lvsicSel[i].SubItems[2].Text == "Match")
+                        else if (lvsicSel[i].SubItems[1].Text == TRegEx && lvsicSel[i].SubItems[2].Text == TMatch)
                             listRegExURLs.Remove(lvsicSel[i].Text);
-                        else if (lvsicSel[i].SubItems[1].Text == "RegEx" && lvsicSel[i].SubItems[2].Text == "Block")
+                        else if (lvsicSel[i].SubItems[1].Text == TRegEx && lvsicSel[i].SubItems[2].Text == TBlock)
                             listRegExBlockedURLs.Remove(lvsicSel[i].Text);
                         RemoveURLListItem(lvsicSel[i]);
 
@@ -385,25 +389,25 @@ namespace KeePassFerry.Forms
                         if (kfurlf.Match && !kfurlf.RegEx)
                         {
                             listNormalURLs.Add(kfurlf.URL);
-                            ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, "Normal", "Match" });
+                            ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, TNormal, TMatch });
                             AddURLListItem(lvi);
                         }
                         if (kfurlf.Block && !kfurlf.RegEx)
                         {
                             listNormalBlockedURLs.Add(kfurlf.URL);
-                            ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, "Normal", "Block" });
+                            ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, TNormal, TBlock });
                             AddURLListItem(lvi);
                         }
                         if (kfurlf.Match && kfurlf.RegEx)
                         {
                             listRegExURLs.Add(kfurlf.URL);
-                            ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, "RegEx", "Match" });
+                            ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, TRegEx, TMatch });
                             AddURLListItem(lvi);
                         }
                         if (kfurlf.Block && kfurlf.RegEx)
                         {
                             listRegExBlockedURLs.Add(kfurlf.URL);
-                            ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, "RegEx", "Block" });
+                            ListViewItem lvi = new ListViewItem(new[] { kfurlf.URL, TRegEx, TBlock });
                             AddURLListItem(lvi);
                         }
                         UpdateURLStrings();
@@ -415,13 +419,13 @@ namespace KeePassFerry.Forms
         private static KeeURLForm URLFormForEditing(ListView.SelectedListViewItemCollection lvsicSel, int i, List<string> others)
         {
             KeeURLForm kfurlf = null;
-            if (lvsicSel[i].SubItems[1].Text == "Normal" && lvsicSel[i].SubItems[2].Text == "Match")
+            if (lvsicSel[i].SubItems[1].Text == TNormal && lvsicSel[i].SubItems[2].Text == TMatch)
                 kfurlf = new KeeURLForm(true, false, null, lvsicSel[i].Text, others);
-            else if (lvsicSel[i].SubItems[1].Text == "Normal" && lvsicSel[i].SubItems[2].Text == "Block")
+            else if (lvsicSel[i].SubItems[1].Text == TNormal && lvsicSel[i].SubItems[2].Text == TBlock)
                 kfurlf = new KeeURLForm(false, true, null, lvsicSel[i].Text, others);
-            else if (lvsicSel[i].SubItems[1].Text == "RegEx" && lvsicSel[i].SubItems[2].Text == "Match")
+            else if (lvsicSel[i].SubItems[1].Text == TRegEx && lvsicSel[i].SubItems[2].Text == TMatch)
                 kfurlf = new KeeURLForm(true, false, lvsicSel[i].Text, null, others);
-            else if (lvsicSel[i].SubItems[1].Text == "RegEx" && lvsicSel[i].SubItems[2].Text == "Block")
+            else if (lvsicSel[i].SubItems[1].Text == TRegEx && lvsicSel[i].SubItems[2].Text == TBlock)
                 kfurlf = new KeeURLForm(false, true, lvsicSel[i].Text, null, others);
             return kfurlf;
         }
@@ -431,13 +435,13 @@ namespace KeePassFerry.Forms
             ListView.SelectedListViewItemCollection lvsicSel = listView1.SelectedItems;
             for (int i = 0; i < lvsicSel.Count; ++i)
             {
-                if (lvsicSel[i].SubItems[1].Text == "Normal" && lvsicSel[i].SubItems[2].Text == "Match")
+                if (lvsicSel[i].SubItems[1].Text == TNormal && lvsicSel[i].SubItems[2].Text == TMatch)
                     listNormalURLs.Remove(lvsicSel[i].Text);
-                else if (lvsicSel[i].SubItems[1].Text == "Normal" && lvsicSel[i].SubItems[2].Text == "Block")
+                else if (lvsicSel[i].SubItems[1].Text == TNormal && lvsicSel[i].SubItems[2].Text == TBlock)
                     listNormalBlockedURLs.Remove(lvsicSel[i].Text);
-                else if (lvsicSel[i].SubItems[1].Text == "RegEx" && lvsicSel[i].SubItems[2].Text == "Match")
+                else if (lvsicSel[i].SubItems[1].Text == TRegEx && lvsicSel[i].SubItems[2].Text == TMatch)
                     listRegExURLs.Remove(lvsicSel[i].Text);
-                else if (lvsicSel[i].SubItems[1].Text == "RegEx" && lvsicSel[i].SubItems[2].Text == "Block")
+                else if (lvsicSel[i].SubItems[1].Text == TRegEx && lvsicSel[i].SubItems[2].Text == TBlock)
                     listRegExBlockedURLs.Remove(lvsicSel[i].Text);
                 RemoveURLListItem(lvsicSel[i]);
             }
@@ -472,22 +476,22 @@ namespace KeePassFerry.Forms
         {
             foreach (string url in listNormalURLs)
             {
-                ListViewItem lvi = new ListViewItem(new[] { url, "Normal", "Match" });
+                ListViewItem lvi = new ListViewItem(new[] { url, TNormal, TMatch });
                 AddURLListItem(lvi);
             }
             foreach (string url in listNormalBlockedURLs)
             {
-                ListViewItem lvi = new ListViewItem(new[] { url, "Normal", "Block" });
+                ListViewItem lvi = new ListViewItem(new[] { url, TNormal, TBlock });
                 AddURLListItem(lvi);
             }
             foreach (string url in listRegExURLs)
             {
-                ListViewItem lvi = new ListViewItem(new[] { url, "RegEx", "Match" });
+                ListViewItem lvi = new ListViewItem(new[] { url, TRegEx, TMatch });
                 AddURLListItem(lvi);
             }
             foreach (string url in listRegExBlockedURLs)
             {
-                ListViewItem lvi = new ListViewItem(new[] { url, "RegEx", "Block" });
+                ListViewItem lvi = new ListViewItem(new[] { url, TRegEx, TBlock });
                 AddURLListItem(lvi);
             }
         }
@@ -562,7 +566,7 @@ namespace KeePassFerry.Forms
                     }
                     if (kff.Type == FieldType.Toggle)
                     {
-                        displayValue = kff.Value == "KEEFOX_CHECKED_FLAG_TRUE" ? "Enabled" : "Disabled";
+                        displayValue = kff.Value == "KEEFOX_CHECKED_FLAG_TRUE" ? TEnabled : TDisabled;
                     }
 
                     ListViewItem lvi = new ListViewItem(new[]
@@ -595,17 +599,17 @@ namespace KeePassFerry.Forms
                     if (tag.ValuePath == PwDefs.PasswordField)
                     {
                         displayName = null;
-                        displayValue = "KeePass password";
+                        displayValue = TPassword;
                     }
                     else if (tag.ValuePath == PwDefs.UserNameField)
                     {
                         displayName = null;
-                        displayValue = "KeePass username";
+                        displayValue = TUserName;
                     }
 
                     if (kff.Type == FieldType.Toggle)
                     {
-                        displayValue = kff.Value == "KEEFOX_CHECKED_FLAG_TRUE" ? "Enabled" : "Disabled";
+                        displayValue = kff.Value == "KEEFOX_CHECKED_FLAG_TRUE" ? TEnabled : TDisabled;
                     }
 
                     string type = Utilities.FieldTypeToDisplay(kff.Type, false);
@@ -676,8 +680,8 @@ namespace KeePassFerry.Forms
             if (listView2.SelectedItems.Count > 0)
             {
                 buttonFieldEdit.Enabled = true;
-                if (listView2.SelectedItems[0].SubItems[1].Text != "KeePass username" 
-                    && listView2.SelectedItems[0].SubItems[1].Text != "KeePass password")
+                if (listView2.SelectedItems[0].SubItems[1].Text != TUserName 
+                    && listView2.SelectedItems[0].SubItems[1].Text != TPassword)
                     buttonFieldDelete.Enabled = true;
             }
             else
@@ -743,8 +747,8 @@ namespace KeePassFerry.Forms
 
         private void listView2_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Delete && listView2.SelectedItems.Count > 0 && listView2.SelectedItems[0].SubItems[1].Text != "KeePass username"
-                    && listView2.SelectedItems[0].SubItems[1].Text != "KeePass password")
+            if (e.KeyCode == Keys.Delete && listView2.SelectedItems.Count > 0 && listView2.SelectedItems[0].SubItems[1].Text != TUserName
+                    && listView2.SelectedItems[0].SubItems[1].Text != TPassword)
             {
                 buttonFieldDelete_Click(sender, e);
             }

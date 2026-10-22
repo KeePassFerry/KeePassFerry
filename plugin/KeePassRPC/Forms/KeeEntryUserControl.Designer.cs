@@ -97,7 +97,7 @@ namespace KeePassFerry.Forms
             this.comboBoxAutoFill.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBoxAutoFill.FormattingEnabled = true;
             this.comboBoxAutoFill.Items.AddRange(new object[] {
-            "Use Kee setting",
+            "Default",
             "Never",
             "Always"});
             this.comboBoxAutoFill.Location = new System.Drawing.Point(75, 20);
@@ -110,7 +110,7 @@ namespace KeePassFerry.Forms
             this.comboBoxAutoSubmit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBoxAutoSubmit.FormattingEnabled = true;
             this.comboBoxAutoSubmit.Items.AddRange(new object[] {
-            "Use Kee setting",
+            "Default",
             "Never",
             "Always"});
             this.comboBoxAutoSubmit.Location = new System.Drawing.Point(75, 55);
@@ -143,7 +143,7 @@ namespace KeePassFerry.Forms
             this.checkBoxHideFromKee.Name = "checkBoxHideFromKee";
             this.checkBoxHideFromKee.Size = new System.Drawing.Size(138, 17);
             this.checkBoxHideFromKee.TabIndex = 1;
-            this.checkBoxHideFromKee.Text = "Hide this entry from Kee";
+            this.checkBoxHideFromKee.Text = "Do not offer this entry in the browser";
             this.checkBoxHideFromKee.UseVisualStyleBackColor = true;
             // 
             // groupBox2
@@ -343,7 +343,7 @@ namespace KeePassFerry.Forms
             this.tabPage1.Size = new System.Drawing.Size(455, 312);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "General";
-            this.tabPage1.ToolTipText = "Basic Kee settings for this entry";
+            this.tabPage1.ToolTipText = "Basic KeePassFerry settings for this entry";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // textBoxKeeRealm
@@ -442,8 +442,7 @@ namespace KeePassFerry.Forms
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(433, 31);
             this.label5.TabIndex = 3;
-            this.label5.Text = "When more than one entry matches, Kee prioritises more accurately matching entrie" +
-    "s. You can exclude this entry from matching at all in some cases.";
+            this.label5.Text = "When more than one entry matches, KeePassFerry prefers the more accurately matching entries. A stricter setting can exclude this entry from matching in some cases.";
             // 
             // tabPage3
             // 

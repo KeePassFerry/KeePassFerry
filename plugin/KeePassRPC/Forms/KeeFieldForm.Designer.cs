@@ -219,14 +219,13 @@ namespace KeePassFerry.Forms
             // 
             // linkLabel1
             // 
-            this.linkLabel1.AutoSize = true;
+            this.linkLabel1.AutoSize = false;
             this.linkLabel1.Location = new System.Drawing.Point(7, 129);
             this.linkLabel1.Name = "linkLabel1";
-            this.linkLabel1.Size = new System.Drawing.Size(247, 13);
+            this.linkLabel1.Size = new System.Drawing.Size(380, 30);
             this.linkLabel1.TabIndex = 11;
             this.linkLabel1.TabStop = true;
-            this.linkLabel1.Text = "https://forum.kee.pm/t/placeholder-handling/1100";
-            this.linkLabel1.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
+            this.linkLabel1.Text = "Replace KeePass placeholders such as {USERNAME} or {S:Field} in form fields with their values before filling.";
             // 
             // label8
             // 

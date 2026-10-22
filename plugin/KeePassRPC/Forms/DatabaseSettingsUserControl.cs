@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Windows.Forms;
 using KeePassLib;
 using KeePassFerry.Models.Shared;
@@ -12,11 +11,19 @@ namespace KeePassFerry.Forms
         private PwDatabase database;
         private DatabaseConfig config;
 
+        // Angezeigte Genauigkeit in der Ausnahmenliste (übersetzt); Anzeige und Auswertung verwenden dieselben Texte
+        private static readonly string TDomain = FerryText.L("Domain");
+        private static readonly string THostname = FerryText.L("Hostname");
+        private static readonly string TExact = FerryText.L("Exact");
+
         public DatabaseSettingsUserControl(PwDatabase db)
         {
             database = db;
             config = db.GetKPRPCConfig();
             InitializeComponent();
+            FerryText.Localize(this);
+            // Erklärung statt Link (früher Kee-Forum)
+            linkLabel1.LinkArea = new LinkArea(0, 0);
             PresentDefaultMatchAccuracy();
             PresentDomains();
             PresentDefaultPlaceholderHandling();
@@ -131,13 +138,10 @@ namespace KeePassFerry.Forms
 
         private static MatchAccuracyMethod MatchAccuracyMethodFromText(string text)
         {
-            switch (text)
-            {
-                case "Domain": return MatchAccuracyMethod.Domain;
-                case "Hostname": return MatchAccuracyMethod.Hostname;
-                case "Exact": return MatchAccuracyMethod.Exact;
-                default: throw new Exception("Invalid data for existing entry.");
-            }
+            if (text == TDomain) return MatchAccuracyMethod.Domain;
+            if (text == THostname) return MatchAccuracyMethod.Hostname;
+            if (text == TExact) return MatchAccuracyMethod.Exact;
+            throw new Exception("Invalid data for existing entry.");
         }
 
         private void buttonURLDelete_Click(object sender, EventArgs e)
@@ -167,13 +171,13 @@ namespace KeePassFerry.Forms
             switch (mam)
             {
                 case MatchAccuracyMethod.Domain:
-                    listView1.Items.Add(new ListViewItem(new[] { domain, "Domain" }));
+                    listView1.Items.Add(new ListViewItem(new[] { domain, TDomain }));
                     break;
                 case MatchAccuracyMethod.Hostname:
-                    listView1.Items.Add(new ListViewItem(new[] { domain, "Hostname" }));
+                    listView1.Items.Add(new ListViewItem(new[] { domain, THostname }));
                     break;
                 case MatchAccuracyMethod.Exact:
-                    listView1.Items.Add(new ListViewItem(new[] { domain, "Exact" }));
+                    listView1.Items.Add(new ListViewItem(new[] { domain, TExact }));
                     break;
             }
         }
@@ -216,12 +220,6 @@ namespace KeePassFerry.Forms
             {
                 buttonURLDelete_Click(sender, e);
             }
-        }
-
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process p = new Process();
-            p = Process.Start("https://forum.kee.pm/t/placeholder-handling/1100");
         }
     }
 }

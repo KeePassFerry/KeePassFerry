@@ -52,7 +52,7 @@ namespace KeePassFerry
                     }
                     else
                     {
-                        Utils.ShowMonoSafeMessageBox("There are configuration errors in this entry. To fix the entry and prevent this warning message appearing, please edit the value of the 'KPRPC JSON' advanced string. Please ask for help on https://forum.kee.pm if you're not sure how to fix this. The URL of the entry is: " + url + " and the full configuration data is: " + json, "Warning: Configuration errors", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        Utils.ShowMonoSafeMessageBox(FerryText.T("Die KeePassFerry-Einstellungen dieses Eintrags sind fehlerhaft. Bitte korrigiere das erweiterte Feld „KPRPC JSON“ oder melde das Problem auf https://github.com/KeePassFerry/KeePassFerry/issues. URL des Eintrags: ", "The KeePassFerry settings of this entry are invalid. Please correct the 'KPRPC JSON' advanced string or report the problem at https://github.com/KeePassFerry/KeePassFerry/issues. URL of the entry: ") + url + FerryText.T(" – Daten: ", " – data: ") + json, FerryText.T("KeePassFerry: fehlerhafte Einstellungen", "KeePassFerry: invalid settings"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                     return null;
                 }
@@ -84,7 +84,7 @@ namespace KeePassFerry
                     }
                     else
                     {
-                        Utils.ShowMonoSafeMessageBox("There are configuration errors in this entry. To fix the entry and prevent this warning message appearing, please edit the value of the 'KPRPC JSON' custom data. Please ask for help on https://forum.kee.pm if you're not sure how to fix this. The URL of the entry is: " + url + " and the full configuration data is: " + json, "Warning: Configuration errors", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        Utils.ShowMonoSafeMessageBox(FerryText.T("Die KeePassFerry-Einstellungen dieses Eintrags sind fehlerhaft. Bitte korrigiere die benutzerdefinierten Daten „KPRPC JSON“ oder melde das Problem auf https://github.com/KeePassFerry/KeePassFerry/issues. URL des Eintrags: ", "The KeePassFerry settings of this entry are invalid. Please correct the 'KPRPC JSON' custom data or report the problem at https://github.com/KeePassFerry/KeePassFerry/issues. URL of the entry: ") + url + FerryText.T(" – Daten: ", " – data: ") + json, FerryText.T("KeePassFerry: fehlerhafte Einstellungen", "KeePassFerry: invalid settings"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                     return null;
                 }

@@ -64,7 +64,7 @@ namespace KeePassFerry
             return fc[fc.Count - 1];
         }
 
-        internal static void ShowMonoSafeMessageBox(string description, string title = "KeePassRPC",
+        internal static void ShowMonoSafeMessageBox(string description, string title = "KeePassFerry",
             MessageBoxButtons mb =  MessageBoxButtons.OK, MessageBoxIcon mi = MessageBoxIcon.Information, MessageBoxDefaultButton mdb = MessageBoxDefaultButton.Button1)
         {
             IWin32Window win = null;

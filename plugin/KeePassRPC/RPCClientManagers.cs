@@ -64,7 +64,6 @@ namespace KeePassFerry
         {
             lock (_lockRPCClients)
             {
-                client.ShuttingDown();
                 _RPCClientConnections.Remove(client);
             }
         }
@@ -144,7 +143,7 @@ namespace KeePassFerry
 
         public override void AttachToGroupDialog(KeePassFerryExt plugin, PwGroup group, TabControl mainTabControl)
         {
-            KeeGroupUserControl groupControl = new KeeGroupUserControl(plugin, group);
+            FerryGroupUserControl groupControl = new FerryGroupUserControl(plugin, group);
             TabPage keeTabPage = new TabPage("KeePassFerry");
             groupControl.Dock = DockStyle.Fill;
             keeTabPage.Controls.Add(groupControl);
@@ -157,38 +156,4 @@ namespace KeePassFerry
 
     }
 
-    public class KeeFoxRPCClientManager : KeePassRPCClientManager
-    {
-        public KeeFoxRPCClientManager()
-            : base("KeeFox", "KPRPCListener")
-        {
-
-        }
-
-        public override void AttachToEntryDialog(KeePassFerryExt plugin, PwEntry entry, TabControl mainTabControl, PwEntryForm form, CustomListViewEx advancedListView, ProtectedStringDictionary strings, StringDictionaryEx customData)
-        {
-            KeeEntryUserControl entryControl = new KeeEntryUserControl(plugin, entry, advancedListView, form, strings, customData);
-            TabPage keefoxTabPage = new TabPage("KeeFox");
-            entryControl.Dock = DockStyle.Fill;
-            keefoxTabPage.Controls.Add(entryControl);
-            if (mainTabControl.ImageList == null)
-                mainTabControl.ImageList = new ImageList();
-            int imageIndex = mainTabControl.ImageList.Images.Add(Resources.KPRPC64, Color.Transparent);
-            keefoxTabPage.ImageIndex = imageIndex;
-            mainTabControl.TabPages.Add(keefoxTabPage);
-        }
-
-        public override void AttachToGroupDialog(KeePassFerryExt plugin, PwGroup group, TabControl mainTabControl)
-        {
-            KeeGroupUserControl groupControl = new KeeGroupUserControl(plugin, group);
-            TabPage keefoxTabPage = new TabPage("KeeFox");
-            groupControl.Dock = DockStyle.Fill;
-            keefoxTabPage.Controls.Add(groupControl);
-            if (mainTabControl.ImageList == null)
-                mainTabControl.ImageList = new ImageList();
-            int imageIndex = mainTabControl.ImageList.Images.Add(Resources.KPRPC64, Color.Transparent);
-            keefoxTabPage.ImageIndex = imageIndex;
-            mainTabControl.TabPages.Add(keefoxTabPage);
-        }
-    }
 }

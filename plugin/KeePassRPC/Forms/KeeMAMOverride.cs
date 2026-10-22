@@ -15,6 +15,7 @@ namespace KeePassFerry.Forms
         public KeeMAMOverrideForm(string domain, MatchAccuracyMethod? mam, List<string> otherKeys)
         {
             InitializeComponent();
+            FerryText.Localize(this);
             Icon = Resources.KPRPCico;
             Domain = domain;
             OtherKeys = otherKeys;
@@ -30,14 +31,9 @@ namespace KeePassFerry.Forms
             }
 
             if (string.IsNullOrEmpty(domain))
-                Text = "Add Override";
+                Text = FerryText.L("Add Override");
             else
-                Text = "Edit Override";
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            
+                Text = FerryText.L("Edit Override");
         }
 
         private void buttonOK_Click(object sender, EventArgs e)
@@ -49,7 +45,7 @@ namespace KeePassFerry.Forms
 
             if (OtherKeys.Contains(Domain))
             {
-                MessageBox.Show(this, "An override for '" + Domain + "' has already been added. Cancel, then find and Edit the existing override.");
+                MessageBox.Show(this, string.Format(FerryText.L("An override for '{0}' has already been added. Cancel, then find and Edit the existing override."), Domain), "KeePassFerry");
                 DialogResult = DialogResult.None;
                 return;
             }
@@ -58,7 +54,7 @@ namespace KeePassFerry.Forms
             DomainName.TryParse(Domain, out domain);
             if (domain == null || domain.RegistrableDomain == null || domain.RegistrableDomain != Domain)
             {
-                MessageBox.Show(this, "Invalid domain name");
+                MessageBox.Show(this, FerryText.L("Invalid domain name"), "KeePassFerry");
                 DialogResult = DialogResult.None;
                 return;
             }

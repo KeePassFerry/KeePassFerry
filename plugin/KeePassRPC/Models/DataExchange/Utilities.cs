@@ -44,6 +44,8 @@ namespace KeePassFerry.Models.DataExchange
                 typeD = "Text";
             else if (type == FieldType.Toggle)
                 typeD = "Toggle";
+            // Auf Deutsch übersetzt (Großschreibung); auf Englisch in der Liste klein geschrieben
+            if (FerryText.German) return FerryText.L(typeD);
             if (!titleCase)
                 return typeD.ToLower();
             return typeD;

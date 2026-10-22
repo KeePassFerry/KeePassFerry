@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
 using KeePassLib;
@@ -48,11 +47,11 @@ namespace KeePassFerry.Forms
             string valuePath, bool editing, string htmlType, string querySelector)
         {
             InitializeComponent();
+            FerryText.Localize(this);
+            // Erklärung statt Link (früher Kee-Forum)
+            linkLabel1.LinkArea = new LinkArea(0, 0);
             Icon = Resources.KPRPCico;
-            if (!editing)
-                Text = "Add a form field";
-            else
-                Text = "Edit a form field";
+            Text = FerryText.L(editing ? "Edit a form field" : "Add a form field");
 
             comboBox1.Text = Utilities.FieldTypeToDisplay(type, true);
             if (valuePath == PwDefs.UserNameField)
@@ -110,7 +109,7 @@ namespace KeePassFerry.Forms
         {
             if (textBox2.Visible && textBox2.Text.Length <= 0)
             {
-                MessageBox.Show(this, "Please specify a value");
+                MessageBox.Show(this, FerryText.L("Please specify a value"), "KeePassFerry");
                 DialogResult = DialogResult.None;
                 return;
             }
@@ -119,7 +118,7 @@ namespace KeePassFerry.Forms
             if (textBox2.Visible && (textBox2.Text == "{USERNAME}" || textBox2.Text == "{PASSWORD}"))
             {
                 MessageBox.Show(this,
-                    "Please change the value of this form field - it is currently set to a value that Kee needs to reserve for internal use. Sorry, please report this on the support forums if you are inconvenienced by this choice of reserved phrase.");
+                    FerryText.L("Please change the value of this form field. {USERNAME} and {PASSWORD} are reserved for internal use by KeePassFerry."), "KeePassFerry");
                 DialogResult = DialogResult.None;
                 return;
             }
@@ -129,16 +128,16 @@ namespace KeePassFerry.Forms
             QuerySelector = textBox5.Text;
             HtmlType = textBox6.Text;
             if (!int.TryParse(textBox4.Text, out Page)) Page = 1;
-            if (comboBox1.Text == "Password")
+            if (comboBox1.Text == FerryText.L("Password"))
                 Type = FieldType.Password;
-            else if (comboBox1.Text == "Existing")
+            else if (comboBox1.Text == FerryText.L("Existing"))
                 Type = FieldType.Existing;
-            else if (comboBox1.Text == "Text")
+            else if (comboBox1.Text == FerryText.L("Text"))
                 Type = FieldType.Text;
-            else if (comboBox1.Text == "Toggle")
+            else if (comboBox1.Text == FerryText.L("Toggle"))
                 Type = FieldType.Toggle;
 
-            if (comboBox1.Text == "Toggle")
+            if (comboBox1.Text == FerryText.L("Toggle"))
             {
                 Value = checkBox1.Checked ? "KEEFOX_CHECKED_FLAG_TRUE" : "KEEFOX_CHECKED_FLAG_FALSE";
             }
@@ -154,7 +153,7 @@ namespace KeePassFerry.Forms
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (comboBox1.Text == "Toggle")
+            if (comboBox1.Text == FerryText.L("Toggle"))
             {
                 textBox2.Visible = false;
                 label2.Visible = false;
@@ -168,12 +167,6 @@ namespace KeePassFerry.Forms
                 checkBox1.Visible = false;
                 checkBox1.Checked = false;
             }
-        }
-
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process p = new Process();
-            p = Process.Start("https://forum.kee.pm/t/placeholder-handling/1100");
         }
     }
 }

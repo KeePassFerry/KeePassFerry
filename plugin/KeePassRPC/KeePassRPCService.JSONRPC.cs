@@ -84,7 +84,7 @@ namespace KeePassFerry
         [JsonRpcMethod]
         public Configuration GetCurrentKFConfig()
         {
-            bool autoCommit = _host.CustomConfig.GetBool("KeePassRPC.KeeFox.autoCommit", true);
+            bool autoCommit = _host.CustomConfig.GetBool("KeePassFerry.AutoSave", true);
             string[] MRUList = new string[_host.MainWindow.FileMruList.ItemCount];
             for (uint i = 0; i < _host.MainWindow.FileMruList.ItemCount; i++)
                 MRUList[i] = ((IOConnectionInfo)_host.MainWindow.FileMruList.GetItem(i).Value).Path;
@@ -196,26 +196,6 @@ namespace KeePassFerry
         }
 
         /// <summary>
-        /// notifies KeePass of a change in current location. The location in the KeePass config file
-        /// is updated and current databse state is modified if applicable
-        /// </summary>
-        /// <param name="locationId">New location identifier (e.g. "work", "home") Case insensitive</param>
-        [JsonRpcMethod]
-        public void ChangeLocation(string locationId)
-        {
-            if (string.IsNullOrEmpty(locationId))
-                return;
-            locationId = locationId.ToLower();
-
-            _host.CustomConfig.SetString("KeePassRPC.currentLocation", locationId);
-            _host.MainWindow.Invoke((MethodInvoker)delegate { _host.MainWindow.SaveConfig(); });
-
-            // tell all RPC clients they need to refresh their representation of the KeePass data
-            if (_host.Database.IsOpen)
-                _keePassRpcPlugin.SignalAllManagedRPCClients(Signal.DATABASE_SELECTED);
-        }
-
-        /// <summary>
         /// Gets a list of all password profiles available in the current KeePass instance
         /// </summary>
         [JsonRpcMethod]
@@ -256,7 +236,7 @@ namespace KeePassFerry
             PwGenerator.Generate(out newPassword, profile, null, _host.PwGeneratorPool);
             var password = newPassword.ReadString();
 
-            if (_host.CustomConfig.GetBool("KeePassRPC.KeeFox.backupNewPasswords", true))
+            if (_host.CustomConfig.GetBool("KeePassFerry.BackupGeneratedPasswords", true))
                 AddPasswordBackupLogin(password, url);
 
             return password;
@@ -428,7 +408,7 @@ namespace KeePassFerry
 
             parentGroup.AddEntry(newLogin, true);
 
-            if (_host.CustomConfig.GetBool("KeePassRPC.KeeFox.editNewEntries", false))
+            if (_host.CustomConfig.GetBool("KeePassFerry.EditNewEntries", false))
                 _host.MainWindow.BeginInvoke(new dlgOpenLoginEditorWindow(OpenLoginEditorWindow), newLogin, chosenDB);
             else
                 _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), chosenDB);
@@ -698,7 +678,7 @@ namespace KeePassFerry
 
                 if (matchedGroup == null)
                     throw new Exception(
-                        "Could not find requested group. Have you deleted your Kee home group? Set a new one and try again.");
+                        "Could not find the group shared with the browser. Has it been deleted? Share another group and try again.");
 
                 groups = new Group[1];
                 groups[0] = GetGroupFromPwGroup(matchedGroup);
@@ -955,10 +935,10 @@ namespace KeePassFerry
 
                     if (configErrors.Count > 0)
                         Utils.ShowMonoSafeMessageBox(
-                            "There are configuration errors in your database called '" + db.Name +
-                            "'. To fix the entries listed below and prevent this warning message appearing, please edit the value of the 'KeePassRPC JSON' custom data. Please ask for help on https://forum.kee.pm if you're not sure how to fix this. These entries are affected:" +
+                            FerryText.T("Einige Einträge der Datenbank „" + db.Name + "“ haben fehlerhafte KeePassFerry-Einstellungen (benutzerdefinierte Daten „KPRPC JSON“). Bitte korrigiere sie oder melde das Problem auf https://github.com/KeePassFerry/KeePassFerry/issues. Betroffen:",
+                                "Some entries in the database \"" + db.Name + "\" have invalid KeePassFerry settings (custom data \"KPRPC JSON\"). Please correct them or report the problem at https://github.com/KeePassFerry/KeePassFerry/issues. Affected:") +
                             Environment.NewLine + string.Join(Environment.NewLine, configErrors.ToArray()),
-                            "Warning: Configuration errors", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            FerryText.T("KeePassFerry: fehlerhafte Einstellungen", "KeePassFerry: invalid settings"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
 
@@ -1011,7 +991,7 @@ namespace KeePassFerry
 
             parentGroup.AddEntry(newLogin, true);
 
-            if (_host.CustomConfig.GetBool("KeePassRPC.KeeFox.editNewEntries", false))
+            if (_host.CustomConfig.GetBool("KeePassFerry.EditNewEntries", false))
                 _host.MainWindow.BeginInvoke(new dlgOpenLoginEditorWindow(OpenLoginEditorWindow), newLogin, chosenDb);
             else
                 _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), chosenDb);
@@ -1416,10 +1396,10 @@ namespace KeePassFerry
 
                     if (configErrors.Count > 0)
                         Utils.ShowMonoSafeMessageBox(
-                            "There are configuration errors in your database called '" + db.Name +
-                            "'. To fix the entries listed below and prevent this warning message appearing, please edit the value of the 'KeePassRPC JSON' custom data. Please ask for help on https://forum.kee.pm if you're not sure how to fix this. These entries are affected:" +
+                            FerryText.T("Einige Einträge der Datenbank „" + db.Name + "“ haben fehlerhafte KeePassFerry-Einstellungen (benutzerdefinierte Daten „KPRPC JSON“). Bitte korrigiere sie oder melde das Problem auf https://github.com/KeePassFerry/KeePassFerry/issues. Betroffen:",
+                                "Some entries in the database \"" + db.Name + "\" have invalid KeePassFerry settings (custom data \"KPRPC JSON\"). Please correct them or report the problem at https://github.com/KeePassFerry/KeePassFerry/issues. Affected:") +
                             Environment.NewLine + string.Join(Environment.NewLine, configErrors.ToArray()),
-                            "Warning: Configuration errors", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            FerryText.T("KeePassFerry: fehlerhafte Einstellungen", "KeePassFerry: invalid settings"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
 

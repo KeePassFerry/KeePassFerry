@@ -115,18 +115,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BigInteger.cs" />
     <Compile Include="DatabaseConfig.cs" />
     <Compile Include="DpiFix.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Forms\FerryGroupUserControl.cs" />
     <Compile Include="Forms\FerryPairingForm.cs">
       <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\AuthForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\AuthForm.Designer.cs">
-      <DependentUpon>AuthForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\DatabaseSettingsUserControl.cs">
       <SubType>UserControl</SubType>
@@ -146,12 +140,6 @@
     <Compile Include="Forms\KeeFieldForm.Designer.cs">
       <DependentUpon>KeeFieldForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\KeeGroupUserControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Forms\KeeGroupUserControl.Designer.cs">
-      <DependentUpon>KeeGroupUserControl.cs</DependentUpon>
-    </Compile>
     <Compile Include="Forms\KeeMAMOverride.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -170,24 +158,6 @@
     <Compile Include="Forms\KeeURLForm.Designer.cs">
       <DependentUpon>KeeURLForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\KeyCreationSimpleForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\KeyCreationSimpleForm.designer.cs">
-      <DependentUpon>KeyCreationSimpleForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Forms\LocationManager.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\LocationManager.Designer.cs">
-      <DependentUpon>LocationManager.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Forms\WelcomeForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\WelcomeForm.Designer.cs">
-      <DependentUpon>WelcomeForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="IconCache.cs" />
     <Compile Include="JsonRpc\ClientMetadata.cs" />
     <Compile Include="JsonRpc\IJsonRpcClientMetadataProperty.cs" />
@@ -205,12 +175,7 @@
     <Compile Include="KeePassRPCService.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Forms\OptionsForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\OptionsForm.Designer.cs">
-      <DependentUpon>OptionsForm.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Forms\OptionsForm.cs" />
     <Compile Include="KeePassRPCService.DTOV1.cs" />
     <Compile Include="KeePassRPCService.DTOV2.cs" />
     <Compile Include="KeePassRPCService.JSONRPC.cs" />
@@ -221,8 +186,6 @@
     <Compile Include="FerryForeground.cs" />
     <Compile Include="FerryUpdater.cs" />
     <Compile Include="FerryReleaseKey.cs" />
-    <Compile Include="KeyChallengeResponse.cs" />
-    <Compile Include="KeyContainerClass.cs" />
     <Compile Include="MatchAccuracyMethod.cs" />
     <Compile Include="Models\DataExchange\ApplicationMetadata.cs" />
     <Compile Include="Models\DataExchange\AuthenticationResult.cs" />
@@ -230,18 +193,13 @@
     <Compile Include="Models\DataExchange\Database.cs" />
     <Compile Include="Models\DataExchange\Utilities.cs" />
     <Compile Include="Models\DataExchange\Entry.cs" />
-    <Compile Include="Models\DataExchange\Error.cs" />
     <Compile Include="Models\DataExchange\ErrorCode.cs" />
     <Compile Include="Models\DataExchange\Group.cs" />
-    <Compile Include="Models\DataExchange\JSONRPCContainer.cs" />
-    <Compile Include="Models\DataExchange\KeyParams.cs" />
-    <Compile Include="Models\DataExchange\KPRPCMessage.cs" />
     <Compile Include="Models\DataExchange\LightEntry.cs" />
     <Compile Include="Models\DataExchange\LoginSearchType.cs" />
     <Compile Include="Models\DataExchange\MatchAccuracy.cs" />
     <Compile Include="Models\DataExchange\MatchAccuracyEnum.cs" />
     <Compile Include="Models\DataExchange\Signal.cs" />
-    <Compile Include="Models\DataExchange\SRPParams.cs" />
     <Compile Include="Models\DataExchange\V2\Database2.cs" />
     <Compile Include="Models\DataExchange\V2\DatabasesAndIcons.cs" />
     <Compile Include="Models\DataExchange\V2\Entry2.cs" />
@@ -276,7 +234,6 @@
     </Compile>
     <Compile Include="RPCClientManagers.cs" />
     <Compile Include="SecureEdit.cs" />
-    <Compile Include="SRP.cs" />
     <Compile Include="URLSummary.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="DPIScaledToolStripMenuItem.cs">
@@ -312,9 +269,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Forms\AuthForm.resx">
-      <DependentUpon>AuthForm.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Forms\DatabaseSettingsUserControl.resx">
       <DependentUpon>DatabaseSettingsUserControl.cs</DependentUpon>
     </EmbeddedResource>
@@ -324,9 +278,6 @@
     <EmbeddedResource Include="Forms\KeeFieldForm.resx">
       <DependentUpon>KeeFieldForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\KeeGroupUserControl.resx">
-      <DependentUpon>KeeGroupUserControl.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Forms\KeeMAMOverride.resx">
       <DependentUpon>KeeMAMOverride.cs</DependentUpon>
     </EmbeddedResource>
@@ -335,18 +286,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\KeeURLForm.resx">
       <DependentUpon>KeeURLForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\KeyCreationSimpleForm.resx">
-      <DependentUpon>KeyCreationSimpleForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\LocationManager.resx">
-      <DependentUpon>LocationManager.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\OptionsForm.resx">
-      <DependentUpon>OptionsForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\WelcomeForm.resx">
-      <DependentUpon>WelcomeForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>

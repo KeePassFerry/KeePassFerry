@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
@@ -363,6 +364,62 @@ namespace KeePassFerry
         {
             string value = Convert.ToBase64String(clientPub) + "|" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name ?? "")) + "|" + DateTime.UtcNow.ToString("o");
             _host.CustomConfig.SetString(KeyClientPrefix + clientId, value);
+        }
+
+        /// <summary>Gekoppelter Browser (für die Anzeige in den Optionen)</summary>
+        public sealed class PairedClient
+        {
+            public string Id;
+            public string Name;
+            public DateTime? PairedAt;
+        }
+
+        /// <summary>
+        /// Alle gekoppelten Browser. KeePass bietet keine Aufzählung der Konfiguration; die Einträge werden
+        /// per Reflection gelesen (wie in KeePassRPC). Klappt das nicht, ist die Liste leer.
+        /// </summary>
+        public List<PairedClient> PairedClients()
+        {
+            var result = new List<PairedClient>();
+            Dictionary<string, string> items = null;
+            try
+            {
+                var type = typeof(KeePass.App.Configuration.AceCustomConfig);
+                var field = type.GetField("m_vItems", BindingFlags.NonPublic | BindingFlags.Instance)
+                            ?? type.GetField("m_d", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (field != null) items = field.GetValue(_host.CustomConfig) as Dictionary<string, string>;
+            }
+            catch (Exception)
+            {
+                items = null;
+            }
+            if (items == null) return result;
+
+            foreach (KeyValuePair<string, string> kvp in items)
+            {
+                if (!kvp.Key.StartsWith(KeyClientPrefix, StringComparison.Ordinal) || string.IsNullOrEmpty(kvp.Value)) continue;
+                string[] parts = kvp.Value.Split('|');
+                var client = new PairedClient { Id = kvp.Key.Substring(KeyClientPrefix.Length), Name = "" };
+                try
+                {
+                    if (parts.Length > 1) client.Name = Encoding.UTF8.GetString(Convert.FromBase64String(parts[1]));
+                }
+                catch (FormatException)
+                {
+                    client.Name = "";
+                }
+                DateTime pairedAt;
+                if (parts.Length > 2 && DateTime.TryParse(parts[2], null, System.Globalization.DateTimeStyles.RoundtripKind, out pairedAt))
+                    client.PairedAt = pairedAt.ToLocalTime();
+                result.Add(client);
+            }
+            return result;
+        }
+
+        /// <summary>Kopplung aufheben: Der Browser muss sich beim nächsten Verbinden neu koppeln (Prüfcode)</summary>
+        public void RemoveClient(string clientId)
+        {
+            _host.CustomConfig.SetString(KeyClientPrefix + clientId, null);
         }
     }
 }

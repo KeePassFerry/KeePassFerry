@@ -110,7 +110,7 @@ namespace KeePassFerry
                 };
                 _BackgroundWorker.RunWorkerAsync();
 
-                string debugFileName = host.CommandLineArgs["KPRPCDebug"];
+                string debugFileName = host.CommandLineArgs["KeePassFerryDebug"];
                 if (debugFileName != null)
                 {
                     try
@@ -120,13 +120,13 @@ namespace KeePassFerry
                     }
                     catch (Exception ex)
                     {
-                        Utils.ShowMonoSafeMessageBox("KeePassRPC debug logger failed to initialise. No logging will be performed until KeePass is restarted with a valid debug log file location. Reason: " + ex);
+                        Utils.ShowMonoSafeMessageBox(FerryText.T("KeePassFerry: Das Debug-Protokoll konnte nicht gestartet werden. Bis zum Neustart von KeePass mit einem gültigen Protokollpfad wird nichts protokolliert. Grund: ", "KeePassFerry: The debug log could not be started. Nothing will be logged until KeePass is restarted with a valid log file location. Reason: ") + ex);
                     }
                 }
                 if (logger != null) logger.WriteLine("Logger initialised.");
 
                 TLDRulesCache.Init(host.CustomConfig.GetString(
-                    "KeePassRPC.publicSuffixDomainCache.path",
+                    "KeePassFerry.PublicSuffixDomainCachePath",
                     GetLocalConfigLocation() + "publicSuffixDomainCache.txt"));
 
                 // The client managers hold the connections of native messaging hosts
@@ -176,15 +176,6 @@ Technical detail: " + ex.Message);
                 _host.MainWindow.FileSaved += OnKPDBSaved;
 
                 _host.MainWindow.DocumentManager.ActiveDocumentSelected += OnKPDBSelected;
-
-                // not acting on upgrade info just yet but we need to track it for future proofing
-                bool upgrading = refreshVersionInfo(host);
-
-                // for debug only:
-                //WelcomeForm wf = new WelcomeForm();
-                //DialogResult dr = wf.ShowDialog();
-                //if (dr == DialogResult.Yes)
-                //    CreateNewDatabase();
 
                 GwmWindowAddedHandler = GlobalWindowManager_WindowAdded;
                 GlobalWindowManager.WindowAdded += GwmWindowAddedHandler;
@@ -354,29 +345,6 @@ Technical detail: " + ex.Message);
             }
         }
 
-        // still useful for tracking server versions I reckon...
-        private bool refreshVersionInfo(IPluginHost host)
-        {
-            bool upgrading = false;
-            int majorOld = (int)host.CustomConfig.GetULong("KeePassRPC.version.major", 0);
-            int minorOld = (int)host.CustomConfig.GetULong("KeePassRPC.version.minor", 0);
-            int buildOld = (int)host.CustomConfig.GetULong("KeePassRPC.version.build", 0);
-            Version versionCurrent = PluginVersion;
-
-            if (majorOld != 0 || minorOld != 0 || buildOld != 0)
-            {
-                Version versionOld = new Version(majorOld, minorOld, buildOld);
-                if (versionCurrent.CompareTo(versionOld) > 0)
-                    upgrading = true;
-            }
-
-            host.CustomConfig.SetULong("KeePassRPC.version.major", (ulong)versionCurrent.Major);
-            host.CustomConfig.SetULong("KeePassRPC.version.minor", (ulong)versionCurrent.Minor);
-            host.CustomConfig.SetULong("KeePassRPC.version.build", (ulong)versionCurrent.Build);
-
-            return upgrading;
-        }
-
         private void OnToolsOptions(object sender, EventArgs e)
         {
             using (OptionsForm ofDlg = new OptionsForm(_host, this))
@@ -397,22 +365,6 @@ Technical detail: " + ex.Message);
                 }
             }
             return icons;
-        }
-
-        public delegate object WelcomeKeeUserDelegate();
-
-
-        public object WelcomeKeeUser()
-        {
-            using (WelcomeForm wf = new WelcomeForm())
-            {
-                DialogResult dr = wf.ShowDialog(_host.MainWindow);
-                if (dr == DialogResult.Yes)
-                    CreateNewDatabase();
-                if (dr == DialogResult.Yes || dr == DialogResult.No)
-                    return 0;
-                return 1;
-            }
         }
 
         public delegate object GetIconDelegate(int iconIndex);
@@ -454,105 +406,9 @@ Technical detail: " + ex.Message);
             }
         }
 
-        /// <summary>
-        /// Called when [file new].
-        /// </summary>
-        /// <remarks>Review whenever private KeePass.MainForm.OnFileNew method changes. Last reviewed 20180416</remarks>
-        internal void CreateNewDatabase()
+        private static string BackupGroupName
         {
-            if (!AppPolicy.Try(AppPolicyId.SaveFile)) return;
-
-            DialogResult dr;
-            string strPath;
-            using (SaveFileDialog sfd = UIUtil.CreateSaveFileDialog(KPRes.CreateNewDatabase,
-                KPRes.NewDatabaseFileName, UIUtil.CreateFileTypeFilter(
-                    AppDefs.FileExtension.FileExt, KPRes.KdbxFiles, true), 1,
-                AppDefs.FileExtension.FileExt, false))
-            {
-                GlobalWindowManager.AddDialog(sfd);
-                dr = sfd.ShowDialog(_host.MainWindow);
-                GlobalWindowManager.RemoveDialog(sfd);
-                strPath = sfd.FileName;
-            }
-
-            if (dr != DialogResult.OK) return;
-
-            CompositeKey key = null;
-            bool showUsualKeePassKeyCreationDialog = false;
-            using (KeyCreationSimpleForm kcsf = new KeyCreationSimpleForm())
-            {
-                // Don't show the simple key creation form if the user has set
-                // security policies that restrict the allowable composite key sources
-                if (Program.Config.UI.KeyCreationFlags == 0)
-                {
-                    kcsf.InitEx(IOConnectionInfo.FromPath(strPath), true);
-                    dr = kcsf.ShowDialog(_host.MainWindow);
-                    if ((dr == DialogResult.Cancel) || (dr == DialogResult.Abort)) return;
-                    if (dr == DialogResult.No)
-                    {
-                        showUsualKeePassKeyCreationDialog = true;
-                    }
-                    else
-                    {
-                        key = kcsf.CompositeKey;
-                    }
-                }
-                else
-                {
-                    showUsualKeePassKeyCreationDialog = true;
-                }
-
-                if (showUsualKeePassKeyCreationDialog)
-                {
-                    using (KeyCreationForm kcf = new KeyCreationForm())
-                    {
-                        kcf.InitEx(IOConnectionInfo.FromPath(strPath), true);
-                        dr = kcf.ShowDialog(_host.MainWindow);
-                        if ((dr == DialogResult.Cancel) || (dr == DialogResult.Abort)) return;
-                        key = kcf.CompositeKey;
-                    }
-                }
-
-                PwDocument dsPrevActive = _host.MainWindow.DocumentManager.ActiveDocument;
-                PwDatabase pd = _host.MainWindow.DocumentManager.CreateNewDocument(true).Database;
-                pd.New(IOConnectionInfo.FromPath(strPath), key);
-
-                if (!string.IsNullOrEmpty(kcsf.DatabaseName))
-                {
-                    pd.Name = kcsf.DatabaseName;
-                    pd.NameChanged = DateTime.Now;
-                }
-
-                InsertStandardKeePassData(pd);
-
-                var conf = pd.GetKPRPCConfig();
-                pd.SetKPRPCConfig(conf);
-
-                // save the new database & update UI appearance
-                pd.Save(_host.MainWindow.CreateStatusBarLogger());
-            }
-            _host.MainWindow.UpdateUI(true, null, true, null, true, null, false);
-        }
-
-        private void InsertStandardKeePassData(PwDatabase pd)
-        {
-            PwGroup pg = new PwGroup(true, true, KPRes.General, PwIcon.Folder);
-            pd.RootGroup.AddGroup(pg, true);
-
-            pg = new PwGroup(true, true, KPRes.WindowsOS, PwIcon.DriveWindows);
-            pd.RootGroup.AddGroup(pg, true);
-
-            pg = new PwGroup(true, true, KPRes.Network, PwIcon.NetworkServer);
-            pd.RootGroup.AddGroup(pg, true);
-
-            pg = new PwGroup(true, true, KPRes.Internet, PwIcon.World);
-            pd.RootGroup.AddGroup(pg, true);
-
-            pg = new PwGroup(true, true, KPRes.EMail, PwIcon.EMail);
-            pd.RootGroup.AddGroup(pg, true);
-
-            pg = new PwGroup(true, true, KPRes.Homebanking, PwIcon.Homebanking);
-            pd.RootGroup.AddGroup(pg, true);
+            get { return FerryText.T("KeePassFerry – generierte Passwörter", "KeePassFerry – generated passwords"); }
         }
 
         internal PwGroup GetAndInstallKeePasswordBackupGroup(PwDatabase pd)
@@ -566,14 +422,14 @@ Technical detail: " + ex.Message);
             PwGroup kfpbg = pd.RootGroup.FindGroup(groupUuid, true);
             if (kfpbg == null)
             {
-                kfpbg = new PwGroup(false, true, "Kee Generated Password Backups", PwIcon.Folder);
+                kfpbg = new PwGroup(false, true, BackupGroupName, PwIcon.Folder);
                 kfpbg.Uuid = groupUuid;
                 kfpbg.CustomIconUuid = GetKPRPCIcon();
                 keeGroup.AddGroup(kfpbg, true);
             }
-            else if (kfpbg.Name == "KeeFox Generated Password Backups")
+            else if (kfpbg.Name == "KeeFox Generated Password Backups" || kfpbg.Name == "Kee Generated Password Backups")
             {
-                kfpbg.Name = "Kee Generated Password Backups";
+                kfpbg.Name = BackupGroupName;
             }
             return kfpbg;
         }
@@ -595,10 +451,6 @@ Technical detail: " + ex.Message);
                 return pd.RootGroup;
             }
 
-            if (kfpg.Name == "KeeFox")
-            {
-                kfpg.Name = "Kee";
-            }
             return kfpg;
         }
 
@@ -643,31 +495,7 @@ Technical detail: " + ex.Message);
             {
                 _lockRPCClientManagers.HeldBy = Thread.CurrentThread.ManagedThreadId;
                 _RPCClientManagers.Add("general", new GeneralRPCClientManager());
-
-                //TODO2: load managers from plugins, etc.
-                _RPCClientManagers.Add("KeeFox", new KeeFoxRPCClientManager());
             }
-        }
-
-        private void PromoteGeneralRPCClient(KeePassRPCClientConnection connection, KeePassRPCClientManager destination)
-        {
-            lock (_lockRPCClientManagers)
-            {
-                _lockRPCClientManagers.HeldBy = Thread.CurrentThread.ManagedThreadId;
-                ((GeneralRPCClientManager)_RPCClientManagers["general"]).RemoveRPCClientConnection(connection);
-                destination.AddRPCClientConnection(connection);
-            }
-        }
-
-        internal void PromoteGeneralRPCClient(KeePassRPCClientConnection connection, string clientName)
-        {
-            string managerName = "general";
-            switch (clientName)
-            {
-                case "KeeFox": managerName = "KeeFox"; break;
-            }
-
-            PromoteGeneralRPCClient(connection, _RPCClientManagers[managerName]);
         }
 
         public override ToolStripMenuItem GetMenuItem(PluginMenuType t)
@@ -675,8 +503,6 @@ Technical detail: " + ex.Message);
             // Provide a menu item for the main location(s)
             if (t == PluginMenuType.Main)
             {
-                //TODO: Remove DPIScaledToolStripMenuItem after 2023 if no DPI regressions found 
-                //ToolStripMenuItem tsmi = new DPIScaledToolStripMenuItem("KeePassRPC (Kee) Options...");
                 ToolStripMenuItem tsmi = new ToolStripMenuItem("KeePassFerry");
                 tsmi.Image = Resources.KPRPC64;
                 ToolStripMenuItem options = new ToolStripMenuItem(FerryText.T("Optionen …", "Options …"));
@@ -692,7 +518,7 @@ Technical detail: " + ex.Message);
         }
 
         // Menü "Nach Updates suchen": neueste Version zeigen und auf Wunsch per Setup aktualisieren
-        private void OnCheckForUpdates(object sender, EventArgs e)
+        internal void OnCheckForUpdates(object sender, EventArgs e)
         {
             string latest = FerryUpdater.LatestVersion();
             string installed = FerryUpdater.InstalledVersion;
@@ -870,7 +696,7 @@ Technical detail: " + ex.Message);
             lock (_lockRPCClientManagers)
             {
                 _lockRPCClientManagers.HeldBy = Thread.CurrentThread.ManagedThreadId;
-                _RPCClientManagers["general"].AddRPCClientConnection(new KeePassRPCClientConnection(transport, false, this));
+                _RPCClientManagers["general"].AddRPCClientConnection(new KeePassRPCClientConnection(transport));
             }
         }
 

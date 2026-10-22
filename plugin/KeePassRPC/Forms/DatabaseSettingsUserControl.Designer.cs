@@ -79,8 +79,7 @@ namespace KeePassFerry.Forms
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(411, 13);
             this.label3.TabIndex = 10;
-            this.label3.Text = "This affects new entries and entries with no existing KeePassRPC (Kee) configurat" +
-    "ion.";
+            this.label3.Text = "This affects new entries and entries without KeePassFerry settings.";
             // 
             // radioButton6
             // 
@@ -238,14 +237,13 @@ namespace KeePassFerry.Forms
             // 
             // linkLabel1
             // 
-            this.linkLabel1.AutoSize = true;
+            this.linkLabel1.AutoSize = false;
             this.linkLabel1.Location = new System.Drawing.Point(7, 160);
             this.linkLabel1.Name = "linkLabel1";
-            this.linkLabel1.Size = new System.Drawing.Size(247, 13);
+            this.linkLabel1.Size = new System.Drawing.Size(430, 34);
             this.linkLabel1.TabIndex = 9;
             this.linkLabel1.TabStop = true;
-            this.linkLabel1.Text = "https://forum.kee.pm/t/placeholder-handling/1100";
-            this.linkLabel1.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
+            this.linkLabel1.Text = "Replace KeePass placeholders such as {USERNAME} or {S:Field} in form fields with their values before filling.";
             // 
             // label8
             // 
