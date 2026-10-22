@@ -24,50 +24,50 @@ export async function getManifest() {
 
         // necessary to omit scripts in 2024 to avoid warning noise in Chrome
         // background: {
-        //     service_worker: "./dist/background/index.js",
+        //     service_worker: "dist/background/index.js",
         //     scripts: ["dist/background/index.js"],
         //     type: "module"
         //   } as any, // type error - doesn't support scripts
         background: {
-            service_worker: "./dist/background/index.js",
+            service_worker: "dist/background/index.js",
             type: "module"
         },
         content_scripts: [{
             // Passkeys: übernimmt navigator.credentials in der Seitenwelt, so früh wie möglich
             all_frames: true,
             matches: ["<all_urls>"],
-            js: ["./dist/webauthn/index.global.js"],
+            js: ["dist/webauthn/index.global.js"],
             run_at: "document_start",
             world: "MAIN"
         } as any, {
             all_frames: true,
             matches: ["<all_urls>"],
             js: [
-                "./dist/page/index.global.js"
+                "dist/page/index.global.js"
             ],
             run_at: "document_end"
         }
         ],
         icons: {
-            "16": "./assets/images/16.png",
-            "32": "./assets/images/32.png",
-            "48": "./assets/images/48.png",
-            "64": "./assets/images/64.png",
-            "96": "./assets/images/96.png",
-            "128": "./assets/images/128.png"
+            "16": "assets/images/16.png",
+            "32": "assets/images/32.png",
+            "48": "assets/images/48.png",
+            "64": "assets/images/64.png",
+            "96": "assets/images/96.png",
+            "128": "assets/images/128.png"
         },
         action: {
             "default_icon": {
-                "16": "./assets/images/16.png",
-                "32": "./assets/images/32.png",
-                "48": "./assets/images/48.png",
-                "64": "./assets/images/64.png"
+                "16": "assets/images/16.png",
+                "32": "assets/images/32.png",
+                "48": "assets/images/48.png",
+                "64": "assets/images/64.png"
             },
             "default_title": "KeePassFerry",
-            default_popup: "./dist/popup/index.html"
+            default_popup: "dist/popup/index.html"
         },
         options_ui: {
-            page: "./dist/settings/index.html",
+            page: "dist/settings/index.html",
             open_in_tab: true
         },
         permissions: [
