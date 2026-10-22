@@ -17,7 +17,7 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Version bestimmen und prüfen
         shell: pwsh
@@ -48,7 +48,7 @@ jobs:
           New-Item -ItemType Directory -Force (Join-Path $dir "Plugins") | Out-Null
           if (-not (Test-Path (Join-Path $dir "KeePass.exe"))) { throw "KeePass.exe fehlt" }
 
-      - uses: microsoft/setup-msbuild@v2
+      - uses: microsoft/setup-msbuild@v3
 
       - name: Plugin bauen
         shell: pwsh
@@ -62,7 +62,7 @@ jobs:
           dotnet build host/KeePassFerryHost -c Release -nologo
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -125,7 +125,7 @@ jobs:
           $notes = if ($end) { $rest[0..($end - 2)] } else { $rest }
           $notes | Out-File release/NOTES.md -Encoding utf8
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: KeePassFerry-${{ env.VERSION }}
           path: |
@@ -136,7 +136,7 @@ jobs:
       # Nur als Entwurf: veröffentlicht wird nach der Signatur mit signing/sign-release.ps1 (Schlüssel nur offline)
       - name: GitHub-Release als Entwurf anlegen
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: true
           name: KeePassFerry ${{ env.VERSION }}
