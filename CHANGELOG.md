@@ -8,7 +8,9 @@
   KeePassFerry.
 - The plugin reports its version to the extension. If the plugin is older than the extension (the store only
   updates the extension), the popup shows a notice with "Update now": the plugin downloads the setup from the
-  GitHub release, verifies its SHA-256 checksum and installs it.
+  GitHub release and installs it only if the checksum list is signed with the KeePassFerry release key (RSA 3072,
+  kept offline), names a newer version than the installed one and matches the downloaded file. Downloads follow
+  redirects only via HTTPS to github.com and githubusercontent.com. Releases are published only after signing.
 - Welcome page with a download button for the setup and updated installation steps.
 - Settings: new icons and colours, consistent with the popup.
 

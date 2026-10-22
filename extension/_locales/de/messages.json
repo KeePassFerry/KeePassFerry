@@ -1550,5 +1550,9 @@
     "ferry_extras_unsupported": {
         "message": "Für Felder und Anhänge braucht KeePassFerry in KeePass eine neuere Version.",
         "description": "KeePassFerry"
+    },
+    "ferry_plugin_update_unsafe": {
+        "message": "Das Update wurde nicht installiert, weil die Dateien im Release nicht korrekt signiert sind. Bitte lade das Setup jetzt nicht herunter und melde das Problem auf GitHub.",
+        "description": "KeePassFerry"
     }
 }

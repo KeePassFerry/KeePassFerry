@@ -34,6 +34,8 @@ jobs:
             if ($tag -ne $pkg) { throw "Tag v$tag passt nicht zur Version $pkg" }
           }
           "VERSION=$pkg" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          # Ein-Klick-Update: Plugin braucht den öffentlichen Release-Schlüssel (signing/new-release-key.ps1)
+          if (-not (Select-String plugin/KeePassRPC/FerryReleaseKey.cs -Pattern "<Modulus>" -Quiet)) { throw "FerryReleaseKey.cs enthält keinen Schlüssel" }
 
       - name: KeePass als Build-Referenz laden
         shell: pwsh
@@ -131,10 +133,12 @@ jobs:
             release/*.exe
             release/SHA256SUMS.txt
 
-      - name: GitHub-Release anlegen
+      # Nur als Entwurf: veröffentlicht wird nach der Signatur mit signing/sign-release.ps1 (Schlüssel nur offline)
+      - name: GitHub-Release als Entwurf anlegen
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
           name: KeePassFerry ${{ env.VERSION }}
           body_path: release/NOTES.md
           files: |

@@ -31,7 +31,17 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
         // Plugins vor 1.0.4 kennen StartPluginUpdate nicht (Ergebnis null): dann die Download-Seite öffnen
         const result = await kee.KeePassRPC.startPluginUpdate();
         diag("hintergrund", "plugin-update", { ergebnis: result });
-        if (result !== "started" && result !== "cancelled" && result !== "uptodate") {
+        if (result === "signature_invalid" || result === "checksum_mismatch") {
+            // Release nicht korrekt signiert: nicht zum Download schicken, sondern warnen
+            chrome.notifications.create("keepassferry-update-unsafe", {
+                type: "basic",
+                iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
+                title: $STR("security_warning_title"),
+                message: $STR("ferry_plugin_update_unsafe"),
+                requireInteraction: true,
+                priority: 2
+            });
+        } else if (result !== "started" && result !== "cancelled" && result !== "uptodate") {
             chrome.tabs.create({ url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest" });
         }
     }

@@ -6,6 +6,7 @@
 *.pem
 *.kdbx
 *.key
+*signing-key*.xml
 
 # Build-Ausgaben
 bin/

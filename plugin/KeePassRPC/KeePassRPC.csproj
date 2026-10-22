@@ -28,7 +28,7 @@
     </SccAuxPath>
     <SccProvider>
     </SccProvider>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -220,6 +220,7 @@
     <Compile Include="FerryText.cs" />
     <Compile Include="FerryForeground.cs" />
     <Compile Include="FerryUpdater.cs" />
+    <Compile Include="FerryReleaseKey.cs" />
     <Compile Include="KeyChallengeResponse.cs" />
     <Compile Include="KeyContainerClass.cs" />
     <Compile Include="MatchAccuracyMethod.cs" />
