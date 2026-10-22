@@ -16,7 +16,7 @@ namespace KeePassFerry
     /// - die Liste eine neuere Version als die installierte nennt (kein Zurückspielen alter Setups) und
     /// - das geladene Setup die dort genannte Prüfsumme hat.
     /// Downloads folgen Umleitungen nur über HTTPS zu github.com bzw. *.githubusercontent.com.
-    /// Das Setup beendet KeePass, ersetzt das Plugin und startet KeePass wieder.
+    /// Das Setup beendet KeePass, ersetzt das Plugin und startet KeePass wieder (eigener [Run]-Eintrag, nicht Restart Manager).
     /// </summary>
     internal static class FerryUpdater
     {
@@ -108,7 +108,7 @@ namespace KeePassFerry
             bool needsAdmin = keepassDir.StartsWith(programFiles, StringComparison.OrdinalIgnoreCase)
                 || (!string.IsNullOrEmpty(programFilesX86) && keepassDir.StartsWith(programFilesX86, StringComparison.OrdinalIgnoreCase));
 
-            string args = "/SILENT /SP- /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /DIR=\"" + keepassDir + "\""
+            string args = "/SILENT /SP- /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /DIR=\"" + keepassDir + "\""
                 + (needsAdmin ? "" : " /CURRENTUSER");
             try
             {
