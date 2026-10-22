@@ -78,6 +78,22 @@ Releases are built by GitHub Actions when a tag `v*` is pushed (see `.github/wor
 
 KeePassFerry has no servers, no telemetry and no tracking. See [PRIVACY.md](PRIVACY.md).
 
+## Code signing policy
+
+Free code signing for Windows programs provided by [SignPath.io](https://about.signpath.io), certificate by
+[SignPath Foundation](https://signpath.org).
+
+- Committers and reviewers: [members of the KeePassFerry organisation](https://github.com/orgs/KeePassFerry/people)
+- Approvers: [owners of the KeePassFerry organisation](https://github.com/orgs/KeePassFerry/people)
+
+Only programs built by GitHub Actions from this repository are signed; every release is approved manually.
+In addition, the plugin installs one-click updates only if the release's `SHA256SUMS.txt` is signed with the
+KeePassFerry release key (kept offline, see `signing/`).
+
+Privacy: this program will not transfer any information to other networked systems unless specifically requested
+by the user or the person installing or operating it (KeePass's own update check, if enabled in KeePass, reads
+`version.txt` from GitHub; updates are downloaded from GitHub only when the user starts them).
+
 ## Credits and licences
 
 KeePassFerry is a fork of **Kee** (Kee Vault Ltd and contributors, AGPL v3) and **KeePassRPC**
