@@ -1,7 +1,7 @@
-; KeePassFerry – Installationsprogramm für das KeePass-Plugin (Inno Setup 6)
+﻿; KeePassFerry – Installationsprogramm für das KeePass-Plugin (Inno Setup 6)
 ; Baut die Release-Action: iscc /DAppVersion=1.2.3 /DSourceDir=..\release\KeePassFerry installer\KeePassFerry.iss
 ; Kopiert das Plugin nach <KeePass>\Plugins\KeePassFerry. KeePass wird über den Restart Manager beendet und
-; danach wieder gestartet. Beim Deinstallieren werden auch die Native-Messaging-Einträge des Plugins entfernt.
+; danach vom Setup wieder gestartet (als normaler Benutzer), sofern es vorher lief. Beim Deinstallieren werden auch die Native-Messaging-Einträge des Plugins entfernt.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"
@@ -34,7 +34,8 @@ PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
 CloseApplications=yes
 CloseApplicationsFilter=*.exe,*.dll
-RestartApplications=yes
+; KeePass meldet sich nicht beim Restart Manager an; den Neustart übernimmt [Run] (StartKeePass)
+RestartApplications=no
 OutputDir=..\release
 OutputBaseFilename=KeePassFerry-Setup-{#AppVersion}
 Compression=lzma2
@@ -59,6 +60,9 @@ en.NoKeePassExe=No KeePass.exe was found in this folder. Please select the KeePa
 de.FinishHint=Starten Sie KeePass und öffnen Sie Ihre Datenbank. Beim ersten Verbinden zeigen KeePass und der Browser denselben sechsstelligen Code – bestätigen Sie ihn in KeePass.
 en.FinishHint=Start KeePass and open your database. When connecting for the first time, KeePass and the browser show the same six-digit code – confirm it in KeePass.
 
+de.StartKeePass=KeePass wieder starten
+en.StartKeePass=Start KeePass again
+
 de.AddToEdge=KeePassFerry in Microsoft Edge hinzufügen (öffnet die Store-Seite)
 en.AddToEdge=Add KeePassFerry to Microsoft Edge (opens the store page)
 de.AddToChrome=KeePassFerry in Google Chrome hinzufügen (öffnet die Store-Seite)
@@ -70,6 +74,8 @@ en.AddToFirefox=Add KeePassFerry to Firefox (opens the add-on page)
 Source: "{#SourceDir}\*"; DestDir: "{app}\Plugins\KeePassFerry"; Flags: ignoreversion recursesubdirs
 
 [Run]
+; KeePass wieder starten, wenn es vor der Installation lief (auch beim stillen Update aus dem Plugin)
+Filename: "{app}\KeePass.exe"; Description: "{cm:StartKeePass}"; Flags: postinstall nowait runasoriginaluser; Check: KeePassWasRunning
 ; Letzte Seite: je installiertem Browser ein Häkchen; öffnet die Store-Seite in genau diesem Browser (als normaler Benutzer)
 Filename: "{code:BrowserExe|msedge}"; Parameters: """{#EdgeStoreUrl}"""; Description: "{cm:AddToEdge}"; Flags: postinstall nowait skipifsilent runasoriginaluser; Check: OfferBrowser('msedge', '{#EdgeStoreUrl}')
 Filename: "{code:BrowserExe|chrome}"; Parameters: """{#ChromeStoreUrl}"""; Description: "{cm:AddToChrome}"; Flags: postinstall nowait skipifsilent runasoriginaluser unchecked; Check: OfferBrowser('chrome', '{#ChromeStoreUrl}')
@@ -79,6 +85,36 @@ Filename: "{code:BrowserExe|firefox}"; Parameters: """{#FirefoxStoreUrl}"""; Des
 Type: dirifempty; Name: "{app}\Plugins\KeePassFerry"
 
 [Code]
+var
+  KeePassRunningAtStart: Boolean;
+
+// Läuft KeePass.exe gerade? (WMI; bei Fehlern: nein)
+function IsKeePassRunning: Boolean;
+var
+  Locator, Service, Processes: Variant;
+begin
+  Result := False;
+  try
+    Locator := CreateOleObject('WbemScripting.SWbemLocator');
+    Service := Locator.ConnectServer('.', 'root\CIMV2');
+    Processes := Service.ExecQuery('SELECT ProcessId FROM Win32_Process WHERE Name = ''KeePass.exe''');
+    Result := Processes.Count > 0;
+  except
+  end;
+end;
+
+// Vor dem Beenden durch den Restart Manager merken, ob KeePass lief
+function InitializeSetup: Boolean;
+begin
+  KeePassRunningAtStart := IsKeePassRunning;
+  Result := True;
+end;
+
+function KeePassWasRunning: Boolean;
+begin
+  Result := KeePassRunningAtStart;
+end;
+
 // KeePass-Ordner aus der Installation von KeePass (Inno-Setup-Eintrag von KeePass), sonst Standardpfad
 function DefaultKeePassDir(Param: String): String;
 var
