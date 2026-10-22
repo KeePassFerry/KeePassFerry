@@ -24,6 +24,8 @@ namespace KeePassFerry.Forms
             FerryText.Localize(this);
             // Erklärung statt Link (früher Kee-Forum)
             linkLabel1.LinkArea = new LinkArea(0, 0);
+            label8.Text = FerryText.T("Platzhalter können Informationen aus deiner Datenbank an Websites weitergeben, etwa an eine manipulierte Seite. Schalte das nur ein, wenn du Platzhalter in Formularfeldern wirklich brauchst.",
+                "Placeholders can pass information from your database to websites, for example to a manipulated page. Only enable this if you really need placeholders in form fields.");
             PresentDefaultMatchAccuracy();
             PresentDomains();
             PresentDefaultPlaceholderHandling();
@@ -32,6 +34,12 @@ namespace KeePassFerry.Forms
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
+            // Übersetzte Texte sind länger als die englischen Designer-Texte
+            FerryLayout.WidenColumn(listView1, buttonURLAdd, buttonURLEdit, buttonURLDelete);
+            FerryLayout.Row(radioButton7.Height, radioButton8, radioButton7);
+            // Erst die Erklärung, darunter der Warnhinweis
+            linkLabel1.Top = label8.Top;
+            label8.Top = linkLabel1.Bottom + linkLabel1.Font.Height;
             if (ParentForm != null)
             {
                 ParentForm.FormClosing +=

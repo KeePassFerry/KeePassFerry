@@ -16,7 +16,7 @@ namespace KeePassFerry.Forms
         {
             InitializeComponent();
             FerryText.Localize(this);
-            Icon = Resources.KPRPCico;
+            Icon = Resources.FerryIcon;
             Domain = domain;
             OtherKeys = otherKeys;
             MAM = mam.GetValueOrDefault(MatchAccuracyMethod.Domain);

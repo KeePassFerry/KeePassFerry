@@ -66,43 +66,26 @@ namespace KeePassFerry.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static Bitmap buttonGradient {
+        /// <summary>KeePassFerry-Symbol 16 px</summary>
+        public static Bitmap FerryIcon16 {
             get {
-                object obj = ResourceManager.GetObject("buttonGradient", resourceCulture);
+                object obj = ResourceManager.GetObject("FerryIcon16", resourceCulture);
                 return ((Bitmap)(obj));
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static Bitmap buttonGradientHover {
+
+        /// <summary>KeePassFerry-Symbol 64 px (Menü, Reiter)</summary>
+        public static Bitmap FerryIcon64 {
             get {
-                object obj = ResourceManager.GetObject("buttonGradientHover", resourceCulture);
+                object obj = ResourceManager.GetObject("FerryIcon64", resourceCulture);
                 return ((Bitmap)(obj));
             }
         }
-        
-        public static Bitmap KPRPC16 {
+
+        /// <summary>KeePassFerry-Symbol für Fenstertitel</summary>
+        public static Icon FerryIcon {
             get {
-                object obj = ResourceManager.GetObject("KPRPC16", resourceCulture);
-                return ((Bitmap)(obj));
-            }
-        }
-        
-        public static Bitmap KPRPC64 {
-            get {
-                object obj = ResourceManager.GetObject("KPRPC64", resourceCulture);
-                return ((Bitmap)(obj));
-            }
-        }
-        
-        public static Icon KPRPCico {
-            get {
-                object obj = ResourceManager.GetObject("KPRPCico", resourceCulture);
+                object obj = ResourceManager.GetObject("FerryIcon", resourceCulture);
                 return ((Icon)(obj));
             }
         }

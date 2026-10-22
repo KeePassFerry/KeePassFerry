@@ -76,7 +76,7 @@ namespace KeePassFerry.Forms
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(137, 13);
             this.label1.TabIndex = 0;
-            this.label1.Text = "Domain:   (e.g. google.com)";
+            this.label1.Text = "Domain (e.g. google.com):";
             // 
             // radioButton1
             // 

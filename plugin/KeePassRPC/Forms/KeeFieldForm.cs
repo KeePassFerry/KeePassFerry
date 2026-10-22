@@ -50,7 +50,9 @@ namespace KeePassFerry.Forms
             FerryText.Localize(this);
             // Erklärung statt Link (früher Kee-Forum)
             linkLabel1.LinkArea = new LinkArea(0, 0);
-            Icon = Resources.KPRPCico;
+            label8.Text = FerryText.T("Achte darauf, dass die verwendeten Platzhalter die Sicherheit deiner Datenbank und deiner Konten nicht verringern.",
+                "Make sure that the placeholders you use do not reduce the security of your database and accounts.");
+            Icon = Resources.FerryIcon;
             Text = FerryText.L(editing ? "Edit a form field" : "Add a form field");
 
             comboBox1.Text = Utilities.FieldTypeToDisplay(type, true);
@@ -103,6 +105,19 @@ namespace KeePassFerry.Forms
             }
 
             comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            // Übersetzte Texte sind länger als die englischen Designer-Texte
+            FerryLayout.Row(radioButton1.Height, radioButton1, radioButton2, radioButton3);
+            // "Wert" bündig mit den übrigen Feldern (Beschriftung rechtsbündig davor)
+            textBox2.Left = textBox1.Left;
+            textBox2.Width = textBox1.Width;
+            label2.Left = label1.Right - label2.Width;
+            linkLabel1.Top = label8.Top;
+            label8.Top = linkLabel1.Bottom + linkLabel1.Font.Height / 2;
         }
 
         private void button1_Click(object sender, EventArgs e)

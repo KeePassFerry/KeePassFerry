@@ -263,7 +263,7 @@ Technical detail: " + ex.Message);
             keeTabPage.Controls.Add(dbSettingsUserControl);
             if (mainTabControl.ImageList == null)
                 mainTabControl.ImageList = new ImageList();
-            int imageIndex = mainTabControl.ImageList.Images.Add(Resources.KPRPC64, Color.Transparent);
+            int imageIndex = mainTabControl.ImageList.Images.Add(Resources.FerryIcon64, Color.Transparent);
             keeTabPage.ImageIndex = imageIndex;
             mainTabControl.TabPages.Add(keeTabPage);
         }
@@ -424,12 +424,13 @@ Technical detail: " + ex.Message);
             {
                 kfpbg = new PwGroup(false, true, BackupGroupName, PwIcon.Folder);
                 kfpbg.Uuid = groupUuid;
-                kfpbg.CustomIconUuid = GetKPRPCIcon();
+                kfpbg.CustomIconUuid = GetFerryIcon();
                 keeGroup.AddGroup(kfpbg, true);
             }
             else if (kfpbg.Name == "KeeFox Generated Password Backups" || kfpbg.Name == "Kee Generated Password Backups")
             {
                 kfpbg.Name = BackupGroupName;
+                kfpbg.CustomIconUuid = GetFerryIcon();
             }
             return kfpbg;
         }
@@ -454,14 +455,12 @@ Technical detail: " + ex.Message);
             return kfpg;
         }
 
-        private PwUuid GetKPRPCIcon()
+        private PwUuid GetFerryIcon()
         {
-            //return null;
-
-            // {EB9FF2ED-0512-4747-B83E-AFA515A30422}
+            // KeePassFerry-Symbol (eigene UUID; das Kee-Symbol {EB9FF2ED-0512-4747-B83E-AFA515A30422} bleibt in alten Datenbanken)
             PwUuid kprpcIconUuid = new PwUuid(new byte[] {
-                0xeb, 0x9f, 0xf2, 0xed, 0x05, 0x12, 0x47, 0x47,
-                0xb8, 0x3e, 0xaf, 0xa5, 0x15, 0xa3, 0x04, 0x22});
+                0xa5, 0x14, 0xd6, 0x3f, 0x69, 0x4b, 0xcb, 0x47,
+                0x84, 0x98, 0xdf, 0x80, 0x88, 0xcc, 0xb3, 0xcc});
 
             PwCustomIcon icon = null;
 
@@ -478,7 +477,7 @@ Technical detail: " + ex.Message);
             {
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    Resources.KPRPC64.Save(ms, ImageFormat.Png);
+                    Resources.FerryIcon64.Save(ms, ImageFormat.Png);
 
                     // Create a new custom icon for use with this entry
                     icon = new PwCustomIcon(kprpcIconUuid,
@@ -504,7 +503,7 @@ Technical detail: " + ex.Message);
             if (t == PluginMenuType.Main)
             {
                 ToolStripMenuItem tsmi = new ToolStripMenuItem("KeePassFerry");
-                tsmi.Image = Resources.KPRPC64;
+                tsmi.Image = Resources.FerryIcon64;
                 ToolStripMenuItem options = new ToolStripMenuItem(FerryText.T("Optionen …", "Options …"));
                 options.Click += OnToolsOptions;
                 ToolStripMenuItem update = new ToolStripMenuItem(FerryText.T("Nach Updates suchen …", "Check for updates …"));

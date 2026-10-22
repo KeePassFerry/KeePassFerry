@@ -44,7 +44,9 @@ namespace KeePassFerry.Forms
             _share = new Button
             {
                 AutoSize = true,
-                Text = FerryText.T("Diese Gruppe für den Browser freigeben", "Share this group with the browser")
+                Text = IsDatabaseRoot
+                    ? FerryText.T("Ganze Datenbank freigeben", "Share the whole database")
+                    : FerryText.T("Diese Gruppe für den Browser freigeben", "Share this group with the browser")
             };
             _share.Click += OnShareClick;
 
@@ -61,6 +63,11 @@ namespace KeePassFerry.Forms
                 _status.MaximumSize = new Size(width, 0);
             };
             UpdateStatus();
+        }
+
+        private bool IsDatabaseRoot
+        {
+            get { return _group == _plugin._host.Database.RootGroup; }
         }
 
         private Visibility CurrentVisibility()
@@ -82,8 +89,10 @@ namespace KeePassFerry.Forms
             switch (CurrentVisibility())
             {
                 case Visibility.Shared:
-                    _status.Text = FerryText.T("Diese Gruppe ist für den Browser freigegeben – samt allen Untergruppen und Einträgen.",
-                        "This group is shared with the browser, including all subgroups and entries.");
+                    _status.Text = IsDatabaseRoot
+                        ? FerryText.T("Die ganze Datenbank ist für den Browser freigegeben.", "The whole database is shared with the browser.")
+                        : FerryText.T("Diese Gruppe ist für den Browser freigegeben – samt allen Untergruppen und Einträgen.",
+                            "This group is shared with the browser, including all subgroups and entries.");
                     _share.Enabled = false;
                     break;
                 case Visibility.Inside:
@@ -108,7 +117,8 @@ namespace KeePassFerry.Forms
         {
             PwDatabase db = _plugin._host.Database;
             var conf = db.GetKPRPCConfig();
-            conf.RootUUID = MemUtil.ByteArrayToHexString(_group.Uuid.UuidBytes);
+            // Oberste Gruppe: Auswahl löschen, dann gilt wieder die ganze Datenbank
+            conf.RootUUID = IsDatabaseRoot ? null : MemUtil.ByteArrayToHexString(_group.Uuid.UuidBytes);
             db.SetKPRPCConfig(conf);
             UpdateStatus();
             _plugin._host.MainWindow.UpdateUI(false, null, true, null, true, null, true);

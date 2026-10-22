@@ -32,7 +32,7 @@ namespace KeePassFerry.Forms
         {
             InitializeComponent();
             FerryText.Localize(this);
-            Icon = Resources.KPRPCico;
+            Icon = Resources.FerryIcon;
             Match = match;
             Block = block;
             OtherKeys = otherKeys;

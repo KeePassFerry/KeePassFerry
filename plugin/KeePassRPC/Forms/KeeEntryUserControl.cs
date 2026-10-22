@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Jayrock.Json.Conversion;
@@ -103,6 +104,7 @@ namespace KeePassFerry.Forms
 
         private void KeeEntryUserControl_Load(object sender, EventArgs e)
         {
+            ArrangeForTranslatedTexts();
             if (_conf == null)
                 return;
 
@@ -203,6 +205,22 @@ namespace KeePassFerry.Forms
             string realmTooltip = FerryText.L("Set this to the realm (what the \"site says\") in the HTTP authentication popup dialog box for a more accurate match");
             toolTipRealm.SetToolTip(textBoxKeeRealm, realmTooltip);
             toolTipRealm.SetToolTip(labelRealm, realmTooltip);
+        }
+
+        // Übersetzte Texte sind länger als die englischen Designer-Texte: Reiter "Allgemein" untereinander anordnen,
+        // Knöpfe auf ihren Text verbreitern
+        private void ArrangeForTranslatedTexts()
+        {
+            int margin = checkBoxHideFromKee.Height;
+            int pageWidth = tabPage1.ClientSize.Width;
+            checkBoxHideFromKee.Location = new Point(margin, margin);
+            groupBox1.Location = new Point(margin, checkBoxHideFromKee.Bottom + margin);
+            groupBox1.Width = pageWidth - 2 * margin;
+            FerryLayout.LabelColumn(margin, margin / 2, 0, label3, comboBoxAutoFill, label4, comboBoxAutoSubmit);
+            textBoxKeeRealm.Top = groupBox1.Bottom + margin;
+            FerryLayout.LabelColumn(margin, margin / 2, pageWidth - margin, labelRealm, textBoxKeeRealm);
+            FerryLayout.WidenColumn(listView1, buttonURLAdd, buttonURLEdit, buttonURLDelete);
+            FerryLayout.WidenRow(margin / 3, buttonFieldAdd, buttonFieldEdit, buttonFieldDelete);
         }
 
         private void textBoxKeeRealm_TextChanged(object sender, EventArgs e)

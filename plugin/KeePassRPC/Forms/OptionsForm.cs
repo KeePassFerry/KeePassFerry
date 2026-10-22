@@ -31,7 +31,7 @@ namespace KeePassFerry.Forms
             _plugin = plugin;
 
             Text = FerryText.T("KeePassFerry – Optionen", "KeePassFerry – Options");
-            Icon = Resources.KPRPCico;
+            Icon = Resources.FerryIcon;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;

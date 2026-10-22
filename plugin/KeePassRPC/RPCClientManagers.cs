@@ -136,7 +136,7 @@ namespace KeePassFerry
             keeTabPage.Controls.Add(entryControl);
             if (mainTabControl.ImageList == null)
                 mainTabControl.ImageList = new ImageList();
-            int imageIndex = mainTabControl.ImageList.Images.Add(Resources.KPRPC64, Color.Transparent);
+            int imageIndex = mainTabControl.ImageList.Images.Add(Resources.FerryIcon64, Color.Transparent);
             keeTabPage.ImageIndex = imageIndex;
             mainTabControl.TabPages.Add(keeTabPage);
         }
@@ -149,7 +149,7 @@ namespace KeePassFerry
             keeTabPage.Controls.Add(groupControl);
             if (mainTabControl.ImageList == null)
                 mainTabControl.ImageList = new ImageList();
-            int imageIndex = mainTabControl.ImageList.Images.Add(Resources.KPRPC64, Color.Transparent);
+            int imageIndex = mainTabControl.ImageList.Images.Add(Resources.FerryIcon64, Color.Transparent);
             keeTabPage.ImageIndex = imageIndex;
             mainTabControl.TabPages.Add(keeTabPage);
         }
