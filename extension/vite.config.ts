@@ -120,13 +120,9 @@ export default defineConfig(({ command }) => ({
     test: {
         globals: true,
         environment: "node",
-        cache: false
-		// setupFiles: [
-		// 	"../vitest.setup.js",
-		// 	"jest-webextension-mock"
-		// ],
-        // sequence: {
-        //     setupFiles: "list"
-        // }
+        cache: false,
+        setupFiles: [r("vitest.setup.js")],
+        // Mit vi.resetModules neu laden: utils.psl parst die Liste je Modulinstanz, die Bibliothek muss dazu frisch sein
+        server: { deps: { inline: ["@gorhill/publicsuffixlist"] } }
     }
 }));

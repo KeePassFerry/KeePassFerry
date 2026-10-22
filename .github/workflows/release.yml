@@ -74,6 +74,8 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npx vitest run
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           npm run build-chrome:prod
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           if (-not (Test-Path extension/manifest.json)) { throw "Erweiterung nicht gebaut" }
@@ -91,7 +93,17 @@ jobs:
           Copy-Item plugin/LICENSE "$plug/LICENSE.txt"
           Copy-Item NOTICE.md "$plug/NOTICE.md"
           Compress-Archive -Path $plug -DestinationPath "$out/KeePassFerry-Plugin-$env:VERSION.zip"
-          Compress-Archive -Path extension/extension/* -DestinationPath "$out/KeePassFerry-Extension-$env:VERSION.zip"
+          # Erweiterung ohne Source-Maps (nur für die lokale Fehlersuche)
+          $ext = "$out/extension"
+          Copy-Item extension/extension $ext -Recurse
+          Get-ChildItem $ext -Recurse -Filter *.map | Remove-Item
+          Compress-Archive -Path "$ext/*" -DestinationPath "$out/KeePassFerry-Extension-$env:VERSION.zip"
+          # Paket für die Browser-Stores: ohne festen Entwicklungsschlüssel (key) im Manifest
+          $manifest = Get-Content "$ext/manifest.json" -Raw | ConvertFrom-Json
+          $manifest.PSObject.Properties.Remove("key")
+          $manifest | ConvertTo-Json -Depth 20 | Set-Content "$ext/manifest.json" -Encoding utf8NoBOM
+          New-Item -ItemType Directory -Force "$out/store" | Out-Null
+          Compress-Archive -Path "$ext/*" -DestinationPath "$out/store/KeePassFerry-Edge-Store-$env:VERSION.zip"
 
       - name: Setup bauen (Inno Setup)
         shell: pwsh
@@ -132,6 +144,7 @@ jobs:
             release/*.zip
             release/*.exe
             release/SHA256SUMS.txt
+            release/store/*.zip
 
       # Nur als Entwurf: veröffentlicht wird nach der Signatur mit signing/sign-release.ps1 (Schlüssel nur offline)
       - name: GitHub-Release als Entwurf anlegen

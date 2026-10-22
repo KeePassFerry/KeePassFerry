@@ -1,6 +1,6 @@
 # Privacy policy / Datenschutzerklärung
 
-_Last updated / Stand: 2026-10-21_
+_Last updated / Stand: 2026-10-22_
 
 ## English
 
@@ -30,6 +30,11 @@ computer**. It does not have servers and does not send any data to the KeePassFe
 **No tracking.** KeePassFerry contains no analytics, advertising or telemetry and makes no network requests of
 its own, except loading website icons (favicons) of the page you are on if you choose to save them with an entry.
 
+**KeePass plugin: updates.** If KeePass's own update check is enabled, KeePass reads `version.txt` from GitHub to
+show whether a newer plugin version exists. The plugin downloads a new version from the GitHub release only when
+you start an update yourself (*Update now* or *Check for updates*). These requests contain no personal data beyond
+what any web request contains (IP address, program name).
+
 Questions: please open an issue at <https://github.com/KeePassFerry/KeePassFerry/issues>.
 
 ## Deutsch
@@ -49,5 +54,9 @@ Computer** verbindet. Es gibt keine Server; es werden keine Daten an die Entwick
   Dokumente-Ordner, ohne Passwörter, Codes oder Feldinhalte.
 - **Kein Tracking**, keine Werbung, keine Telemetrie. Eigene Netzwerkzugriffe nur zum Laden des Website-Symbols
   (Favicon), wenn du es mit einem Eintrag speicherst.
+- **KeePass-Plugin, Updates:** Ist die Update-Prüfung von KeePass eingeschaltet, liest KeePass `version.txt` von
+  GitHub, um eine neuere Plugin-Version anzuzeigen. Eine neue Version lädt das Plugin nur, wenn du das Update selbst
+  startest („Jetzt aktualisieren“ oder „Nach Updates suchen“). Dabei werden keine persönlichen Daten übertragen,
+  außer dem, was jede Webanfrage enthält (IP-Adresse, Programmkennung).
 
 Fragen bitte als Issue: <https://github.com/KeePassFerry/KeePassFerry/issues>.

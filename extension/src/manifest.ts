@@ -82,7 +82,6 @@ export async function getManifest() {
             "webRequestAuthProvider", // Supported in Firefox 126+ (https://bugzilla.mozilla.org/show_bug.cgi?id=1820569)
             "webRequest",
             "notifications",
-            "unlimitedStorage",
             "idle",
             "nativeMessaging",
             "scripting" // Inhaltsskripte in schon offene Tabs laden (nach Installation/Update)

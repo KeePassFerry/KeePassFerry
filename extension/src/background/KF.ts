@@ -2,7 +2,6 @@ import { offerPendingOtpSetup } from "./otpSetup";
 import { diag } from "./ferryDiag";
 import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
 import { KeeURL } from "../common/KeeURL";
-import { isFirefox } from "webext-detect-page";
 import { PersistentTabState } from "./PersistentTabState";
 import { jsonrpcClient } from "./jsonrpcClient";
 import { NetworkAuth } from "./NetworkAuth";
