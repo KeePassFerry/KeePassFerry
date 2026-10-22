@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.5 – 2026-10-22
+
+- KeePass shows KeePassFerry everywhere instead of Kee: new options window (save behaviour, paired browsers with
+  "Remove pairing", version and update check), entry/group/database tabs and dialogs in German and English with
+  KeePassFerry icons. The group tab shares a group with the browser; sharing the top group means the whole database.
+  Generated password backups are stored in "KeePassFerry – generated passwords".
+- Removed the unreachable Kee sign-in (SRP), Kee welcome and new-database dialogs and locations; connections are
+  only accepted over the paired, encrypted channel. Plugin settings use their own `KeePassFerry.*` keys.
+- KeePass's own update check verifies the signature of `version.txt` (release key).
+- Setup: starts KeePass again after installing (also for one-click updates); uninstaller in the plugin folder with
+  the KeePassFerry icon.
+- Extension: unused Kee files, styles and texts removed, one permission less (`unlimitedStorage`), smaller package
+  (no source maps); unit tests run again.
+
 ## 1.0.4 – 2026-10-22
 
 - Windows setup (`KeePassFerry-Setup.exe`): finds KeePass, installs the plugin into `Plugins\KeePassFerry`, closes

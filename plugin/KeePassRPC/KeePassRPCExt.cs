@@ -98,7 +98,9 @@ namespace KeePassFerry
                     return false;
                 _host = host;
 
-                // Update-Prüfung erst mit eigener signierter version.info (Kees Schlüssel unten gehört zu Kees Datei)
+                // KeePass-Update-Prüfung: version.txt ist mit dem Release-Schlüssel signiert (signing/sign-version.ps1);
+                // unsignierte oder veränderte Dateien zeigt KeePass als Fehler statt einer falschen Version
+                UpdateCheckEx.SetFileSigKey(UpdateUrl, FerryReleaseKey.PublicKeyXml);
 
                 _BackgroundWorker = new BackgroundWorker();
                 _BackgroundWorker.WorkerReportsProgress = true;
