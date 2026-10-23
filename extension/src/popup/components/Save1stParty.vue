@@ -3,6 +3,7 @@
         <div class="ferry-pagehead ferry-edit-head">
             <button type="button" class="ferry-ib" :aria-label="$i18n('cancel')" @click="cancel">
                 <tabler-arrow-left class="ferry-ico" />
+                <v-tooltip location="bottom" activator="parent">{{ $i18n("cancel") }}</v-tooltip>
             </button>
             <span class="ferry-pagehead-title">{{ editingExisting ? $i18n("ferry_edit_entry") : $i18n("create_new_entry") }}</span>
             <button v-if="editingExisting" type="button" class="ferry-ib" :aria-label="$i18n('open_full_editor')" @click="openFullEntryEditor">
@@ -20,6 +21,7 @@
                     <template v-if="titleFocussed && resettableTitle" #append-inner>
                         <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_reset_value')" @click="resetTitle">
                             <tabler-arrow-back-up class="ferry-ico" />
+                            <v-tooltip location="bottom" activator="parent">{{ $i18n("ferry_reset_value") }}</v-tooltip>
                         </button>
                     </template>
                 </v-text-field>

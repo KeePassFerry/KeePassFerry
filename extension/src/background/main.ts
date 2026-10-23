@@ -251,6 +251,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case "addEntryText":
             work = kee.KeePassRPC.addEntryText(msg.uuid, msg.dbFileName, msg.fieldName ?? "", msg.value ?? "", !!msg.protect, !!msg.toNotes);
             break;
+        case "updateEntryText":
+            work = kee.KeePassRPC.updateEntryText(msg.uuid, msg.dbFileName, msg.name ?? "", msg.value ?? "", !!msg.toNotes);
+            break;
         case "setTotp":
             // Aus dem Popup eingefügter Schlüssel/QR-Code; nur gültige otpauth-TOTP-URIs
             work = parseOtpauth(msg.uri ?? "")
@@ -271,7 +274,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             return;
     }
     // Änderungen an Einträgen aus dem Popup: Ansicht und Seitentreffer auffrischen
-    if (["setTotp", "addEntryText", "removeEntryExtra", "addImageAttachment", "applyOtpSetup"].includes(request)) {
+    if (["setTotp", "addEntryText", "updateEntryText", "removeEntryExtra", "addImageAttachment", "applyOtpSetup"].includes(request)) {
         work = work.then(async result => {
             await kee.refreshAfterEntryChange();
             return result;

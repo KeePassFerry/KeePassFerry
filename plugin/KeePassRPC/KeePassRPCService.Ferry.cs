@@ -197,7 +197,40 @@ namespace KeePassFerry
         }
 
         /// <summary>
-        /// Entfernt ein eigenes Textfeld (kind "field") oder einen Anhang (kind "attachment").
+        /// Ändert den Wert eines vorhandenen eigenen Felds (Schutz bleibt wie er ist) oder ersetzt die Notizen (toNotes).
+        /// Vorher wandert der alte Stand in die Eintragshistorie. Standard- und interne Felder bleiben unberührt.
+        /// </summary>
+        [JsonRpcMethod]
+        public bool UpdateEntryText(string uuid, string dbFileName, string name, string value, bool toNotes)
+        {
+            if (!EnsureDBisOpen() || value == null || value.Length > MaxEntryTextLength) return false;
+            PwDatabase db;
+            PwEntry entry = FindFerryEntry(uuid, dbFileName, out db);
+            if (entry == null) return false;
+
+            ProtectedString text;
+            if (toNotes)
+            {
+                name = PwDefs.NotesField;
+                text = new ProtectedString(db.MemoryProtection.ProtectNotes, value.Trim());
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(name) || IsReservedStringName(name) || value.Trim().Length == 0) return false;
+                ProtectedString old = entry.Strings.Get(name);
+                if (old == null) return false;
+                text = new ProtectedString(old.IsProtected, value.Trim());
+            }
+
+            entry.CreateBackup(db);
+            entry.Strings.Set(name, text);
+            entry.Touch(true);
+            _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), db);
+            return true;
+        }
+
+        /// <summary>
+        /// Entfernt ein eigenes Textfeld (kind "field"), einen Anhang (kind "attachment") oder leert die Notizen (kind "notes").
         /// Vorher wandert der alte Stand in die Eintragshistorie. Standard- und interne Felder bleiben unberührt.
         /// </summary>
         [JsonRpcMethod]
@@ -219,6 +252,12 @@ namespace KeePassFerry
                 if (entry.Binaries.Get(name) == null) return false;
                 entry.CreateBackup(db);
                 entry.Binaries.Remove(name);
+            }
+            else if (kind == "notes")
+            {
+                if (entry.Strings.ReadSafe(PwDefs.NotesField).Length == 0) return false;
+                entry.CreateBackup(db);
+                entry.Strings.Set(PwDefs.NotesField, new ProtectedString(db.MemoryProtection.ProtectNotes, ""));
             }
             else return false;
 

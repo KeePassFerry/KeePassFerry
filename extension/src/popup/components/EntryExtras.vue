@@ -8,6 +8,7 @@
             <button type="button" class="ferry-ib" :class="{ ok: copied === 'notes' }" :aria-label="$i18n('copy_value_to_clipboard')" @click.stop="copy('notes', notes)">
                 <tabler-check v-if="copied === 'notes'" class="ferry-ico" />
                 <tabler-copy v-else class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">{{ $i18n("copy_value_to_clipboard") }}</v-tooltip>
             </button>
         </div>
         <div v-for="f of fields" :key="'f:' + f.name" class="ferry-row">
@@ -23,10 +24,14 @@
                 :aria-label="revealed[f.name] !== undefined ? $i18n('ferry_generator_hide') : $i18n('ferry_generator_show')" @click="toggleReveal(f)">
                 <tabler-eye-off v-if="revealed[f.name] !== undefined" class="ferry-ico" />
                 <tabler-eye v-else class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">
+                    {{ revealed[f.name] !== undefined ? $i18n("ferry_generator_hide") : $i18n("ferry_generator_show") }}
+                </v-tooltip>
             </button>
             <button type="button" class="ferry-ib" :class="{ ok: copied === f.name }" :aria-label="$i18n('copy_value_to_clipboard')" @click="copyField(f)">
                 <tabler-check v-if="copied === f.name" class="ferry-ico" />
                 <tabler-copy v-else class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">{{ $i18n("copy_value_to_clipboard") }}</v-tooltip>
             </button>
         </div>
         <div v-for="a of attachments" :key="'a:' + a.name" class="ferry-row ferry-extra-click" @click="openAttachment(a)">

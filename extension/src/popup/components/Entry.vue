@@ -45,6 +45,7 @@
                 @click.stop="toggleFullDetails">
                 <tabler-chevron-up v-if="expanded" class="ferry-ico" />
                 <tabler-chevron-down v-else class="ferry-ico" />
+                <v-tooltip location="bottom" activator="parent">{{ expanded ? $i18n("ferry_hide_details") : $i18n("ferry_show_details") }}</v-tooltip>
             </button>
         </div>
         <div v-if="expanded && entrySummary.fullDetails" class="ferry-entry-details">

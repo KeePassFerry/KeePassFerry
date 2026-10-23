@@ -2,9 +2,11 @@
     <li>
         <div>
             <v-list-item :style="indentStyle" :active="item.selected" density="comfortable" @click="$emit('select', item)">
-                <button v-if="hasVisibleChildren" type="button" class="ferry-ib" style="margin-right: 4px" @click.stop="toggleExpand">
+                <button v-if="hasVisibleChildren" type="button" class="ferry-ib" style="margin-right: 4px"
+                    :aria-label="isExpanded ? $i18n('ferry_group_collapse') : $i18n('ferry_group_expand')" @click.stop="toggleExpand">
                     <tabler-chevron-down v-if="isExpanded" class="ferry-ico" />
                     <tabler-chevron-right v-else class="ferry-ico" />
+                    <v-tooltip location="bottom" activator="parent">{{ isExpanded ? $i18n("ferry_group_collapse") : $i18n("ferry_group_expand") }}</v-tooltip>
                 </button>
                 <tabler-folder class="ferry-ico" style="color: var(--ferry-faint); margin-right: 8px; vertical-align: -3px" />
                 <span>{{ item.text }}</span>

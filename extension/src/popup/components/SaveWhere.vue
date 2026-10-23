@@ -3,6 +3,7 @@
         <div class="ferry-pagehead ferry-edit-head">
             <button type="button" class="ferry-ib" :aria-label="$i18n('cancel')" @click="$emit('back')">
                 <tabler-arrow-left class="ferry-ico" />
+                <v-tooltip location="bottom" activator="parent">{{ $i18n("cancel") }}</v-tooltip>
             </button>
             <span class="ferry-pagehead-title">{{ $i18n("where") }}</span>
         </div>

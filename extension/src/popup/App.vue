@@ -40,6 +40,7 @@
                     </button>
                     <button type="button" class="ferry-ib" :aria-label="$i18n('close')" @click="lastSaveEntryResult = null">
                         <tabler-x class="ferry-ico" />
+                        <v-tooltip location="bottom" activator="parent">{{ $i18n("close") }}</v-tooltip>
                     </button>
                 </div>
 

@@ -19,6 +19,7 @@
                 <span class="ferry-extra-name">
                     {{ r.name }}
                     <span v-if="r.isNew" class="ferry-badge">{{ $i18n("ferry_extras_new") }}</span>
+                    <span v-else-if="r.newValue !== undefined && !r.removed" class="ferry-badge">{{ $i18n("ferry_extras_changed") }}</span>
                     <span v-if="r.removed" class="ferry-badge warn">{{ $i18n("ferry_extras_removed") }}</span>
                 </span>
                 <span v-if="r.sub || revealed[r.key] !== undefined" class="ferry-extra-sub">
@@ -32,11 +33,20 @@
                 <v-tooltip location="start" activator="parent">{{ $i18n("ferry_extras_rename") }}</v-tooltip>
             </button>
             <button
-                v-if="r.isProtected" type="button" class="ferry-ib"
+                v-if="(r.type === 'notes' || r.type === 'field') && !r.removed" type="button" class="ferry-ib"
+                :class="{ active: editing === r }" :aria-label="$i18n('ferry_extras_edit')" @click="startEdit(r)">
+                <tabler-pencil class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_extras_edit") }}</v-tooltip>
+            </button>
+            <button
+                v-if="r.isProtected && !r.removed" type="button" class="ferry-ib"
                 :aria-label="revealed[r.key] !== undefined ? $i18n('ferry_generator_hide') : $i18n('ferry_generator_show')"
                 @click="toggleReveal(r)">
                 <tabler-eye-off v-if="revealed[r.key] !== undefined" class="ferry-ico" />
                 <tabler-eye v-else class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">
+                    {{ revealed[r.key] !== undefined ? $i18n("ferry_generator_hide") : $i18n("ferry_generator_show") }}
+                </v-tooltip>
             </button>
             <button
                 v-if="r.type === 'attachment' && !r.removed" type="button" class="ferry-ib"
@@ -48,7 +58,7 @@
                 </v-tooltip>
             </button>
             <button
-                v-if="!(r.type === 'notes' && !r.isNew)" type="button" class="ferry-ib" :class="{ danger: !r.removed }"
+                type="button" class="ferry-ib" :class="{ danger: !r.removed }"
                 :aria-label="r.removed ? $i18n('ferry_extras_undo') : $i18n('ferry_extras_remove')" @click="toggleRow(r)">
                 <tabler-arrow-back-up v-if="r.removed" class="ferry-ico" />
                 <tabler-trash v-else class="ferry-ico" />
@@ -60,16 +70,39 @@
         <div v-if="unsupported" class="ferry-extra-empty">{{ $i18n("ferry_extras_unsupported") }}</div>
         <div v-else-if="!rows.length && !adding" class="ferry-extra-empty">{{ $i18n("ferry_extras_empty") }}</div>
 
-        <button v-if="!adding && !unsupported" type="button" class="ferry-add-open" @click="openAdd">
+        <div v-if="editing" class="ferry-add-form">
+            <div class="ferry-add-head">
+                <span class="ferry-add-title">{{ $i18n("ferry_extras_edit_heading", [editing.name]) }}</span>
+                <button type="button" class="ferry-ib" :aria-label="$i18n('cancel')" @click="editing = null">
+                    <tabler-x class="ferry-ico" />
+                    <v-tooltip location="bottom" activator="parent">{{ $i18n("cancel") }}</v-tooltip>
+                </button>
+            </div>
+            <v-textarea
+                ref="editValue" v-model="editValue" :label="$i18n('ferry_add_value')" rows="3" auto-grow max-rows="10"
+                hide-details autofocus />
+            <div v-if="editing.type === 'notes' && !editValue.trim() && !editing.isNew" class="ferry-hint">
+                {{ $i18n("ferry_extras_notes_cleared") }}
+            </div>
+            <div class="ferry-add-row">
+                <v-spacer />
+                <v-btn variant="tonal" color="primary" :disabled="!canApplyEdit" @click="applyEdit">
+                    {{ $i18n("ferry_extras_apply") }}
+                </v-btn>
+            </div>
+        </div>
+
+        <button v-if="!editing && !adding && !unsupported" type="button" class="ferry-add-open" @click="openAdd">
             <tabler-plus class="ferry-ico" />
             {{ $i18n("ferry_add_open") }}
         </button>
 
-        <div v-else-if="adding" class="ferry-add-form">
+        <div v-else-if="adding && !editing" class="ferry-add-form">
             <div class="ferry-add-head">
                 <span class="ferry-add-title">{{ $i18n("ferry_add_heading") }}</span>
                 <button type="button" class="ferry-ib" :aria-label="$i18n('cancel')" @click="closeAdd">
                     <tabler-x class="ferry-ico" />
+                    <v-tooltip location="bottom" activator="parent">{{ $i18n("cancel") }}</v-tooltip>
                 </button>
             </div>
             <v-select
@@ -150,6 +183,8 @@ interface Row {
     fileName?: string;
     data?: string;
     blob?: Blob;
+    // Geänderter Wert eines vorhandenen Felds bzw. der Notizen (wird mit "Speichern" geschrieben)
+    newValue?: string;
 }
 
 let nextKey = 1;
@@ -174,6 +209,8 @@ export default {
         imageName: "",
         renaming: null as string,
         renameValue: "",
+        editing: null as Row,
+        editValue: "",
         // Aufgedeckte geschützte Werte je Zeile
         revealed: {} as Record<string, string>,
         preview: { open: false, title: "", blob: null as Blob, text: null as string }
@@ -205,7 +242,14 @@ export default {
             return true;
         },
         hasChanges: function (): boolean {
-            return this.staged.length > 0 || this.existing.some(r => r.removed);
+            return this.staged.length > 0 || this.existing.some(r => r.removed || r.newValue !== undefined);
+        },
+        // Leere Notizen sind erlaubt (= Notizen leeren), ein Feld braucht einen Wert
+        canApplyEdit: function (): boolean {
+            if (!this.editing) return false;
+            const empty = !(this.editValue ?? "").trim();
+            if (this.editing.type === "notes") return !(empty && this.editing.isNew);
+            return !empty;
         }
     },
     watch: {
@@ -385,7 +429,7 @@ export default {
             if (!this.canOpen(r)) return;
             this.error = null;
             if (r.type === "notes" || r.type === "field") {
-                this.preview = { open: true, title: r.name, blob: null, text: r.value };
+                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r) };
                 return;
             }
             const blob = r.blob ?? (await loadAttachment(this.uuid, this.dbFileName, r.name));
@@ -402,11 +446,50 @@ export default {
                 this.revealed = rest;
                 return;
             }
-            const value = r.isNew ? r.value : await loadFieldValue(this.uuid, this.dbFileName, r.name);
+            const value = this.currentValue(r) ?? (await loadFieldValue(this.uuid, this.dbFileName, r.name));
             if (value === null || value === undefined) this.error = this.$i18n("ferry_extras_load_failed");
             else this.revealed = { ...this.revealed, [r.key]: value };
         },
+        currentValue: function (r: Row): string {
+            return r.newValue !== undefined ? r.newValue : r.value;
+        },
+        // Notiz oder Feld bearbeiten; geschützte vorhandene Werte werden erst jetzt aus KeePass geholt
+        startEdit: async function (r: Row) {
+            this.error = null;
+            this.adding = false;
+            this.renaming = null;
+            let value = this.currentValue(r);
+            if (value === undefined) {
+                value = await loadFieldValue(this.uuid, this.dbFileName, r.name);
+                if (value === null || value === undefined) {
+                    this.error = this.$i18n("ferry_extras_load_failed");
+                    return;
+                }
+                // Vergleichswert für "unverändert"
+                r.value = value;
+            }
+            this.editValue = value;
+            this.editing = r;
+        },
+        applyEdit: function () {
+            const r: Row = this.editing;
+            if (!r || !this.canApplyEdit) return;
+            const value = this.editValue.trim();
+            if (r.isNew) r.value = value;
+            else if (value === (r.value ?? "").trim()) r.newValue = undefined;
+            else r.newValue = value;
+            r.sub = r.isProtected ? "••••••••" : value.slice(0, 60);
+            const { [r.key]: _, ...rest } = this.revealed;
+            this.revealed = rest;
+            // Leere Notizen = Notizen entfernen
+            if (!r.isNew && r.type === "notes" && !value) {
+                r.newValue = undefined;
+                r.removed = true;
+            }
+            this.editing = null;
+        },
         toggleRow: function (r: Row) {
+            if (this.editing === r) this.editing = null;
             if (r.isNew) this.staged = this.staged.filter(x => x !== r);
             else r.removed = !r.removed;
         },
@@ -417,8 +500,15 @@ export default {
             let ok = true;
             let totpSaved = false;
             for (const r of this.existing.filter(x => x.removed)) {
-                const kind = r.type === "attachment" ? "attachment" : "field";
-                if (!(await send({ keepassferry: "removeEntryExtra", kind, name: r.name }).catch(() => false))) ok = false;
+                const kind = r.type === "attachment" ? "attachment" : r.type === "notes" ? "notes" : "field";
+                const name = r.type === "notes" ? "Notes" : r.name;
+                if (!(await send({ keepassferry: "removeEntryExtra", kind, name }).catch(() => false))) ok = false;
+            }
+            for (const r of this.existing.filter(x => !x.removed && x.newValue !== undefined)) {
+                const toNotes = r.type === "notes";
+                const result = await send({ keepassferry: "updateEntryText", name: toNotes ? "" : r.name, value: r.newValue, toNotes })
+                    .catch(() => false);
+                if (!result) ok = false;
             }
             for (const r of this.staged) {
                 let result: any = null;

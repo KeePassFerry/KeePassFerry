@@ -15,6 +15,7 @@
         </div>
         <button type="button" class="ferry-ib" :aria-label="$i18n('close')" @click="closeNotification(notification.id)">
             <tabler-x class="ferry-ico" />
+            <v-tooltip location="bottom" activator="parent">{{ $i18n("close") }}</v-tooltip>
         </button>
     </div>
 </template>

@@ -265,6 +265,14 @@ export class jsonrpcClient {
         return responses?.[0]?.resultWrapper?.result ?? null;
     }
 
+    // Wert eines vorhandenen eigenen Felds ändern oder die Notizen ersetzen (Plugin ab 1.0.7)
+    async updateEntryText(uuid: string, dbFileName: string, name: string, value: string, toNotes: boolean): Promise<boolean> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return false;
+        const responses = await this.kprpcClient.request([sessionManager], "UpdateEntryText", [uuid, dbFileName, name, value, toNotes]);
+        return !!responses?.[0]?.resultWrapper?.result;
+    }
+
     // Gesperrte Datenbank im Hintergrund entsperren lassen (Schlüsselabfrage/Windows Hello, ohne KeePass-Fenster)
     async requestUnlock(): Promise<string> {
         const sessionManager = this.kprpcClient.getSessionManagerByType(SessionType.Websocket);

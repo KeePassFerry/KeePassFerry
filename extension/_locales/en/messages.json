@@ -1258,5 +1258,33 @@
   "ferry_otp_pending_discard": {
     "message": "Discard",
     "description": "KeePassFerry"
+  },
+  "ferry_extras_edit": {
+    "message": "Edit",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_edit_heading": {
+    "message": "Edit “$1”",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_changed": {
+    "message": "Changed",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_apply": {
+    "message": "Apply",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_notes_cleared": {
+    "message": "Applying an empty text removes the notes.",
+    "description": "KeePassFerry"
+  },
+  "ferry_group_expand": {
+    "message": "Show subgroups",
+    "description": "KeePassFerry"
+  },
+  "ferry_group_collapse": {
+    "message": "Hide subgroups",
+    "description": "KeePassFerry"
   }
 }

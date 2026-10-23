@@ -9,6 +9,7 @@
                 </button>
                 <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_preview_close')" @click="close">
                     <tabler-x class="ferry-ico" />
+                    <v-tooltip location="bottom" activator="parent">{{ $i18n("ferry_preview_close") }}</v-tooltip>
                 </button>
             </div>
             <div class="ferry-preview-body">
