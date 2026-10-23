@@ -17,19 +17,10 @@
                 <tabler-lock v-if="f.isProtected" class="ferry-ico" />
                 <tabler-text-caption v-else class="ferry-ico" />
             </span>
-            <span class="ferry-row-value" :class="{ secret: f.isProtected && revealed[f.name] === undefined }">
-                <span class="ferry-extra-label">{{ f.name }}</span>{{ fieldDisplay(f) }}
+            <span class="ferry-row-value" :class="{ secret: f.isProtected }">
+                <span class="ferry-extra-label">{{ f.name }}</span>{{ f.isProtected ? "••••••••" : f.value }}
             </span>
-            <button
-                v-if="f.isProtected" type="button" class="ferry-ib"
-                :aria-label="revealed[f.name] !== undefined ? $i18n('ferry_generator_hide') : $i18n('ferry_generator_show')" @click="toggleReveal(f)">
-                <tabler-eye-off v-if="revealed[f.name] !== undefined" class="ferry-ico" />
-                <tabler-eye v-else class="ferry-ico" />
-                <v-tooltip location="start" activator="parent">
-                    {{ revealed[f.name] !== undefined ? $i18n("ferry_generator_hide") : $i18n("ferry_generator_show") }}
-                </v-tooltip>
-            </button>
-            <button v-else type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_show')" @click="showField(f)">
+            <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_show')" @click="showField(f)">
                 <tabler-eye class="ferry-ico" />
                 <v-tooltip location="start" activator="parent">{{ $i18n("ferry_attachment_show") }}</v-tooltip>
             </button>
@@ -55,7 +46,7 @@
     <div v-if="error" class="ferry-hint err ferry-extras-error">{{ error }}</div>
     <ExtraPreview
         :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :file-name="preview.title"
-        :external="preview.external" @close="preview.open = false"
+        :external="preview.external" :codes="preview.codes" @close="closePreview"
         @open-external="preview.blob ? openExternal(preview.title) : openNotesExternal()" />
 </template>
 
@@ -75,11 +66,10 @@ export default {
         notes: "",
         fields: [] as { name: string; isProtected: boolean; value: string }[],
         attachments: [] as { name: string; size: number }[],
-        revealed: {} as Record<string, string>,
         copied: null as string,
         error: null as string,
         // external: Knopf "Mit Standardprogramm öffnen" in der Vorschau (Notizen, Bilder)
-        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false }
+        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false, codes: false }
     }),
     computed: {
         notesPreview: function (): string {
@@ -101,27 +91,13 @@ export default {
         isImage: isImageName,
         canOpenExternally,
         size: formatSize,
-        fieldDisplay: function (f: { name: string; isProtected: boolean; value: string }): string {
-            if (!f.isProtected) return f.value ?? "";
-            return this.revealed[f.name] ?? "••••••••";
-        },
-        toggleReveal: async function (f: { name: string }) {
-            if (this.revealed[f.name] !== undefined) {
-                const { [f.name]: _, ...rest } = this.revealed;
-                this.revealed = rest;
-                return;
-            }
-            const value = await loadFieldValue(this.uuid, this.dbFileName, f.name);
-            if (value === null || value === undefined) this.error = this.$i18n("ferry_extras_load_failed");
-            else this.revealed = { ...this.revealed, [f.name]: value };
-        },
         copy: async function (key: string, value: string) {
             await copyStringToClipboard(value);
             this.copied = key;
             setTimeout(() => (this.copied = null), 1500);
         },
         copyField: async function (f: { name: string; isProtected: boolean; value: string }) {
-            const value = f.isProtected ? this.revealed[f.name] ?? (await loadFieldValue(this.uuid, this.dbFileName, f.name)) : f.value;
+            const value = f.isProtected ? await loadFieldValue(this.uuid, this.dbFileName, f.name) : f.value;
             if (value === null || value === undefined) {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
@@ -145,11 +121,22 @@ export default {
             }
             this.preview.open = false;
         },
-        showNotes: function () {
-            this.preview = { open: true, title: this.$i18n("ferry_extras_notes"), blob: null, text: this.notes, external: true };
+        // Beim Schließen auch den (evtl. geschützten) Text vergessen
+        closePreview: function () {
+            this.preview = { open: false, title: "", blob: null, text: null, external: false, codes: false };
         },
-        showField: function (f: { name: string; value: string }) {
-            this.preview = { open: true, title: f.name, blob: null, text: f.value ?? "", external: false };
+        showNotes: function () {
+            this.preview = { open: true, title: this.$i18n("ferry_extras_notes"), blob: null, text: this.notes, external: true, codes: false };
+        },
+        // Geschützte Werte (z. B. Wiederherstellungscodes) erst jetzt aus KeePass holen; Zeilen einzeln kopierbar
+        showField: async function (f: { name: string; isProtected: boolean; value: string }) {
+            this.error = null;
+            const value = f.isProtected ? await loadFieldValue(this.uuid, this.dbFileName, f.name) : f.value ?? "";
+            if (value === null || value === undefined) {
+                this.error = this.$i18n("ferry_extras_load_failed");
+                return;
+            }
+            this.preview = { open: true, title: f.name, blob: null, text: value, external: false, codes: f.isProtected };
         },
         // Bild: Vorschau; PDF/Text: Standardprogramm; alles andere: Speichern unter
         attachmentAction: function (name: string): string {
@@ -166,7 +153,7 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            if (isImageName(a.name)) this.preview = { open: true, title: a.name, blob, text: null, external: true };
+            if (isImageName(a.name)) this.preview = { open: true, title: a.name, blob, text: null, external: true, codes: false };
             else saveBlob(blob, a.name);
         }
     }

@@ -22,8 +22,8 @@
                     <span v-else-if="r.newValue !== undefined && !r.removed" class="ferry-badge">{{ $i18n("ferry_extras_changed") }}</span>
                     <span v-if="r.removed" class="ferry-badge warn">{{ $i18n("ferry_extras_removed") }}</span>
                 </span>
-                <span v-if="r.sub || revealed[r.key] !== undefined" class="ferry-extra-sub">
-                    {{ revealed[r.key] !== undefined ? revealed[r.key] : r.sub }}
+                <span v-if="r.sub" class="ferry-extra-sub">
+                    {{ r.sub }}
                 </span>
             </span>
             <button
@@ -40,13 +40,9 @@
             </button>
             <button
                 v-if="r.isProtected && !r.removed" type="button" class="ferry-ib"
-                :aria-label="revealed[r.key] !== undefined ? $i18n('ferry_generator_hide') : $i18n('ferry_generator_show')"
-                @click="toggleReveal(r)">
-                <tabler-eye-off v-if="revealed[r.key] !== undefined" class="ferry-ico" />
-                <tabler-eye v-else class="ferry-ico" />
-                <v-tooltip location="start" activator="parent">
-                    {{ revealed[r.key] !== undefined ? $i18n("ferry_generator_hide") : $i18n("ferry_generator_show") }}
-                </v-tooltip>
+                :aria-label="$i18n('ferry_attachment_show')" @click="showProtected(r)">
+                <tabler-eye class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_attachment_show") }}</v-tooltip>
             </button>
             <button
                 v-if="r.type === 'attachment' && !r.removed" type="button" class="ferry-ib"
@@ -150,8 +146,8 @@
     </div>
     <div v-if="error" class="ferry-hint err">{{ error }}</div>
     <ExtraPreview
-        :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :external="preview.external"
-        @close="preview.open = false" @open-external="preview.blob ? openExternal(preview.title) : openNotesExternal()" />
+        :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :external="preview.external" :codes="preview.codes"
+        @close="closePreview" @open-external="preview.blob ? openExternal(preview.title) : openNotesExternal()" />
 </template>
 
 <script lang="ts">
@@ -213,9 +209,7 @@ export default {
         renameValue: "",
         editing: null as Row,
         editValue: "",
-        // Aufgedeckte geschützte Werte je Zeile
-        revealed: {} as Record<string, string>,
-        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false }
+        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false, codes: false }
     }),
     computed: {
         kindItems: function () {
@@ -345,7 +339,6 @@ export default {
                 for (const a of r?.attachments ?? []) {
                     list.push({ key: "a:" + a.name, type: "attachment", name: a.name, sub: formatSize(a.size) });
                 }
-                this.revealed = {};
                 this.existing = list;
             } catch (e) {
                 this.existing = [];
@@ -433,7 +426,7 @@ export default {
             if (r.type === "notes" || r.type === "field") {
                 // Im Standard-Editor nur gespeicherte, unveränderte Notizen (das Plugin öffnet den Stand in KeePass)
                 const external = r.type === "notes" && !r.isNew && r.newValue === undefined;
-                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external };
+                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external, codes: false };
                 return;
             }
             const blob = r.blob ?? (await loadAttachment(this.uuid, this.dbFileName, r.name));
@@ -441,7 +434,7 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null, external: !r.isNew };
+            if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null, external: !r.isNew, codes: false };
             else saveBlob(blob, r.name);
         },
         openNotesExternal: async function () {
@@ -460,15 +453,18 @@ export default {
             }
             this.preview.open = false;
         },
-        toggleReveal: async function (r: Row) {
-            if (this.revealed[r.key] !== undefined) {
-                const { [r.key]: _, ...rest } = this.revealed;
-                this.revealed = rest;
+        // Geschützter Wert in der Vorschau, Zeilen einzeln kopierbar (z. B. Wiederherstellungscodes)
+        showProtected: async function (r: Row) {
+            this.error = null;
+            const value = this.currentValue(r) ?? (await loadFieldValue(this.uuid, this.dbFileName, r.name));
+            if (value === null || value === undefined) {
+                this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            const value = this.currentValue(r) ?? (await loadFieldValue(this.uuid, this.dbFileName, r.name));
-            if (value === null || value === undefined) this.error = this.$i18n("ferry_extras_load_failed");
-            else this.revealed = { ...this.revealed, [r.key]: value };
+            this.preview = { open: true, title: r.name, blob: null, text: value, external: false, codes: true };
+        },
+        closePreview: function () {
+            this.preview = { open: false, title: "", blob: null, text: null, external: false, codes: false };
         },
         currentValue: function (r: Row): string {
             return r.newValue !== undefined ? r.newValue : r.value;
@@ -499,8 +495,6 @@ export default {
             else if (value === (r.value ?? "").trim()) r.newValue = undefined;
             else r.newValue = value;
             r.sub = r.isProtected ? "••••••••" : value.slice(0, 60);
-            const { [r.key]: _, ...rest } = this.revealed;
-            this.revealed = rest;
             // Leere Notizen = Notizen entfernen
             if (!r.isNew && r.type === "notes" && !value) {
                 r.newValue = undefined;
