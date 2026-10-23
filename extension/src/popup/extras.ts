@@ -38,6 +38,11 @@ export async function loadAttachment(uuid: string, dbFileName: string, name: str
     return base64 ? blobFromBase64(base64, mimeFor(name)) : null;
 }
 
+// Bilder, PDF und Text öffnet das Plugin im Standardprogramm (andere Typen könnte Windows ausführen)
+export function canOpenExternally(name: string): boolean {
+    return mimeFor(name) !== "application/octet-stream";
+}
+
 // Über KeePass im Standardprogramm von Windows öffnen; false bei Plugin vor 1.0.7 oder Fehler
 export async function openAttachmentExternally(uuid: string, dbFileName: string, name: string): Promise<boolean> {
     return !!(await chrome.runtime

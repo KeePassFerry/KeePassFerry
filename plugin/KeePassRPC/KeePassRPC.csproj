@@ -118,6 +118,7 @@
     <Compile Include="DatabaseConfig.cs" />
     <Compile Include="DpiFix.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="FerryTempFiles.cs" />
     <Compile Include="Forms\FerryGroupUserControl.cs" />
     <Compile Include="Forms\FerryLayout.cs" />
     <Compile Include="Forms\FerryPairingForm.cs">

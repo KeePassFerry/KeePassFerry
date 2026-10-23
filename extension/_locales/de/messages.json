@@ -1288,7 +1288,7 @@
         "description": "KeePassFerry"
     },
     "ferry_attachment_open_external": {
-        "message": "Mit Standardprogramm öffnen (über KeePass)",
+        "message": "Mit Standardprogramm öffnen",
         "description": "KeePassFerry"
     }
 }

@@ -185,29 +185,33 @@ namespace KeePassFerry
         }
 
         /// <summary>
-        /// Öffnet einen Anhang im Standardprogramm von Windows (z. B. Fotos), wie "In externer Anwendung öffnen" in KeePass:
-        /// KeePass legt eine temporäre Kopie an und entfernt sie wieder, sobald im KeePass-Dialog bestätigt wird.
-        /// Schreibgeschützt, damit der Anhang nicht unbemerkt geändert zurückkommt.
+        /// Öffnet einen Anhang (Bild, PDF, Text) im Standardprogramm von Windows, z. B. Fotos.
+        /// Temporäre Kopie und Aufräumen: FerryTempFiles (ohne den Import-Dialog von KeePass).
         /// </summary>
         [JsonRpcMethod]
         public bool OpenEntryAttachmentExternally(string uuid, string dbFileName, string name)
         {
-            if (!EnsureDBisOpen() || string.IsNullOrEmpty(name)) return false;
+            if (!EnsureDBisOpen() || string.IsNullOrEmpty(name) || !FerryTempFiles.IsViewable(name)) return false;
             PwDatabase db;
             PwEntry entry = FindFerryEntry(uuid, dbFileName, out db);
             if (entry == null) return false;
             ProtectedBinary binary = entry.Binaries.Get(name);
             if (binary == null) return false;
 
-            // Der KeePass-Dialog nach dem Öffnen ist modal: nicht auf ihn warten, sonst hängt die Antwort an den Browser
-            _host.MainWindow.BeginInvoke(new System.Windows.Forms.MethodInvoker(delegate
+            byte[] data = binary.ReadData();
+            try
             {
-                var options = new KeePass.Util.BinaryDataOpenOptions();
-                options.Handler = KeePass.Util.BinaryDataHandler.ExternalApp;
-                options.ReadOnly = true;
-                KeePass.Util.BinaryDataUtil.Open(name, binary, options);
-            }));
-            return true;
+                FerryTempFiles.Open(name, data);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            finally
+            {
+                if (binary.IsProtected) MemUtil.ZeroByteArray(data);
+            }
         }
 
         /// <summary>Wert eines eigenen Felds, auch eines geschützten (Auge im Browser); null bei Standard- und internen Feldern</summary>

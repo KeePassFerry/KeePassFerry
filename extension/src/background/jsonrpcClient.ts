@@ -237,7 +237,8 @@ export class jsonrpcClient {
         return responses?.[0]?.resultWrapper?.result ?? null;
     }
 
-    // Anhang im Standardprogramm von Windows öffnen (über KeePass, das danach seinen Dialog zeigt)
+    // Anhang im Standardprogramm von Windows öffnen; das Plugin startet es, darf dafür in den Vordergrund
+    // (sonst bliebe das Programm hinter dem Browser)
     async openEntryAttachmentExternally(uuid: string, dbFileName: string, name: string): Promise<boolean> {
         const sessionManager = this.sessionManagerForFilename(dbFileName);
         if (!sessionManager) return false;

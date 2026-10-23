@@ -1288,7 +1288,7 @@
     "description": "KeePassFerry"
   },
   "ferry_attachment_open_external": {
-    "message": "Open with default app (via KeePass)",
+    "message": "Open with default app",
     "description": "KeePassFerry"
   }
 }

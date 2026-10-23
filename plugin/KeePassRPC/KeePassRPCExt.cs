@@ -169,6 +169,9 @@ Technical detail: " + ex.Message);
                 }
                 if (logger != null) logger.WriteLine("RPC server started.");
 
+                // Reste geöffneter Anhang-Kopien (z. B. nach einem Absturz)
+                FerryTempFiles.CleanUp();
+
                 // register to recieve events that we need to deal with
 
                 _host.MainWindow.FileOpened += OnKPDBOpen;
@@ -561,6 +564,7 @@ Technical detail: " + ex.Message);
         public override void Terminate()
         {
             terminating = true;
+            FerryTempFiles.CleanUp();
             if (_RPCServer != null)
                 _RPCServer.Stop();
             lock (_lockRPCClientManagers)
@@ -646,6 +650,8 @@ Technical detail: " + ex.Message);
 
         private void OnKPDBClose(object sender, FileClosedEventArgs e)
         {
+            // Auch beim Sperren: geöffnete Anhang-Kopien entfernen
+            FerryTempFiles.CleanUp();
             SignalAllManagedRPCClients(Signal.DATABASE_CLOSED);
         }
 
