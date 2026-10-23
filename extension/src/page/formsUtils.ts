@@ -1,4 +1,5 @@
 import { isOtpField } from "./OtpFields";
+import { isUsernameField } from "./loginFields";
 import { KeeLogger } from "../common/Logger";
 import { MatchedField } from "./MatchedField";
 import { Field } from "../common/model/Field";
@@ -55,47 +56,6 @@ export class FormUtils {
         } else return true;
     }
 
-    private isAKnownUsernameString(fieldNameIn) {
-        const fieldName = fieldNameIn.toLowerCase();
-        if (
-            fieldName == "username" ||
-            fieldName == "j_username" ||
-            fieldName == "user_name" ||
-            fieldName == "user" ||
-            fieldName == "user-name" ||
-            fieldName == "login" ||
-            fieldName == "vb_login_username" ||
-            fieldName == "name" ||
-            fieldName == "user name" ||
-            fieldName == "user id" ||
-            fieldName == "user-id" ||
-            fieldName == "userid" ||
-            fieldName == "email" ||
-            fieldName == "e-mail" ||
-            fieldName == "id" ||
-            fieldName == "form_loginname" ||
-            fieldName == "wpname" ||
-            fieldName == "mail" ||
-            fieldName == "loginid" ||
-            fieldName == "login id" ||
-            fieldName == "login_name" ||
-            fieldName == "openid_identifier" ||
-            fieldName == "authentication_email" ||
-            fieldName == "openid" ||
-            fieldName == "auth_email" ||
-            fieldName == "auth_id" ||
-            fieldName == "authentication_identifier" ||
-            fieldName == "authentication_id" ||
-            fieldName == "customer_number" ||
-            fieldName == "customernumber" ||
-            fieldName == "onlineid"
-        ) {
-            // etc. etc.
-            return true;
-        }
-        return false;
-    }
-
     /*
      * getFormFields
      *
@@ -116,7 +76,6 @@ export class FormUtils {
             type: string;
         }[] = [];
         let firstPasswordIndex = -1;
-        let firstPossibleUsernameIndex = -1;
         let usernameIndex = -1;
 
         // search the DOM for any form fields we might be interested in
@@ -180,28 +139,20 @@ export class FormUtils {
                 firstPasswordIndex = allFields.length - 1;
             }
 
-            if (
-                this.isATextFormFieldType(domType) &&
-                firstPossibleUsernameIndex == -1 &&
-                (this.isAKnownUsernameString(elements[i].name) ||
-                    field.locators[0].labels?.some(label => this.isAKnownUsernameString(label)) ||
-                    field.locators[0].autocompleteValues?.includes("username"))
-            ) {
-                firstPossibleUsernameIndex = allFields.length - 1;
-            }
-
             if (elements[i].keeInitialDetectedValue == null) {
                 elements[i].keeInitialDetectedValue = fieldValue;
             }
         }
 
-        // Work out which DOM form element is most likely to be the username field.
-        // This information is only used to display the username to the user so an inaccurate
-        // choice won't impact the form detection or filling behaviour.
-        //TODO:5: Extend this to inspect more than just the name of the field. E.g. max length?
-        //TODO:5: For form filling (not submitting) we might want to select based upon found data in KeePass?
-        if (firstPossibleUsernameIndex != -1) usernameIndex = firstPossibleUsernameIndex;
-        else if (firstPasswordIndex > 0) usernameIndex = firstPasswordIndex - 1;
+        // Benutzerfeld nach derselben Regel wie beim Ausfüllen (loginFields.ts: autocomplete, letztes Textfeld vor dem
+        // Passwort, einzelnes Login-Feld); ohne Treffer (z. B. Benutzername nur versteckt mitgeschickt) das Textfeld
+        // direkt vor dem ersten Passwortfeld
+        usernameIndex = allFields.findIndex(
+            f => this.isATextFormFieldType(f.type) && isUsernameField(f.element.DOMelement as HTMLInputElement)
+        );
+        if (usernameIndex == -1 && firstPasswordIndex > 0 && this.isATextFormFieldType(allFields[firstPasswordIndex - 1].type)) {
+            usernameIndex = firstPasswordIndex - 1;
+        }
         this.Logger.debug("usernameIndex: " + usernameIndex);
 
         let otherCount = 0;

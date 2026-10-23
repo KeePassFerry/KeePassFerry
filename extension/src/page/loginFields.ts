@@ -53,9 +53,13 @@ export function isUsernameField(el: HTMLInputElement): boolean {
     if (!(el instanceof HTMLInputElement) || !isTextInput(el)) return false;
 
     const ac = (el.getAttribute("autocomplete") ?? "").toLowerCase();
-    if (/\b(username|email|webauthn)\b/.test(ac)) return true;
-
     const inputs = inputsIn(scopeOf(el));
+    if (/\busername\b/.test(ac)) return true;
+    if (/\b(email|webauthn)\b/.test(ac)) {
+        // E-Mail ist nur dann der Benutzername, wenn das Formular kein ausdrückliches username-Feld hat (Registrierung)
+        return !inputs.some(i => i !== el && isTextInput(i) && /\busername\b/i.test(i.getAttribute("autocomplete") ?? ""));
+    }
+
     const firstPassword = inputs.find(isPasswordInput);
     if (firstPassword) {
         const before = inputs.filter(

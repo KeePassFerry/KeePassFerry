@@ -172,7 +172,7 @@ export class FormSaving {
                     nonEmptyOtherFields.map(f => f.field),
                     nonEmptyPasswordFields.map(f => f.field)
                 ),
-                title: doc.title || url.hostname,
+                title: siteTitle(doc, url),
                 isPasswordChangeForm,
                 isRegistrationForm
             };
@@ -202,4 +202,13 @@ export class FormSaving {
             return false;
         });
     }
+}
+
+// Titel für einen neuen Eintrag: der Name, den die Website selbst angibt (og:site_name, application-name),
+// sonst der Hostname ohne "www." – der Seitentitel ("Register New Account - …") taugt dafür selten
+function siteTitle(doc: Document, url: URL): string {
+    const meta = (selector: string) => doc.querySelector<HTMLMetaElement>(selector)?.content?.trim();
+    const name = meta('meta[property="og:site_name"]') || meta('meta[name="application-name"]');
+    if (name && name.length <= 60) return name;
+    return url.hostname.replace(/^www\./, "") || doc.title;
 }
