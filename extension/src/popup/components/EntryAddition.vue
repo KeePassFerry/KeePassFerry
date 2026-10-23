@@ -15,7 +15,9 @@
                     :label="$i18n('ferry_add_image_name')" @keyup.enter.stop="finishRename(r)" @keyup.esc.stop="renaming = null"
                     @blur="finishRename(r)" />
             </span>
-            <span v-else class="ferry-extra-text" :class="{ clickable: canOpen(r) }" @click="openRow(r)">
+            <span
+                v-else class="ferry-extra-text" :class="{ clickable: canOpen(r) }" :role="canOpen(r) ? 'button' : undefined"
+                :tabindex="canOpen(r) ? 0 : undefined" @click="openRow(r)" @keyup.enter.stop="openRow(r)">
                 <span class="ferry-extra-name">
                     {{ r.name }}
                     <span v-if="r.isNew" class="ferry-badge">{{ $i18n("ferry_extras_new") }}</span>
@@ -25,6 +27,7 @@
                 <span v-if="r.sub" class="ferry-extra-sub">
                     {{ r.sub }}
                 </span>
+                <v-tooltip v-if="canOpen(r)" location="top" activator="parent">{{ openLabel(r) }}</v-tooltip>
             </span>
             <button
                 v-if="r.isNew && r.type === 'attachment' && renaming !== r.key" type="button" class="ferry-ib"
@@ -37,21 +40,6 @@
                 :class="{ active: editing === r }" :aria-label="$i18n('ferry_extras_edit')" @click="startEdit(r)">
                 <tabler-pencil class="ferry-ico" />
                 <v-tooltip location="start" activator="parent">{{ $i18n("ferry_extras_edit") }}</v-tooltip>
-            </button>
-            <button
-                v-if="r.isProtected && !r.removed" type="button" class="ferry-ib"
-                :aria-label="$i18n('ferry_attachment_show')" @click="showProtected(r)">
-                <tabler-eye class="ferry-ico" />
-                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_attachment_show") }}</v-tooltip>
-            </button>
-            <button
-                v-if="r.type === 'attachment' && !r.removed" type="button" class="ferry-ib"
-                :aria-label="isImage(r) ? $i18n('ferry_attachment_show') : $i18n('ferry_attachment_save')" @click="openRow(r)">
-                <tabler-eye v-if="isImage(r)" class="ferry-ico" />
-                <tabler-download v-else class="ferry-ico" />
-                <v-tooltip location="start" activator="parent">
-                    {{ isImage(r) ? $i18n("ferry_attachment_show") : $i18n("ferry_attachment_save") }}
-                </v-tooltip>
             </button>
             <button
                 type="button" class="ferry-ib" :class="{ danger: !r.removed }"
@@ -156,7 +144,7 @@ import ExtraPreview from "./ExtraPreview.vue";
 import { fillPageField, pageFieldKinds } from "../pageFields";
 import { readClipboard } from "../clipboard";
 import {
-    formatSize, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
+    canOpenExternally, formatSize, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
 } from "../extras";
 
 // "Hinzufügen" im Bearbeiten-Fenster: Wiederherstellungscode, Zwei-Faktor-Schlüssel, Notiz, eigenes Feld oder Bild.
@@ -414,19 +402,31 @@ export default {
         isImage: function (r: Row): boolean {
             return !!r.blob || isImageName(r.name);
         },
+        openLabel: function (r: Row): string {
+            if (r.type === "attachment" && !this.isImage(r) && !canOpenExternally(r.name)) return this.$i18n("ferry_attachment_save");
+            return this.$i18n("ferry_attachment_show");
+        },
         canOpen: function (r: Row): boolean {
             if (r.removed) return false;
-            if (r.type === "attachment" || r.type === "notes") return true;
-            return r.type === "field" && !r.isProtected && (r.value ?? "").length > 60;
+            return r.type === "attachment" || r.type === "notes" || r.type === "field";
         },
         // Zeile anklicken: Bild/Notiz in der Vorschau, andere Anhänge speichern
         openRow: async function (r: Row) {
             if (!this.canOpen(r)) return;
             this.error = null;
+            if (r.type === "field" && r.isProtected) {
+                await this.showProtected(r);
+                return;
+            }
             if (r.type === "notes" || r.type === "field") {
                 // Im Standard-Editor nur gespeicherte, unveränderte Notizen (das Plugin öffnet den Stand in KeePass)
                 const external = r.type === "notes" && !r.isNew && r.newValue === undefined;
                 this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external };
+                return;
+            }
+            // Gespeicherte PDF/Text-Anhänge wie im aufgeklappten Eintrag direkt im Standardprogramm
+            if (!r.isNew && !this.isImage(r) && canOpenExternally(r.name)) {
+                await this.openExternal(r.name);
                 return;
             }
             const blob = r.blob ?? (await loadAttachment(this.uuid, this.dbFileName, r.name));
@@ -588,11 +588,17 @@ export default {
     font-size: 13px;
     line-height: 1.45;
 }
+/* Klickfläche wie im aufgeklappten Eintrag: dezente Hinterlegung, keine Link-Optik */
 .ferry-extra-text.clickable {
+    margin-left: -8px;
+    padding: 3px 8px;
+    border-radius: 8px;
     cursor: pointer;
+    outline: none;
 }
-.ferry-extra-text.clickable:hover .ferry-extra-name {
-    color: rgb(var(--v-theme-primary));
+.ferry-extra-text.clickable:hover,
+.ferry-extra-text.clickable:focus-visible {
+    background: rgba(var(--v-theme-on-surface), 0.06);
 }
 .ferry-extra-name {
     font-size: 13px;

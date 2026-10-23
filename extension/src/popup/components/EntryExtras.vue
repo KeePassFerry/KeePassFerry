@@ -1,46 +1,38 @@
 <template>
-    <!-- Jede Zeile: Auge "Anzeigen" in derselben Spalte wie beim Passwort, rechts daneben "Kopieren" nur bei Feldern -->
+    <!-- Wie im Bearbeiten-Fenster: Name oben, Inhalt darunter. Ein Klick auf den Text öffnet die Vorschau
+         (Hinterlegung beim Darüberfahren statt Link-Optik); "Kopieren" nur bei Feldern -->
     <div v-if="notes || fields.length || attachments.length" class="ferry-extras">
-        <div v-if="notes" class="ferry-row ferry-extra-click" @click="showNotes">
+        <div v-if="notes" class="ferry-row ferry-extra-row">
             <span class="ferry-row-icon"><tabler-note class="ferry-ico" /></span>
-            <span class="ferry-row-value">
-                <span class="ferry-extra-label">{{ $i18n("ferry_extras_notes") }}</span>{{ notesPreview }}
+            <span class="ferry-extra-open" role="button" tabindex="0" @click="showNotes" @keyup.enter.stop="showNotes">
+                <span class="ferry-extra-name">{{ $i18n("ferry_extras_notes") }}</span>
+                <span class="ferry-extra-value">{{ notesPreview }}</span>
+                <v-tooltip location="top" activator="parent">{{ $i18n("ferry_attachment_show") }}</v-tooltip>
             </span>
-            <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_show')" @click.stop="showNotes">
-                <tabler-eye class="ferry-ico" />
-                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_attachment_show") }}</v-tooltip>
-            </button>
-            <span class="ferry-ib-space" />
         </div>
-        <div v-for="f of fields" :key="'f:' + f.name" class="ferry-row">
+        <div v-for="f of fields" :key="'f:' + f.name" class="ferry-row ferry-extra-row">
             <span class="ferry-row-icon">
                 <tabler-lock v-if="f.isProtected" class="ferry-ico" />
                 <tabler-text-caption v-else class="ferry-ico" />
             </span>
-            <span class="ferry-row-value" :class="{ secret: f.isProtected }">
-                <span class="ferry-extra-label">{{ f.name }}</span>{{ f.isProtected ? "••••••••" : f.value }}
+            <span class="ferry-extra-open" role="button" tabindex="0" @click="showField(f)" @keyup.enter.stop="showField(f)">
+                <span class="ferry-extra-name">{{ f.name }}</span>
+                <span class="ferry-extra-value" :class="{ secret: f.isProtected }">{{ f.isProtected ? "••••••••" : f.value }}</span>
+                <v-tooltip location="top" activator="parent">{{ $i18n("ferry_attachment_show") }}</v-tooltip>
             </span>
-            <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_show')" @click="showField(f)">
-                <tabler-eye class="ferry-ico" />
-                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_attachment_show") }}</v-tooltip>
-            </button>
             <button type="button" class="ferry-ib" :class="{ ok: copied === f.name }" :aria-label="$i18n('copy_value_to_clipboard')" @click="copyField(f)">
                 <tabler-check v-if="copied === f.name" class="ferry-ico" />
                 <tabler-copy v-else class="ferry-ico" />
                 <v-tooltip location="start" activator="parent">{{ $i18n("copy_value_to_clipboard") }}</v-tooltip>
             </button>
         </div>
-        <div v-for="a of attachments" :key="'a:' + a.name" class="ferry-row ferry-extra-click" @click="openAttachment(a)">
+        <div v-for="a of attachments" :key="'a:' + a.name" class="ferry-row ferry-extra-row">
             <span class="ferry-row-icon"><tabler-paperclip class="ferry-ico" /></span>
-            <span class="ferry-row-value">
-                {{ a.name }} <span class="ferry-extra-size">{{ size(a.size) }}</span>
+            <span class="ferry-extra-open" role="button" tabindex="0" @click="openAttachment(a)" @keyup.enter.stop="openAttachment(a)">
+                <span class="ferry-extra-name">{{ a.name }}</span>
+                <span class="ferry-extra-value">{{ size(a.size) }}</span>
+                <v-tooltip location="top" activator="parent">{{ attachmentAction(a.name) }}</v-tooltip>
             </span>
-            <button type="button" class="ferry-ib" :aria-label="attachmentAction(a.name)" @click.stop="openAttachment(a)">
-                <tabler-eye v-if="canOpenExternally(a.name)" class="ferry-ico" />
-                <tabler-download v-else class="ferry-ico" />
-                <v-tooltip location="start" activator="parent">{{ attachmentAction(a.name) }}</v-tooltip>
-            </button>
-            <span class="ferry-ib-space" />
         </div>
     </div>
     <div v-if="error" class="ferry-hint err ferry-extras-error">{{ error }}</div>
@@ -167,26 +159,40 @@ export default {
     padding-top: 4px;
     border-top: 1px solid var(--ferry-line);
 }
-/* Platzhalter in Breite eines Symbol-Knopfs, damit das Auge in allen Zeilen in derselben Spalte steht */
-.ferry-ib-space {
-    width: 32px;
-    flex: none;
+.ferry-extra-row {
+    min-height: 44px;
 }
-.ferry-extra-click {
+/* Klickfläche: dezente Hinterlegung wie bei den Einträgen der Trefferliste, keine Link-Optik */
+.ferry-extra-open {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    margin-left: -8px;
+    padding: 3px 8px;
+    border-radius: 8px;
     cursor: pointer;
+    outline: none;
 }
-.ferry-extra-click:hover .ferry-row-value {
-    color: rgb(var(--v-theme-primary));
+.ferry-extra-open:hover,
+.ferry-extra-open:focus-visible {
+    background: rgba(var(--v-theme-on-surface), 0.06);
 }
-.ferry-extra-label {
-    margin-right: 6px;
-    color: var(--ferry-muted);
+.ferry-extra-name {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ferry-extra-value {
     font-size: 12px;
-}
-.ferry-extra-size {
-    margin-left: 4px;
     color: var(--ferry-muted);
-    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ferry-extra-value.secret {
+    letter-spacing: 0.08em;
 }
 .ferry-extras-error {
     padding-left: 44px;
