@@ -38,7 +38,7 @@
     <div v-if="error" class="ferry-hint err ferry-extras-error">{{ error }}</div>
     <ExtraPreview
         :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :file-name="preview.title"
-        :external="preview.external" @close="closePreview"
+        :external="preview.external" :editable="!!preview.editKey" @close="closePreview" @edit="editFromPreview"
         @open-external="preview.blob ? openExternal(preview.title) : openNotesExternal()" />
 </template>
 
@@ -54,6 +54,7 @@ import {
 export default {
     components: { ExtraPreview },
     props: ["uuid", "dbFileName", "title"],
+    emits: ["edit-extra"],
     data: () => ({
         notes: "",
         fields: [] as { name: string; isProtected: boolean; value: string }[],
@@ -61,7 +62,8 @@ export default {
         copied: null as string,
         error: null as string,
         // external: Knopf "Mit Standardprogramm öffnen" in der Vorschau (Notizen, Bilder)
-        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false }
+        // editKey: Zusatz, den der Stift im Bearbeiten-Fenster öffnet ("notes", "f:<Feldname>")
+        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false, editKey: null as string }
     }),
     computed: {
         notesPreview: function (): string {
@@ -115,10 +117,15 @@ export default {
         },
         // Beim Schließen auch den (evtl. geschützten) Text vergessen
         closePreview: function () {
-            this.preview = { open: false, title: "", blob: null, text: null, external: false };
+            this.preview = { open: false, title: "", blob: null, text: null, external: false, editKey: null };
+        },
+        editFromPreview: function () {
+            const key = this.preview.editKey;
+            this.closePreview();
+            this.$emit("edit-extra", key);
         },
         showNotes: function () {
-            this.preview = { open: true, title: this.$i18n("ferry_extras_notes"), blob: null, text: this.notes, external: true };
+            this.preview = { open: true, title: this.$i18n("ferry_extras_notes"), blob: null, text: this.notes, external: true, editKey: "notes" };
         },
         // Geschützte Werte (z. B. Wiederherstellungscodes) erst jetzt aus KeePass holen
         showField: async function (f: { name: string; isProtected: boolean; value: string }) {
@@ -128,7 +135,7 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            this.preview = { open: true, title: f.name, blob: null, text: value, external: false };
+            this.preview = { open: true, title: f.name, blob: null, text: value, external: false, editKey: "f:" + f.name };
         },
         // Bild: Vorschau; PDF/Text: Standardprogramm; alles andere: Speichern unter
         attachmentAction: function (name: string): string {
@@ -145,7 +152,7 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            if (isImageName(a.name)) this.preview = { open: true, title: a.name, blob, text: null, external: true };
+            if (isImageName(a.name)) this.preview = { open: true, title: a.name, blob, text: null, external: true, editKey: null };
             else saveBlob(blob, a.name);
         }
     }

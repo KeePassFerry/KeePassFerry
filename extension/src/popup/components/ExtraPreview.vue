@@ -3,6 +3,10 @@
         <div class="ferry-preview-card" role="dialog" :aria-label="title">
             <div class="ferry-preview-head">
                 <span class="ferry-preview-title">{{ title }}</span>
+                <button v-if="editable" type="button" class="ferry-ib" :aria-label="$i18n('ferry_extras_edit')" @click="$emit('edit')">
+                    <tabler-pencil class="ferry-ico" />
+                    <v-tooltip location="bottom" activator="parent">{{ $i18n("ferry_extras_edit") }}</v-tooltip>
+                </button>
                 <button v-if="external" type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_open_external')" @click="$emit('open-external')">
                     <tabler-external-link class="ferry-ico" />
                     <v-tooltip location="bottom" activator="parent">{{ $i18n("ferry_attachment_open_external") }}</v-tooltip>
@@ -38,8 +42,9 @@ import { copyStringToClipboard } from "../../common/copyStringToClipboard";
 // Vorschau im Popup: Bild (mit "Speichern unter", bei gespeicherten Anhängen auch "Mit Standardprogramm öffnen")
 // oder Text so, wie er gespeichert ist, mit "Alles kopieren".
 export default {
-    props: ["open", "title", "blob", "text", "fileName", "external"],
-    emits: ["close", "open-external"],
+    // editable: Stift "Bearbeiten" (Notizen, Felder)
+    props: ["open", "title", "blob", "text", "fileName", "external", "editable"],
+    emits: ["close", "open-external", "edit"],
     data: () => ({ imageUrl: null as string, copied: null as string }),
     computed: {
         hasText: function (): boolean {

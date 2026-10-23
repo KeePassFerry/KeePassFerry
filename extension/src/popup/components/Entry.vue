@@ -53,7 +53,9 @@
                 v-for="f of allFields" :key="f.uuid" :field="f" :kind="fillKind(f)"
                 :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
             <OtpRow :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
-            <EntryExtras :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" :title="entrySummary.title" />
+            <EntryExtras
+                :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" :title="entrySummary.title"
+                @edit-extra="editExtra" />
             <v-checkbox
                 v-if="isMatchedEntry" :label="$i18n('preferred_matching_entry')"
                 :model-value="entrySummary.isPreferredMatch" hide-details class="ferry-pref"
@@ -66,6 +68,7 @@
 import Field from "./Field.vue";
 import OtpRow from "./OtpRow.vue";
 import EntryExtras from "./EntryExtras.vue";
+import { requestExtraEdit } from "../extras";
 import { AddonMessage } from "../../common/AddonMessage";
 import { Port } from "../../common/port";
 import useStore from "../../store";
@@ -195,6 +198,11 @@ export default {
             //TODO: Confirm that we don't have to roundtrip JSON here too
 //            this.updateSaveState(JSON.parse(JSON.stringify(updatedSaveState)));
             this.updateSaveState(updatedSaveState);
+        },
+        // Stift in der Vorschau: Bearbeiten-Fenster öffnen, dort gleich diesen Zusatz zum Bearbeiten
+        editExtra: async function (key: string) {
+            requestExtraEdit(this.entrySummary.uuid, key);
+            await this.editEntry();
         },
         focusin: function (e) {
             if (!(this.$refs.card as HTMLElement).contains(e.relatedTarget)) {

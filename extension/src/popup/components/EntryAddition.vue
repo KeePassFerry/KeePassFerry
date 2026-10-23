@@ -54,7 +54,7 @@
         <div v-if="unsupported" class="ferry-extra-empty">{{ $i18n("ferry_extras_unsupported") }}</div>
         <div v-else-if="!rows.length && !adding" class="ferry-extra-empty">{{ $i18n("ferry_extras_empty") }}</div>
 
-        <div v-if="editing" class="ferry-add-form">
+        <div v-if="editing" ref="editForm" class="ferry-add-form">
             <div class="ferry-add-head">
                 <span class="ferry-add-title">{{ $i18n("ferry_extras_edit_heading", [editing.name]) }}</span>
                 <button type="button" class="ferry-ib" :aria-label="$i18n('cancel')" @click="editing = null">
@@ -134,7 +134,7 @@
     </div>
     <div v-if="error" class="ferry-hint err">{{ error }}</div>
     <ExtraPreview
-        :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :external="preview.external"
+        :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :external="preview.external" :editable="!!preview.editKey" @edit="editFromPreview"
         @close="closePreview" @open-external="preview.blob ? openExternal(preview.title) : openNotesExternal()" />
 </template>
 
@@ -144,7 +144,7 @@ import ExtraPreview from "./ExtraPreview.vue";
 import { fillPageField, pageFieldKinds } from "../pageFields";
 import { readClipboard } from "../clipboard";
 import {
-    canOpenExternally, formatSize, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
+    canOpenExternally, formatSize, takeExtraEdit, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
 } from "../extras";
 
 // "Hinzufügen" im Bearbeiten-Fenster: Wiederherstellungscode, Zwei-Faktor-Schlüssel, Notiz, eigenes Feld oder Bild.
@@ -197,7 +197,7 @@ export default {
         renameValue: "",
         editing: null as Row,
         editValue: "",
-        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false }
+        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false, editKey: null as string }
     }),
     computed: {
         kindItems: function () {
@@ -328,6 +328,10 @@ export default {
                     list.push({ key: "a:" + a.name, type: "attachment", name: a.name, sub: formatSize(a.size) });
                 }
                 this.existing = list;
+                // Aus der Vorschau des aufgeklappten Eintrags mit dem Stift gekommen: gleich bearbeiten
+                const pendingKey = takeExtraEdit(this.uuid);
+                const pendingRow = pendingKey ? list.find(x => x.key === pendingKey) : null;
+                if (pendingRow) await this.startEdit(pendingRow);
             } catch (e) {
                 this.existing = [];
             }
@@ -421,7 +425,7 @@ export default {
             if (r.type === "notes" || r.type === "field") {
                 // Im Standard-Editor nur gespeicherte, unveränderte Notizen (das Plugin öffnet den Stand in KeePass)
                 const external = r.type === "notes" && !r.isNew && r.newValue === undefined;
-                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external };
+                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external, editKey: r.key };
                 return;
             }
             // Gespeicherte PDF/Text-Anhänge wie im aufgeklappten Eintrag direkt im Standardprogramm
@@ -434,7 +438,7 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null, external: !r.isNew };
+            if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null, external: !r.isNew, editKey: null };
             else saveBlob(blob, r.name);
         },
         openNotesExternal: async function () {
@@ -461,10 +465,15 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            this.preview = { open: true, title: r.name, blob: null, text: value, external: false };
+            this.preview = { open: true, title: r.name, blob: null, text: value, external: false, editKey: r.key };
+        },
+        editFromPreview: function () {
+            const row = this.rows.find((x: Row) => x.key === this.preview.editKey);
+            this.closePreview();
+            if (row && !row.removed) this.startEdit(row);
         },
         closePreview: function () {
-            this.preview = { open: false, title: "", blob: null, text: null, external: false };
+            this.preview = { open: false, title: "", blob: null, text: null, external: false, editKey: null };
         },
         currentValue: function (r: Row): string {
             return r.newValue !== undefined ? r.newValue : r.value;
@@ -486,6 +495,7 @@ export default {
             }
             this.editValue = value;
             this.editing = r;
+            this.$nextTick(() => (this.$refs.editForm as HTMLElement)?.scrollIntoView({ block: "nearest" }));
         },
         applyEdit: function () {
             const r: Row = this.editing;
