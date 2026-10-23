@@ -128,10 +128,13 @@ function visualCenterY(element: HTMLElement, rect: DOMRect): number {
 function isShown(element: HTMLElement, rect: DOMRect): boolean {
     if (rect.bottom <= 0 || rect.top >= window.innerHeight || rect.right <= 0 || rect.left >= window.innerWidth) return false;
     const style = window.getComputedStyle(element);
-    if (style.visibility === "hidden" || style.display === "none" || Number(style.opacity) === 0) return false;
+    if (style.visibility === "hidden" || style.display === "none") return false;
     const x = Math.min(rect.right - 2, Math.max(rect.left + 2, rect.left + rect.width / 3));
     const hit = rootFor(element).elementFromPoint(x, rect.top + rect.height / 2);
     if (!hit) return false;
+    // Durchsichtiges Feld (opacity 0) nur, wenn es selbst obenauf liegt und die Eingaben annimmt
+    // (z. B. Codefeld über sechs gezeichneten Kästchen); versteckte Fallen-Felder liegen darunter
+    if (Number(style.opacity) === 0) return hit === element;
     if (hit === element || element.contains(hit) || hit.contains(element) || isOwnHost(hit)) return true;
     // Schwebende Beschriftungen (Material-Design-Felder) liegen oft über dem Feld
     const labels = (element as HTMLInputElement).labels;

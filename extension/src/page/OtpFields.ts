@@ -519,7 +519,9 @@ export class OtpFields {
 
     private showIcon(target: HTMLInputElement[]) {
         if (configManager.current.ferryShowFieldIcons === false) return;
-        const outside = target.length > 1;
+        // Neben das Feld: bei Einzelziffernfeldern und bei einem durchsichtigen Feld über gezeichneten Kästchen
+        // (sonst läge das Symbol über der letzten Ziffer)
+        const outside = target.length > 1 || Number(getComputedStyle(target[0]).opacity) === 0;
         const el = target[target.length - 1];
         this.iconTarget = target;
         if (this.iconField === el || (!outside && el.offsetWidth < 60)) return;
