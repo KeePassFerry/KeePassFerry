@@ -79,8 +79,8 @@
                 </button>
             </div>
             <v-textarea
-                ref="editValue" v-model="editValue" :label="$i18n('ferry_add_value')" rows="3" auto-grow max-rows="10"
-                hide-details autofocus />
+                ref="editValue" v-model="editValue" :label="$i18n('ferry_add_value')" rows="3" auto-grow max-rows="14"
+                hide-details autofocus class="ferry-compact-text" />
             <div v-if="editing.type === 'notes' && !editValue.trim() && !editing.isNew" class="ferry-hint">
                 {{ $i18n("ferry_extras_notes_cleared") }}
             </div>
@@ -121,7 +121,7 @@
                     :label="$i18n('ferry_add_name')" hide-details class="mb-2" />
                 <v-textarea
                     ref="value" v-model="value" :label="$i18n('ferry_add_value')" :placeholder="$i18n('ferry_add_paste_hint')"
-                    rows="2" auto-grow hide-details @update:model-value="onValueChanged" />
+                    rows="2" auto-grow hide-details class="ferry-compact-text" @update:model-value="onValueChanged" />
                 <v-btn size="small" variant="text" color="primary" class="ferry-paste-btn" @click="pasteText">
                     <tabler-clipboard-text class="ferry-ico mr-1" />
                     {{ $i18n("ferry_paste_clipboard") }}
@@ -588,6 +588,11 @@ export default {
     flex-direction: column;
     min-width: 0;
     flex: 1;
+}
+/* Mehrzeilige Inhalte (Notizen, Codes) kleiner, damit im Popup mehr auf einmal sichtbar ist */
+.ferry-compact-text :deep(textarea) {
+    font-size: 13px;
+    line-height: 1.45;
 }
 .ferry-extra-text.clickable {
     cursor: pointer;
