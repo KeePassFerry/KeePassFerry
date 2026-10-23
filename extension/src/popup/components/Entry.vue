@@ -162,11 +162,21 @@ export default {
             const ss = this.saveState as SaveState;
             const entry = this.entrySummary.fullDetails as Entry;
             const updatedSaveState = Object.assign({}, ss);
-            const { urls, showWarning } = await reconcileURLs(entry.URLs, ss.submittedData?.url);
-            updatedSaveState.newEntry = supplementEntryState(entry, ss, urls);
+            // Gerade abgeschickte Anmeldedaten nur übernehmen, wenn sie von derselben Website stammen (Passwort
+            // geändert); sonst ist es reines Bearbeiten: Adressen und Felder bleiben, keine Warnung
+            const submittedDomain = KeeURL.fromString(ss.submittedData?.url ?? "")?.domainOrIPAddress;
+            const sameSite =
+                !!submittedDomain && entry.URLs.some(u => KeeURL.fromString(u)?.domainOrIPAddress === submittedDomain);
+            if (sameSite) {
+                const { urls, showWarning } = await reconcileURLs(entry.URLs, ss.submittedData.url);
+                updatedSaveState.newEntry = supplementEntryState(entry, ss, urls);
+                updatedSaveState.showURLMismatchWarning = showWarning;
+            } else {
+                updatedSaveState.newEntry = supplementEntryState(entry, { ...ss, submittedData: null }, entry.URLs);
+                updatedSaveState.showURLMismatchWarning = false;
+            }
             updatedSaveState.titleResetValue = entry.title;
             updatedSaveState.lastActiveAt = new Date();
-            updatedSaveState.showURLMismatchWarning = showWarning;
             //TODO: Confirm that we don't have to roundtrip JSON here too
 //            this.updateSaveState(JSON.parse(JSON.stringify(updatedSaveState)));
             this.updateSaveState(updatedSaveState);
