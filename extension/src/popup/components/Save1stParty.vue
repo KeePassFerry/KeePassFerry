@@ -90,7 +90,7 @@ export default {
         FieldEditor,
         EntryAddition
     },
-    emits: ["cancel-clicked", "save-where-clicked"],
+    emits: ["cancel-clicked", "save-where-clicked", "saved-additions-only"],
     setup() {
         const { updateSaveState, removeFieldFromActiveEntry } = useStore();
         return { updateSaveState, removeFieldFromActiveEntry };
@@ -201,7 +201,14 @@ export default {
             const ok = additions ? await additions.commit() : true;
             if (this.entryChanged) Port.postMessage({ action: Action.UpdateEntry } as AddonMessage);
             this.saving = false;
-            if (ok) window.close();
+            if (!ok) return;
+            // Nur Zusätze gespeichert: kein UpdateEntry, das den Bearbeiten-Zustand beendet, also hier verwerfen
+            // (sonst öffnet das Popup beim nächsten Mal wieder "Bearbeiten" ohne Änderungen)
+            if (!this.entryChanged) {
+                this.$emit("saved-additions-only");
+                await this.$nextTick();
+            }
+            window.close();
         },
         openFullEntryEditor() {
             const entry = (JSON.parse(JSON.stringify(this.saveState)) as SaveState).newEntry;

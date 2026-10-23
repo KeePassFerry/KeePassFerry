@@ -69,7 +69,7 @@
                 <SearchResults v-show="showSearchPanel" :matched-entries-in="cachedMatchedEntries" :site-entries-in="siteEntries" :frame-id="frameId"
                     @pref-entry-toggle="prefEntryToggle" />
                 <Save1stParty v-if="showSaveStart && !showSaveWhere" @save-where-clicked="saveWhere"
-                    @cancel-clicked="saveDiscard" />
+                    @cancel-clicked="saveDiscard" @saved-additions-only="saveDiscard" />
                 <SaveWhere v-if="showSaveWhere" :display-reason="displayWhereReason"
                     :preferred-group-uuid="preferredGroupUuid" @back="showSaveWhere = false" />
             </main>
