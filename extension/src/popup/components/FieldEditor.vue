@@ -34,7 +34,7 @@
                 </button>
                 <!-- Entfernen wird nur vorgemerkt (wie unter "Im Eintrag"); erst "Speichern" entfernt das Feld -->
                 <button
-                    type="button" class="ferry-ib" :class="{ danger: !removed }"
+                    v-if="removable" type="button" class="ferry-ib" :class="{ danger: !removed }"
                     :aria-label="removed ? $i18n('ferry_extras_undo') : $i18n('ferry_extras_remove')" @click="deleteClicked">
                     <tabler-arrow-back-up v-if="removed" class="ferry-ico" />
                     <tabler-trash v-else class="ferry-ico" />
@@ -101,6 +101,11 @@ export default {
         },
         label: function () {
             return Field.getDisplayName(this.field);
+        },
+        // Benutzername und Passwort bleiben (wer sie nicht will, leert sie); entfernen lassen sich nur
+        // zusätzlich erkannte Felder, z. B. eine E-Mail-Adresse aus dem Formular
+        removable: function () {
+            return this.field.name !== "KeePass username" && this.field.name !== "KeePass password";
         }
     },
     methods: {
