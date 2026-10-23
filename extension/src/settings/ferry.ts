@@ -72,11 +72,17 @@ async function setupClipboardPermission() {
         }
     });
     // Vom Popup aus geöffnet (#clipboard): Schalter zeigen und hervorheben
+    // Erst nach dem vollständigen Aufbau (Übersetzungen, Abschnitte) scrollen, sonst verschiebt sich das Layout danach
     if (location.hash === "#clipboard") {
-        const row = document.getElementById("clipboard");
-        row?.scrollIntoView({ block: "center" });
-        row?.classList.add("highlight");
-        input.focus();
+        const show = () =>
+            requestAnimationFrame(() => {
+                const row = document.getElementById("clipboard");
+                row?.scrollIntoView({ block: "center", behavior: "smooth" });
+                row?.classList.add("highlight");
+                input.focus({ preventScroll: true });
+            });
+        if (document.readyState === "complete") setTimeout(show, 150);
+        else window.addEventListener("load", () => setTimeout(show, 150), { once: true });
     }
 }
 
