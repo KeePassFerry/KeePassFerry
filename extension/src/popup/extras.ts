@@ -65,18 +65,24 @@ export async function loadFieldValue(uuid: string, dbFileName: string, name: str
 // Stift in der Vorschau des aufgeklappten Eintrags: das Bearbeiten-Fenster öffnet diesen Zusatz gleich zum Bearbeiten.
 // key wie in EntryAddition ("notes" bzw. "f:<Feldname>"); gilt nur innerhalb des geöffneten Popups.
 // Verfällt nach kurzer Zeit, damit ein späteres normales Bearbeiten nicht unerwartet ein Feld öffnet.
-let pendingExtraEdit: { uuid: string; key: string; at: number } = null;
+// Nach dem ersten Lesen bleibt der Wunsch noch kurz gültig, falls das Bearbeiten-Fenster neu aufgebaut wird.
+let pendingExtraEdit: { uuid: string; key: string; at: number; takenAt?: number } = null;
 const PENDING_EDIT_MS = 10000;
+const REMOUNT_GRACE_MS = 3000;
 
 export function requestExtraEdit(uuid: string, key: string) {
     pendingExtraEdit = { uuid, key, at: Date.now() };
 }
 
 export function takeExtraEdit(uuid: string): string {
-    const pending = pendingExtraEdit;
-    pendingExtraEdit = null;
-    if (!pending || pending.uuid !== uuid || Date.now() - pending.at > PENDING_EDIT_MS) return null;
-    return pending.key;
+    const p = pendingExtraEdit;
+    const now = Date.now();
+    if (!p || p.uuid !== uuid || now - p.at > PENDING_EDIT_MS || (p.takenAt && now - p.takenAt > REMOUNT_GRACE_MS)) {
+        pendingExtraEdit = null;
+        return null;
+    }
+    p.takenAt ??= now;
+    return p.key;
 }
 
 // "Speichern unter": Download über einen Link, der Browser fragt nach dem Ort (bzw. nutzt den Download-Ordner)

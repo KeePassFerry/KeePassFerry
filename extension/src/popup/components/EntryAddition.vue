@@ -475,12 +475,12 @@ export default {
         highlightRow: function (r: Row) {
             this.highlighted = r.key;
             this.$nextTick(() => {
-                const el = (this.$refs.group as HTMLElement)?.querySelector(`[data-key="${CSS.escape(r.key)}"]`);
-                el?.scrollIntoView({ block: "nearest" });
+                const rows = (this.$refs.group as HTMLElement)?.querySelectorAll<HTMLElement>("[data-key]") ?? [];
+                Array.from(rows).find(el => el.dataset.key === r.key)?.scrollIntoView({ block: "nearest" });
             });
             setTimeout(() => {
                 if (this.highlighted === r.key) this.highlighted = null;
-            }, 2500);
+            }, 3000);
         },
         editFromPreview: function () {
             const row = this.rows.find((x: Row) => x.key === this.preview.editKey);
@@ -595,10 +595,10 @@ export default {
 /* Sanft auslaufende Hervorhebung (wie in den Einstellungen) */
 .ferry-extra {
     border-radius: 8px;
-    transition: background-color 0.8s ease;
+    transition: background-color 1.2s ease;
 }
 .ferry-extra.highlight {
-    background: rgba(var(--v-theme-primary), 0.1);
+    background: rgba(var(--v-theme-primary), 0.16);
     transition: none;
 }
 .ferry-extra.removed .ferry-extra-text {
