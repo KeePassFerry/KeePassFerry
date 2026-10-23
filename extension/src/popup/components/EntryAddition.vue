@@ -1,7 +1,9 @@
 <template>
-    <div class="ferry-group">
+    <div ref="group" class="ferry-group">
         <div class="ferry-group-title">{{ $i18n("ferry_extras_heading") }}</div>
-        <div v-for="r of rows" :key="r.key" class="ferry-extra" :class="{ removed: r.removed }">
+        <div
+            v-for="r of rows" :key="r.key" class="ferry-extra" :class="{ removed: r.removed, highlight: highlighted === r.key }"
+            :data-key="r.key">
             <span class="ferry-extra-icon">
                 <tabler-paperclip v-if="r.type === 'attachment'" class="ferry-ico" />
                 <tabler-shield-lock v-else-if="r.type === 'totp'" class="ferry-ico" />
@@ -196,6 +198,8 @@ export default {
         renaming: null as string,
         renameValue: "",
         editing: null as Row,
+        // Kurz hervorgehobene Zeile (Sprung aus der Bildvorschau: dort z. B. löschen)
+        highlighted: null as string,
         editValue: "",
         preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false, editKey: null as string }
     }),
@@ -331,7 +335,8 @@ export default {
                 // Aus der Vorschau des aufgeklappten Eintrags mit dem Stift gekommen: gleich bearbeiten
                 const pendingKey = takeExtraEdit(this.uuid);
                 const pendingRow = pendingKey ? list.find(x => x.key === pendingKey) : null;
-                if (pendingRow) await this.startEdit(pendingRow);
+                if (pendingRow?.type === "attachment") this.highlightRow(pendingRow);
+                else if (pendingRow) await this.startEdit(pendingRow);
             } catch (e) {
                 this.existing = [];
             }
@@ -467,6 +472,16 @@ export default {
             }
             this.preview = { open: true, title: r.name, blob: null, text: value, external: false, editKey: r.key };
         },
+        highlightRow: function (r: Row) {
+            this.highlighted = r.key;
+            this.$nextTick(() => {
+                const el = (this.$refs.group as HTMLElement)?.querySelector(`[data-key="${CSS.escape(r.key)}"]`);
+                el?.scrollIntoView({ block: "nearest" });
+            });
+            setTimeout(() => {
+                if (this.highlighted === r.key) this.highlighted = null;
+            }, 2500);
+        },
         editFromPreview: function () {
             const row = this.rows.find((x: Row) => x.key === this.preview.editKey);
             this.closePreview();
@@ -576,6 +591,15 @@ export default {
     align-items: center;
     gap: 10px;
     min-height: 42px;
+}
+/* Sanft auslaufende Hervorhebung (wie in den Einstellungen) */
+.ferry-extra {
+    border-radius: 8px;
+    transition: background-color 0.8s ease;
+}
+.ferry-extra.highlight {
+    background: rgba(var(--v-theme-primary), 0.1);
+    transition: none;
 }
 .ferry-extra.removed .ferry-extra-text {
     opacity: 0.5;

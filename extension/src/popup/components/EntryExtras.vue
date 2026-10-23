@@ -62,7 +62,7 @@ export default {
         copied: null as string,
         error: null as string,
         // external: Knopf "Mit Standardprogramm öffnen" in der Vorschau (Notizen, Bilder)
-        // editKey: Zusatz, den der Stift im Bearbeiten-Fenster öffnet ("notes", "f:<Feldname>")
+        // editKey: Zusatz, zu dem der Stift im Bearbeiten-Fenster springt ("notes", "f:<Feldname>", "a:<Anhang>")
         preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false, editKey: null as string }
     }),
     computed: {
@@ -152,7 +152,7 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            if (isImageName(a.name)) this.preview = { open: true, title: a.name, blob, text: null, external: true, editKey: null };
+            if (isImageName(a.name)) this.preview = { open: true, title: a.name, blob, text: null, external: true, editKey: "a:" + a.name };
             else saveBlob(blob, a.name);
         }
     }
