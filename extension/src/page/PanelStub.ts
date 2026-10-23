@@ -44,14 +44,32 @@ export class PanelStub {
     private parentFrameId: number;
     private elementToRefocus: Element;
 
-    constructor(options: PanelStubOptions, target: HTMLElement, parentFrameId: number, itemCount?: number) {
+    constructor(options: PanelStubOptions, target: HTMLElement, parentFrameId: number, itemCount?: number, itemTexts?: string[]) {
         this.target = target;
         this.options = options;
         this.parentFrameId = parentFrameId;
-        // Auswahlliste nur so hoch wie nötig (Kopf + Einträge, Rest scrollt)
+        // Auswahlliste nur so hoch wie nötig (Kopf + Einträge, Rest scrollt) und so breit wie der längste Eintrag
         if (options.name === "matchedLoginsLegacy" && itemCount > 0) {
-            this.options = { ...options, width: 340, height: Math.min(options.height, 58 + itemCount * 50) };
+            this.options = {
+                ...options,
+                width: PanelStub.matchedLoginsWidth(itemTexts ?? []),
+                height: Math.min(options.height, 58 + itemCount * 50)
+            };
         }
+    }
+
+    // Breite der Auswahlliste: längster Benutzername/Titel plus Zeilenrahmen (Symbol, Schnellknöpfe, Abstände),
+    // mindestens 340 px, höchstens 560 px und nie breiter als das Fenster
+    private static matchedLoginsWidth(texts: string[]): number {
+        const ROW_CHROME = 200;
+        let longest = 0;
+        const context = document.createElement("canvas").getContext("2d");
+        if (context) {
+            context.font = '600 14px "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif';
+            for (const text of texts) if (text) longest = Math.max(longest, context.measureText(text).width);
+        }
+        const max = Math.max(340, Math.min(560, window.innerWidth - 24));
+        return Math.round(Math.min(max, Math.max(340, longest + ROW_CHROME)));
     }
 
     public createPanel() {

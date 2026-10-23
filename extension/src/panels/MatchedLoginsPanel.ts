@@ -69,6 +69,8 @@ export class MatchedLoginsPanel {
             title.className = "ferry-login-title";
             title.textContent = entry.title;
             text.append(user, title);
+            // Voller Text als Tooltip, falls die Zeile trotz breiterer Liste abgeschnitten wird
+            text.title = [usernameDisplayValue, entry.title].filter(Boolean).join("\n");
             const more = document.createElement("button");
             more.className = "ferry-login-more";
             more.type = "button";

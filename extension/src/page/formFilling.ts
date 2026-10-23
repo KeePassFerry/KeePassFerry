@@ -93,7 +93,8 @@ export class FormFilling {
                     PanelStubOptions.MatchedLogins,
                     null,
                     this.parentFrameId,
-                    this.matchedEntryCount()
+                    this.matchedEntryCount(),
+                    this.matchedEntryTexts()
                 );
                 this.matchedLoginsPanelStub.createPanel();
             }
@@ -116,7 +117,8 @@ export class FormFilling {
             PanelStubOptions.MatchedLogins,
             target,
             this.parentFrameId,
-            this.matchedEntryCount()
+            this.matchedEntryCount(),
+            this.matchedEntryTexts()
         );
         KeeLog.debug("Creating panel...");
         this.matchedLoginsPanelStub.createPanel();
@@ -130,6 +132,14 @@ export class FormFilling {
         const uuids = new Set<string>();
         for (const list of this.matchResult?.entries ?? []) for (const e of list ?? []) uuids.add(e.uuid);
         return uuids.size;
+    }
+
+    // Angezeigte Texte der passenden Einträge (Benutzername, Titel) für die Breite der Auswahlliste
+    private matchedEntryTexts(): string[] {
+        const texts: string[] = [];
+        for (const list of this.matchResult?.entries ?? [])
+            for (const e of list ?? []) texts.push(Entry.getUsernameField(e)?.value ?? "", e.title ?? "");
+        return texts;
     }
 
     public closeMatchedLoginsPanel() {
