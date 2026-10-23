@@ -84,6 +84,11 @@ function rawHintText(el: HTMLInputElement): string {
 
 function isVisible(el: HTMLElement): boolean {
     if (el.offsetWidth <= 0 && el.offsetHeight <= 0) return false;
+    // Inhalt eines zugeklappten <details> (Chromium: content-visibility: hidden) behält seine Maße, ist aber nicht zu sehen.
+    // Sonst landet der Code z. B. im verborgenen Feld "App entfernen" und die Seite schickt es selbst ab.
+    if (typeof el.checkVisibility === "function" && !el.checkVisibility({ visibilityProperty: true })) return false;
+    const closedDetails = el.closest("details:not([open])");
+    if (closedDetails && !el.closest("summary")?.parentElement?.isSameNode(closedDetails)) return false;
     const style = getComputedStyle(el);
     return style.visibility !== "hidden" && style.display !== "none";
 }
