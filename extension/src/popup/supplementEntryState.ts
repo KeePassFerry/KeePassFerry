@@ -18,8 +18,11 @@ export function supplementEntryState(entry: Entry, saveState: SaveState, urls?: 
         : {}) as Entry;
     const overwriteWithURLs = (urls
         ? {
-              URLs: urls
+              URLs: [...urls]
           }
         : {}) as Entry;
-    return Object.assign({}, entry, overwriteWithSubmittedData, overwriteWithURLs);
+    // Immer eigene Kopien von Feldern und Adressen: sonst ändert das Bearbeiten-Fenster (z. B. Feld entfernen)
+    // auch den Eintrag in der Trefferliste, solange keine übermittelten Daten einfließen
+    const ownCopies = { fields: JSON.parse(JSON.stringify(entry.fields)), URLs: [...(entry.URLs ?? [])] } as Entry;
+    return Object.assign({}, entry, ownCopies, overwriteWithSubmittedData, overwriteWithURLs);
 }

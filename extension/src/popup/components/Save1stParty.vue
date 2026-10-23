@@ -26,7 +26,7 @@
                     </template>
                 </v-text-field>
                 <FieldEditor
-                    v-for="f of saveState.newEntry.fields" :key="f.uuid" :field="f"
+                    v-for="f of saveState.newEntry.fields" :key="f.uuid" :field="f" :removed="pendingRemoval.includes(f.uuid)"
                     @field-value-changed="fieldValueChanged" @field-deleted="fieldDeleted" />
             </div>
             <div v-if="showURLMismatchWarning" class="ferry-note warn ferry-edit-warn">
@@ -108,6 +108,8 @@ export default {
         titleFocussed: true,
         additionsChanged: false,
         saving: false,
+        // Zum Entfernen vorgemerkte Felder (uuid); entfernt wird erst beim Speichern
+        pendingRemoval: [] as string[],
         originalFieldCount: 0
     }),
     computed: {
@@ -122,6 +124,7 @@ export default {
         entryChanged: function () {
             const e = (this.saveState as SaveState).newEntry;
             return (
+                this.pendingRemoval.length > 0 ||
                 this.saveState.titleResetValue !== e.title ||
                 e.fields.length !== this.originalFieldCount ||
                 e.fields.some(f => f.resetValue !== undefined && f.resetValue !== f.value)
@@ -181,9 +184,11 @@ export default {
             this.$emit("cancel-clicked");
         },
         nextClicked: function () {
+            this.applyPendingRemovals();
             this.$emit("save-where-clicked", this.displayWhereReason, this.preferredGroupUuid);
         },
         saveEntry: function () {
+            this.applyPendingRemovals();
             const updatedSaveState = Object.assign({}, JSON.parse(JSON.stringify(this.saveState))) as SaveState;
             updatedSaveState.newEntry = new Entry({
                 ...updatedSaveState.newEntry,
@@ -199,7 +204,10 @@ export default {
             this.saving = true;
             const additions = this.$refs.addition as any;
             const ok = additions ? await additions.commit() : true;
-            if (this.entryChanged) Port.postMessage({ action: Action.UpdateEntry } as AddonMessage);
+            if (this.entryChanged) {
+                this.applyPendingRemovals();
+                Port.postMessage({ action: Action.UpdateEntry } as AddonMessage);
+            }
             this.saving = false;
             if (!ok) return;
             // Nur Zusätze gespeichert: kein UpdateEntry, das den Bearbeiten-Zustand beendet, also hier verwerfen
@@ -253,7 +261,14 @@ export default {
             this.updateSaveState(updatedSaveState);
         },
         fieldDeleted: function (field: Partial<Field>) {
-            this.removeFieldFromActiveEntry(field.uuid);
+            this.pendingRemoval = this.pendingRemoval.includes(field.uuid)
+                ? this.pendingRemoval.filter((u: string) => u !== field.uuid)
+                : [...this.pendingRemoval, field.uuid];
+        },
+        // Vorgemerkte Felder jetzt wirklich entfernen (vor Anlegen/Aktualisieren des Eintrags)
+        applyPendingRemovals: function () {
+            for (const uuid of this.pendingRemoval) this.removeFieldFromActiveEntry(uuid);
+            this.pendingRemoval = [];
         },
         getPreferredGroup: function (mruGroup: { [key: string]: string }, dbs: Database[]) {
             if (!mruGroup) {
