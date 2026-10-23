@@ -242,6 +242,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case "getEntryAttachment":
             work = kee.KeePassRPC.getEntryAttachment(msg.uuid, msg.dbFileName, msg.name);
             break;
+        case "openEntryAttachmentExternally":
+            work = kee.KeePassRPC.openEntryAttachmentExternally(msg.uuid, msg.dbFileName, msg.name);
+            break;
         case "getEntryFieldValue":
             work = kee.KeePassRPC.getEntryFieldValue(msg.uuid, msg.dbFileName, msg.name);
             break;

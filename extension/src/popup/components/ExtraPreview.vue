@@ -3,6 +3,10 @@
         <div class="ferry-preview-card" role="dialog" :aria-label="title">
             <div class="ferry-preview-head">
                 <span class="ferry-preview-title">{{ title }}</span>
+                <button v-if="external" type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_open_external')" @click="$emit('open-external')">
+                    <tabler-external-link class="ferry-ico" />
+                    <v-tooltip location="bottom" activator="parent">{{ $i18n("ferry_attachment_open_external") }}</v-tooltip>
+                </button>
                 <button v-if="blob" type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_save')" @click="save">
                     <tabler-download class="ferry-ico" />
                     <v-tooltip location="bottom" activator="parent">{{ $i18n("ferry_attachment_save") }}</v-tooltip>
@@ -23,10 +27,10 @@
 <script lang="ts">
 import { saveBlob } from "../extras";
 
-// Vorschau im Popup: Bild (mit "Speichern unter") oder Text (z. B. Notiz)
+// Vorschau im Popup: Bild (mit "Speichern unter", bei gespeicherten Anhängen auch "In Windows öffnen") oder Text (z. B. Notiz)
 export default {
-    props: ["open", "title", "blob", "text", "fileName"],
-    emits: ["close"],
+    props: ["open", "title", "blob", "text", "fileName", "external"],
+    emits: ["close", "open-external"],
     data: () => ({ imageUrl: null as string }),
     watch: {
         blob: {

@@ -1286,5 +1286,9 @@
     "ferry_group_collapse": {
         "message": "Untergruppen ausblenden",
         "description": "KeePassFerry"
+    },
+    "ferry_attachment_open_external": {
+        "message": "Mit Standardprogramm öffnen (über KeePass)",
+        "description": "KeePassFerry"
     }
 }

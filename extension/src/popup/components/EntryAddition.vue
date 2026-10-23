@@ -150,8 +150,8 @@
     </div>
     <div v-if="error" class="ferry-hint err">{{ error }}</div>
     <ExtraPreview
-        :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text"
-        @close="preview.open = false" />
+        :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :external="preview.external"
+        @close="preview.open = false" @open-external="openExternal(preview.title)" />
 </template>
 
 <script lang="ts">
@@ -159,7 +159,7 @@ import AttachmentPaste from "./AttachmentPaste.vue";
 import ExtraPreview from "./ExtraPreview.vue";
 import { fillPageField, pageFieldKinds } from "../pageFields";
 import { readClipboard } from "../clipboard";
-import { formatSize, isImageName, loadAttachment, loadFieldValue, saveBlob } from "../extras";
+import { formatSize, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, saveBlob } from "../extras";
 
 // "Hinzufügen" im Bearbeiten-Fenster: Wiederherstellungscode, Zwei-Faktor-Schlüssel, Notiz, eigenes Feld oder Bild.
 // Hinzugefügtes und Entferntes wird nur vorgemerkt (Liste "Im Eintrag" mit Neu/Wird entfernt) und erst mit
@@ -213,7 +213,7 @@ export default {
         editValue: "",
         // Aufgedeckte geschützte Werte je Zeile
         revealed: {} as Record<string, string>,
-        preview: { open: false, title: "", blob: null as Blob, text: null as string }
+        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false }
     }),
     computed: {
         kindItems: function () {
@@ -429,7 +429,7 @@ export default {
             if (!this.canOpen(r)) return;
             this.error = null;
             if (r.type === "notes" || r.type === "field") {
-                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r) };
+                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external: false };
                 return;
             }
             const blob = r.blob ?? (await loadAttachment(this.uuid, this.dbFileName, r.name));
@@ -437,8 +437,16 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null };
+            if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null, external: !r.isNew };
             else saveBlob(blob, r.name);
+        },
+        openExternal: async function (name: string) {
+            this.error = null;
+            if (!(await openAttachmentExternally(this.uuid, this.dbFileName, name))) {
+                this.error = this.$i18n("ferry_extras_load_failed");
+                return;
+            }
+            this.preview.open = false;
         },
         toggleReveal: async function (r: Row) {
             if (this.revealed[r.key] !== undefined) {

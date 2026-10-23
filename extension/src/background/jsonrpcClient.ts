@@ -222,7 +222,6 @@ export class jsonrpcClient {
         return responses?.[0]?.resultWrapper?.result ?? null;
     }
 
-    // Eigene Felder (geschützte ohne Wert) und Anhänge eines Eintrags
     // Inhalt eines Anhangs (Base64) bzw. Wert eines eigenen (auch geschützten) Felds, erst auf Klick geladen
     async getEntryAttachment(uuid: string, dbFileName: string, name: string): Promise<string> {
         const sessionManager = this.sessionManagerForFilename(dbFileName);
@@ -238,6 +237,16 @@ export class jsonrpcClient {
         return responses?.[0]?.resultWrapper?.result ?? null;
     }
 
+    // Anhang im Standardprogramm von Windows öffnen (über KeePass, das danach seinen Dialog zeigt)
+    async openEntryAttachmentExternally(uuid: string, dbFileName: string, name: string): Promise<boolean> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return false;
+        this.kprpcClient.allowKeePassForeground();
+        const responses = await this.kprpcClient.request([sessionManager], "OpenEntryAttachmentExternally", [uuid, dbFileName, name]);
+        return !!responses?.[0]?.resultWrapper?.result;
+    }
+
+    // Eigene Felder (geschützte ohne Wert), Notizen und Anhänge eines Eintrags
     async getEntryExtras(uuid: string, dbFileName: string): Promise<{
         fields: { name: string; isProtected: boolean; value: string }[];
         attachments: { name: string; size: number }[];

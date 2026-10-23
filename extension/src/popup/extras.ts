@@ -38,6 +38,13 @@ export async function loadAttachment(uuid: string, dbFileName: string, name: str
     return base64 ? blobFromBase64(base64, mimeFor(name)) : null;
 }
 
+// Über KeePass im Standardprogramm von Windows öffnen; false bei Plugin vor 1.0.7 oder Fehler
+export async function openAttachmentExternally(uuid: string, dbFileName: string, name: string): Promise<boolean> {
+    return !!(await chrome.runtime
+        .sendMessage({ keepassferry: "openEntryAttachmentExternally", uuid, dbFileName, name })
+        .catch(() => false));
+}
+
 export async function loadFieldValue(uuid: string, dbFileName: string, name: string): Promise<string> {
     return chrome.runtime.sendMessage({ keepassferry: "getEntryFieldValue", uuid, dbFileName, name }).catch(() => null);
 }

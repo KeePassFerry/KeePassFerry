@@ -39,6 +39,10 @@
             <span class="ferry-row-value">
                 {{ a.name }} <span class="ferry-extra-size">{{ size(a.size) }}</span>
             </span>
+            <button v-if="!isImage(a.name)" type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_open_external')" @click.stop="openExternal(a.name)">
+                <tabler-external-link class="ferry-ico" />
+                <v-tooltip location="top" activator="parent">{{ $i18n("ferry_attachment_open_external") }}</v-tooltip>
+            </button>
             <button type="button" class="ferry-ib" :aria-label="isImage(a.name) ? $i18n('ferry_attachment_show') : $i18n('ferry_attachment_save')" @click.stop="openAttachment(a)">
                 <tabler-eye v-if="isImage(a.name)" class="ferry-ico" />
                 <tabler-download v-else class="ferry-ico" />
@@ -49,13 +53,13 @@
     <div v-if="error" class="ferry-hint err ferry-extras-error">{{ error }}</div>
     <ExtraPreview
         :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :file-name="preview.title"
-        @close="preview.open = false" />
+        :external="!!preview.blob" @close="preview.open = false" @open-external="openExternal(preview.title)" />
 </template>
 
 <script lang="ts">
 import ExtraPreview from "./ExtraPreview.vue";
 import { copyStringToClipboard } from "../../common/copyStringToClipboard";
-import { formatSize, isImageName, loadAttachment, loadFieldValue, saveBlob } from "../extras";
+import { formatSize, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, saveBlob } from "../extras";
 
 // Aufgeklappter Eintrag: Notiz, eigene Felder (z. B. Wiederherstellungscodes) und Anhänge des Eintrags.
 // Geschützte Werte und Anhänge werden erst auf Klick aus KeePass geholt.
@@ -116,6 +120,15 @@ export default {
                 return;
             }
             await this.copy(f.name, value);
+        },
+        // KeePass öffnet die Datei und zeigt danach seinen Dialog (temporäre Kopie wird dort sicher gelöscht)
+        openExternal: async function (name: string) {
+            this.error = null;
+            if (!(await openAttachmentExternally(this.uuid, this.dbFileName, name))) {
+                this.error = this.$i18n("ferry_extras_load_failed");
+                return;
+            }
+            this.preview.open = false;
         },
         showNotes: function () {
             this.preview = { open: true, title: this.$i18n("ferry_extras_notes"), blob: null, text: this.notes };
