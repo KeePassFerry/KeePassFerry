@@ -6,6 +6,7 @@ import { KeeLog } from "../common/Logger";
 import { Entry } from "../common/model/Entry";
 import type { AddonMessage } from "../common/AddonMessage";
 import { diag } from "./ferryDiag";
+import { rememberAutoFill } from "./otpRepeat";
 
 /*
 otpSetup.ts: Einrichtung eines Zwei-Faktor-Schlüssels (TOTP) von einer Webseite.
@@ -319,6 +320,8 @@ export async function applyOtpSetup(tabId: number, uuid: string, dbFileName: str
         const totp = await kee.KeePassRPC.getTotp(uuid, dbFileName);
         const code = totp?.code ?? result.code;
         if (code) {
+            // Lädt die Seite nach dem Absenden neu (z. B. "ungültig"), denselben Code nicht noch einmal von selbst eintragen
+            await rememberAutoFill(tabId, setup.domain, code);
             kee.tabStates.get(tabId)?.framePorts?.forEach(port => {
                 try {
                     // Mit Restzeit, damit am Feld der Gültigkeitsring startet

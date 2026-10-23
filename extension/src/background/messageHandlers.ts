@@ -1,6 +1,7 @@
 import { preparePasskey, finishPasskey, cancelPasskey, signalPasskey, finishSignal } from "./passkeys";
 import { diag } from "./ferryDiag";
 import { handleOtpSetupCandidate, dismissOtpSetup, isOtpSetupPending } from "./otpSetup";
+import { isRepeatedAutoFill, rememberAutoFill } from "./otpRepeat";
 import { onFieldsAvailable } from "./pageFields";
 import { KeeURL } from "../common/KeeURL";
 import type { AddonMessage } from "../common/AddonMessage";
@@ -355,6 +356,14 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             const totp = await kee.findTotpCode(this.sender.tab.id, frameUrl);
             diag("hintergrund", "otp angefragt", { code: totp ? "gefunden" : "keiner", rest: totp?.remainingSeconds });
             if (totp) {
+                const domain = KeeURL.fromString(frameUrl)?.domainOrIPAddress;
+                // Derselbe Code schon von selbst eingetragen (Seite hat neu geladen, z. B. nach "ungültig"): nur das Symbol
+                if (!msg.userInitiated && (await isRepeatedAutoFill(this.sender.tab.id, domain, totp.code))) {
+                    diag("hintergrund", "otp schon eingetragen -> nur symbol");
+                    this.postMessage({ action: Action.FillOtp, otpIconOnly: true } as AddonMessage);
+                    return;
+                }
+                if (!msg.userInitiated) await rememberAutoFill(this.sender.tab.id, domain, totp.code);
                 this.postMessage({
                     action: Action.FillOtp,
                     otpCode: totp.code,

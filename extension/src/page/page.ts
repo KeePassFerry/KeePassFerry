@@ -343,6 +343,8 @@ if (document.body) {
 
             if (m.action == Action.FillOtp && m.otpCode) {
                 otpFields.fill(m.otpCode, m.otpRemaining, m.otpPeriod);
+            } else if (m.action == Action.FillOtp && m.otpIconOnly) {
+                otpFields.showIconOnly();
             }
 
             // Popup: welche Felder hat dieser Frame, und einzelnes Feld füllen

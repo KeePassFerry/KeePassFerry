@@ -446,6 +446,18 @@ export class OtpFields {
         this.scanSoon();
     }
 
+    // Derselbe Code wurde hier schon von selbst eingetragen: nichts eintragen, nur das Symbol (Klick trägt ein)
+    public showIconOnly() {
+        const target = this.target && document.contains(this.target[0]) ? this.target : findOtpTarget(true);
+        if (!target) return;
+        this.target = target;
+        try {
+            this.showIcon(target);
+        } catch (e) {
+            console.debug("KeePassFerry: OTP icon failed", e);
+        }
+    }
+
     // Für das Popup: hat die Seite ein Codefeld (auch schon ausgefülltes)?
     public hasTarget(): boolean {
         return !!findOtpTarget(true);

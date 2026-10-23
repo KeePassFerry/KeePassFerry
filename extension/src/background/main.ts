@@ -1,5 +1,6 @@
 import { diag } from "./ferryDiag";
 import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup, parseOtpauth } from "./otpSetup";
+import { forgetAutoFill } from "./otpRepeat";
 import { queryPageFields, fillPageField } from "./pageFields";
 import { pluginIsOutdated, pluginVersionFrom } from "../common/FeatureFlags";
 import { isFirefox } from "webext-detect-page";
@@ -314,6 +315,7 @@ chrome.action.onClicked.addListener(async () => {
 chrome.tabs.onRemoved.addListener(tabId => {
     kee?.persistentTabStates?.delete(tabId);
     forgetOtpSetup(tabId);
+    forgetAutoFill(tabId);
     kee?.deleteTabState?.(tabId);
 });
 

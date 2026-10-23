@@ -49,6 +49,8 @@ export interface AddonMessage {
     requestUnlock?: boolean;
     ferryDiag?: { event: string; data?: Record<string, unknown> };
     otpPeriod?: number;
+    // FillOtp ohne Code: derselbe Code wurde hier schon von selbst eingetragen, nur das Symbol am Feld zeigen
+    otpIconOnly?: boolean;
     preferredUuid?: string;
     otpIssuer?: string;
     unlocked?: boolean;
