@@ -1,19 +1,16 @@
 <template>
+    <!-- Jede Zeile: Auge "Anzeigen" in derselben Spalte wie beim Passwort, rechts daneben "Kopieren" nur bei Feldern -->
     <div v-if="notes || fields.length || attachments.length" class="ferry-extras">
         <div v-if="notes" class="ferry-row ferry-extra-click" @click="showNotes">
             <span class="ferry-row-icon"><tabler-note class="ferry-ico" /></span>
             <span class="ferry-row-value">
                 <span class="ferry-extra-label">{{ $i18n("ferry_extras_notes") }}</span>{{ notesPreview }}
             </span>
-            <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_open_external')" @click.stop="openNotesExternal">
-                <tabler-external-link class="ferry-ico" />
-                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_attachment_open_external") }}</v-tooltip>
+            <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_show')" @click.stop="showNotes">
+                <tabler-eye class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_attachment_show") }}</v-tooltip>
             </button>
-            <button type="button" class="ferry-ib" :class="{ ok: copied === 'notes' }" :aria-label="$i18n('copy_value_to_clipboard')" @click.stop="copy('notes', notes)">
-                <tabler-check v-if="copied === 'notes'" class="ferry-ico" />
-                <tabler-copy v-else class="ferry-ico" />
-                <v-tooltip location="start" activator="parent">{{ $i18n("copy_value_to_clipboard") }}</v-tooltip>
-            </button>
+            <span class="ferry-ib-space" />
         </div>
         <div v-for="f of fields" :key="'f:' + f.name" class="ferry-row">
             <span class="ferry-row-icon">
@@ -32,6 +29,10 @@
                     {{ revealed[f.name] !== undefined ? $i18n("ferry_generator_hide") : $i18n("ferry_generator_show") }}
                 </v-tooltip>
             </button>
+            <button v-else type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_show')" @click="showField(f)">
+                <tabler-eye class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_attachment_show") }}</v-tooltip>
+            </button>
             <button type="button" class="ferry-ib" :class="{ ok: copied === f.name }" :aria-label="$i18n('copy_value_to_clipboard')" @click="copyField(f)">
                 <tabler-check v-if="copied === f.name" class="ferry-ico" />
                 <tabler-copy v-else class="ferry-ico" />
@@ -43,21 +44,18 @@
             <span class="ferry-row-value">
                 {{ a.name }} <span class="ferry-extra-size">{{ size(a.size) }}</span>
             </span>
-            <button v-if="!isImage(a.name) && canOpenExternally(a.name)" type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_open_external')" @click.stop="openExternal(a.name)">
-                <tabler-external-link class="ferry-ico" />
-                <v-tooltip location="top" activator="parent">{{ $i18n("ferry_attachment_open_external") }}</v-tooltip>
-            </button>
-            <button type="button" class="ferry-ib" :aria-label="isImage(a.name) ? $i18n('ferry_attachment_show') : $i18n('ferry_attachment_save')" @click.stop="openAttachment(a)">
-                <tabler-eye v-if="isImage(a.name)" class="ferry-ico" />
+            <button type="button" class="ferry-ib" :aria-label="attachmentAction(a.name)" @click.stop="openAttachment(a)">
+                <tabler-eye v-if="canOpenExternally(a.name)" class="ferry-ico" />
                 <tabler-download v-else class="ferry-ico" />
-                <v-tooltip location="top" activator="parent">{{ isImage(a.name) ? $i18n("ferry_attachment_show") : $i18n("ferry_attachment_save") }}</v-tooltip>
+                <v-tooltip location="start" activator="parent">{{ attachmentAction(a.name) }}</v-tooltip>
             </button>
+            <span class="ferry-ib-space" />
         </div>
     </div>
     <div v-if="error" class="ferry-hint err ferry-extras-error">{{ error }}</div>
     <ExtraPreview
         :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :file-name="preview.title"
-        :external="true" @close="preview.open = false"
+        :external="preview.external" @close="preview.open = false"
         @open-external="preview.blob ? openExternal(preview.title) : openNotesExternal()" />
 </template>
 
@@ -80,7 +78,8 @@ export default {
         revealed: {} as Record<string, string>,
         copied: null as string,
         error: null as string,
-        preview: { open: false, title: "", blob: null as Blob, text: null as string }
+        // external: Knopf "Mit Standardprogramm öffnen" in der Vorschau (Notizen, Bilder)
+        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false }
     }),
     computed: {
         notesPreview: function (): string {
@@ -147,16 +146,27 @@ export default {
             this.preview.open = false;
         },
         showNotes: function () {
-            this.preview = { open: true, title: this.$i18n("ferry_extras_notes"), blob: null, text: this.notes };
+            this.preview = { open: true, title: this.$i18n("ferry_extras_notes"), blob: null, text: this.notes, external: true };
+        },
+        showField: function (f: { name: string; value: string }) {
+            this.preview = { open: true, title: f.name, blob: null, text: f.value ?? "", external: false };
+        },
+        // Bild: Vorschau; PDF/Text: Standardprogramm; alles andere: Speichern unter
+        attachmentAction: function (name: string): string {
+            return canOpenExternally(name) ? this.$i18n("ferry_attachment_show") : this.$i18n("ferry_attachment_save");
         },
         openAttachment: async function (a: { name: string }) {
             this.error = null;
+            if (!isImageName(a.name) && canOpenExternally(a.name)) {
+                await this.openExternal(a.name);
+                return;
+            }
             const blob = await loadAttachment(this.uuid, this.dbFileName, a.name);
             if (!blob) {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            if (isImageName(a.name)) this.preview = { open: true, title: a.name, blob, text: null };
+            if (isImageName(a.name)) this.preview = { open: true, title: a.name, blob, text: null, external: true };
             else saveBlob(blob, a.name);
         }
     }
@@ -169,6 +179,11 @@ export default {
     margin-top: 4px;
     padding-top: 4px;
     border-top: 1px solid var(--ferry-line);
+}
+/* Platzhalter in Breite eines Symbol-Knopfs, damit das Auge in allen Zeilen in derselben Spalte steht */
+.ferry-ib-space {
+    width: 32px;
+    flex: none;
 }
 .ferry-extra-click {
     cursor: pointer;
