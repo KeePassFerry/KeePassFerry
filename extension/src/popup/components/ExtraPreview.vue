@@ -11,13 +11,6 @@
                     <tabler-external-link class="ferry-ico" />
                     <v-tooltip location="bottom" activator="parent">{{ $i18n("ferry_attachment_open_external") }}</v-tooltip>
                 </button>
-                <button
-                    v-if="hasText" type="button" class="ferry-ib" :class="{ ok: copied === 'all' }"
-                    :aria-label="$i18n('ferry_preview_copy_all')" @click="copy('all', text)">
-                    <tabler-check v-if="copied === 'all'" class="ferry-ico" />
-                    <tabler-copy v-else class="ferry-ico" />
-                    <v-tooltip location="bottom" activator="parent">{{ $i18n("ferry_preview_copy_all") }}</v-tooltip>
-                </button>
                 <button v-if="blob" type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_save')" @click="save">
                     <tabler-download class="ferry-ico" />
                     <v-tooltip location="bottom" activator="parent">{{ $i18n("ferry_attachment_save") }}</v-tooltip>
@@ -37,15 +30,14 @@
 
 <script lang="ts">
 import { saveBlob } from "../extras";
-import { copyStringToClipboard } from "../../common/copyStringToClipboard";
 
 // Vorschau im Popup: Bild (mit "Speichern unter", bei gespeicherten Anhängen auch "Mit Standardprogramm öffnen")
-// oder Text so, wie er gespeichert ist, mit "Alles kopieren".
+// oder Text so, wie er gespeichert ist (markieren und kopieren wie gewohnt).
 export default {
     // editable: Stift "Bearbeiten" (Notizen, Felder)
     props: ["open", "title", "blob", "text", "fileName", "external", "editable"],
     emits: ["close", "open-external", "edit"],
-    data: () => ({ imageUrl: null as string, copied: null as string }),
+    data: () => ({ imageUrl: null as string }),
     computed: {
         hasText: function (): boolean {
             return this.text !== null && this.text !== undefined;
@@ -69,13 +61,6 @@ export default {
     methods: {
         close: function () {
             this.$emit("close");
-        },
-        copy: async function (key: string, value: string) {
-            await copyStringToClipboard(value);
-            this.copied = key;
-            setTimeout(() => {
-                if (this.copied === key) this.copied = null;
-            }, 1500);
         },
         save: function () {
             if (this.blob) saveBlob(this.blob, this.fileName || this.title);
