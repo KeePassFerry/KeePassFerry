@@ -636,7 +636,7 @@
         "description": "KeePassFerry toolbar button tooltip"
     },
     "attachment_paste_hint": {
-        "message": "Screenshot, QR-Code oder Zwei-Faktor-Schlüssel einfügen (Strg+V) oder Bild hierher ziehen",
+        "message": "Screenshot, QR-Code oder Zwei-Faktor-Schlüssel hinzufügen – oder Bild hierher ziehen",
         "description": "KeePassFerry image attachment"
     },
     "attachment_saving": {
@@ -984,7 +984,7 @@
         "description": "KeePassFerry"
     },
     "ferry_add_paste_hint": {
-        "message": "Hier einfügen (Strg+V)",
+        "message": "Inhalt eingeben oder einfügen",
         "description": "KeePassFerry"
     },
     "ferry_add_protect": {
@@ -1080,7 +1080,7 @@
         "description": "KeePassFerry"
     },
     "ferry_add_open": {
-        "message": "Hinzufügen oder Strg+V",
+        "message": "Hinzufügen",
         "description": "KeePassFerry"
     },
     "ferry_popup_search_results": {
@@ -1177,6 +1177,26 @@
     },
     "ferry_plugin_update_unsafe": {
         "message": "Das Update wurde nicht installiert, weil die Dateien im Release nicht korrekt signiert sind. Bitte lade das Setup jetzt nicht herunter und melde das Problem auf GitHub.",
+        "description": "KeePassFerry"
+    },
+    "ferry_paste_clipboard": {
+        "message": "Aus Zwischenablage einfügen",
+        "description": "KeePassFerry"
+    },
+    "ferry_choose_file": {
+        "message": "Datei auswählen …",
+        "description": "KeePassFerry"
+    },
+    "ferry_clipboard_empty": {
+        "message": "In der Zwischenablage ist nichts zum Einfügen.",
+        "description": "KeePassFerry"
+    },
+    "ferry_clipboard_no_image": {
+        "message": "In der Zwischenablage ist kein Bild und kein Zwei-Faktor-Schlüssel.",
+        "description": "KeePassFerry"
+    },
+    "ferry_clipboard_denied": {
+        "message": "Ohne deine Erlaubnis kann KeePassFerry die Zwischenablage nicht lesen. Füge den Inhalt dann mit Strg+V ein.",
         "description": "KeePassFerry"
     }
 }

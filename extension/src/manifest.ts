@@ -92,6 +92,9 @@ export async function getManifest() {
         // could look into requesting "optional_host_permissions": ["<all_urls>"] and
         // host_permissions to give end users more
         // options for risk management.
+        // Nur auf Knopfdruck "Aus Zwischenablage einfügen" angefragt; hält Updates nicht an
+        optional_permissions: ["clipboardRead"] as any,
+
         host_permissions: ["<all_urls>"],
 
         // http and https only(no file) - otherwise should be identical to <all_urls>

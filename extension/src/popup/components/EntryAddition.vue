@@ -56,6 +56,11 @@
                 <v-textarea
                     ref="value" v-model="value" :label="$i18n('ferry_add_value')" :placeholder="$i18n('ferry_add_paste_hint')"
                     rows="2" auto-grow hide-details @update:model-value="onValueChanged" />
+                <v-btn size="small" variant="text" color="primary" class="ferry-paste-btn" @click="pasteText">
+                    <tabler-clipboard-text class="ferry-ico mr-1" />
+                    {{ $i18n("ferry_paste_clipboard") }}
+                </v-btn>
+                <div v-if="clipboardNotice" class="ferry-hint">{{ clipboardNotice }}</div>
                 <div v-if="kind === 'totp' && value && !totpUri" class="ferry-hint err">{{ $i18n("ferry_add_totp_invalid") }}</div>
                 <div v-else-if="looksLikeTotp" class="ferry-hint">
                     <tabler-shield-lock class="ferry-ico ferry-hint-icon" />
@@ -83,6 +88,7 @@
 <script lang="ts">
 import AttachmentPaste from "./AttachmentPaste.vue";
 import { fillPageField, pageFieldKinds } from "../pageFields";
+import { readClipboard } from "../clipboard";
 
 // "Hinzufügen" im Bearbeiten-Fenster: Wiederherstellungscode, Zwei-Faktor-Schlüssel, Notiz, eigenes Feld oder Bild.
 // Hinzugefügtes und Entferntes wird nur vorgemerkt (Liste "Im Eintrag" mit Neu/Wird entfernt) und erst mit
@@ -124,7 +130,8 @@ export default {
         unsupported: false,
         existing: [] as Row[],
         staged: [] as Row[],
-        error: null as string
+        error: null as string,
+        clipboardNotice: null as string
     }),
     computed: {
         kindItems: function () {
@@ -163,11 +170,7 @@ export default {
     },
     mounted: function () {
         this.name = this.$i18n("ferry_add_kind_recovery");
-        window.addEventListener("paste", this.onPaste, true);
         this.loadExisting();
-    },
-    unmounted: function () {
-        window.removeEventListener("paste", this.onPaste, true);
     },
     methods: {
         uriFor: function (v: string): string {
@@ -183,6 +186,7 @@ export default {
         kindChanged: function () {
             this.value = "";
             this.error = null;
+            this.clipboardNotice = null;
             if (this.kind === "recovery") this.name = this.$i18n("ferry_add_kind_recovery");
             if (this.kind === "custom") this.name = "";
             this.focusValue();
@@ -210,30 +214,22 @@ export default {
             this.error = null;
             if (this.kind !== "totp" && OTPAUTH_RE.test((this.value ?? "").trim())) this.kind = "totp";
         },
-        // Bild eingefügt, während eine Textart gewählt ist: zu "Bild" wechseln und das Bild dort verarbeiten
-        onPaste: function (e: ClipboardEvent) {
-            if (this.adding && this.kind === "image") return;
-            const file = Array.from(e.clipboardData?.items ?? [])
-                .find(i => i.kind === "file" && i.type.startsWith("image/"))
-                ?.getAsFile();
-            if (file) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                this.pendingImage = file;
+        // "Aus Zwischenablage einfügen" bei einer Textart; ein Bild in der Zwischenablage wechselt zu "Bild"
+        pasteText: async function () {
+            this.clipboardNotice = null;
+            const content = await readClipboard();
+            if (content === "denied") {
+                this.clipboardNotice = this.$i18n("ferry_clipboard_denied");
+            } else if (content === "empty") {
+                this.clipboardNotice = this.$i18n("ferry_clipboard_empty");
+            } else if (content.image) {
+                this.pendingImage = content.image;
                 this.kind = "image";
-                this.adding = true;
-                return;
+            } else {
+                this.value = content.text;
+                this.onValueChanged();
+                this.focusValue();
             }
-            const target = e.target as HTMLElement;
-            if (target?.closest?.("input, textarea, [contenteditable]")) return;
-            const text = e.clipboardData?.getData("text/plain")?.trim();
-            if (!text) return;
-            e.preventDefault();
-            this.adding = true;
-            if (this.kind === "image") this.kind = "recovery";
-            this.value = text;
-            this.onValueChanged();
-            this.focusValue();
         },
         loadExisting: async function () {
             try {
@@ -452,6 +448,10 @@ export default {
     align-items: center;
     gap: 8px;
     margin-top: 8px;
+}
+.ferry-paste-btn {
+    margin-top: 4px;
+    margin-left: -8px;
 }
 .ferry-add-note {
     font-size: 12px;

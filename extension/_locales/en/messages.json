@@ -636,7 +636,7 @@
     "description": "KeePassFerry toolbar button tooltip"
   },
   "attachment_paste_hint": {
-    "message": "Paste a screenshot, QR code or two-factor key (Ctrl+V) or drop an image here",
+    "message": "Add a screenshot, QR code or two-factor key – or drop an image here",
     "description": "KeePassFerry image attachment"
   },
   "attachment_saving": {
@@ -984,7 +984,7 @@
     "description": "KeePassFerry"
   },
   "ferry_add_paste_hint": {
-    "message": "Paste here (Ctrl+V)",
+    "message": "Type or paste the content",
     "description": "KeePassFerry"
   },
   "ferry_add_protect": {
@@ -1080,7 +1080,7 @@
     "description": "KeePassFerry"
   },
   "ferry_add_open": {
-    "message": "Add or press Ctrl+V",
+    "message": "Add",
     "description": "KeePassFerry"
   },
   "ferry_popup_search_results": {
@@ -1177,6 +1177,26 @@
   },
   "ferry_plugin_update_unsafe": {
     "message": "The update was not installed because the release files are not correctly signed. Please do not download the setup for now and report the problem on GitHub.",
+    "description": "KeePassFerry"
+  },
+  "ferry_paste_clipboard": {
+    "message": "Paste from clipboard",
+    "description": "KeePassFerry"
+  },
+  "ferry_choose_file": {
+    "message": "Choose file …",
+    "description": "KeePassFerry"
+  },
+  "ferry_clipboard_empty": {
+    "message": "The clipboard contains nothing to paste.",
+    "description": "KeePassFerry"
+  },
+  "ferry_clipboard_no_image": {
+    "message": "The clipboard contains no image and no two-factor key.",
+    "description": "KeePassFerry"
+  },
+  "ferry_clipboard_denied": {
+    "message": "Without your permission KeePassFerry cannot read the clipboard. Paste the content with Ctrl+V instead.",
     "description": "KeePassFerry"
   }
 }

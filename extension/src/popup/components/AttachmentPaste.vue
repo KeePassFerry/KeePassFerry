@@ -2,9 +2,11 @@
     <div
         class="paste-zone"
         :class="{ active: dragOver, failed: failed, choice: !!totpUri }"
+        ref="zone"
         tabindex="0"
-        role="button"
+        role="group"
         :aria-label="$i18n('attachment_paste_hint')"
+        @paste="onPaste"
         @dragover.prevent="dragOver = true"
         @dragleave="dragOver = false"
         @drop.prevent="onDrop"
@@ -28,20 +30,31 @@
                 </div>
             </div>
         </template>
-        <template v-else-if="failed">
-            <span class="msg">{{ $i18n("attachment_failed") }}</span>
-        </template>
         <template v-else>
             <tabler-photo-plus class="ferry-ico icon"/>
-            <span class="msg">{{ $i18n("attachment_paste_hint") }}</span>
+            <div class="choice-body">
+                <span class="msg">{{ failed ? $i18n("attachment_failed") : notice || $i18n("attachment_paste_hint") }}</span>
+                <div class="choice-actions">
+                    <v-btn size="small" variant="flat" color="primary" rounded="lg" @click="pasteClipboard">
+                        <tabler-clipboard-text class="ferry-ico mr-1" />
+                        {{ $i18n("ferry_paste_clipboard") }}
+                    </v-btn>
+                    <v-btn size="small" variant="text" @click="($refs.file as HTMLInputElement).click()">
+                        {{ $i18n("ferry_choose_file") }}
+                    </v-btn>
+                </div>
+            </div>
+            <input ref="file" type="file" accept="image/*" hidden @change="onFileChosen" />
         </template>
     </div>
 </template>
 
 <script lang="ts">
 import jsQR from "jsqr";
+import { readClipboard } from "../clipboard";
 
-// Einfügezone im Bearbeiten-Fenster: Strg+V oder Ablegen.
+// Einfügezone im Bearbeiten-Fenster: "Aus Zwischenablage einfügen", Datei auswählen, Ablegen oder Strg+V in der
+// (beim Öffnen fokussierten) Zone selbst – Einfügen anderswo im Fenster wird nicht abgefangen.
 // - Bild: verkleinern und als Anhang vormerken (z. B. Screenshot der Sicherheitsfragen)
 // - QR-Code (Bild) oder Schlüssel als Text (otpauth-Link, Base32): Angebot, ihn als Zwei-Faktor-Schlüssel vorzumerken
 // Gespeichert wird erst mit "Speichern" (EntryAddition).
@@ -115,14 +128,14 @@ export default {
         totpUri: null as string,
         totpExists: false,
         totpSaved: false,
-        pendingImage: null as File
+        pendingImage: null as File,
+        notice: null as string
     }),
     mounted: function () {
-        window.addEventListener("paste", this.onPaste);
         if (this.initialFile) this.handleImage(this.initialFile);
+        else this.$nextTick(() => (this.$refs.zone as HTMLElement)?.focus());
     },
     unmounted: function () {
-        window.removeEventListener("paste", this.onPaste);
         if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
     },
     methods: {
@@ -138,6 +151,28 @@ export default {
             const label = encodeURIComponent(this.title || "KeePass");
             return `otpauth://totp/${label}?secret=${secret.replace(/=+$/, "")}&issuer=${label}`;
         },
+        pasteClipboard: async function () {
+            this.notice = null;
+            this.failed = false;
+            const content = await readClipboard();
+            if (content === "denied") {
+                this.notice = this.$i18n("ferry_clipboard_denied");
+            } else if (content === "empty") {
+                this.notice = this.$i18n("ferry_clipboard_no_image");
+            } else if (content.image) {
+                this.handleImage(content.image);
+            } else {
+                const uri = this.uriFromText(content.text);
+                if (uri) this.offerTotp(uri, null);
+                else this.notice = this.$i18n("ferry_clipboard_no_image");
+            }
+        },
+        onFileChosen: function (e: Event) {
+            const input = e.target as HTMLInputElement;
+            const file = input.files?.[0];
+            input.value = "";
+            if (file && file.type.startsWith("image/")) this.handleImage(file);
+        },
         onPaste: function (e: ClipboardEvent) {
             const file = Array.from(e.clipboardData?.items ?? [])
                 .find(i => i.kind === "file" && i.type.startsWith("image/"))
@@ -147,9 +182,6 @@ export default {
                 this.handleImage(file);
                 return;
             }
-            // Text in ein Eingabefeld (z. B. Suche) normal einfügen
-            const target = e.target as HTMLElement;
-            if (target?.closest?.("input, textarea, [contenteditable]")) return;
             const uri = this.uriFromText(e.clipboardData?.getData("text/plain"));
             if (!uri) return;
             e.preventDefault();
