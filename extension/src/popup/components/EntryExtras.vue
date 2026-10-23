@@ -1,5 +1,5 @@
 <template>
-    <template v-if="notes || fields.length || attachments.length">
+    <div v-if="notes || fields.length || attachments.length" class="ferry-extras">
         <div v-if="notes" class="ferry-row ferry-extra-click" @click="showNotes">
             <span class="ferry-row-icon"><tabler-note class="ferry-ico" /></span>
             <span class="ferry-row-value">
@@ -49,7 +49,7 @@
                 <v-tooltip location="top" activator="parent">{{ isImage(a.name) ? $i18n("ferry_attachment_show") : $i18n("ferry_attachment_save") }}</v-tooltip>
             </button>
         </div>
-    </template>
+    </div>
     <div v-if="error" class="ferry-hint err ferry-extras-error">{{ error }}</div>
     <ExtraPreview
         :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :file-name="preview.title"
@@ -149,6 +149,12 @@ export default {
 </script>
 
 <style>
+/* Feine Linie zwischen Anmeldedaten (Benutzer, Passwort, Code) und Notizen/Feldern/Anhängen */
+.ferry-extras {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--ferry-line);
+}
 .ferry-extra-click {
     cursor: pointer;
 }
