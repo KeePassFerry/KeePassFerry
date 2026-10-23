@@ -327,7 +327,7 @@ export class OtpFields {
         if (e.target instanceof HTMLImageElement) this.scanSoon();
     };
 
-    // Nachgeladene QR-Codes erkennen (viele Seiten zeigen ihn erst nach einem Klick auf "2FA aktivieren")
+    // Nachgeladene QR-Codes und erst später sichtbare Codefelder erkennen (viele Seiten zeigen sie erst nach einem Klick)
     public observe() {
         if (this.observer || !document.body) return;
         this.observer = new MutationObserver(mutations => {
@@ -346,7 +346,13 @@ export class OtpFields {
                 }
             }
         });
-        this.observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["src", "href"] });
+        // open/hidden: Codefeld erscheint erst beim Aufklappen (<details>, <dialog>) oder Einblenden, z. B. "App entfernen"
+        this.observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["src", "href", "open", "hidden"]
+        });
         document.addEventListener("load", this.onImageLoad, true);
     }
 
