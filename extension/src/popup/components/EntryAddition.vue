@@ -151,7 +151,7 @@
     <div v-if="error" class="ferry-hint err">{{ error }}</div>
     <ExtraPreview
         :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :external="preview.external"
-        @close="preview.open = false" @open-external="openExternal(preview.title)" />
+        @close="preview.open = false" @open-external="preview.blob ? openExternal(preview.title) : openNotesExternal()" />
 </template>
 
 <script lang="ts">
@@ -159,7 +159,9 @@ import AttachmentPaste from "./AttachmentPaste.vue";
 import ExtraPreview from "./ExtraPreview.vue";
 import { fillPageField, pageFieldKinds } from "../pageFields";
 import { readClipboard } from "../clipboard";
-import { formatSize, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, saveBlob } from "../extras";
+import {
+    formatSize, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
+} from "../extras";
 
 // "Hinzufügen" im Bearbeiten-Fenster: Wiederherstellungscode, Zwei-Faktor-Schlüssel, Notiz, eigenes Feld oder Bild.
 // Hinzugefügtes und Entferntes wird nur vorgemerkt (Liste "Im Eintrag" mit Neu/Wird entfernt) und erst mit
@@ -429,7 +431,9 @@ export default {
             if (!this.canOpen(r)) return;
             this.error = null;
             if (r.type === "notes" || r.type === "field") {
-                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external: false };
+                // Im Standard-Editor nur gespeicherte, unveränderte Notizen (das Plugin öffnet den Stand in KeePass)
+                const external = r.type === "notes" && !r.isNew && r.newValue === undefined;
+                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external };
                 return;
             }
             const blob = r.blob ?? (await loadAttachment(this.uuid, this.dbFileName, r.name));
@@ -439,6 +443,14 @@ export default {
             }
             if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null, external: !r.isNew };
             else saveBlob(blob, r.name);
+        },
+        openNotesExternal: async function () {
+            this.error = null;
+            if (!(await openNotesExternally(this.uuid, this.dbFileName, this.title))) {
+                this.error = this.$i18n("ferry_extras_load_failed");
+                return;
+            }
+            this.preview.open = false;
         },
         openExternal: async function (name: string) {
             this.error = null;

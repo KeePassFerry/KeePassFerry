@@ -1290,5 +1290,9 @@
     "ferry_attachment_open_external": {
         "message": "Mit Standardprogramm öffnen",
         "description": "KeePassFerry"
+    },
+    "ferry_notes_file_name": {
+        "message": "$1 – Notizen",
+        "description": "KeePassFerry"
     }
 }

@@ -247,6 +247,15 @@ export class jsonrpcClient {
         return !!responses?.[0]?.resultWrapper?.result;
     }
 
+    // Notizen als Textdatei im Standard-Editor öffnen (fileName ohne Endung, übersetzt)
+    async openEntryNotesExternally(uuid: string, dbFileName: string, fileName: string): Promise<boolean> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return false;
+        this.kprpcClient.allowKeePassForeground();
+        const responses = await this.kprpcClient.request([sessionManager], "OpenEntryNotesExternally", [uuid, dbFileName, fileName]);
+        return !!responses?.[0]?.resultWrapper?.result;
+    }
+
     // Eigene Felder (geschützte ohne Wert), Notizen und Anhänge eines Eintrags
     async getEntryExtras(uuid: string, dbFileName: string): Promise<{
         fields: { name: string; isProtected: boolean; value: string }[];

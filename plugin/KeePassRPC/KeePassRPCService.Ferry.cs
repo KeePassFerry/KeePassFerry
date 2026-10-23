@@ -214,6 +214,47 @@ namespace KeePassFerry
             }
         }
 
+        /// <summary>
+        /// Öffnet die Notizen als Textdatei im Standard-Editor (temporäre Kopie wie bei Anhängen, FerryTempFiles).
+        /// fileName kommt aus der Erweiterung (übersetzt), die Endung ist immer .txt.
+        /// </summary>
+        [JsonRpcMethod]
+        public bool OpenEntryNotesExternally(string uuid, string dbFileName, string fileName)
+        {
+            if (!EnsureDBisOpen()) return false;
+            PwDatabase db;
+            PwEntry entry = FindFerryEntry(uuid, dbFileName, out db);
+            if (entry == null) return false;
+            string notes = entry.Strings.ReadSafe(PwDefs.NotesField);
+            if (notes.Length == 0) return false;
+
+            // Titel enthalten oft Punkte ("mailferry.de") oder Schrägstriche: nicht als Pfad/Endung deuten
+            string name = (fileName ?? "").Replace('/', '-').Replace('\\', '-').Trim();
+            if (name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)) name = name.Substring(0, name.Length - 4);
+            if (name.Length > 100) name = name.Substring(0, 100).Trim();
+            if (name.Length == 0) name = "Notes";
+            // Mit BOM, damit jeder Editor Umlaute richtig erkennt; Zeilenenden wie unter Windows
+            byte[] data = new System.Text.UTF8Encoding(true).GetPreamble();
+            byte[] text = System.Text.Encoding.UTF8.GetBytes(notes.Replace("\r\n", "\n").Replace("\n", "\r\n"));
+            byte[] all = new byte[data.Length + text.Length];
+            Buffer.BlockCopy(data, 0, all, 0, data.Length);
+            Buffer.BlockCopy(text, 0, all, data.Length, text.Length);
+            try
+            {
+                FerryTempFiles.Open(name + ".txt", all);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            finally
+            {
+                MemUtil.ZeroByteArray(text);
+                MemUtil.ZeroByteArray(all);
+            }
+        }
+
         /// <summary>Wert eines eigenen Felds, auch eines geschützten (Auge im Browser); null bei Standard- und internen Feldern</summary>
         [JsonRpcMethod]
         public string GetEntryFieldValue(string uuid, string dbFileName, string name)

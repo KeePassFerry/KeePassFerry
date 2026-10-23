@@ -5,6 +5,10 @@
             <span class="ferry-row-value">
                 <span class="ferry-extra-label">{{ $i18n("ferry_extras_notes") }}</span>{{ notesPreview }}
             </span>
+            <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_attachment_open_external')" @click.stop="openNotesExternal">
+                <tabler-external-link class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_attachment_open_external") }}</v-tooltip>
+            </button>
             <button type="button" class="ferry-ib" :class="{ ok: copied === 'notes' }" :aria-label="$i18n('copy_value_to_clipboard')" @click.stop="copy('notes', notes)">
                 <tabler-check v-if="copied === 'notes'" class="ferry-ico" />
                 <tabler-copy v-else class="ferry-ico" />
@@ -53,19 +57,22 @@
     <div v-if="error" class="ferry-hint err ferry-extras-error">{{ error }}</div>
     <ExtraPreview
         :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :file-name="preview.title"
-        :external="!!preview.blob" @close="preview.open = false" @open-external="openExternal(preview.title)" />
+        :external="true" @close="preview.open = false"
+        @open-external="preview.blob ? openExternal(preview.title) : openNotesExternal()" />
 </template>
 
 <script lang="ts">
 import ExtraPreview from "./ExtraPreview.vue";
 import { copyStringToClipboard } from "../../common/copyStringToClipboard";
-import { canOpenExternally, formatSize, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, saveBlob } from "../extras";
+import {
+    canOpenExternally, formatSize, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
+} from "../extras";
 
 // Aufgeklappter Eintrag: Notiz, eigene Felder (z. B. Wiederherstellungscodes) und Anhänge des Eintrags.
 // Geschützte Werte und Anhänge werden erst auf Klick aus KeePass geholt.
 export default {
     components: { ExtraPreview },
-    props: ["uuid", "dbFileName"],
+    props: ["uuid", "dbFileName", "title"],
     data: () => ({
         notes: "",
         fields: [] as { name: string; isProtected: boolean; value: string }[],
@@ -126,6 +133,14 @@ export default {
         openExternal: async function (name: string) {
             this.error = null;
             if (!(await openAttachmentExternally(this.uuid, this.dbFileName, name))) {
+                this.error = this.$i18n("ferry_extras_load_failed");
+                return;
+            }
+            this.preview.open = false;
+        },
+        openNotesExternal: async function () {
+            this.error = null;
+            if (!(await openNotesExternally(this.uuid, this.dbFileName, this.title))) {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }

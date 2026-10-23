@@ -50,6 +50,14 @@ export async function openAttachmentExternally(uuid: string, dbFileName: string,
         .catch(() => false));
 }
 
+// Notizen als Textdatei im Standard-Editor; Dateiname "<Titel> – Notizen"
+export async function openNotesExternally(uuid: string, dbFileName: string, title: string): Promise<boolean> {
+    const fileName = title ? chrome.i18n.getMessage("ferry_notes_file_name", [title]) : chrome.i18n.getMessage("ferry_extras_notes");
+    return !!(await chrome.runtime
+        .sendMessage({ keepassferry: "openEntryNotesExternally", uuid, dbFileName, fileName })
+        .catch(() => false));
+}
+
 export async function loadFieldValue(uuid: string, dbFileName: string, name: string): Promise<string> {
     return chrome.runtime.sendMessage({ keepassferry: "getEntryFieldValue", uuid, dbFileName, name }).catch(() => null);
 }
