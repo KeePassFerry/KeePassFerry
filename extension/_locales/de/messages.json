@@ -1196,7 +1196,15 @@
         "description": "KeePassFerry"
     },
     "ferry_clipboard_denied": {
-        "message": "Ohne deine Erlaubnis kann KeePassFerry die Zwischenablage nicht lesen. Füge den Inhalt dann mit Strg+V ein.",
+        "message": "Bitte erlaube das Einfügen aus der Zwischenablage in den Einstellungen. Bis dahin funktioniert Strg+V.",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_clipboardRead": {
+        "message": "Einfügen aus der Zwischenablage per Knopf",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_clipboardRead_hint": {
+        "message": "Erlaubt beim Bearbeiten eines Eintrags den Knopf „Aus Zwischenablage einfügen“. KeePassFerry liest die Zwischenablage nur, wenn du darauf klickst. Strg+V funktioniert auch ohne diese Erlaubnis.",
         "description": "KeePassFerry"
     }
 }

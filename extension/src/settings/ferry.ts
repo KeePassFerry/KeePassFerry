@@ -56,6 +56,30 @@ async function setupTheme() {
     }
 }
 
+// "Aus Zwischenablage einfügen" im Popup: optionale Berechtigung clipboardRead hier erteilen oder entziehen.
+// Im Popup selbst würde die Abfrage das Popup schließen; dieser Tab bleibt offen.
+async function setupClipboardPermission() {
+    const input = document.getElementById("ferryClipboardRead") as HTMLInputElement;
+    if (!input) return;
+    const perm = { permissions: ["clipboardRead"] } as chrome.permissions.Permissions;
+    input.checked = await chrome.permissions.contains(perm);
+    input.addEventListener("change", async () => {
+        try {
+            if (input.checked) input.checked = await chrome.permissions.request(perm);
+            else await chrome.permissions.remove(perm);
+        } catch (e) {
+            input.checked = await chrome.permissions.contains(perm);
+        }
+    });
+    // Vom Popup aus geöffnet (#clipboard): Schalter zeigen und hervorheben
+    if (location.hash === "#clipboard") {
+        const row = document.getElementById("clipboard");
+        row?.scrollIntoView({ block: "center" });
+        row?.classList.add("highlight");
+        input.focus();
+    }
+}
+
 async function refreshStatus() {
     let s: Status = null;
     try {
@@ -147,6 +171,7 @@ function setupNav() {
 }
 
 setupTheme();
+setupClipboardPermission();
 setupResetPairing();
 setupNav();
 refreshStatus();

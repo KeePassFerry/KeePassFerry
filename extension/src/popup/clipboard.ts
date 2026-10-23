@@ -1,17 +1,20 @@
 // Zwischenablage auf Knopfdruck lesen ("Aus Zwischenablage einfügen").
-// Die Berechtigung "clipboardRead" ist optional (optional_permissions im Manifest): Der Browser fragt beim ersten Mal
-// nach, ein Update der Erweiterung wird dadurch nicht angehalten. Ohne Zustimmung liefert die Funktion "denied".
-// Muss direkt aus dem Klick heraus aufgerufen werden (chrome.permissions.request verlangt eine Nutzeraktion).
+// Die Berechtigung "clipboardRead" ist optional (optional_permissions im Manifest), damit ein Update die Erweiterung
+// nicht anhält. Erteilt wird sie in den Einstellungen: Die Abfrage des Browsers würde das Popup schließen.
+// Ohne Erlaubnis öffnet readClipboard die Einstellungen an dieser Stelle und liefert "denied".
 export type ClipboardContent = { image?: File; text?: string } | "denied" | "empty";
 
 export async function readClipboard(): Promise<ClipboardContent> {
     let granted = false;
     try {
-        granted = await chrome.permissions.request({ permissions: ["clipboardRead"] });
+        granted = await chrome.permissions.contains({ permissions: ["clipboardRead"] });
     } catch (e) {
         granted = false;
     }
-    if (!granted) return "denied";
+    if (!granted) {
+        chrome.tabs.create({ url: chrome.runtime.getURL("dist/settings/index.html#clipboard") });
+        return "denied";
+    }
 
     try {
         const items = await navigator.clipboard.read();

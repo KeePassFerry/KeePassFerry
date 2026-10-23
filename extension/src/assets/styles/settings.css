@@ -272,3 +272,14 @@ legend.fix-border { padding: 0 8px; font-weight: 700; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Vom Popup aus geöffnete Einstellung (z. B. #clipboard) kurz hervorheben */
+.checkbox.highlight {
+    border-radius: 10px;
+    box-shadow: 0 0 0 2px var(--accent);
+    animation: ferry-highlight 2.4s ease-out;
+}
+@keyframes ferry-highlight {
+    0% { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+    100% { background: transparent; }
+}
