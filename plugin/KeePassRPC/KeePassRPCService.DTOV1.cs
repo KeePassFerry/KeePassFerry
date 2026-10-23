@@ -193,13 +193,22 @@ namespace KeePassFerry
                     alwaysAutoFill, neverAutoFill, alwaysAutoSubmit, neverAutoSubmit, priority,
                     GetGroupFromPwGroup(pwe.ParentGroup), imageData,
                     GetDatabaseFromPwDatabase(db, false, true), matchAccuracy);
+                SetExtrasSummary(kpe, pwe);
                 return kpe;
             }
 
-            return new LightEntry((string[])URLs.ToArray(typeof(string)),
+            var light = new LightEntry((string[])URLs.ToArray(typeof(string)),
                 pwe.Strings.ReadSafe(PwDefs.TitleField),
                 MemUtil.ByteArrayToHexString(pwe.Uuid.UuidBytes),
                 imageData, "username", usernameValue);
+            SetExtrasSummary(light, pwe);
+            return light;
+        }
+
+        private static void SetExtrasSummary(LightEntry target, PwEntry pwe)
+        {
+            target.HasNotes = !string.IsNullOrEmpty(pwe.Strings.ReadSafe(PwDefs.NotesField).Trim());
+            target.AttachmentCount = (int)pwe.Binaries.UCount;
         }
 
         private Group GetGroupFromPwGroup(PwGroup pwg)

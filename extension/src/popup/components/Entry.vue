@@ -14,7 +14,19 @@
                 <tabler-key v-else class="ferry-ico" />
             </span>
             <span class="ferry-entry-text">
-                <span class="ferry-entry-title">{{ entrySummary.title }}</span>
+                <span class="ferry-entry-line">
+                    <span class="ferry-entry-title">{{ entrySummary.title }}</span>
+                    <span v-if="entrySummary.hasNotes" class="ferry-entry-mark">
+                        <tabler-note class="ferry-ico" />
+                        <v-tooltip location="top" activator="parent">{{ $i18n("ferry_extras_has_notes") }}</v-tooltip>
+                    </span>
+                    <span v-if="entrySummary.attachmentCount" class="ferry-entry-mark">
+                        <tabler-paperclip class="ferry-ico" />
+                        <v-tooltip location="top" activator="parent">
+                            {{ $i18n("ferry_extras_attachment_count", [String(entrySummary.attachmentCount)]) }}
+                        </v-tooltip>
+                    </span>
+                </span>
                 <span class="ferry-entry-sub">
                     {{ expanded && entrySummary.fullDetails ? metaLine : usernameDisplayValue }}
                     <v-tooltip v-if="expanded && entrySummary.fullDetails" location="bottom" activator="parent">
@@ -40,6 +52,7 @@
                 v-for="f of allFields" :key="f.uuid" :field="f" :kind="fillKind(f)"
                 :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
             <OtpRow :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
+            <EntryExtras :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
             <v-checkbox
                 v-if="isMatchedEntry" :label="$i18n('preferred_matching_entry')"
                 :model-value="entrySummary.isPreferredMatch" hide-details class="ferry-pref"
@@ -51,6 +64,7 @@
 <script lang="ts">
 import Field from "./Field.vue";
 import OtpRow from "./OtpRow.vue";
+import EntryExtras from "./EntryExtras.vue";
 import { AddonMessage } from "../../common/AddonMessage";
 import { Port } from "../../common/port";
 import useStore from "../../store";
@@ -66,7 +80,7 @@ import { mapState } from "pinia";
 import { $STR } from "~/common/DollarPolyfills";
 
 export default {
-    components: { Field, OtpRow },
+    components: { Field, OtpRow, EntryExtras },
     props: ["entrySummary", "isFirstInAList", "entryIndex", "frameId", "dataIndex", "startExpanded", "noNavigate"],
     emits: ["move-next-in-list", "move-prev-in-list", "move-out-of-list", "pref-entry-toggle"],
     setup() {
@@ -272,11 +286,27 @@ export default {
     flex: 1;
 }
 .ferry-entry-title {
+    min-width: 0;
     font-size: 13.5px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+.ferry-entry-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+.ferry-entry-mark {
+    display: inline-flex;
+    flex: none;
+    color: var(--ferry-muted);
+}
+.ferry-entry-mark .ferry-ico {
+    width: 14px;
+    height: 14px;
 }
 .ferry-entry-sub {
     font-size: 12px;

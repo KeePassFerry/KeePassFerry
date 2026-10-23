@@ -22,6 +22,15 @@
                         <v-tooltip location="start" activator="parent">{{ $i18n("discard_changes") }}</v-tooltip>
                     </button>
                 </div>
+                <div v-if="otpPending && databaseIsOpen && !showSaveStart" class="ferry-note">
+                    <tabler-shield-lock class="ferry-ico" />
+                    <span class="ferry-note-text">{{ $i18n("ferry_otp_pending", [otpPending.issuer]) }}</span>
+                    <v-btn size="small" variant="text" color="primary" @click="openOtpSetup">{{ $i18n("ferry_otp_pending_open") }}</v-btn>
+                    <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_otp_pending_discard')" @click="discardOtpSetup">
+                        <tabler-x class="ferry-ico" />
+                        <v-tooltip location="start" activator="parent">{{ $i18n("ferry_otp_pending_discard") }}</v-tooltip>
+                    </button>
+                </div>
                 <div v-show="showSaveResult" class="ferry-note success">
                     <tabler-circle-check class="ferry-ico" />
                     <span class="ferry-note-text">{{ $i18n("you_recently_saved") }}</span>
@@ -160,7 +169,9 @@ export default {
             manualRecoveryPromptTimeMs: manualRecoveryPromptTimeMs,
             autoRecoveryTimeMs: autoRecoveryTimeMs,
             showPasswordGenerator: false,
-            lastSaveEntryResult: null
+            lastSaveEntryResult: null,
+            // Noch nicht gespeicherter Zwei-Faktor-Schlüssel der aktuellen Seite
+            otpPending: null as { issuer: string }
         };
     },
     computed: {
@@ -249,6 +260,11 @@ export default {
             this.saveDiscard();
         }
 
+        // Wurde die Schlüssel-Auswahl ohne Speichern geschlossen, hier erneut anbieten
+        chrome.runtime.sendMessage({ keepassferry: "getOtpSetupSummary" })
+            .then(s => (this.otpPending = s ?? null))
+            .catch(() => undefined);
+
         // Aus dem Speichern-Hinweis der Seite geöffnet: gleich den Speichern-Dialog zeigen
         if (new URLSearchParams(window.location.search).get("save") === "1") {
             // Die übermittelten Daten können kurz nach dem Start eintreffen
@@ -270,6 +286,14 @@ export default {
         this.updateSaveState(updatedSaveState);
     },
     methods: {
+        // Dieselbe Ansicht wie aus dem Seitenhinweis (popup/main.ts rendert bei ?otp=1 die Auswahl)
+        openOtpSetup: function () {
+            window.location.search = "?otp=1";
+        },
+        discardOtpSetup: function () {
+            this.otpPending = null;
+            chrome.runtime.sendMessage({ keepassferry: "discardOtpSetup" }).catch(() => undefined);
+        },
         showOptions: () => {
             chrome.runtime.openOptionsPage();
             window.close();

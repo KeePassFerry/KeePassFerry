@@ -9,16 +9,46 @@
                 <tabler-lock v-else-if="r.isProtected" class="ferry-ico" />
                 <tabler-text-caption v-else class="ferry-ico" />
             </span>
-            <span class="ferry-extra-text">
+            <span v-if="renaming === r.key" class="ferry-extra-text">
+                <v-text-field
+                    ref="rename" v-model="renameValue" density="compact" hide-details autofocus
+                    :label="$i18n('ferry_add_image_name')" @keyup.enter.stop="finishRename(r)" @keyup.esc.stop="renaming = null"
+                    @blur="finishRename(r)" />
+            </span>
+            <span v-else class="ferry-extra-text" :class="{ clickable: canOpen(r) }" @click="openRow(r)">
                 <span class="ferry-extra-name">
                     {{ r.name }}
                     <span v-if="r.isNew" class="ferry-badge">{{ $i18n("ferry_extras_new") }}</span>
                     <span v-if="r.removed" class="ferry-badge warn">{{ $i18n("ferry_extras_removed") }}</span>
                 </span>
-                <span v-if="r.sub" class="ferry-extra-sub">{{ r.sub }}</span>
+                <span v-if="r.sub || revealed[r.key] !== undefined" class="ferry-extra-sub">
+                    {{ revealed[r.key] !== undefined ? revealed[r.key] : r.sub }}
+                </span>
             </span>
             <button
-                type="button" class="ferry-ib" :class="{ danger: !r.removed }"
+                v-if="r.isNew && r.type === 'attachment' && renaming !== r.key" type="button" class="ferry-ib"
+                :aria-label="$i18n('ferry_extras_rename')" @click="startRename(r)">
+                <tabler-pencil class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">{{ $i18n("ferry_extras_rename") }}</v-tooltip>
+            </button>
+            <button
+                v-if="r.isProtected" type="button" class="ferry-ib"
+                :aria-label="revealed[r.key] !== undefined ? $i18n('ferry_generator_hide') : $i18n('ferry_generator_show')"
+                @click="toggleReveal(r)">
+                <tabler-eye-off v-if="revealed[r.key] !== undefined" class="ferry-ico" />
+                <tabler-eye v-else class="ferry-ico" />
+            </button>
+            <button
+                v-if="r.type === 'attachment' && !r.removed" type="button" class="ferry-ib"
+                :aria-label="isImage(r) ? $i18n('ferry_attachment_show') : $i18n('ferry_attachment_save')" @click="openRow(r)">
+                <tabler-eye v-if="isImage(r)" class="ferry-ico" />
+                <tabler-download v-else class="ferry-ico" />
+                <v-tooltip location="start" activator="parent">
+                    {{ isImage(r) ? $i18n("ferry_attachment_show") : $i18n("ferry_attachment_save") }}
+                </v-tooltip>
+            </button>
+            <button
+                v-if="!(r.type === 'notes' && !r.isNew)" type="button" class="ferry-ib" :class="{ danger: !r.removed }"
                 :aria-label="r.removed ? $i18n('ferry_extras_undo') : $i18n('ferry_extras_remove')" @click="toggleRow(r)">
                 <tabler-arrow-back-up v-if="r.removed" class="ferry-ico" />
                 <tabler-trash v-else class="ferry-ico" />
@@ -45,6 +75,9 @@
             <v-select
                 v-model="kind" :items="kindItems" :label="$i18n('ferry_add_kind')" hide-details class="mb-2"
                 @update:model-value="kindChanged" />
+            <v-text-field
+                v-if="kind === 'image'" v-model="imageName" :label="$i18n('ferry_add_image_name')"
+                :placeholder="$i18n('ferry_add_image_name_hint')" persistent-placeholder hide-details class="mb-1" />
             <AttachmentPaste
                 v-if="kind === 'image'"
                 :uuid="uuid" :db-file-name="dbFileName" :title="title" :initial-file="pendingImage"
@@ -83,12 +116,17 @@
         <div v-if="!unsupported" class="ferry-add-note">{{ $i18n("ferry_add_saved_directly") }}</div>
     </div>
     <div v-if="error" class="ferry-hint err">{{ error }}</div>
+    <ExtraPreview
+        :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text"
+        @close="preview.open = false" />
 </template>
 
 <script lang="ts">
 import AttachmentPaste from "./AttachmentPaste.vue";
+import ExtraPreview from "./ExtraPreview.vue";
 import { fillPageField, pageFieldKinds } from "../pageFields";
 import { readClipboard } from "../clipboard";
+import { formatSize, isImageName, loadAttachment, loadFieldValue, saveBlob } from "../extras";
 
 // "Hinzufügen" im Bearbeiten-Fenster: Wiederherstellungscode, Zwei-Faktor-Schlüssel, Notiz, eigenes Feld oder Bild.
 // Hinzugefügtes und Entferntes wird nur vorgemerkt (Liste "Im Eintrag" mit Neu/Wird entfernt) und erst mit
@@ -111,12 +149,13 @@ interface Row {
     uri?: string;
     fileName?: string;
     data?: string;
+    blob?: Blob;
 }
 
 let nextKey = 1;
 
 export default {
-    components: { AttachmentPaste },
+    components: { AttachmentPaste, ExtraPreview },
     props: ["uuid", "dbFileName", "title"],
     emits: ["changed"],
     data: () => ({
@@ -131,7 +170,13 @@ export default {
         existing: [] as Row[],
         staged: [] as Row[],
         error: null as string,
-        clipboardNotice: null as string
+        clipboardNotice: null as string,
+        imageName: "",
+        renaming: null as string,
+        renameValue: "",
+        // Aufgedeckte geschützte Werte je Zeile
+        revealed: {} as Record<string, string>,
+        preview: { open: false, title: "", blob: null as Blob, text: null as string }
     }),
     computed: {
         kindItems: function () {
@@ -199,6 +244,7 @@ export default {
             this.adding = false;
             this.value = "";
             this.pendingImage = null;
+            this.imageName = "";
             if (this.kind === "image") this.kind = "recovery";
         },
         switchToTotp: function () {
@@ -236,18 +282,24 @@ export default {
                 const r = await chrome.runtime.sendMessage({ keepassferry: "getEntryExtras", uuid: this.uuid, dbFileName: this.dbFileName });
                 this.unsupported = !r;
                 const list: Row[] = [];
+                const notes = (r?.notes ?? "").trim();
+                if (notes) {
+                    list.push({ key: "notes", type: "notes", name: this.$i18n("ferry_extras_notes"), sub: notes.slice(0, 60), value: notes });
+                }
                 for (const f of r?.fields ?? []) {
                     list.push({
                         key: "f:" + f.name,
                         type: "field",
                         name: f.name,
                         isProtected: f.isProtected,
-                        sub: f.isProtected ? "••••••••" : (f.value ?? "").slice(0, 60)
+                        sub: f.isProtected ? "••••••••" : (f.value ?? "").slice(0, 60),
+                        value: f.isProtected ? undefined : f.value
                     });
                 }
                 for (const a of r?.attachments ?? []) {
-                    list.push({ key: "a:" + a.name, type: "attachment", name: a.name, sub: Math.max(1, Math.round(a.size / 1024)) + " KB" });
+                    list.push({ key: "a:" + a.name, type: "attachment", name: a.name, sub: formatSize(a.size) });
                 }
+                this.revealed = {};
                 this.existing = list;
             } catch (e) {
                 this.existing = [];
@@ -288,19 +340,71 @@ export default {
                 // ohne Hinweis
             }
         },
-        stageImage: function (img: { fileName: string; data: string; size: number; previewUrl: string }) {
+        stageImage: function (img: { fileName: string; data: string; size: number; blob: Blob }) {
             this.pendingImage = null;
-            if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+            const fileName = this.imageName.trim() || img.fileName;
             this.staged.push({
                 key: "i" + nextKey++,
                 type: "attachment",
-                name: img.fileName || this.$i18n("ferry_add_kind_image"),
-                sub: Math.max(1, Math.round(img.size / 1024)) + " KB",
+                name: this.imageDisplayName(fileName),
+                sub: formatSize(img.size),
                 isNew: true,
-                fileName: img.fileName,
-                data: img.data
+                fileName,
+                data: img.data,
+                blob: img.blob
             });
             this.closeAdd();
+        },
+        // Das Plugin hängt die Endung des tatsächlichen Typs an (verkleinerte Bilder sind JPEG);
+        // ohne Namen vergibt es Datum und Uhrzeit
+        imageDisplayName: function (fileName: string): string {
+            if (!fileName) return this.$i18n("ferry_add_kind_image");
+            return /\.(jpe?g)$/i.test(fileName) ? fileName : fileName.replace(/\.[a-z0-9]{1,5}$/i, "") + ".jpg";
+        },
+        startRename: function (r: Row) {
+            this.renaming = r.key;
+            this.renameValue = r.fileName ? r.name : "";
+        },
+        finishRename: function (r: Row) {
+            if (this.renaming !== r.key) return;
+            this.renaming = null;
+            const fileName = this.renameValue.trim();
+            r.fileName = fileName;
+            r.name = this.imageDisplayName(fileName);
+        },
+        isImage: function (r: Row): boolean {
+            return !!r.blob || isImageName(r.name);
+        },
+        canOpen: function (r: Row): boolean {
+            if (r.removed) return false;
+            if (r.type === "attachment" || r.type === "notes") return true;
+            return r.type === "field" && !r.isProtected && (r.value ?? "").length > 60;
+        },
+        // Zeile anklicken: Bild/Notiz in der Vorschau, andere Anhänge speichern
+        openRow: async function (r: Row) {
+            if (!this.canOpen(r)) return;
+            this.error = null;
+            if (r.type === "notes" || r.type === "field") {
+                this.preview = { open: true, title: r.name, blob: null, text: r.value };
+                return;
+            }
+            const blob = r.blob ?? (await loadAttachment(this.uuid, this.dbFileName, r.name));
+            if (!blob) {
+                this.error = this.$i18n("ferry_extras_load_failed");
+                return;
+            }
+            if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null };
+            else saveBlob(blob, r.name);
+        },
+        toggleReveal: async function (r: Row) {
+            if (this.revealed[r.key] !== undefined) {
+                const { [r.key]: _, ...rest } = this.revealed;
+                this.revealed = rest;
+                return;
+            }
+            const value = r.isNew ? r.value : await loadFieldValue(this.uuid, this.dbFileName, r.name);
+            if (value === null || value === undefined) this.error = this.$i18n("ferry_extras_load_failed");
+            else this.revealed = { ...this.revealed, [r.key]: value };
         },
         toggleRow: function (r: Row) {
             if (r.isNew) this.staged = this.staged.filter(x => x !== r);
@@ -374,6 +478,12 @@ export default {
     flex-direction: column;
     min-width: 0;
     flex: 1;
+}
+.ferry-extra-text.clickable {
+    cursor: pointer;
+}
+.ferry-extra-text.clickable:hover .ferry-extra-name {
+    color: rgb(var(--v-theme-primary));
 }
 .ferry-extra-name {
     font-size: 13px;

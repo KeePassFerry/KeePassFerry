@@ -1206,5 +1206,57 @@
   "ferry_setting_clipboardRead_hint": {
     "message": "Enables the “Paste from clipboard” button when editing an entry. KeePassFerry only reads the clipboard when you click it. Ctrl+V works without this permission as well.",
     "description": "KeePassFerry"
+  },
+  "ferry_attachment_save": {
+    "message": "Save as …",
+    "description": "KeePassFerry"
+  },
+  "ferry_attachment_show": {
+    "message": "Show",
+    "description": "KeePassFerry"
+  },
+  "ferry_preview_close": {
+    "message": "Close",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_notes": {
+    "message": "Notes",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_has_notes": {
+    "message": "Has notes",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_attachment_count": {
+    "message": "Attachments: $1",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_load_failed": {
+    "message": "Could not load. Please check that KeePass is unlocked and the plugin is up to date.",
+    "description": "KeePassFerry"
+  },
+  "ferry_extras_rename": {
+    "message": "Rename",
+    "description": "KeePassFerry"
+  },
+  "ferry_add_image_name": {
+    "message": "Name (optional)",
+    "description": "KeePassFerry"
+  },
+  "ferry_add_image_name_hint": {
+    "message": "e.g. Security questions",
+    "description": "KeePassFerry"
+  },
+  "ferry_otp_pending": {
+    "message": "Two-factor key found for $1",
+    "description": "KeePassFerry"
+  },
+  "ferry_otp_pending_open": {
+    "message": "Save to entry",
+    "description": "KeePassFerry"
+  },
+  "ferry_otp_pending_discard": {
+    "message": "Discard",
+    "description": "KeePassFerry"
   }
 }

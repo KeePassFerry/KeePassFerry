@@ -53,7 +53,8 @@ export default {
             return Field.getDisplayTooltip(this.field, this.revealed);
         },
         useful: function () {
-            return this.field.type !== "checkbox" && this.displayValue.length > 0;
+            // Häkchen-Felder ("boolean", z. B. "Angemeldet bleiben") sind nur fürs Ausfüllen da, nicht zum Anzeigen
+            return this.field.type !== "boolean" && this.displayValue.length > 0;
         },
         fieldStyle: function () {
             return this.field.type === "password" ? "cursor: pointer" : "cursor: default";

@@ -1,5 +1,5 @@
 import { diag } from "./ferryDiag";
-import { getOtpSetupForPopup, applyOtpSetup, forgetOtpSetup, parseOtpauth } from "./otpSetup";
+import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup, parseOtpauth } from "./otpSetup";
 import { queryPageFields, fillPageField } from "./pageFields";
 import { pluginIsOutdated, pluginVersionFrom } from "../common/FeatureFlags";
 import { isFirefox } from "webext-detect-page";
@@ -205,6 +205,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case "getOtpSetup":
             work = getOtpSetupForPopup(kee.foregroundTabId);
             break;
+        case "getOtpSetupSummary":
+            work = getOtpSetupSummary(kee.foregroundTabId);
+            break;
+        case "discardOtpSetup":
+            forgetOtpSetup(kee.foregroundTabId);
+            work = Promise.resolve(true);
+            break;
         case "applyOtpSetup":
             work = applyOtpSetup(kee.foregroundTabId, msg.uuid, msg.dbFileName, !!msg.overwrite);
             break;
@@ -231,6 +238,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             break;
         case "getEntryExtras":
             work = kee.KeePassRPC.getEntryExtras(msg.uuid, msg.dbFileName);
+            break;
+        case "getEntryAttachment":
+            work = kee.KeePassRPC.getEntryAttachment(msg.uuid, msg.dbFileName, msg.name);
+            break;
+        case "getEntryFieldValue":
+            work = kee.KeePassRPC.getEntryFieldValue(msg.uuid, msg.dbFileName, msg.name);
             break;
         case "removeEntryExtra":
             work = kee.KeePassRPC.removeEntryExtra(msg.uuid, msg.dbFileName, msg.kind, msg.name);

@@ -155,7 +155,45 @@ namespace KeePassFerry
             var attachments = new System.Collections.Generic.List<EntryExtraAttachment>();
             foreach (var kv in entry.Binaries)
                 attachments.Add(new EntryExtraAttachment { name = kv.Key, size = (int)kv.Value.Length });
-            return new EntryExtras { fields = fields.ToArray(), attachments = attachments.ToArray() };
+            return new EntryExtras
+            {
+                fields = fields.ToArray(),
+                attachments = attachments.ToArray(),
+                notes = entry.Strings.ReadSafe(PwDefs.NotesField)
+            };
+        }
+
+        /// <summary>Inhalt eines Anhangs (Base64) zum Anzeigen oder Speichern im Browser; null, wenn nicht vorhanden</summary>
+        [JsonRpcMethod]
+        public string GetEntryAttachment(string uuid, string dbFileName, string name)
+        {
+            if (!EnsureDBisOpen() || string.IsNullOrEmpty(name)) return null;
+            PwDatabase db;
+            PwEntry entry = FindFerryEntry(uuid, dbFileName, out db);
+            if (entry == null) return null;
+            var binary = entry.Binaries.Get(name);
+            if (binary == null) return null;
+            byte[] data = binary.ReadData();
+            try
+            {
+                return Convert.ToBase64String(data);
+            }
+            finally
+            {
+                if (binary.IsProtected) MemUtil.ZeroByteArray(data);
+            }
+        }
+
+        /// <summary>Wert eines eigenen Felds, auch eines geschützten (Auge im Browser); null bei Standard- und internen Feldern</summary>
+        [JsonRpcMethod]
+        public string GetEntryFieldValue(string uuid, string dbFileName, string name)
+        {
+            if (!EnsureDBisOpen() || string.IsNullOrEmpty(name) || IsReservedStringName(name)) return null;
+            PwDatabase db;
+            PwEntry entry = FindFerryEntry(uuid, dbFileName, out db);
+            if (entry == null) return null;
+            var value = entry.Strings.Get(name);
+            return value == null ? null : value.ReadString();
         }
 
         /// <summary>
@@ -501,6 +539,7 @@ namespace KeePassFerry
     {
         public EntryExtraField[] fields;
         public EntryExtraAttachment[] attachments;
+        public string notes;
     }
 
     public class EntryExtraField

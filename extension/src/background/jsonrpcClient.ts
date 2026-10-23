@@ -223,9 +223,25 @@ export class jsonrpcClient {
     }
 
     // Eigene Felder (geschützte ohne Wert) und Anhänge eines Eintrags
+    // Inhalt eines Anhangs (Base64) bzw. Wert eines eigenen (auch geschützten) Felds, erst auf Klick geladen
+    async getEntryAttachment(uuid: string, dbFileName: string, name: string): Promise<string> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return null;
+        const responses = await this.kprpcClient.request([sessionManager], "GetEntryAttachment", [uuid, dbFileName, name]);
+        return responses?.[0]?.resultWrapper?.result ?? null;
+    }
+
+    async getEntryFieldValue(uuid: string, dbFileName: string, name: string): Promise<string> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return null;
+        const responses = await this.kprpcClient.request([sessionManager], "GetEntryFieldValue", [uuid, dbFileName, name]);
+        return responses?.[0]?.resultWrapper?.result ?? null;
+    }
+
     async getEntryExtras(uuid: string, dbFileName: string): Promise<{
         fields: { name: string; isProtected: boolean; value: string }[];
         attachments: { name: string; size: number }[];
+        notes?: string;
     }> {
         const sessionManager = this.sessionManagerForFilename(dbFileName);
         if (!sessionManager) return null;

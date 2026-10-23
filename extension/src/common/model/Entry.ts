@@ -44,6 +44,10 @@ export class Entry {
 
     readonly database: DatabaseSummary;
 
+    // Notizen bzw. Anhänge am Eintrag (Hinweis in der Liste; Inhalt über GetEntryExtras)
+    readonly hasNotes: boolean;
+    readonly attachmentCount: number;
+
     // How relevant this entry is to the current form in
     // the browser - transient (not stored in KeePass)
     //TODO:5 put all match data into a new object?
@@ -67,6 +71,8 @@ export class Entry {
         this.matchAccuracy = e.matchAccuracy || 0;
         this.icon = e.icon || { version: 1, iconImageData: "" };
         this.database = e.database || new Database({});
+        this.hasNotes = !!e.hasNotes;
+        this.attachmentCount = e.attachmentCount || 0;
         this.relevanceScore = e.relevanceScore;
         this.lowFieldMatchRatio = e.lowFieldMatchRatio;
         this.formIndex = e.formIndex;
@@ -120,7 +126,9 @@ export class Entry {
             httpRealm: entryDto.hTTPRealm,
             uuid: entryDto.uniqueID,
             title: entryDto.title,
-            fields: sortedFields
+            fields: sortedFields,
+            hasNotes: entryDto.hasNotes,
+            attachmentCount: entryDto.attachmentCount
         });
 
         return entry;

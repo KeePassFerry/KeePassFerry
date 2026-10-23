@@ -124,7 +124,6 @@ export default {
         savedName: null as string,
         savedSize: 0,
         failed: false,
-        previewUrl: null as string,
         totpUri: null as string,
         totpExists: false,
         totpSaved: false,
@@ -134,9 +133,6 @@ export default {
     mounted: function () {
         if (this.initialFile) this.handleImage(this.initialFile);
         else this.$nextTick(() => (this.$refs.zone as HTMLElement)?.focus());
-    },
-    unmounted: function () {
-        if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
     },
     methods: {
         // Schlüssel als Text in eine otpauth-URI umwandeln; Bezeichnung = Titel des Eintrags
@@ -251,7 +247,8 @@ export default {
                     fileName: file.name && file.name !== "image.png" ? file.name : "",
                     data: btoa(binary),
                     size: compressed.size,
-                    previewUrl: URL.createObjectURL(compressed)
+                    // für die Vorschau vor dem Speichern
+                    blob: compressed
                 });
             } catch (e) {
                 this.failed = true;

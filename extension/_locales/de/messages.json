@@ -1206,5 +1206,57 @@
     "ferry_setting_clipboardRead_hint": {
         "message": "Erlaubt beim Bearbeiten eines Eintrags den Knopf „Aus Zwischenablage einfügen“. KeePassFerry liest die Zwischenablage nur, wenn du darauf klickst. Strg+V funktioniert auch ohne diese Erlaubnis.",
         "description": "KeePassFerry"
+    },
+    "ferry_attachment_save": {
+        "message": "Speichern unter …",
+        "description": "KeePassFerry"
+    },
+    "ferry_attachment_show": {
+        "message": "Anzeigen",
+        "description": "KeePassFerry"
+    },
+    "ferry_preview_close": {
+        "message": "Schließen",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_notes": {
+        "message": "Notizen",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_has_notes": {
+        "message": "Mit Notizen",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_attachment_count": {
+        "message": "Anhänge: $1",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_load_failed": {
+        "message": "Laden nicht möglich. Bitte prüfe, ob KeePass entsperrt ist und das Plugin aktuell ist.",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_rename": {
+        "message": "Umbenennen",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_image_name": {
+        "message": "Name (optional)",
+        "description": "KeePassFerry"
+    },
+    "ferry_add_image_name_hint": {
+        "message": "z. B. Sicherheitsfragen",
+        "description": "KeePassFerry"
+    },
+    "ferry_otp_pending": {
+        "message": "Zwei-Faktor-Schlüssel für $1 gefunden",
+        "description": "KeePassFerry"
+    },
+    "ferry_otp_pending_open": {
+        "message": "In Eintrag speichern",
+        "description": "KeePassFerry"
+    },
+    "ferry_otp_pending_discard": {
+        "message": "Verwerfen",
+        "description": "KeePassFerry"
     }
 }

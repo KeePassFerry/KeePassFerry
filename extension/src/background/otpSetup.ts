@@ -258,6 +258,20 @@ export function forgetOtpSetup(tabId: number) {
     lastQrScan.delete(tabId);
 }
 
+// Noch nicht gespeicherter Fund im Tab (auch nach "Später"), solange der Tab auf derselben Domain ist:
+// das normale Popup bietet dann die Auswahl erneut an (die Seite muss nichts neu erkennen)
+export async function getOtpSetupSummary(tabId: number): Promise<{ issuer: string }> {
+    const setup = pending.get(tabId);
+    if (!setup || Date.now() - setup.at > MAX_AGE_MS) return null;
+    try {
+        const tab = await chrome.tabs.get(tabId);
+        if (KeeURL.fromString(tab?.url)?.domainOrIPAddress !== setup.domain) return null;
+    } catch (e) {
+        return null;
+    }
+    return { issuer: setup.issuer || setup.domain };
+}
+
 // Daten für die Popup-Ansicht: Fund (ohne Secret) und vorgeschlagene Einträge
 export async function getOtpSetupForPopup(tabId: number) {
     const setup = pending.get(tabId);

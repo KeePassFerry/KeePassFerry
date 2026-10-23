@@ -85,6 +85,9 @@ export class EntryDto {
     uniqueID: string;
     title: string;
     formFieldList: FieldDto[];
+    // KeePassFerry-Plugin ab 1.0.7
+    hasNotes?: boolean;
+    attachmentCount?: number;
 }
 
 export class EntrySummaryDto {
@@ -94,6 +97,9 @@ export class EntrySummaryDto {
     title: string;
     usernameValue: string;
     usernameName: string;
+    // KeePassFerry-Plugin ab 1.0.7
+    hasNotes?: boolean;
+    attachmentCount?: number;
 }
 
 // tslint:disable-next-line:class-name
