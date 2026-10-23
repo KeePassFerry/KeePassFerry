@@ -25,18 +25,6 @@
             </div>
             <div class="ferry-preview-body">
                 <img v-if="imageUrl" :src="imageUrl" alt="" class="ferry-preview-img" />
-                <div v-else-if="hasText && codes" class="ferry-preview-codes">
-                    <div v-for="(line, i) of lines" :key="i" class="ferry-preview-code">
-                        <span class="ferry-preview-code-text">{{ line }}</span>
-                        <button
-                            type="button" class="ferry-ib" :class="{ ok: copied === i }"
-                            :aria-label="$i18n('copy_value_to_clipboard')" @click="copy(i, line)">
-                            <tabler-check v-if="copied === i" class="ferry-ico" />
-                            <tabler-copy v-else class="ferry-ico" />
-                            <v-tooltip location="start" activator="parent">{{ $i18n("copy_value_to_clipboard") }}</v-tooltip>
-                        </button>
-                    </div>
-                </div>
                 <pre v-else-if="hasText" class="ferry-preview-text">{{ text }}</pre>
             </div>
         </div>
@@ -48,17 +36,14 @@ import { saveBlob } from "../extras";
 import { copyStringToClipboard } from "../../common/copyStringToClipboard";
 
 // Vorschau im Popup: Bild (mit "Speichern unter", bei gespeicherten Anhängen auch "Mit Standardprogramm öffnen")
-// oder Text mit "Alles kopieren". codes: geschützter Wert (z. B. Wiederherstellungscodes), jede Zeile einzeln kopierbar.
+// oder Text so, wie er gespeichert ist, mit "Alles kopieren".
 export default {
-    props: ["open", "title", "blob", "text", "fileName", "external", "codes"],
+    props: ["open", "title", "blob", "text", "fileName", "external"],
     emits: ["close", "open-external"],
-    data: () => ({ imageUrl: null as string, copied: null as string | number }),
+    data: () => ({ imageUrl: null as string, copied: null as string }),
     computed: {
         hasText: function (): boolean {
             return this.text !== null && this.text !== undefined;
-        },
-        lines: function (): string[] {
-            return (this.text ?? "").split(/\r?\n/).map((l: string) => l.trim()).filter((l: string) => l.length > 0);
         }
     },
     watch: {
@@ -80,7 +65,7 @@ export default {
         close: function () {
             this.$emit("close");
         },
-        copy: async function (key: string | number, value: string) {
+        copy: async function (key: string, value: string) {
             await copyStringToClipboard(value);
             this.copied = key;
             setTimeout(() => {
@@ -141,23 +126,6 @@ export default {
     max-width: 100%;
     margin: 0 auto;
     border-radius: 6px;
-}
-.ferry-preview-code {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 34px;
-    border-bottom: 1px solid var(--ferry-line);
-}
-.ferry-preview-code:last-child {
-    border-bottom: 0;
-}
-.ferry-preview-code-text {
-    flex: 1;
-    min-width: 0;
-    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
-    font-size: 13px;
-    word-break: break-all;
 }
 .ferry-preview-text {
     margin: 0;

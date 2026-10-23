@@ -146,7 +146,7 @@
     </div>
     <div v-if="error" class="ferry-hint err">{{ error }}</div>
     <ExtraPreview
-        :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :external="preview.external" :codes="preview.codes"
+        :open="preview.open" :title="preview.title" :blob="preview.blob" :text="preview.text" :external="preview.external"
         @close="closePreview" @open-external="preview.blob ? openExternal(preview.title) : openNotesExternal()" />
 </template>
 
@@ -209,7 +209,7 @@ export default {
         renameValue: "",
         editing: null as Row,
         editValue: "",
-        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false, codes: false }
+        preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false }
     }),
     computed: {
         kindItems: function () {
@@ -426,7 +426,7 @@ export default {
             if (r.type === "notes" || r.type === "field") {
                 // Im Standard-Editor nur gespeicherte, unveränderte Notizen (das Plugin öffnet den Stand in KeePass)
                 const external = r.type === "notes" && !r.isNew && r.newValue === undefined;
-                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external, codes: false };
+                this.preview = { open: true, title: r.name, blob: null, text: this.currentValue(r), external };
                 return;
             }
             const blob = r.blob ?? (await loadAttachment(this.uuid, this.dbFileName, r.name));
@@ -434,7 +434,7 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null, external: !r.isNew, codes: false };
+            if (this.isImage(r)) this.preview = { open: true, title: r.name, blob, text: null, external: !r.isNew };
             else saveBlob(blob, r.name);
         },
         openNotesExternal: async function () {
@@ -453,7 +453,7 @@ export default {
             }
             this.preview.open = false;
         },
-        // Geschützter Wert in der Vorschau, Zeilen einzeln kopierbar (z. B. Wiederherstellungscodes)
+        // Geschützter Wert (z. B. Wiederherstellungscodes) in der Vorschau
         showProtected: async function (r: Row) {
             this.error = null;
             const value = this.currentValue(r) ?? (await loadFieldValue(this.uuid, this.dbFileName, r.name));
@@ -461,10 +461,10 @@ export default {
                 this.error = this.$i18n("ferry_extras_load_failed");
                 return;
             }
-            this.preview = { open: true, title: r.name, blob: null, text: value, external: false, codes: true };
+            this.preview = { open: true, title: r.name, blob: null, text: value, external: false };
         },
         closePreview: function () {
-            this.preview = { open: false, title: "", blob: null, text: null, external: false, codes: false };
+            this.preview = { open: false, title: "", blob: null, text: null, external: false };
         },
         currentValue: function (r: Row): string {
             return r.newValue !== undefined ? r.newValue : r.value;
