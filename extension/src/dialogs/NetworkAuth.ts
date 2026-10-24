@@ -4,11 +4,19 @@ import { Entry } from "../common/model/Entry";
 import {setup as i18nSetup } from "../common/i18n";
 
 class NetworkAuth {
+    // Kopf: nur der Hostname (statt der ganzen Adresse) und darunter der Bereich, den die Seite meldet
     public setupPage(entries: Entry[], realm: string, url: string, isProxy: boolean) {
-        const instructions = isProxy
-            ? $STRF("network_auth_proxy_description", [url])
-            : $STRF("network_auth_http_auth_description", [url, realm]);
-        document.getElementById("network_auth_instructions").textContent = instructions;
+        let host = url;
+        try {
+            host = new URL(url).host || url;
+        } catch (e) {
+            // keine gültige Adresse: so anzeigen, wie sie kam
+        }
+        document.getElementById("network_auth_site").textContent = $STRF(
+            isProxy ? "ferry_netauth_proxy" : "ferry_netauth_site",
+            [host]
+        );
+        document.getElementById("network_auth_realm").textContent = realm ? $STRF("ferry_netauth_realm", [realm]) : "";
         this.createNearNode(document.getElementById("network_auth_choose"), entries);
     }
 
@@ -75,7 +83,11 @@ class NetworkAuth {
             sub.className = "sub";
             sub.textContent = usernameDisplayValue + " · " + entry.parentGroup.path;
             text.append(title, sub);
-            loginItem.append(tile, text);
+            const arrow = document.createElement("span");
+            arrow.className = "arrow";
+            arrow.setAttribute("aria-hidden", "true");
+            arrow.textContent = "›";
+            loginItem.append(tile, text, arrow);
 
             loginItem.addEventListener("keydown", this.keyboardNavHandler, false);
             loginItem.addEventListener(
@@ -146,7 +158,9 @@ async function setupNetworkAuthDialog() {
         }
     });
     chrome.runtime.sendMessage({ action: "NetworkAuth_load" });
-    document.getElementById("i18n_root").style.display = "block";
+    // "Selbst eingeben": Fenster schließen, der Browser zeigt dann sein eigenes Anmeldefenster
+    document.getElementById("network_auth_manual").addEventListener("click", () => window.close());
+    document.getElementById("i18n_root").style.display = "flex";
 }
 
 if (document.readyState === "loading") {

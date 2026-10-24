@@ -119,8 +119,9 @@ export class NetworkAuth {
             const createData = {
                 type: "popup",
                 url: "/dist/dialogs/NetworkAuth.html",
-                width: 600,
-                height: 300
+                // Platz für Kopf, drei Einträge und Fußzeile ohne Scrollen (weitere Einträge scrollen in der Liste)
+                width: 480,
+                height: 470
             } as chrome.windows.CreateData;
             try {
                 wind = await chrome.windows.create(createData);

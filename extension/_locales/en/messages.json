@@ -1306,5 +1306,29 @@
   "ferry_related_domain": {
     "message": "Related domain: $1",
     "description": "KeePassFerry"
+  },
+  "ferry_netauth_site": {
+    "message": "$1 requires you to sign in",
+    "description": "KeePassFerry"
+  },
+  "ferry_netauth_proxy": {
+    "message": "The proxy $1 requires you to sign in",
+    "description": "KeePassFerry"
+  },
+  "ferry_netauth_realm": {
+    "message": "Realm: $1",
+    "description": "KeePassFerry"
+  },
+  "ferry_netauth_choose": {
+    "message": "Choose sign-in details",
+    "description": "KeePassFerry"
+  },
+  "ferry_netauth_manual": {
+    "message": "Enter manually",
+    "description": "KeePassFerry"
+  },
+  "ferry_netauth_manual_hint": {
+    "message": "Without a choice, the browser shows its own sign-in window.",
+    "description": "KeePassFerry"
   }
 }

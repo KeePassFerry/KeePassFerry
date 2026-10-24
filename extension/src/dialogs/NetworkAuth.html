@@ -7,98 +7,138 @@
     <style>
         :root {
             color-scheme: light dark;
-            --bg: #ffffff;
+            --bg: #f4f6f9;
+            --card: #ffffff;
             --text: #1f2937;
             --muted: rgba(31, 41, 55, 0.62);
             --line: rgba(31, 41, 55, 0.1);
-            --hover: rgba(31, 41, 55, 0.05);
+            --hover: rgba(37, 99, 235, 0.06);
             --tile: #f1f3f6;
             --primary: #2563eb;
+            --head1: #1e5fa8;
+            --head2: #0b3463;
         }
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme="light"]) {
-                --bg: #17191e;
+                --bg: #111317;
+                --card: #1b1e24;
                 --text: #e5e7eb;
                 --muted: rgba(229, 231, 235, 0.62);
                 --line: rgba(229, 231, 235, 0.12);
-                --hover: rgba(229, 231, 235, 0.06);
-                --tile: #24272e;
+                --hover: rgba(96, 165, 250, 0.1);
+                --tile: #262a31;
                 --primary: #60a5fa;
             }
         }
         :root[data-theme="dark"] {
-            --bg: #17191e;
+            --bg: #111317;
+            --card: #1b1e24;
             --text: #e5e7eb;
             --muted: rgba(229, 231, 235, 0.62);
             --line: rgba(229, 231, 235, 0.12);
-            --hover: rgba(229, 231, 235, 0.06);
-            --tile: #24272e;
+            --hover: rgba(96, 165, 250, 0.1);
+            --tile: #262a31;
             --primary: #60a5fa;
         }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
         body {
             margin: 0;
             background: var(--bg);
             color: var(--text);
             font: 14px/1.45 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
         }
-        main {
-            max-width: 520px;
-            margin: 48px auto;
-            padding: 0 16px;
+        /* Seite: Kopf, scrollbare Liste, feste Fußzeile */
+        #i18n_root {
+            height: 100%;
+            flex-direction: column;
         }
         header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 14px;
+            padding: 18px 20px;
+            background: linear-gradient(135deg, var(--head1), var(--head2));
+            color: #ffffff;
         }
         header img {
-            width: 36px;
-            height: 36px;
-            border-radius: 9px;
+            width: 40px;
+            height: 40px;
+            flex: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+        .head-text {
+            min-width: 0;
         }
         h1 {
-            font-size: 18px;
-            font-weight: 600;
             margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            opacity: 0.8;
         }
-        #network_auth_instructions {
-            color: var(--muted);
-            margin: 0 0 18px;
+        #network_auth_site {
+            margin: 2px 0 0;
+            font-size: 16px;
+            font-weight: 600;
             overflow-wrap: anywhere;
+        }
+        #network_auth_realm {
+            margin: 2px 0 0;
+            font-size: 12.5px;
+            opacity: 0.8;
+            overflow-wrap: anywhere;
+        }
+        #network_auth_realm:empty {
+            display: none;
+        }
+        .content {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 16px 20px 8px;
         }
         #network_auth_choose {
             font-size: 12px;
             font-weight: 600;
             color: var(--muted);
-            margin-bottom: 4px;
+            margin: 0 0 8px 2px;
         }
         ul {
             list-style: none;
             margin: 0;
             padding: 0;
-            border-top: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
         li {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 10px 12px;
-            border-bottom: 1px solid var(--line);
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px;
             cursor: pointer;
             outline: none;
+            transition: background-color 0.12s, border-color 0.12s;
         }
         li:hover {
             background: var(--hover);
+            border-color: color-mix(in srgb, var(--primary) 35%, transparent);
         }
         li:focus-visible {
-            box-shadow: inset 0 0 0 2px var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
         }
         .tile {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             flex: none;
-            border-radius: 9px;
+            border-radius: 10px;
             background: var(--tile);
             display: flex;
             align-items: center;
@@ -111,6 +151,7 @@
         .text {
             display: flex;
             flex-direction: column;
+            flex: 1;
             min-width: 0;
         }
         .title {
@@ -126,17 +167,63 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .arrow {
+            flex: none;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1;
+        }
+        li:hover .arrow,
+        li:focus-visible .arrow {
+            color: var(--primary);
+        }
+        footer {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px 16px;
+            border-top: 1px solid var(--line);
+        }
+        #network_auth_manual_hint {
+            flex: 1;
+            font-size: 12px;
+            color: var(--muted);
+        }
+        button {
+            flex: none;
+            padding: 7px 14px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: var(--card);
+            color: var(--text);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
     </style>
 </head>
 <body>
-    <main id="i18n_root" style="display:none">
+    <div id="i18n_root" style="display:none">
         <header>
             <img src="/assets/images/64.png" alt="">
-            <h1 data-i18n="network_authentication"></h1>
+            <div class="head-text">
+                <h1 data-i18n="network_authentication"></h1>
+                <p id="network_auth_site"></p>
+                <p id="network_auth_realm"></p>
+            </div>
         </header>
-        <p id="network_auth_instructions"></p>
-        <div id="network_auth_choose" data-i18n="network_auth_choose"></div>
-    </main>
+        <div class="content">
+            <div id="network_auth_choose" data-i18n="ferry_netauth_choose"></div>
+        </div>
+        <footer>
+            <span id="network_auth_manual_hint" data-i18n="ferry_netauth_manual_hint"></span>
+            <button type="button" id="network_auth_manual" data-i18n="ferry_netauth_manual"></button>
+        </footer>
+    </div>
     <script type="module" src="./NetworkAuth.ts"></script>
 </body>
 </html>

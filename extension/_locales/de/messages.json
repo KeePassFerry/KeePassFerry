@@ -1306,5 +1306,29 @@
     "ferry_related_domain": {
         "message": "Zugehörige Domain: $1",
         "description": "KeePassFerry"
+    },
+    "ferry_netauth_site": {
+        "message": "$1 verlangt eine Anmeldung",
+        "description": "KeePassFerry"
+    },
+    "ferry_netauth_proxy": {
+        "message": "Der Proxy $1 verlangt eine Anmeldung",
+        "description": "KeePassFerry"
+    },
+    "ferry_netauth_realm": {
+        "message": "Bereich: $1",
+        "description": "KeePassFerry"
+    },
+    "ferry_netauth_choose": {
+        "message": "Anmeldedaten auswählen",
+        "description": "KeePassFerry"
+    },
+    "ferry_netauth_manual": {
+        "message": "Selbst eingeben",
+        "description": "KeePassFerry"
+    },
+    "ferry_netauth_manual_hint": {
+        "message": "Ohne Auswahl zeigt der Browser sein eigenes Anmeldefenster.",
+        "description": "KeePassFerry"
     }
 }
