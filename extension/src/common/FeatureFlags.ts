@@ -8,16 +8,25 @@ export function pluginVersionFrom(features: string[]): string {
     return flag ? flag.substring("KEEPASSFERRY_VERSION_".length) : null;
 }
 
+// Ab dieser Plugin-Version blockiert "Jetzt aktualisieren" den Kanal nicht mehr (Update läuft in KeePass);
+// ältere Plugins bekommen stattdessen die Release-Seite zum Herunterladen des Setups
+export const BROWSER_UPDATE_PLUGIN_VERSION = "1.0.8";
+
+// true, wenn das Plugin mindestens diese Version meldet
+export function pluginVersionAtLeast(features: string[], min: string): boolean {
+    const v = pluginVersionFrom(features);
+    if (!v) return false;
+    const a = v.split(".").map(n => parseInt(n, 10) || 0);
+    const b = min.split(".").map(n => parseInt(n, 10) || 0);
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0);
+    }
+    return true;
+}
+
 // true, wenn das Plugin älter als MIN_PLUGIN_VERSION ist (oder seine Version nicht meldet)
 export function pluginIsOutdated(features: string[]): boolean {
-    const v = pluginVersionFrom(features);
-    if (!v) return true;
-    const a = v.split(".").map(n => parseInt(n, 10) || 0);
-    const b = MIN_PLUGIN_VERSION.split(".").map(n => parseInt(n, 10) || 0);
-    for (let i = 0; i < Math.max(a.length, b.length); i++) {
-        if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) < (b[i] ?? 0);
-    }
-    return false;
+    return !pluginVersionAtLeast(features, MIN_PLUGIN_VERSION);
 }
 
 export class FeatureFlags {

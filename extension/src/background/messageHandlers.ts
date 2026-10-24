@@ -3,6 +3,7 @@ import { diag } from "./ferryDiag";
 import { handleOtpSetupCandidate, dismissOtpSetup, isOtpSetupPending } from "./otpSetup";
 import { isRepeatedAutoFill, rememberAutoFill } from "./otpRepeat";
 import { sameSite } from "../common/relatedDomains";
+import { BROWSER_UPDATE_PLUGIN_VERSION, pluginVersionAtLeast } from "../common/FeatureFlags";
 import { onFieldsAvailable } from "./pageFields";
 import { KeeURL } from "../common/KeeURL";
 import type { AddonMessage } from "../common/AddonMessage";
@@ -30,6 +31,13 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
         kee.removeUserNotifications((n: KeeNotification) => n.id != msg.removeNotification);
     }
     if (msg.startPluginUpdate) {
+        // Plugins vor 1.0.8 führen das ganze Update auf dem Kanal zum Browser aus und können ihn dabei blockieren:
+        // für sie gleich die Release-Seite mit dem Setup öffnen
+        if (!pluginVersionAtLeast(kee.KeePassRPC.kprpcClient.nativeSessionManager.features(), BROWSER_UPDATE_PLUGIN_VERSION)) {
+            diag("hintergrund", "plugin-update", { ergebnis: "release-seite (altes plugin)" });
+            chrome.tabs.create({ url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest" });
+            return;
+        }
         // Plugins vor 1.0.4 kennen StartPluginUpdate nicht (Ergebnis null): dann die Download-Seite öffnen
         const result = await kee.KeePassRPC.startPluginUpdate();
         diag("hintergrund", "plugin-update", { ergebnis: result });

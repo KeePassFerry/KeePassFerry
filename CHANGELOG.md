@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.8 – 2026-10-24
+
+- Related domains: an entry for one domain of a provider is also offered on its other domains, e.g. outlook.com on
+  login.live.com (Microsoft, Google, Apple, Amazon, eBay, PayPal, Ubiquiti, Proton, Atlassian, X and others). Such
+  matches come after direct ones and are marked "Related domain: …". Multi-page sign-ins keep the entry chosen on
+  the first page across these domains (e.g. login.microsoftonline.com → login.live.com), also for one-time codes.
+- Network sign-in window redesigned: site in the header, entries as cards, "Enter manually" button.
+- Plugin update from the browser no longer blocks the connection: the plugin answers at once and runs download,
+  signature check and setup in KeePass, which comes to the front so the Windows prompt is visible; update steps are
+  written to the diagnostic log. For plugins before 1.0.8 the button opens the release page instead.
+- Windows notifications show the actual notice and open the popup when clicked.
+- Edit window: username and password can no longer be removed, removing other detected fields is only marked until
+  "Save"; fixed the edit window changing the entry shown in the results list.
+- Settings: missing texts for the website search field.
+
 ## 1.0.7 – 2026-10-24
 
 - Notes, custom fields (e.g. recovery codes) and attachments of an entry are shown in the expanded entry and in the
