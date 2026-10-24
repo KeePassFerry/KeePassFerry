@@ -1330,5 +1330,9 @@
   "ferry_netauth_manual_hint": {
     "message": "Without a choice, the browser shows its own sign-in window.",
     "description": "KeePassFerry"
+  },
+  "ferry_notification_click_to_open": {
+    "message": "Click to open",
+    "description": "KeePassFerry"
   }
 }

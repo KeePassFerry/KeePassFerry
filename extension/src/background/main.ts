@@ -4,7 +4,7 @@ import { forgetAutoFill } from "./otpRepeat";
 import { queryPageFields, fillPageField } from "./pageFields";
 import { pluginIsOutdated, pluginVersionFrom } from "../common/FeatureFlags";
 import { isFirefox } from "webext-detect-page";
-import { kee } from "./KF";
+import { kee, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
 import { commandManager } from "./commands";
 import { KeeLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
@@ -308,6 +308,19 @@ chrome.action.onClicked.addListener(async () => {
         await chrome.action.openPopup();
     } catch (e) {
         KeeLog.warn("Could not open popup: " + e);
+    }
+});
+
+// Klick auf die Windows-Benachrichtigung zu einem Hinweis: Browserfenster nach vorne und Popup mit dem Hinweis öffnen
+chrome.notifications.onClicked.addListener(async id => {
+    if (!id.startsWith(OPEN_POPUP_NOTIFICATION_PREFIX)) return;
+    chrome.notifications.clear(id);
+    try {
+        const win = await chrome.windows.getLastFocused({ windowTypes: ["normal"] });
+        if (win?.id != null) await chrome.windows.update(win.id, { focused: true });
+        await chrome.action.openPopup();
+    } catch (e) {
+        KeeLog.warn("Could not open popup from notification: " + e);
     }
 });
 

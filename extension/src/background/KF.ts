@@ -31,6 +31,8 @@ import { Mutation } from "~/store/Mutation";
 import { KeeBrowserActionIconConfiguration } from "../common/KeeBrowserActionIconConfiguration";
 
 const SAVE_BADGE_COLOR = "#16a34a";
+// Windows-Benachrichtigung zu einem Hinweis im Popup: ein Klick darauf öffnet das Popup (main.ts)
+export const OPEN_POPUP_NOTIFICATION_PREFIX = "keepassferry-note-";
 
 class Kee {
     tabStates: Map<number, TabState>;
@@ -321,14 +323,13 @@ class Kee {
             });
         } else {
             if (configManager.current.notificationCountGeneric < 5) {
-                chrome.notifications.create({
+                // Der eigentliche Hinweis statt eines allgemeinen Texts; ein Klick öffnet das Popup mit dem ganzen Hinweis
+                chrome.notifications.create(OPEN_POPUP_NOTIFICATION_PREFIX + notification.id, {
                     type: "basic",
                     iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
-                    title: $STR("notification_raised_title"),
-                    message:
-                        $STR("notification_yellow_background") +
-                        "\n" +
-                        $STR("notification_only_shown_some_times")
+                    title: "KeePassFerry",
+                    message: notification.messages?.[0] ?? $STR("notification_raised_title"),
+                    contextMessage: $STR("ferry_notification_click_to_open")
                 });
                 configManager.setASAP({
                     notificationCountGeneric: configManager.current.notificationCountGeneric + 1

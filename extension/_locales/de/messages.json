@@ -1330,5 +1330,9 @@
     "ferry_netauth_manual_hint": {
         "message": "Ohne Auswahl zeigt der Browser sein eigenes Anmeldefenster.",
         "description": "KeePassFerry"
+    },
+    "ferry_notification_click_to_open": {
+        "message": "Zum Anzeigen klicken",
+        "description": "KeePassFerry"
     }
 }
