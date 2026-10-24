@@ -33,6 +33,9 @@
                         {{ fullEntryPath }} · {{ entrySummary.url }}
                     </v-tooltip>
                 </span>
+                <span v-if="entrySummary.relatedDomain" class="ferry-entry-related">
+                    {{ $i18n("ferry_related_domain", [entrySummary.relatedDomain]) }}
+                </span>
             </span>
             <button
                 v-if="expanded && entrySummary.fullDetails" type="button" class="ferry-ib"
@@ -319,6 +322,15 @@ export default {
 }
 .ferry-entry-sub {
     font-size: 12px;
+    color: var(--ferry-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Treffer über eine zugehörige Domain (z. B. outlook.com auf login.live.com) */
+.ferry-entry-related {
+    font-size: 11.5px;
+    font-style: italic;
     color: var(--ferry-muted);
     white-space: nowrap;
     overflow: hidden;

@@ -56,6 +56,8 @@ export class Entry {
     formIndex: number;
     entryIndex: number;
     isPreferredMatch?: boolean;
+    // Nur über eine zugehörige Domain gefunden (z. B. Eintrag für outlook.com auf login.live.com): diese Domain
+    relatedDomain?: string;
 
     constructor(e: Partial<Entry>) {
         this.alwaysAutoFill = e.alwaysAutoFill || false;
@@ -78,6 +80,7 @@ export class Entry {
         this.formIndex = e.formIndex;
         this.entryIndex = e.entryIndex;
         this.isPreferredMatch = e.isPreferredMatch;
+        this.relatedDomain = e.relatedDomain;
     }
 
     public static getUsernameField(entry: Entry) {

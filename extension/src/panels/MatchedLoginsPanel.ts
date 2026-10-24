@@ -69,8 +69,16 @@ export class MatchedLoginsPanel {
             title.className = "ferry-login-title";
             title.textContent = entry.title;
             text.append(user, title);
+            // Nur über eine zugehörige Domain gefunden (z. B. outlook.com auf login.live.com): Grund dazuschreiben
+            const related = entry.relatedDomain ? $STRF("ferry_related_domain", [entry.relatedDomain]) : "";
+            if (related) {
+                const via = document.createElement("div");
+                via.className = "ferry-login-related";
+                via.textContent = related;
+                text.append(via);
+            }
             // Voller Text als Tooltip, falls die Zeile trotz breiterer Liste abgeschnitten wird
-            text.title = [usernameDisplayValue, entry.title].filter(Boolean).join("\n");
+            text.title = [usernameDisplayValue, entry.title, related].filter(Boolean).join("\n");
             const more = document.createElement("button");
             more.className = "ferry-login-more";
             more.type = "button";

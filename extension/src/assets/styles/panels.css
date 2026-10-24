@@ -118,6 +118,8 @@ body {
 .ferry-login-user, .ferry-login-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ferry-login-user { font-weight: 600; }
 .ferry-login-title { font-size: 12.5px; color: var(--muted); }
+/* Treffer über eine zugehörige Domain (z. B. outlook.com auf login.live.com) */
+.ferry-login-related { font-size: 11.5px; color: var(--muted); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .ferry-login-quick {
     flex: none;

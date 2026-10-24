@@ -1302,5 +1302,9 @@
     "website_options_search_tooltip": {
         "message": "Ab zwei Zeichen werden vorhandene Website-Einstellungen gesucht; „Hinzufügen“ legt eine neue an.",
         "description": "KeePassFerry"
+    },
+    "ferry_related_domain": {
+        "message": "Zugehörige Domain: $1",
+        "description": "KeePassFerry"
     }
 }

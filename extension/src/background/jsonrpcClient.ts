@@ -10,6 +10,8 @@ import { Entry } from "../common/model/Entry";
 import { DatabaseSummary } from "../common/model/DatabaseSummary";
 import BackgroundStore from "../store/BackgroundStore";
 import { kee } from "./KF";
+import { KeeURL } from "../common/KeeURL";
+import { hostInDomains, relatedDomains } from "../common/relatedDomains";
 
 /*
 jsonrpcClient provides a JSON-RPC client and method proxies for
@@ -166,40 +168,41 @@ export class jsonrpcClient {
             return [];
         }
 
-        const urls = [];
-
-        if (fullURL) {
-            urls.push(fullURL);
-
-            // Google treat youtube.com and google.com as the same property when authenticating
-            //TODO:v: extend to wider concept of equivelent domains (beware ownership changes)
-            if (fullURL.search(/$https:\/\/accounts\.youtube\.com\/?/) >= 0) {
-                urls.push("https://accounts.google.com");
+        const request = async (urls: string[]): Promise<Entry[]> => {
+            const sessionResponses = await this.kprpcClient.request(sessionManagers, "FindLogins", [
+                urls,
+                null,
+                httpRealm,
+                lst,
+                false,
+                uuid,
+                dbFileName,
+                freeText,
+                username
+            ]);
+            const found: Entry[] = [];
+            for (const sessionResponse of sessionResponses) {
+                if (sessionResponse.resultWrapper?.result?.[0]) {
+                    const db = DatabaseSummary.fromKPRPCDatabaseSummaryDTO(sessionResponse.resultWrapper.result[0].db);
+                    found.push(...sessionResponse.resultWrapper.result.map((res: EntryDto) => Entry.fromKPRPCEntryDTO(res, db)));
+                }
             }
-        }
+            return found;
+        };
 
-        const sessionResponses = await this.kprpcClient.request(sessionManagers, "FindLogins", [
-            urls,
-            null,
-            httpRealm,
-            lst,
-            false,
-            uuid,
-            dbFileName,
-            freeText,
-            username
-        ]);
-        const results: Entry[] = [];
-        for (const sessionResponse of sessionResponses) {
-            if (sessionResponse.resultWrapper?.result?.[0]) {
-                const db = DatabaseSummary.fromKPRPCDatabaseSummaryDTO(
-                    sessionResponse.resultWrapper.result[0].db
-                );
-                results.push(
-                    ...sessionResponse.resultWrapper.result.map((res: EntryDto) =>
-                        Entry.fromKPRPCEntryDTO(res, db)
-                    )
-                );
+        const results = await request(fullURL ? [fullURL] : []);
+
+        // Zugehörige Domains (z. B. login.live.com für einen Eintrag mit outlook.com): zweite Suche, neue Treffer
+        // nachrangig (matchAccuracy 0) und gekennzeichnet. Nicht bei Suche nach Eintrag, Text oder Benutzername.
+        const domain = fullURL && !uuid && !freeText && !username ? KeeURL.fromString(fullURL)?.domainOrIPAddress : null;
+        const related = domain ? relatedDomains(domain) : [];
+        if (related.length > 0) {
+            const known = new Set(results.map(e => e.database.fileName + "|" + e.uuid));
+            for (const e of await request(related.map(d => "https://" + d))) {
+                if (known.has(e.database.fileName + "|" + e.uuid)) continue;
+                known.add(e.database.fileName + "|" + e.uuid);
+                const via = e.URLs.map(u => hostInDomains(KeeURL.fromString(u)?.url?.hostname, related)).find(Boolean);
+                results.push(new Entry({ ...e, matchAccuracy: 0, relatedDomain: via ?? related[0] }));
             }
         }
         return results;

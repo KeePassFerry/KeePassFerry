@@ -138,7 +138,10 @@ export class FormFilling {
     private matchedEntryTexts(): string[] {
         const texts: string[] = [];
         for (const list of this.matchResult?.entries ?? [])
-            for (const e of list ?? []) texts.push(Entry.getUsernameField(e)?.value ?? "", e.title ?? "");
+            for (const e of list ?? []) {
+                texts.push(Entry.getUsernameField(e)?.value ?? "", e.title ?? "");
+                if (e.relatedDomain) texts.push($STRF("ferry_related_domain", [e.relatedDomain]));
+            }
         return texts;
     }
 

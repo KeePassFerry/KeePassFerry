@@ -1302,5 +1302,9 @@
   "website_options_search_tooltip": {
     "message": "From two characters, existing website settings are searched; \"Add\" creates a new one.",
     "description": "KeePassFerry"
+  },
+  "ferry_related_domain": {
+    "message": "Related domain: $1",
+    "description": "KeePassFerry"
   }
 }

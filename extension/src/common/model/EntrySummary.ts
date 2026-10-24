@@ -18,6 +18,8 @@ export class EntrySummary {
     isPreferredMatch?: boolean;
     hasNotes: boolean;
     attachmentCount: number;
+    // Nur über eine zugehörige Domain gefunden (siehe Entry.relatedDomain)
+    relatedDomain?: string;
 
     constructor(e: Partial<EntrySummary>) {
         this.icon = e.icon || { version: 1, iconImageData: "" };
@@ -34,6 +36,7 @@ export class EntrySummary {
         this.isPreferredMatch = e.isPreferredMatch;
         this.hasNotes = !!e.hasNotes;
         this.attachmentCount = e.attachmentCount || 0;
+        this.relatedDomain = e.relatedDomain;
     }
 
     public static fromEntry(entry: Entry) {
@@ -49,7 +52,8 @@ export class EntrySummary {
             fullDetails: entry,
             isPreferredMatch: entry.isPreferredMatch,
             hasNotes: entry.hasNotes,
-            attachmentCount: entry.attachmentCount
+            attachmentCount: entry.attachmentCount,
+            relatedDomain: entry.relatedDomain
         });
     }
 
