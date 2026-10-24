@@ -2,6 +2,7 @@ import { preparePasskey, finishPasskey, cancelPasskey, signalPasskey, finishSign
 import { diag } from "./ferryDiag";
 import { handleOtpSetupCandidate, dismissOtpSetup, isOtpSetupPending } from "./otpSetup";
 import { isRepeatedAutoFill, rememberAutoFill } from "./otpRepeat";
+import { sameSite } from "../common/relatedDomains";
 import { onFieldsAvailable } from "./pageFields";
 import { KeeURL } from "../common/KeeURL";
 import type { AddonMessage } from "../common/AddonMessage";
@@ -193,7 +194,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         let preferredUuid: string = undefined;
         const last = kee.persistentTabStates.get(this.sender.tab.id)?.lastFilledEntry;
         const domain = KeeURL.fromString(this.sender.url ?? msg.findMatches.uri ?? "")?.domainOrIPAddress;
-        if (last && domain && last.domain === domain && last.at > Date.now() - 10 * 60 * 1000 && result?.some(e => e.uuid === last.uuid)) {
+        if (last && sameSite(last.domain, domain) && last.at > Date.now() - 10 * 60 * 1000 && result?.some(e => e.uuid === last.uuid)) {
             preferredUuid = last.uuid;
         }
         this.postMessage({

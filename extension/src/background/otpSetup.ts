@@ -7,6 +7,7 @@ import { Entry } from "../common/model/Entry";
 import type { AddonMessage } from "../common/AddonMessage";
 import { diag } from "./ferryDiag";
 import { rememberAutoFill } from "./otpRepeat";
+import { sameSite } from "../common/relatedDomains";
 
 /*
 otpSetup.ts: Einrichtung eines Zwei-Faktor-Schlüssels (TOTP) von einer Webseite.
@@ -282,7 +283,7 @@ export async function getOtpSetupForPopup(tabId: number) {
     const seen = new Set<string>();
     const last = kee.persistentTabStates.get(tabId)?.lastFilledEntry;
     const found: Entry[] = (await kee.KeePassRPC.findLogins(setup.url, null, null, null, null, null)) ?? [];
-    const ordered = last && last.domain === setup.domain
+    const ordered = last && sameSite(last.domain, setup.domain)
         ? [...found.filter(e => e.uuid === last.uuid), ...found.filter(e => e.uuid !== last.uuid)]
         : found;
     for (const e of ordered.slice(0, 8)) {
@@ -303,7 +304,7 @@ export async function getOtpSetupForPopup(tabId: number) {
         account: setup.account,
         domain: setup.domain,
         candidates,
-        lastFilledUuid: last && last.domain === setup.domain ? last.uuid : null
+        lastFilledUuid: last && sameSite(last.domain, setup.domain) ? last.uuid : null
     };
 }
 

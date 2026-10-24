@@ -1,4 +1,5 @@
 import { offerPendingOtpSetup } from "./otpSetup";
+import { sameSite } from "../common/relatedDomains";
 import { diag } from "./ferryDiag";
 import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
 import { KeeURL } from "../common/KeeURL";
@@ -528,7 +529,7 @@ class Kee {
         let chosen: { uuid: string; dbFileName: string } = null;
         let result: { code: string; remainingSeconds: number; period: number } = null;
         const last = this.persistentTabStates.get(tabId)?.lastFilledEntry;
-        if (last && last.domain === domain && last.at > Date.now() - 15 * 60 * 1000) {
+        if (last && sameSite(last.domain, domain) && last.at > Date.now() - 15 * 60 * 1000) {
             chosen = { uuid: last.uuid, dbFileName: last.dbFileName };
             result = await getTotp(chosen);
             diag("hintergrund", "otp kandidaten", {
@@ -647,7 +648,7 @@ class Kee {
             const result: Entry[] = [];
             const last = this.persistentTabStates.get(tabId)?.lastFilledEntry;
             const domain = KeeURL.fromString(tab.url)?.domainOrIPAddress;
-            if (last && domain && last.domain === domain) {
+            if (last && sameSite(last.domain, domain)) {
                 const lastEntries: Entry[] = (await timeout(this.KeePassRPC.findLogins(tab.url, null, last.uuid, last.dbFileName, null, null))) ?? [];
                 result.push(...lastEntries.filter(e => e.uuid === last.uuid));
             }

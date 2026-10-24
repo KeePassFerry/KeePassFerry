@@ -84,6 +84,13 @@ export function relatedDomains(domain: string): string[] {
     return group ? group.filter(d => d !== domain.toLowerCase()) : [];
 }
 
+// Gleiche Website im Sinne von "zuletzt gewählter Eintrag": gleiche Domain oder dieselbe Anbieter-Gruppe
+// (z. B. Benutzername auf login.microsoftonline.com, Kennwort danach auf login.live.com)
+export function sameSite(a: string, b: string): boolean {
+    if (!a || !b) return false;
+    return a.toLowerCase() === b.toLowerCase() || relatedDomains(a).includes(b.toLowerCase());
+}
+
 // Liegt der Hostname in einer der Domains (Domain selbst oder Subdomain davon)?
 export function hostInDomains(hostname: string, domains: string[]): string {
     const host = (hostname ?? "").toLowerCase();

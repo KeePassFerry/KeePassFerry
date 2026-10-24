@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { hostInDomains, relatedDomains } from "../common/relatedDomains";
+import { hostInDomains, relatedDomains, sameSite } from "../common/relatedDomains";
+
+describe("sameSite", () => {
+    it("Folgeseite einer mehrstufigen Microsoft-Anmeldung gilt als dieselbe Website", () => {
+        expect(sameSite("microsoftonline.com", "live.com")).toBe(true);
+        expect(sameSite("example.com", "example.com")).toBe(true);
+        expect(sameSite("live.com", "google.com")).toBe(false);
+        expect(sameSite("example.com", "example.org")).toBe(false);
+        expect(sameSite(null, "live.com")).toBe(false);
+    });
+});
 import { KeeURL } from "../common/KeeURL";
 
 describe("relatedDomains", () => {
