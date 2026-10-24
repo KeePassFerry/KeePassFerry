@@ -110,9 +110,18 @@ namespace KeePassFerry
 
             string args = "/SILENT /SP- /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /DIR=\"" + keepassDir + "\""
                 + (needsAdmin ? "" : " /CURRENTUSER");
+            var start = new ProcessStartInfo(path, args) { UseShellExecute = true };
+            // Aus dem Browser gestartet ist KeePass nicht im Vordergrund: die Windows-Abfrage (UAC) erschiene dann nur
+            // blinkend in der Taskleiste. Deshalb KeePass nach vorne holen und die Abfrage an sein Fenster hängen.
+            IntPtr owner = BringMainWindowForward();
+            if (owner != IntPtr.Zero)
+            {
+                start.ErrorDialog = true;
+                start.ErrorDialogParentHandle = owner;
+            }
             try
             {
-                Process.Start(new ProcessStartInfo(path, args) { UseShellExecute = true });
+                Process.Start(start);
                 return "started";
             }
             catch (Win32Exception ex)
@@ -124,6 +133,27 @@ namespace KeePassFerry
             {
                 return "start_failed";
             }
+        }
+
+        // Hauptfenster von KeePass in den Vordergrund (auf dem UI-Thread); liefert sein Handle oder IntPtr.Zero
+        private static IntPtr BringMainWindowForward()
+        {
+            var main = KeePass.Program.MainForm;
+            if (main == null || main.IsDisposed || !main.IsHandleCreated) return IntPtr.Zero;
+            IntPtr handle = IntPtr.Zero;
+            try
+            {
+                main.Invoke(new System.Windows.Forms.MethodInvoker(delegate
+                {
+                    if (main.Visible) FerryForeground.Bring(main);
+                    handle = main.Handle;
+                }));
+            }
+            catch (Exception)
+            {
+                return IntPtr.Zero;
+            }
+            return handle;
         }
 
         // RSA (PKCS#1 v1.5, SHA-256) gegen den eingebauten öffentlichen Release-Schlüssel

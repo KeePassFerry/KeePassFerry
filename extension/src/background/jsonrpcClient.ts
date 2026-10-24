@@ -221,6 +221,8 @@ export class jsonrpcClient {
     async startPluginUpdate(): Promise<string> {
         const sessionManager = this.kprpcClient.getPrimarySessionManager();
         if (!sessionManager) return null;
+        // KeePass darf nach vorne: sonst erscheint die Windows-Abfrage (UAC) für das Setup nur in der Taskleiste
+        this.kprpcClient.allowKeePassForeground();
         const responses = await this.kprpcClient.request([sessionManager], "StartPluginUpdate", []);
         return responses?.[0]?.resultWrapper?.result ?? null;
     }
