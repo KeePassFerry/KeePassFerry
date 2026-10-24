@@ -637,14 +637,15 @@ class Kee {
     }
 
     // Popup auf Seiten ohne Anmeldeformular (z. B. Zwei-Faktor-Abfrage): Einträge dieser Website, der im Tab
-    // zuletzt benutzte zuerst. Höchstens 1,5 s warten, damit das Popup nicht hängt.
+    // zuletzt benutzte zuerst, dann direkte Treffer, dann über zugehörige Domains. Höchstens 2,5 s warten
+    // (mit zugehörigen Domains sind es zwei Suchen), damit das Popup nicht hängt.
     async siteEntriesForPopup(tabId: number): Promise<Entry[]> {
         try {
             if (!this.store.state.connected || this.store.state.KeePassDatabases.length === 0) return [];
             const tab = await chrome.tabs.get(tabId);
             if (!tab?.url || !/^https?:/.test(tab.url)) return [];
             const timeout = <T>(p: Promise<T>) =>
-                Promise.race([p, new Promise<T>(resolve => self.setTimeout(() => resolve(null), 1500))]);
+                Promise.race([p, new Promise<T>(resolve => self.setTimeout(() => resolve(null), 2500))]);
 
             const result: Entry[] = [];
             const last = this.persistentTabStates.get(tabId)?.lastFilledEntry;
@@ -655,7 +656,8 @@ class Kee {
             }
             const found: Entry[] = (await timeout(this.KeePassRPC.findLogins(tab.url, null, null, null, null, null))) ?? [];
             for (const e of found) if (!result.some(r => r.uuid === e.uuid)) result.push(e);
-            return result.slice(0, 10);
+            // Seiten großer Anbieter (z. B. Microsoft) passen mit zugehörigen Domains zu vielen Einträgen; die Liste scrollt
+            return result.slice(0, 30);
         } catch (e) {
             KeeLog.debug("siteEntriesForPopup failed: " + e);
             return [];
