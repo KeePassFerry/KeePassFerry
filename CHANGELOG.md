@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.7 – 2026-10-24
+
+- Notes, custom fields (e.g. recovery codes) and attachments of an entry are shown in the expanded entry and in the
+  edit window; the list marks entries with notes or attachments. A click on the text opens a preview (images, notes,
+  protected values only on request); images, PDF, text and notes can be opened with the default Windows app (via the
+  plugin: encrypted, read-only temporary copy that is deleted after two minutes, on lock and on exit).
+- Edit window: notes and custom fields can be edited and removed, pasted images can be named and renamed; all changes
+  are applied with "Save". Removing additionally detected fields is only marked until "Save" (undo possible);
+  username and password can no longer be removed. Saving only additions no longer leaves the popup in edit mode.
+- Paste from the clipboard by button instead of a global Ctrl+V; the optional clipboard permission is granted in the
+  settings. Editing an entry keeps its URLs and fields and no longer shows the "different website" warning.
+- Saving: the same username rule as for filling (no more "full name" as username), the site name as entry title.
+- Matched logins list: width from the longest entry, full text as tooltip.
+- One-time codes: no filling into hidden fields (e.g. inside a collapsed section), the same code is never filled in
+  automatically twice on the same page (pages that submit by themselves and reload no longer loop), code fields
+  that appear later (expanded section, dialog) are found, and the field icon is also shown for code inputs placed
+  over drawn digit boxes. A found but unsaved two-factor key is offered again when the popup is opened.
+- Tooltips on all icon buttons, missing texts in the settings added.
+- The extension needs plugin 1.0.7 (new functions for attachments and notes); older plugins get the update notice.
+
 ## 1.0.6 – 2026-10-22
 
 - Google Chrome: the plugin accepts the KeePassFerry extension from the Chrome Web Store; the setup offers to open

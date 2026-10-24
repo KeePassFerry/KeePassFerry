@@ -1,6 +1,6 @@
 // Kleinste Plugin-Version, mit der diese Erweiterung vollständig zusammenarbeitet. Bei Änderungen am Plugin, die die
 // Erweiterung voraussetzt, hier erhöhen: ältere Plugins bekommen dann den Hinweis "bitte aktualisieren".
-export const MIN_PLUGIN_VERSION = "1.0.4";
+export const MIN_PLUGIN_VERSION = "1.0.7";
 
 // Version aus der Fähigkeitsliste des Plugins ("KEEPASSFERRY_VERSION_1.2.3"); null bei Plugins vor 1.0.4
 export function pluginVersionFrom(features: string[]): string {
