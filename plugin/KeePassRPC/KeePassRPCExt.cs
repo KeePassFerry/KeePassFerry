@@ -543,19 +543,7 @@ Technical detail: " + ex.Message);
                     "KeePassFerry " + latest + " ist verfügbar (installiert: " + installed + ").\r\n\r\nJetzt aktualisieren? KeePass wird dafür kurz beendet und danach wieder gestartet. Speichere vorher offene Änderungen.",
                     "KeePassFerry " + latest + " is available (installed: " + installed + ").\r\n\r\nUpdate now? KeePass will close briefly and restart. Save open changes first."),
                     "KeePassFerry", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
-            string result = FerryUpdater.Run(false);
-            if (result == "signature_invalid" || result == "checksum_mismatch")
-            {
-                MessageBox.Show(FerryText.T("Das Update wurde nicht installiert: Die Dateien im Release sind nicht korrekt signiert (" + result + ").\r\n\r\nBitte lade das Setup jetzt nicht herunter und melde das Problem auf GitHub.",
-                    "The update was not installed: the release files are not correctly signed (" + result + ").\r\n\r\nPlease do not download the setup for now and report the problem on GitHub."), "KeePassFerry",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            else if (result != "started" && result != "cancelled" && result != "uptodate")
-            {
-                MessageBox.Show(FerryText.T("Das Update konnte nicht gestartet werden (" + result + "). Lade das Setup bitte von GitHub herunter.",
-                    "The update could not be started (" + result + "). Please download the setup from GitHub."), "KeePassFerry",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
+            FerryUpdater.ReportResult(FerryUpdater.Run(false));
         }
 
         /// <summary>

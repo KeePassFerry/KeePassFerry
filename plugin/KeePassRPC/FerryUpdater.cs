@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Windows.Forms;
 using KeePass.Util;
 
 namespace KeePassFerry
@@ -63,15 +64,25 @@ namespace KeePassFerry
         /// </summary>
         internal static string Run(bool onlyIfNewer)
         {
+            string result = RunSteps(onlyIfNewer);
+            Log("ergebnis " + result);
+            return result;
+        }
+
+        private static string RunSteps(bool onlyIfNewer)
+        {
+            Log("start installiert=" + InstalledVersion);
             if (onlyIfNewer)
             {
                 string latest = LatestVersion();
+                Log("neueste=" + (latest ?? "nicht abrufbar"));
                 if (latest == null) return "download_failed";
                 if (!IsNewer(latest, InstalledVersion)) return "uptodate";
             }
 
             byte[] sums = Download(ReleaseUrl + SumsName);
             byte[] signature = Download(ReleaseUrl + SignatureName);
+            Log("pruefsummen=" + (sums == null ? "fehlt" : sums.Length.ToString()) + " signatur=" + (signature == null ? "fehlt" : signature.Length.ToString()));
             if (sums == null || signature == null) return "download_failed";
             if (!SignatureValid(sums, signature)) return "signature_invalid";
 
@@ -93,6 +104,7 @@ namespace KeePassFerry
             if (!IsNewer(offered, InstalledVersion)) return "uptodate";
 
             byte[] setup = Download(ReleaseUrl + SetupName);
+            Log("setup=" + (setup == null ? "fehlt" : setup.Length.ToString()) + " angeboten=" + offered);
             if (setup == null || setup.Length == 0) return "download_failed";
             string actual;
             using (var sha = SHA256.Create())
@@ -119,6 +131,7 @@ namespace KeePassFerry
                 start.ErrorDialog = true;
                 start.ErrorDialogParentHandle = owner;
             }
+            Log("setup starten admin=" + needsAdmin + " fenster=" + (owner != IntPtr.Zero));
             try
             {
                 Process.Start(start);
@@ -127,11 +140,58 @@ namespace KeePassFerry
             catch (Win32Exception ex)
             {
                 // 1223: Benutzer hat die Windows-Abfrage (UAC) abgelehnt
+                Log("start fehler " + ex.NativeErrorCode + " " + ex.Message);
                 return ex.NativeErrorCode == 1223 ? "cancelled" : "start_failed";
+            }
+            catch (Exception ex)
+            {
+                Log("start fehler " + ex.GetType().Name + " " + ex.Message);
+                return "start_failed";
+            }
+        }
+
+        /// <summary>
+        /// "Jetzt aktualisieren" aus dem Browser: läuft in KeePass (UI-Thread), nicht auf dem Kanal zum Browser –
+        /// sonst blockiert ein langer Download oder die Windows-Abfrage alle weiteren Anfragen der Erweiterung.
+        /// Ergebnis meldet KeePass selbst (wie der Menüpunkt "Nach Updates suchen").
+        /// </summary>
+        internal static void RunFromBrowser()
+        {
+            ReportResult(Run(true));
+        }
+
+        /// <summary>Meldung zum Ergebnis von Run (nur bei Fehlern; "started"/"uptodate"/"cancelled" ohne Meldung)</summary>
+        internal static void ReportResult(string result)
+        {
+            if (result == "signature_invalid" || result == "checksum_mismatch")
+            {
+                MessageBox.Show(FerryText.T("Das Update wurde nicht installiert: Die Dateien im Release sind nicht korrekt signiert (" + result + ").\r\n\r\nBitte lade das Setup jetzt nicht herunter und melde das Problem auf GitHub.",
+                    "The update was not installed: the release files are not correctly signed (" + result + ").\r\n\r\nPlease do not download the setup for now and report the problem on GitHub."), "KeePassFerry",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else if (result != "started" && result != "cancelled" && result != "uptodate")
+            {
+                MessageBox.Show(FerryText.T("Das Update konnte nicht gestartet werden (" + result + "). Lade das Setup bitte von GitHub herunter.",
+                    "The update could not be started (" + result + "). Please download the setup from GitHub."), "KeePassFerry",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        // Update-Schritte ins Diagnoseprotokoll der Erweiterung – nur wenn es existiert (Diagnose wurde eingeschaltet)
+        private static readonly object LogLock = new object();
+        internal static void Log(string message)
+        {
+            try
+            {
+                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "KeePassFerry", "diagnose.log");
+                if (!File.Exists(path)) return;
+                lock (LogLock)
+                    File.AppendAllText(path, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " plugin update " + message + "\r\n",
+                        new System.Text.UTF8Encoding(false));
             }
             catch (Exception)
             {
-                return "start_failed";
+                // Protokoll ist nur Hilfe
             }
         }
 
@@ -192,6 +252,9 @@ namespace KeePassFerry
                     if (!AllowedHost(uri)) return null;
                     var request = (HttpWebRequest)WebRequest.Create(uri);
                     request.AllowAutoRedirect = false;
+                    // Klare Grenzen statt der .NET-Vorgaben (100 s bzw. 300 s je Lesevorgang)
+                    request.Timeout = 30000;
+                    request.ReadWriteTimeout = 30000;
                     request.UserAgent = "KeePassFerry/" + InstalledVersion;
                     request.Headers[HttpRequestHeader.CacheControl] = "no-cache";
                     using (var response = (HttpWebResponse)request.GetResponse())
@@ -215,8 +278,9 @@ namespace KeePassFerry
                 }
                 return null;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Log("download fehler " + new Uri(url).AbsolutePath + ": " + ex.GetType().Name + " " + ex.Message);
                 return null;
             }
         }

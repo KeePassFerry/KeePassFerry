@@ -73,14 +73,20 @@ namespace KeePassFerry
     public partial class KeePassRPCService
     {
         /// <summary>
-        /// Plugin per Setup aktualisieren (Knopf "Jetzt aktualisieren" in der Erweiterung). Lädt das neueste Setup
-        /// von GitHub, prüft die Prüfsumme und startet es still; KeePass wird dabei beendet und neu gestartet.
-        /// Ergebnis siehe FerryUpdater.Run.
+        /// Plugin per Setup aktualisieren (Knopf "Jetzt aktualisieren" in der Erweiterung). Prüft nur kurz, ob es eine
+        /// neuere Version gibt, und antwortet sofort. Download, Signaturprüfung und Setup-Start laufen danach in KeePass
+        /// (UI-Thread, wie "Nach Updates suchen"), damit dieser Kanal nicht blockiert; Fehler meldet KeePass selbst.
+        /// Ergebnis: "started", "uptodate" oder "download_failed".
         /// </summary>
         [JsonRpcMethod]
         public string StartPluginUpdate()
         {
-            return FerryUpdater.Run(true);
+            FerryUpdater.Log("anfrage aus dem browser");
+            string latest = FerryUpdater.LatestVersion();
+            if (latest == null) return "download_failed";
+            if (!FerryUpdater.IsNewer(latest, FerryUpdater.InstalledVersion)) return "uptodate";
+            _host.MainWindow.BeginInvoke(new System.Windows.Forms.MethodInvoker(FerryUpdater.RunFromBrowser));
+            return "started";
         }
     }
 
