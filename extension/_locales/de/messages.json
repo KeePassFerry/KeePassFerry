@@ -1294,5 +1294,13 @@
     "ferry_notes_file_name": {
         "message": "$1 – Notizen",
         "description": "KeePassFerry"
+    },
+    "website_options_search_placeholder": {
+        "message": "Website suchen oder eingeben (z. B. example.com)",
+        "description": "KeePassFerry"
+    },
+    "website_options_search_tooltip": {
+        "message": "Ab zwei Zeichen werden vorhandene Website-Einstellungen gesucht; „Hinzufügen“ legt eine neue an.",
+        "description": "KeePassFerry"
     }
 }
