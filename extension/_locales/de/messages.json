@@ -1227,6 +1227,14 @@
         "message": "Mit Notizen",
         "description": "KeePassFerry"
     },
+    "ferry_extras_has_passkey": {
+        "message": "Mit Passkey",
+        "description": "KeePassFerry"
+    },
+    "ferry_extras_has_otp": {
+        "message": "Mit OTP (Zwei-Faktor-Code)",
+        "description": "KeePassFerry"
+    },
     "ferry_extras_attachment_count": {
         "message": "Anhänge: $1",
         "description": "KeePassFerry"

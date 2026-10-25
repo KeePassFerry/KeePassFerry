@@ -20,6 +20,14 @@
                         <tabler-note class="ferry-ico" />
                         <v-tooltip location="top" activator="parent">{{ $i18n("ferry_extras_has_notes") }}</v-tooltip>
                     </span>
+                    <span v-if="entrySummary.hasPasskey" class="ferry-entry-mark">
+                        <tabler-fingerprint class="ferry-ico" />
+                        <v-tooltip location="top" activator="parent">{{ $i18n("ferry_extras_has_passkey") }}</v-tooltip>
+                    </span>
+                    <span v-if="entrySummary.hasOtp" class="ferry-entry-mark">
+                        <tabler-shield-lock class="ferry-ico" />
+                        <v-tooltip location="top" activator="parent">{{ $i18n("ferry_extras_has_otp") }}</v-tooltip>
+                    </span>
                     <span v-if="entrySummary.attachmentCount" class="ferry-entry-mark">
                         <tabler-paperclip class="ferry-ico" />
                         <v-tooltip location="top" activator="parent">

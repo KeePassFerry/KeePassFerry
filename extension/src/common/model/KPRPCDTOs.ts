@@ -88,6 +88,9 @@ export class EntryDto {
     // KeePassFerry-Plugin ab 1.0.7
     hasNotes?: boolean;
     attachmentCount?: number;
+    // KeePassFerry-Plugin ab 1.0.9
+    hasPasskey?: boolean;
+    hasOtp?: boolean;
 }
 
 export class EntrySummaryDto {
@@ -100,6 +103,9 @@ export class EntrySummaryDto {
     // KeePassFerry-Plugin ab 1.0.7
     hasNotes?: boolean;
     attachmentCount?: number;
+    // KeePassFerry-Plugin ab 1.0.9
+    hasPasskey?: boolean;
+    hasOtp?: boolean;
 }
 
 // tslint:disable-next-line:class-name

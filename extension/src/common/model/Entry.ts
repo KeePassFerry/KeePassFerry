@@ -44,9 +44,11 @@ export class Entry {
 
     readonly database: DatabaseSummary;
 
-    // Notizen bzw. Anhänge am Eintrag (Hinweis in der Liste; Inhalt über GetEntryExtras)
+    // Notizen, Anhänge, Passkey bzw. OTP am Eintrag (Hinweis in der Liste; Inhalt über GetEntryExtras)
     readonly hasNotes: boolean;
     readonly attachmentCount: number;
+    readonly hasPasskey: boolean;
+    readonly hasOtp: boolean;
 
     // How relevant this entry is to the current form in
     // the browser - transient (not stored in KeePass)
@@ -75,6 +77,8 @@ export class Entry {
         this.database = e.database || new Database({});
         this.hasNotes = !!e.hasNotes;
         this.attachmentCount = e.attachmentCount || 0;
+        this.hasPasskey = !!e.hasPasskey;
+        this.hasOtp = !!e.hasOtp;
         this.relevanceScore = e.relevanceScore;
         this.lowFieldMatchRatio = e.lowFieldMatchRatio;
         this.formIndex = e.formIndex;
@@ -131,7 +135,9 @@ export class Entry {
             title: entryDto.title,
             fields: sortedFields,
             hasNotes: entryDto.hasNotes,
-            attachmentCount: entryDto.attachmentCount
+            attachmentCount: entryDto.attachmentCount,
+            hasPasskey: entryDto.hasPasskey,
+            hasOtp: entryDto.hasOtp
         });
 
         return entry;

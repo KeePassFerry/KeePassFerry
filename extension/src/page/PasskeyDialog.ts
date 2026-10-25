@@ -87,9 +87,13 @@ const STYLE = `
     .single .radio { display: none; }
     .single .item { cursor: default; }
     .text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-    .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .subtitle { font-size: 12.5px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .badges { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+    /* Titel bis zwei Zeilen, Benutzername vollständig; Badges darunter, damit beides lesbar bleibt */
+    .title {
+        font-weight: 600; overflow-wrap: anywhere;
+        display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+    }
+    .subtitle { font-size: 12.5px; color: #64748b; overflow-wrap: anywhere; }
+    .badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
     .badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
     .badge.green { background: #dcfce7; color: #166534; }
     .badge.amber { background: #fef3c7; color: #92400e; }
@@ -222,6 +226,7 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
             s.textContent = item.subtitle;
             text.append(t, s);
             b.append(radio, text);
+            b.title = item.title + "\n" + item.subtitle;
             if (item.badges?.length) {
                 const badges = document.createElement("span");
                 badges.className = "badges";
@@ -231,7 +236,7 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
                     x.textContent = bd.text;
                     badges.append(x);
                 }
-                b.append(badges);
+                text.append(badges);
             }
             b.addEventListener("click", () => {
                 selected = item;

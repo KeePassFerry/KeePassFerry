@@ -8,9 +8,11 @@ namespace KeePassFerry.Models.DataExchange
         public string UsernameValue;
         public string UsernameName;
         public string IconImageData;
-        // KeePassFerry: Hinweis in der Trefferliste, dass Notizen bzw. Anhänge am Eintrag hängen
+        // KeePassFerry: Hinweis in der Trefferliste, dass Notizen, Anhänge, Passkey bzw. OTP am Eintrag hängen
         public bool HasNotes;
         public int AttachmentCount;
+        public bool HasPasskey;
+        public bool HasOtp;
 
         public LightEntry() { }
 

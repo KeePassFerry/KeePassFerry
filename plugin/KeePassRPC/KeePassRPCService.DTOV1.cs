@@ -209,6 +209,8 @@ namespace KeePassFerry
         {
             target.HasNotes = !string.IsNullOrEmpty(pwe.Strings.ReadSafe(PwDefs.NotesField).Trim());
             target.AttachmentCount = (int)pwe.Binaries.UCount;
+            target.HasPasskey = !string.IsNullOrEmpty(pwe.Strings.ReadSafe(FieldCredentialId));
+            target.HasOtp = Totp.HasTotp(pwe);
         }
 
         private Group GetGroupFromPwGroup(PwGroup pwg)

@@ -18,6 +18,8 @@ export class EntrySummary {
     isPreferredMatch?: boolean;
     hasNotes: boolean;
     attachmentCount: number;
+    hasPasskey: boolean;
+    hasOtp: boolean;
     // Nur über eine zugehörige Domain gefunden (siehe Entry.relatedDomain)
     relatedDomain?: string;
 
@@ -36,6 +38,8 @@ export class EntrySummary {
         this.isPreferredMatch = e.isPreferredMatch;
         this.hasNotes = !!e.hasNotes;
         this.attachmentCount = e.attachmentCount || 0;
+        this.hasPasskey = !!e.hasPasskey;
+        this.hasOtp = !!e.hasOtp;
         this.relatedDomain = e.relatedDomain;
     }
 
@@ -53,6 +57,8 @@ export class EntrySummary {
             isPreferredMatch: entry.isPreferredMatch,
             hasNotes: entry.hasNotes,
             attachmentCount: entry.attachmentCount,
+            hasPasskey: entry.hasPasskey,
+            hasOtp: entry.hasOtp,
             relatedDomain: entry.relatedDomain
         });
     }
@@ -73,7 +79,9 @@ export class EntrySummary {
             uuid: entrySummaryDto.uniqueID,
             dbFileName,
             hasNotes: entrySummaryDto.hasNotes,
-            attachmentCount: entrySummaryDto.attachmentCount
+            attachmentCount: entrySummaryDto.attachmentCount,
+            hasPasskey: entrySummaryDto.hasPasskey,
+            hasOtp: entrySummaryDto.hasOtp
         });
     }
 }
