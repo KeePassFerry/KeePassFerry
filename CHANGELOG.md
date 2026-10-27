@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.9 – 2026-10-27
 
 - Setup: the uninstall entry in Windows now points to the plugin folder instead of the KeePass folder. Third-party
   uninstallers (e.g. HiBit, Revo) offered the whole KeePass folder as leftovers after uninstalling KeePassFerry.
