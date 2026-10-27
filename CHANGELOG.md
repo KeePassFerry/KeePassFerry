@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Setup: the uninstall entry in Windows now points to the plugin folder instead of the KeePass folder. Third-party
+  uninstallers (e.g. HiBit, Revo) offered the whole KeePass folder as leftovers after uninstalling KeePassFerry.
+- Results list: entries with a passkey or a one-time code (OTP) are marked with a small icon.
+- Passkey dialog: entry title and username are shown in full, notes such as "has a passkey" below them.
+- Popup: up to 30 entries for the current site.
+
 ## 1.0.8 – 2026-10-24
 
 - Related domains: an entry for one domain of a provider is also offered on its other domains, e.g. outlook.com on

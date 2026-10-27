@@ -134,6 +134,10 @@ var
   Old: String;
 begin
   if CurStep <> ssPostInstall then Exit;
+  // InstallLocation wäre sonst der KeePass-Ordner ({app}); Deinstallations-Werkzeuge wie HiBit oder Revo bieten
+  // diesen Ordner danach als "Reste" zum Löschen an. "Inno Setup: App Path" bleibt {app} (für Updates).
+  RegWriteStringValue(HKA, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{6E0F2F4B-6C55-4B6E-9A8E-4E4C1F1E8A2D}_is1',
+    'InstallLocation', ExpandConstant('{app}\Plugins\KeePassFerry\'));
   Old := PreviousUninstaller;
   if (Old = '') or (CompareText(Old, ExpandConstant('{uninstallexe}')) = 0) then Exit;
   if CompareText(RemoveBackslash(ExtractFileDir(Old)), RemoveBackslash(ExpandConstant('{app}'))) <> 0 then Exit;
