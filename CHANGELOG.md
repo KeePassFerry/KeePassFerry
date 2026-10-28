@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.12 – 2026-10-28
+
+- Right-click menu no longer asks KeePass to unlock a locked database: while locked it does not query KeePass at all
+  (since 1.0.11 every page load or tab switch triggered the unlock prompt). Once the database has been unlocked, e.g.
+  by clicking the toolbar icon, the menu is rebuilt with the matching entries.
+
 ## 1.0.11 – 2026-10-28
 
 - Right-click menu also lists the matching entries on pages without any login form (e.g. a page with only a search
