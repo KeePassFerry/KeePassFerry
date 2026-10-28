@@ -27,6 +27,9 @@ export class KFCommands {
     private menuActions = new Map<string, MenuAction>();
     private extrasCache = new Map<string, { at: number; names: string[] }>();
     private scheduledUpdate: ReturnType<typeof setTimeout> = null;
+    // Treffer der Tab-Adresse, wenn die Seite selbst keine meldet (kein Anmeldeformular, z. B. nur ein Suchfeld)
+    private tabUrlEntries = new Map<number, { url: string; at: number; entries: Entry[] }>();
+    private tabUrlLookups = new Set<number>();
 
     public init() {
         chrome.commands.onCommand.addListener(command => {
@@ -136,6 +139,23 @@ export class KFCommands {
         if (changed) this.setupContextMenuItems();
     }
 
+    // Wie das Popup selbst nach der Adresse suchen; bei geänderten Treffern Menü neu aufbauen
+    private async lookupTabEntries(tabId: number, url: string) {
+        if (this.tabUrlLookups.has(tabId)) return;
+        this.tabUrlLookups.add(tabId);
+        try {
+            const found: Entry[] = (await kee.findLogins(url, null, null, null, null, null)) ?? [];
+            const before = this.tabUrlEntries.get(tabId);
+            this.tabUrlEntries.set(tabId, { url, at: Date.now(), entries: found });
+            const ids = (list: Entry[]) => list.map(e => e.uuid).join(",");
+            if (!before || before.url !== url || ids(before.entries) !== ids(found)) this.setupContextMenuItems();
+        } catch (e) {
+            KeeLog.warn("Context menu lookup failed: " + e);
+        } finally {
+            this.tabUrlLookups.delete(tabId);
+        }
+    }
+
     // Menüpunkt anlegen; Chrome kennt den Kontext "password" nicht, dann ohne ihn
     private createMenuItem(props: chrome.contextMenus.CreateProperties) {
         const withoutPassword = () =>
@@ -164,6 +184,13 @@ export class KFCommands {
             });
         state.frames.forEach((frame, frameId) => collect(frame.entries, frameId, true));
         state.frames.forEach((frame, frameId) => collect(frame.urlEntries, frameId, false));
+        if (entries.length === 0 && state.url) {
+            const cached = this.tabUrlEntries.get(kee.foregroundTabId);
+            if (cached?.url === state.url) collect(cached.entries, 0, false);
+            if (!cached || cached.url !== state.url || Date.now() - cached.at > EXTRAS_REFRESH_MS) {
+                this.lookupTabEntries(kee.foregroundTabId, state.url);
+            }
+        }
         const customNames = entries.map(
             e => this.extrasCache.get(KFCommands.extrasKey(e.entry.uuid, e.entry.database.fileName))?.names ?? []
         );

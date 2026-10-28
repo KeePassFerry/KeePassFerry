@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Right-click menu also lists the matching entries on pages without any login form (e.g. a page with only a search
+  field); it is rebuilt on every page load in the active tab.
 - Extension: shows "New version for KeePass available" with "Update now" when the plugin is older than the version
   recommended for this extension (not just when it is no longer compatible). No network request is needed for this.
 - Update from KeePass: after the restart a Windows notification reports the result (version old → new, click opens

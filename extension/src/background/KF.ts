@@ -240,6 +240,8 @@ class Kee {
                     if (frameId === 0) {
                         this.offerSaveNotice(tabId);
                         offerPendingOtpSetup(tabId, p.sender.url ?? p.sender.tab.url);
+                        // Neue Seite im aktiven Tab: Kontextmenü auch ohne Anmeldeformular mit den Treffern der Adresse
+                        if (tabId === this.foregroundTabId) commandManager.scheduleContextMenuUpdate();
                     }
                     break;
                 }
