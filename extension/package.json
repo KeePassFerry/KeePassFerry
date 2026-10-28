@@ -2,7 +2,7 @@
   "name": "keepassferry",
   "displayName": "KeePassFerry",
   "description": "Connects your browser with KeePass via native messaging: fill and save logins, one-time codes and passkeys. Based on Kee.",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "type": "module",
   "devDependencies": {
     "@ffflorian/jszip-cli": "^3.6.3",

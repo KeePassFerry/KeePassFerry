@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.11 – 2026-10-28
 
 - Right-click menu also lists the matching entries on pages without any login form (e.g. a page with only a search
   field); it is rebuilt on every page load in the active tab.
