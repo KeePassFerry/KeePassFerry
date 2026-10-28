@@ -2,7 +2,7 @@ import { NativeSessionManager } from "./NativeSession";
 import { SessionType } from "../common/SessionType";
 import { KeeLog } from "../common/Logger";
 import type { Button } from "../common/Button";
-import { FeatureFlags, pluginIsOutdated } from "../common/FeatureFlags";
+import { FeatureFlags, pluginUpdateAvailable } from "../common/FeatureFlags";
 import { KeeNotification } from "../common/KeeNotification";
 import { utils } from "../common/utils";
 import BackgroundStore from "~/store/BackgroundStore";
@@ -170,7 +170,7 @@ export class kprpcClient {
         }
         this.onConnectStartup();
         // Der Store aktualisiert nur die Erweiterung: ein älteres Plugin um ein Update bitten
-        if (pluginIsOutdated(features)) {
+        if (pluginUpdateAvailable(features)) {
             const button: Button = { label: $STR("ferry_plugin_update_button"), action: "startPluginUpdate" };
             kee.notifyUser(
                 new KeeNotification("keepassferry-plugin-update", [button], utils.newGUID(), [$STR("ferry_plugin_update_message")], "Medium")

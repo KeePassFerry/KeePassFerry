@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Extension: shows "New version for KeePass available" with "Update now" when the plugin is older than the version
+  recommended for this extension (not just when it is no longer compatible). No network request is needed for this.
 - Update from KeePass: after the restart a Windows notification reports the result (version old → new, click opens
   the changes), without blocking the unlock prompt; a failed update is reported as well.
 - Browser registration (native messaging host) is checked again when a database is opened and every 15 minutes and

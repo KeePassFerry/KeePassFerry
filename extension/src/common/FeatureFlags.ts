@@ -32,6 +32,16 @@ export function pluginIsOutdated(features: string[]): boolean {
     return !pluginVersionAtLeast(features, MIN_PLUGIN_VERSION);
 }
 
+// Plugin-Version mit den neuesten Funktionen für diese Erweiterung. Nur erhöhen, wenn sich das Plugin im Release
+// geändert hat (nicht bei Releases, die nur die Erweiterung betreffen): ältere Plugins bekommen dann den Hinweis
+// "Neue Version für KeePass verfügbar" mit "Jetzt aktualisieren". Ohne Abfrage im Netz.
+export const RECOMMENDED_PLUGIN_VERSION = "1.0.10";
+
+// true, wenn das Plugin älter als RECOMMENDED_PLUGIN_VERSION ist (oder seine Version nicht meldet)
+export function pluginUpdateAvailable(features: string[]): boolean {
+    return !pluginVersionAtLeast(features, RECOMMENDED_PLUGIN_VERSION);
+}
+
 export class FeatureFlags {
     public static readonly offered: string[] = [
         // Full feature set as of KeeFox 1.6
