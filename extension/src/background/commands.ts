@@ -111,6 +111,12 @@ export class KFCommands {
         return dbFileName + "|" + uuid;
     }
 
+    // Jede Plugin-Anfrage bei gesperrter Datenbank stößt in KeePass die Entsperrabfrage an (EnsureDBisOpen).
+    // Das Menü fragt deshalb nur bei offener Datenbank an; entsperrt wird nur durch den Nutzer (z. B. Klick aufs Symbol).
+    private static databaseOpen() {
+        return kee.store.state.connected && kee.store.state.KeePassDatabases.length > 0;
+    }
+
     // Eigene Felder eines Eintrags wurden im Popup geändert: Menü sofort mit den neuen Namen aufbauen
     public entryExtrasChanged(uuid: string, dbFileName: string) {
         this.extrasCache.delete(KFCommands.extrasKey(uuid, dbFileName));
@@ -119,6 +125,7 @@ export class KFCommands {
 
     // Namen eigener Felder im Hintergrund holen (Plugin vor 1.0.7: keine); bei Änderungen Menü neu aufbauen
     private async refreshCustomFieldNames(entries: Entry[]) {
+        if (!KFCommands.databaseOpen()) return;
         let changed = false;
         await Promise.all(
             entries.map(async e => {
@@ -141,7 +148,7 @@ export class KFCommands {
 
     // Wie das Popup selbst nach der Adresse suchen; bei geänderten Treffern Menü neu aufbauen
     private async lookupTabEntries(tabId: number, url: string) {
-        if (this.tabUrlLookups.has(tabId)) return;
+        if (this.tabUrlLookups.has(tabId) || !KFCommands.databaseOpen()) return;
         this.tabUrlLookups.add(tabId);
         try {
             const found: Entry[] = (await kee.findLogins(url, null, null, null, null, null)) ?? [];
@@ -243,7 +250,13 @@ export class KFCommands {
         try {
             await chrome.contextMenus.removeAll();
             this.menuActions.clear();
-            if (store.state.connected) this.addEntryMenus();
+            if (KFCommands.databaseOpen()) {
+                this.addEntryMenus();
+            } else {
+                // Gesperrt: keine Einträge (samt Werten) aus der Zeit vor dem Sperren behalten
+                this.tabUrlEntries.clear();
+                this.extrasCache.clear();
+            }
 
             chrome.contextMenus.create({
                 type: "separator",
