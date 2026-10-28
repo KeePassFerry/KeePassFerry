@@ -2,7 +2,7 @@ import { diag } from "./ferryDiag";
 import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup, parseOtpauth } from "./otpSetup";
 import { forgetAutoFill } from "./otpRepeat";
 import { queryPageFields, fillPageField } from "./pageFields";
-import { pluginIsOutdated, pluginVersionFrom } from "../common/FeatureFlags";
+import { FIELD_PROTECTION_FEATURE, pluginIsOutdated, pluginVersionFrom } from "../common/FeatureFlags";
 import { isFirefox } from "webext-detect-page";
 import { kee, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
 import { commandManager } from "./commands";
@@ -226,7 +226,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     ...s,
                     databases: kee.store.state.KeePassDatabases.map(db => db.name || db.fileName),
                     pluginVersion: s.connected ? pluginVersionFrom(features) : null,
-                    pluginOutdated: s.connected ? pluginIsOutdated(features) : false
+                    pluginOutdated: s.connected ? pluginIsOutdated(features) : false,
+                    fieldProtection: s.connected && (features ?? []).includes(FIELD_PROTECTION_FEATURE)
                 };
             });
             break;
@@ -262,6 +263,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             break;
         case "updateEntryText":
             work = kee.KeePassRPC.updateEntryText(msg.uuid, msg.dbFileName, msg.name ?? "", msg.value ?? "", !!msg.toNotes);
+            break;
+        case "setEntryFieldProtection":
+            work = kee.KeePassRPC.setEntryFieldProtection(msg.uuid, msg.dbFileName, msg.name ?? "", !!msg.protect);
             break;
         case "setTotp":
             // Aus dem Popup eingefügter Schlüssel/QR-Code; nur gültige otpauth-TOTP-URIs

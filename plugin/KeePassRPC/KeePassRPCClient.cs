@@ -48,7 +48,10 @@ namespace KeePassFerry
             "KPRPC_SECURITY_FIX_20200729",
 
             // Can send new DTO format
-            "KPRPC_FEATURE_DTO_V2"
+            "KPRPC_FEATURE_DTO_V2",
+
+            // KeePassFerry: Schutz eigener Felder umschalten (SetEntryFieldProtection)
+            "KEEPASSFERRY_FIELD_PROTECTION"
         };
 
         // Zusätzlich die Produktversion des Plugins ("KEEPASSFERRY_VERSION_1.2.3"): Die Erweiterung erkennt daran ein

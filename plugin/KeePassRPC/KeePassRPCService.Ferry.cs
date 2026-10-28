@@ -307,6 +307,28 @@ namespace KeePassFerry
         }
 
         /// <summary>
+        /// Schaltet den Schutz eines vorhandenen eigenen Felds um ("Wert im Speicher schützen" in KeePass).
+        /// Vorher wandert der alte Stand in die Eintragshistorie. Standard- und interne Felder bleiben unberührt.
+        /// </summary>
+        [JsonRpcMethod]
+        public bool SetEntryFieldProtection(string uuid, string dbFileName, string name, bool protect)
+        {
+            if (!EnsureDBisOpen() || string.IsNullOrEmpty(name) || IsReservedStringName(name)) return false;
+            PwDatabase db;
+            PwEntry entry = FindFerryEntry(uuid, dbFileName, out db);
+            if (entry == null) return false;
+            ProtectedString old = entry.Strings.Get(name);
+            if (old == null) return false;
+            if (old.IsProtected == protect) return true;
+
+            entry.CreateBackup(db);
+            entry.Strings.Set(name, old.WithProtection(protect));
+            entry.Touch(true);
+            _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), db);
+            return true;
+        }
+
+        /// <summary>
         /// Entfernt ein eigenes Textfeld (kind "field"), einen Anhang (kind "attachment") oder leert die Notizen (kind "notes").
         /// Vorher wandert der alte Stand in die Eintragshistorie. Standard- und interne Felder bleiben unberührt.
         /// </summary>

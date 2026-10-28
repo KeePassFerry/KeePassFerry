@@ -8,7 +8,7 @@
                 <tabler-paperclip v-if="r.type === 'attachment'" class="ferry-ico" />
                 <tabler-shield-lock v-else-if="r.type === 'totp'" class="ferry-ico" />
                 <tabler-note v-else-if="r.type === 'notes'" class="ferry-ico" />
-                <tabler-lock v-else-if="r.isProtected" class="ferry-ico" />
+                <tabler-lock v-else-if="shownProtected(r)" class="ferry-ico" />
                 <tabler-text-caption v-else class="ferry-ico" />
             </span>
             <span v-if="renaming === r.key" class="ferry-extra-text">
@@ -71,6 +71,9 @@
                 {{ $i18n("ferry_extras_notes_cleared") }}
             </div>
             <div class="ferry-add-row">
+                <v-checkbox
+                    v-if="editing.type === 'field' && (editing.isNew || protectionSupported)" v-model="editProtect"
+                    :label="$i18n('ferry_add_protect')" hide-details />
                 <v-spacer />
                 <v-btn variant="tonal" color="primary" :disabled="!canApplyEdit" @click="applyEdit">
                     {{ $i18n("ferry_extras_apply") }}
@@ -173,6 +176,8 @@ interface Row {
     blob?: Blob;
     // Geänderter Wert eines vorhandenen Felds bzw. der Notizen (wird mit "Speichern" geschrieben)
     newValue?: string;
+    // Geänderter Schutz eines vorhandenen Felds (wird mit "Speichern" geschrieben)
+    newProtect?: boolean;
 }
 
 let nextKey = 1;
@@ -185,7 +190,11 @@ export default {
         kind: "recovery",
         name: "",
         value: "",
+        // Geschützt sind standardmäßig nur Wiederherstellungscodes (siehe kindChanged)
         protect: true,
+        // Plugin kann den Schutz vorhandener Felder umschalten
+        protectionSupported: false,
+        editProtect: false,
         pendingImage: null as File,
         adding: false,
         // Älteres Plugin ohne GetEntryExtras/AddEntryText: Bereich nur mit Hinweis
@@ -230,7 +239,7 @@ export default {
             return true;
         },
         hasChanges: function (): boolean {
-            return this.staged.length > 0 || this.existing.some(r => r.removed || r.newValue !== undefined);
+            return this.staged.length > 0 || this.existing.some(r => r.removed || r.newValue !== undefined || r.newProtect !== undefined);
         },
         // Leere Notizen sind erlaubt (= Notizen leeren), ein Feld braucht einen Wert
         canApplyEdit: function (): boolean {
@@ -248,6 +257,10 @@ export default {
     mounted: function () {
         this.name = this.$i18n("ferry_add_kind_recovery");
         this.loadExisting();
+        chrome.runtime
+            .sendMessage({ keepassferry: "connectionStatus" })
+            .then(s => (this.protectionSupported = !!s?.fieldProtection))
+            .catch(() => undefined);
     },
     methods: {
         uriFor: function (v: string): string {
@@ -266,6 +279,7 @@ export default {
             this.clipboardNotice = null;
             if (this.kind === "recovery") this.name = this.$i18n("ferry_add_kind_recovery");
             if (this.kind === "custom") this.name = "";
+            this.protect = this.kind === "recovery";
             this.focusValue();
         },
         openAdd: function () {
@@ -493,6 +507,9 @@ export default {
         currentValue: function (r: Row): string {
             return r.newValue !== undefined ? r.newValue : r.value;
         },
+        shownProtected: function (r: Row): boolean {
+            return r.newProtect !== undefined ? r.newProtect : !!r.isProtected;
+        },
         // Notiz oder Feld bearbeiten; geschützte vorhandene Werte werden erst jetzt aus KeePass geholt
         startEdit: async function (r: Row) {
             this.error = null;
@@ -509,6 +526,7 @@ export default {
                 r.value = value;
             }
             this.editValue = value;
+            this.editProtect = this.shownProtected(r);
             this.editing = r;
             this.$nextTick(() => (this.$refs.editForm as HTMLElement)?.scrollIntoView({ block: "nearest" }));
         },
@@ -519,7 +537,11 @@ export default {
             if (r.isNew) r.value = value;
             else if (value === (r.value ?? "").trim()) r.newValue = undefined;
             else r.newValue = value;
-            r.sub = r.isProtected ? "••••••••" : value.slice(0, 60);
+            if (r.type === "field") {
+                if (r.isNew) r.isProtected = this.editProtect;
+                else if (this.protectionSupported) r.newProtect = this.editProtect !== !!r.isProtected ? this.editProtect : undefined;
+            }
+            r.sub = this.shownProtected(r) ? "••••••••" : value.slice(0, 60);
             // Leere Notizen = Notizen entfernen
             if (!r.isNew && r.type === "notes" && !value) {
                 r.newValue = undefined;
@@ -546,6 +568,11 @@ export default {
             for (const r of this.existing.filter(x => !x.removed && x.newValue !== undefined)) {
                 const toNotes = r.type === "notes";
                 const result = await send({ keepassferry: "updateEntryText", name: toNotes ? "" : r.name, value: r.newValue, toNotes })
+                    .catch(() => false);
+                if (!result) ok = false;
+            }
+            for (const r of this.existing.filter(x => !x.removed && x.newProtect !== undefined)) {
+                const result = await send({ keepassferry: "setEntryFieldProtection", name: r.name, protect: r.newProtect })
                     .catch(() => false);
                 if (!result) ok = false;
             }

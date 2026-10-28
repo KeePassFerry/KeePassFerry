@@ -273,6 +273,14 @@ export class jsonrpcClient {
         return responses?.[0]?.resultWrapper?.result ?? null;
     }
 
+    // Schutz eines vorhandenen eigenen Felds umschalten (Plugin mit KEEPASSFERRY_FIELD_PROTECTION)
+    async setEntryFieldProtection(uuid: string, dbFileName: string, name: string, protect: boolean): Promise<boolean> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return false;
+        const responses = await this.kprpcClient.request([sessionManager], "SetEntryFieldProtection", [uuid, dbFileName, name, protect]);
+        return !!responses?.[0]?.resultWrapper?.result;
+    }
+
     // Eigenes Feld (kind "field") oder Anhang (kind "attachment") entfernen
     async removeEntryExtra(uuid: string, dbFileName: string, kind: string, name: string): Promise<boolean> {
         const sessionManager = this.sessionManagerForFilename(dbFileName);
