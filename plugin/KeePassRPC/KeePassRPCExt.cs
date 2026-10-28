@@ -157,16 +157,12 @@ Technical detail: " + ex.Message);
                     return false;
                 }
 
-                try
-                {
-                    string registrationError = NativeHostRegistration.Register();
-                    if (registrationError != null && logger != null)
-                        logger.WriteLine("Native messaging host not registered: " + registrationError);
-                }
-                catch (Exception ex)
-                {
-                    if (logger != null) logger.WriteLine("Native messaging host registration failed: " + ex);
-                }
+                EnsureHostRegistration();
+                // Selbstheilend: fehlt die Registrierung später (z. B. durch ein Aufräumprogramm), trägt das Plugin sie
+                // beim Öffnen einer Datenbank und alle 15 Minuten wieder ein; geschrieben wird nur bei Abweichungen
+                _registrationTimer = new System.Windows.Forms.Timer { Interval = 15 * 60 * 1000 };
+                _registrationTimer.Tick += delegate { EnsureHostRegistration(); };
+                _registrationTimer.Start();
                 if (logger != null) logger.WriteLine("RPC server started.");
 
                 // Reste geöffneter Anhang-Kopien (z. B. nach einem Absturz)
@@ -192,7 +188,85 @@ Technical detail: " + ex.Message);
                 return false;
             }
             if (logger != null) logger.WriteLine("KPRPC startup succeeded.");
+            ShowUpdateResultSoon();
             return true; // Initialization successful
+        }
+
+        private System.Windows.Forms.Timer _registrationTimer;
+
+        private void EnsureHostRegistration()
+        {
+            try
+            {
+                string registrationError = NativeHostRegistration.Register();
+                if (registrationError != null && logger != null)
+                    logger.WriteLine("Native messaging host not registered: " + registrationError);
+            }
+            catch (Exception ex)
+            {
+                if (logger != null) logger.WriteLine("Native messaging host registration failed: " + ex);
+            }
+        }
+
+        // Nach einem Update aus KeePass (FerryUpdater): einmalig melden, ob die neue Version läuft
+        private void ShowUpdateResultSoon()
+        {
+            string from = _host.CustomConfig.GetString(FerryUpdater.UpdatedFromConfigKey, "");
+            if (string.IsNullOrEmpty(from)) return;
+            _host.CustomConfig.SetString(FerryUpdater.UpdatedFromConfigKey, null);
+            SaveConfigSoon();
+            string now = FerryUpdater.InstalledVersion;
+            bool ok = from != now;
+            string releaseUrl = "https://github.com/KeePassFerry/KeePassFerry/releases/tag/v" + now;
+
+            // Windows-Benachrichtigung über das Symbol im Infobereich: blockiert nichts, auch nicht bei gesperrter
+            // Datenbank (KeePass startet oft minimiert, entsperrt wird erst auf Anfrage des Browsers). Klick: Änderungen
+            var timer = new System.Windows.Forms.Timer { Interval = 2000 };
+            timer.Tick += delegate
+            {
+                NotifyIcon icon = _host.MainWindow.MainNotifyIcon;
+                if (icon != null && icon.Visible)
+                {
+                    timer.Stop();
+                    timer.Dispose();
+                    EventHandler clicked = null;
+                    clicked = delegate
+                    {
+                        icon.BalloonTipClicked -= clicked;
+                        WinUtil.OpenUrl(ok ? releaseUrl : FerryUpdater.ReleasesPage, null);
+                    };
+                    icon.BalloonTipClicked += clicked;
+                    icon.ShowBalloonTip(15000, "KeePassFerry", ok
+                        ? FerryText.T("Erfolgreich aktualisiert: Version " + from + " → " + now + ". Klicken Sie hier für die Änderungen.",
+                            "Updated successfully: version " + from + " → " + now + ". Click here for the changes.")
+                        : FerryText.T("Das Update wurde nicht abgeschlossen; installiert ist weiterhin Version " + now + ". Klicken Sie hier für das Setup.",
+                            "The update was not completed; version " + now + " is still installed. Click here for the setup."),
+                        ok ? ToolTipIcon.Info : ToolTipIcon.Warning);
+                    return;
+                }
+                // Ohne Symbol im Infobereich: Dialog, aber erst wenn kein KeePass-Dialog offen und die Datenbank
+                // entsperrt ist (sonst kämpft er mit der Entsperr-Abfrage um den Vordergrund)
+                if (GlobalWindowManager.WindowCount > 0 ||
+                    !_host.MainWindow.IsAtLeastOneFileOpen() || _host.MainWindow.IsFileLocked(null))
+                    return;
+                timer.Stop();
+                timer.Dispose();
+                if (ok)
+                {
+                    if (MessageService.AskYesNo(
+                        FerryText.T("KeePassFerry wurde erfolgreich aktualisiert: Version " + from + " → " + now + ".\n\nÄnderungen dieser Version ansehen?",
+                            "KeePassFerry was updated successfully: version " + from + " → " + now + ".\n\nView the changes in this version?"),
+                        "KeePassFerry", false, MessageBoxIcon.Information))
+                        WinUtil.OpenUrl(releaseUrl, null);
+                }
+                else
+                {
+                    MessageService.ShowWarning(FerryText.T(
+                        "Das Update von KeePassFerry wurde nicht abgeschlossen; installiert ist weiterhin Version " + now + ".\n\nBitte versuchen Sie es erneut über \"KeePassFerry → Nach Updates suchen\" oder laden Sie das Setup von GitHub.",
+                        "The KeePassFerry update was not completed; version " + now + " is still installed.\n\nPlease try again via \"KeePassFerry → Check for updates\" or download the setup from GitHub."));
+                }
+            };
+            timer.Start();
         }
 
         private string GetLocalConfigLocation()
@@ -552,6 +626,7 @@ Technical detail: " + ex.Message);
         public override void Terminate()
         {
             terminating = true;
+            if (_registrationTimer != null) _registrationTimer.Dispose();
             FerryTempFiles.CleanUp();
             if (_RPCServer != null)
                 _RPCServer.Stop();
@@ -607,6 +682,7 @@ Technical detail: " + ex.Message);
         private void OnKPDBOpen(object sender, FileOpenedEventArgs e)
         {
             EnsureDBIconIsInKPRPCIconCache();
+            EnsureHostRegistration();
 
             if (GetConfigVersionForLegacyMigration(e.Database) > 0)
             {

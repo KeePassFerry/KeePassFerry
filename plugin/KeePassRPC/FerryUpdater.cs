@@ -23,6 +23,7 @@ namespace KeePassFerry
     {
         private const string VersionUrl = "https://raw.githubusercontent.com/KeePassFerry/KeePassFerry/main/version.txt";
         private const string ReleaseUrl = "https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/";
+        internal const string ReleasesPage = "https://github.com/KeePassFerry/KeePassFerry/releases/latest";
         private const string SetupName = "KeePassFerry-Setup.exe";
         private const string SumsName = "SHA256SUMS.txt";
         private const string SignatureName = "SHA256SUMS.txt.sig";
@@ -67,6 +68,33 @@ namespace KeePassFerry
             string result = RunSteps(onlyIfNewer);
             Log("ergebnis " + result);
             return result;
+        }
+
+        // Nach dem Neustart durch das Setup meldet das Plugin einmalig, ob das Update geklappt hat (KeePassRPCExt)
+        internal const string UpdatedFromConfigKey = "KeePassFerry.UpdatedFrom";
+
+        private static void RememberUpdateStart()
+        {
+            try
+            {
+                KeePass.Program.Config.CustomConfig.SetString(UpdatedFromConfigKey, InstalledVersion);
+                KeePass.Program.MainForm.SaveConfig();
+            }
+            catch (Exception ex)
+            {
+                Log("merken fehler " + ex.Message);
+            }
+        }
+
+        private static void ForgetUpdateStart()
+        {
+            try
+            {
+                KeePass.Program.Config.CustomConfig.SetString(UpdatedFromConfigKey, null);
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private static string RunSteps(bool onlyIfNewer)
@@ -132,6 +160,7 @@ namespace KeePassFerry
                 start.ErrorDialogParentHandle = owner;
             }
             Log("setup starten admin=" + needsAdmin + " fenster=" + (owner != IntPtr.Zero));
+            RememberUpdateStart();
             try
             {
                 Process.Start(start);
@@ -141,11 +170,13 @@ namespace KeePassFerry
             {
                 // 1223: Benutzer hat die Windows-Abfrage (UAC) abgelehnt
                 Log("start fehler " + ex.NativeErrorCode + " " + ex.Message);
+                ForgetUpdateStart();
                 return ex.NativeErrorCode == 1223 ? "cancelled" : "start_failed";
             }
             catch (Exception ex)
             {
                 Log("start fehler " + ex.GetType().Name + " " + ex.Message);
+                ForgetUpdateStart();
                 return "start_failed";
             }
         }

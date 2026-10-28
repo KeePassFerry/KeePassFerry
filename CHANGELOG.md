@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Update from KeePass: after the restart a Windows notification reports the result (version old → new, click opens
+  the changes), without blocking the unlock prompt; a failed update is reported as well.
+- Browser registration (native messaging host) is checked again when a database is opened and every 15 minutes and
+  repaired if something removed it, e.g. a cleanup tool.
+
 ## 1.0.10 – 2026-10-28
 
 - Context menu: right-clicking into any input field lists the matching entries; for each entry the username,
