@@ -25,5 +25,6 @@ export const enum Action {
     UnlockState = "unlockState",
     WebAuthnRequest = "webAuthnRequest",
     QueryFields = "queryFields",
-    FillField = "fillField"
+    FillField = "fillField",
+    FillContextTarget = "fillContextTarget"
 }

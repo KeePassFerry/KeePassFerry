@@ -43,6 +43,8 @@ export class PanelStub {
     private options: PanelStubOptions;
     private parentFrameId: number;
     private elementToRefocus: Element;
+    // Zusätzliche Parameter für die Panel-Seite (z. B. "&insert=1")
+    public extraQuery = "";
 
     constructor(options: PanelStubOptions, target: HTMLElement, parentFrameId: number, itemCount?: number, itemTexts?: string[]) {
         this.target = target;
@@ -133,7 +135,7 @@ export class PanelStub {
         const template = chrome.runtime.getURL(
             `dist/panels/panels${this.options.legacy ? "Legacy" : ""}.html`
         );
-        iframe.src = `${template}?parentFrameId=${this.parentFrameId}&autoCloseTime=${this.options.autoCloseTime}&panel=${this.options.name}&theme=${configManager.activeTheme}`;
+        iframe.src = `${template}?parentFrameId=${this.parentFrameId}&autoCloseTime=${this.options.autoCloseTime}&panel=${this.options.name}&theme=${configManager.activeTheme}${this.extraQuery}`;
 
         const bodyElements = document.getElementsByTagName("body");
         if (bodyElements && bodyElements.length > 0) {

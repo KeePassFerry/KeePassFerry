@@ -14,6 +14,7 @@ import { configManager } from "../common/ConfigManager";
 import { Entry } from "../common/model/Entry";
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
 import { kee } from "./KF";
+import { commandManager } from "./commands";
 
 
 // callbacks for messaging / ports
@@ -198,6 +199,9 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             null,
             null
         );
+        const frameState = kee.tabStates.get(this.sender.tab.id)?.frames.get(this.sender.frameId);
+        if (frameState) frameState.urlEntries = result ?? [];
+        if (this.sender.tab.id === kee.foregroundTabId) commandManager.scheduleContextMenuUpdate();
         // Mehrseitige Anmeldung: den eben im Tab gewählten Eintrag auf Folgeseiten derselben Domain bevorzugen
         let preferredUuid: string = undefined;
         const last = kee.persistentTabStates.get(this.sender.tab.id)?.lastFilledEntry;
@@ -232,6 +236,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         //TODO:f: When/how is this msg sent? it might be somewhere we can trigger the browser action button update to display the number of matched items.
         kee.tabStates.get(this.sender.tab.id).frames.get(this.sender.frameId).entries =
             msg.entries;
+        if (this.sender.tab.id === kee.foregroundTabId) commandManager.scheduleContextMenuUpdate();
     }
     if (msg.requestUnlock) {
         // Klick auf ein gesperrtes Feldsymbol: bewusste Aktion, ohne Bremsen entsperren
@@ -516,6 +521,17 @@ export async function iframeMessageHandler(this: chrome.runtime.Port, msg: Addon
         kee.launchLoginEditor(msg.loginEditor.uuid, msg.loginEditor.DBfilename);
     }
 
+    // Passwort-Generator: "Einsetzen" in das Feld, in das rechts geklickt wurde
+    if (msg.insertGeneratedPassword) {
+        const target = kee.generatorInsertTarget;
+        kee.generatorInsertTarget = null;
+        if (target && target.tabId === this.sender.tab?.id) {
+            kee.tabStates.get(target.tabId)?.framePorts.get(target.frameId)?.postMessage({
+                action: Action.FillContextTarget,
+                fillValue: msg.insertGeneratedPassword
+            } as AddonMessage);
+        }
+    }
     if (msg.copyToClipboard) {
         await copyStringToClipboard(msg.copyToClipboard);
     }

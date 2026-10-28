@@ -467,6 +467,10 @@
         "message": "Kopieren",
         "description": "Action button to copy to the clipboard a value such as a newly generated password"
     },
+    "generator_action_insert": {
+        "message": "Einsetzen",
+        "description": "Action button to insert a newly generated password into the field that was right-clicked"
+    },
     "generator_action_apply": {
         "message": "Anwenden",
         "description": "Action button to apply a change such as a newly generated password. Resulting alterations are not persisted immediately."
@@ -1233,6 +1237,22 @@
     },
     "ferry_extras_has_otp": {
         "message": "Mit OTP (Zwei-Faktor-Code)",
+        "description": "KeePassFerry"
+    },
+    "ferry_menu_fill_login": {
+        "message": "Anmeldung ausfüllen",
+        "description": "KeePassFerry"
+    },
+    "ferry_menu_insert_username": {
+        "message": "Benutzername einfügen",
+        "description": "KeePassFerry"
+    },
+    "ferry_menu_insert_password": {
+        "message": "Passwort einfügen",
+        "description": "KeePassFerry"
+    },
+    "ferry_menu_insert_otp": {
+        "message": "Einmalcode einfügen",
         "description": "KeePassFerry"
     },
     "ferry_extras_attachment_count": {

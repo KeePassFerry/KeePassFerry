@@ -9,9 +9,10 @@ export class PasswordGenerator {
 
     constructor(private parentFrameId: number) {}
 
-    public createGeneratePasswordPanel() {
+    public createGeneratePasswordPanel(canInsert = false) {
         this.closeGeneratePasswordPanel();
         this.generatePasswordPanelStub = new PanelStub(panelOptions, null, this.parentFrameId);
+        if (canInsert) this.generatePasswordPanelStub.extraQuery = "&insert=1";
         this.generatePasswordPanelStub.createPanel();
     }
 

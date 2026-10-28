@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Context menu: right-clicking into any input field lists the matching entries; for each entry the username,
+  password, one-time code or any custom field can be inserted into exactly that field (values are fetched from
+  KeePass only on click). Works on pages without a detected login form too, e.g. security questions after login.
+- Context menu is updated as soon as a page reports its matches (also after saving the database), no reload needed.
+- Password generator opened by right-clicking into a field: new "Insert" button fills the password into that field.
 - Uninstaller: closes a running KeePass (after the confirmation, KeePass asks about unsaved changes) and the
   connection helper started by the browser, so the plugin files are removed without a restart.
 

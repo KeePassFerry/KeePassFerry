@@ -68,6 +68,9 @@ export interface AddonMessage {
     fieldsAvailable?: PageFieldKinds;
     fillKind?: PageFieldKind;
     fillValue?: string;
+    // Passwort-Generator per Rechtsklick in ein Eingabefeld geöffnet: "Einsetzen" anbieten bzw. ausführen
+    canInsert?: boolean;
+    insertGeneratedPassword?: string;
 }
 
 export type PageFieldKind = "username" | "password" | "otp";

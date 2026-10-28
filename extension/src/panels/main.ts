@@ -43,7 +43,7 @@ async function start() {
                     try {
                         const piniaInstance = createPinia();
                         vueApp = createApp({
-                            render: () => h(Panel, {})
+                            render: () => h(Panel, { canInsert: params["insert"] === "1" })
                         });
 
                         const vuetify = createVuetify({ components, directives, ...ferryVuetifyOptions(darkTheme ? "dark" : "light") });

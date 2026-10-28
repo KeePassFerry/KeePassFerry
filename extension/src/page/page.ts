@@ -11,7 +11,7 @@ import { Action } from "../common/Action";
 import { Port } from "../common/port";
 import { showSaveNotice, hideSaveNotice } from "./SaveNotice";
 import { OtpFields } from "./OtpFields";
-import { availableFieldKinds, fillFieldKind } from "./fieldFill";
+import { availableFieldKinds, fillContextTarget, fillFieldKind, trackContextTarget } from "./fieldFill";
 import { pageDiag } from "./ferryDiagPage";
 import NonReactiveStore from "../store/NonReactiveStore";
 import { Mutation } from "../store/Mutation";
@@ -58,6 +58,7 @@ const otpFields = new OtpFields(() => onOtpCodeRequested?.());
 // Passkeys: Brücke zur Seitenwelt sofort starten, damit WebAuthn-Aufrufe der Seite früh bedient werden
 const passkeyBridge = new PasskeyBridge();
 passkeyBridge.start();
+trackContextTarget();
 
 // Content scripts are injected into non-HTML documents such as SVGs.
 // We have no interest in this document if it has no body Node
@@ -313,7 +314,7 @@ if (document.body) {
             }
 
             if (m.action == Action.GeneratePassword) {
-                passwordGenerator.createGeneratePasswordPanel();
+                passwordGenerator.createGeneratePasswordPanel(!!m.canInsert);
             }
 
             if (m.action == Action.CloseAllPanels) {
@@ -357,6 +358,9 @@ if (document.body) {
                 } else {
                     fillFieldKind(m.fillKind, m.fillValue);
                 }
+            }
+            if (m.action == Action.FillContextTarget) {
+                fillContextTarget(m.fillValue);
             }
         });
     }

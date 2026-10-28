@@ -1090,13 +1090,17 @@ class Kee {
         this.tabStates.delete(tabId);
     }
 
-    initiatePasswordGeneration() {
+    // Ziel für "Einsetzen" im Passwort-Generator: Frame, in dessen Eingabefeld rechts geklickt wurde
+    public generatorInsertTarget: { tabId: number; frameId: number } = null;
+
+    initiatePasswordGeneration(insertTarget: { tabId: number; frameId: number } = null) {
+        this.generatorInsertTarget = insertTarget;
         if (this.store.state.connected) {
             const tabState = this.tabStates.get(this.foregroundTabId);
             if (tabState) {
                 const framePort = tabState.framePorts.get(0);
                 if (framePort) {
-                    framePort.postMessage({ action: Action.GeneratePassword });
+                    framePort.postMessage({ action: Action.GeneratePassword, canInsert: !!insertTarget });
                     return;
                 }
             }

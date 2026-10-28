@@ -48,7 +48,13 @@
                 <v-btn variant="text" rounded="lg" @click="cancel">
                     {{ cancelButtonText }}
                 </v-btn>
-                <v-btn variant="flat" color="primary" rounded="lg" :disabled="disabled" @click="ok">
+                <v-btn v-if="canInsert" variant="text" rounded="lg" :disabled="disabled" @click="ok">
+                    {{ okButtonText }}
+                </v-btn>
+                <v-btn v-if="canInsert" variant="flat" color="primary" rounded="lg" :disabled="disabled" @click="insert">
+                    {{ $i18n("generator_action_insert") }}
+                </v-btn>
+                <v-btn v-else variant="flat" color="primary" rounded="lg" :disabled="disabled" @click="ok">
                     {{ okButtonText }}
                 </v-btn>
             </div>
@@ -64,8 +70,8 @@ import useStore from "../../store";
 import { mapState } from "pinia";
 
 export default {
-    props: ["field", "standalone", "topmost"],
-    emits: ["copy-to-clipboard", "dialog-closed"],
+    props: ["field", "standalone", "topmost", "canInsert"],
+    emits: ["copy-to-clipboard", "dialog-closed", "insert"],
     setup() {
         const { updateGeneratedPassword } = useStore();
         return { updateGeneratedPassword };
@@ -146,6 +152,12 @@ export default {
                 this.$emit("copy-to-clipboard", { value: this.cachedGeneratedPassword });
             }
             this.$emit("dialog-closed", { value: this.cachedGeneratedPassword });
+        },
+        // In das Feld eintragen, in das rechts geklickt wurde (mit "Auch kopieren" zusätzlich in die Zwischenablage)
+        insert: function () {
+            if (!this.cachedGeneratedPassword) return;
+            if (this.forceCopy) this.$emit("copy-to-clipboard", { value: this.cachedGeneratedPassword });
+            this.$emit("insert", { value: this.cachedGeneratedPassword });
         },
         cancel: function () {
             this.$emit("dialog-closed");

@@ -254,9 +254,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             break;
         case "removeEntryExtra":
             work = kee.KeePassRPC.removeEntryExtra(msg.uuid, msg.dbFileName, msg.kind, msg.name);
+            work.then(() => commandManager.entryExtrasChanged(msg.uuid, msg.dbFileName), () => undefined);
             break;
         case "addEntryText":
             work = kee.KeePassRPC.addEntryText(msg.uuid, msg.dbFileName, msg.fieldName ?? "", msg.value ?? "", !!msg.protect, !!msg.toNotes);
+            work.then(() => commandManager.entryExtrasChanged(msg.uuid, msg.dbFileName), () => undefined);
             break;
         case "updateEntryText":
             work = kee.KeePassRPC.updateEntryText(msg.uuid, msg.dbFileName, msg.name ?? "", msg.value ?? "", !!msg.toNotes);
