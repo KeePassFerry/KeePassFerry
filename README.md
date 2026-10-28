@@ -13,6 +13,8 @@
   <a href="https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/KeePassFerry-Setup.exe"><b>Download setup for KeePass</b></a>
   &nbsp;·&nbsp;
   <a href="https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg"><b>Get it for Microsoft Edge</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga"><b>Get it for Google Chrome</b></a>
 </p>
 
 ---
@@ -56,7 +58,8 @@ Browser extension ──native messaging──▶ KeePassFerryHost.exe ──nam
    folder of KeePass while KeePass is closed.
 2. Start KeePass and open your database. KeePass reports new plugin versions through its own update check.
 3. Install the browser extension from
-   [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg).
+   [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg) or the
+   [Chrome Web Store](https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga).
    For testing a release build: extract `KeePassFerry-Extension-<version>.zip`, open `edge://extensions`, enable
    developer mode and choose “Load unpacked”.
 4. When the browser connects for the first time, KeePass and the browser show the same six-digit code. Click
@@ -105,4 +108,4 @@ KeePassFerry verbindet Edge/Chrome sicher mit KeePass 2 unter Windows: Anmeldeda
 aus der eigenen Datenbank, Entsperren per Windows Hello, ohne offene Ports und ohne Cloud. Installation:
 [`KeePassFerry-Setup.exe`](https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/KeePassFerry-Setup.exe)
 ausführen (findet KeePass selbst), Erweiterung aus [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg)
-installieren, beim ersten Verbinden den Prüfcode in KeePass bestätigen.
+oder dem [Chrome Web Store](https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga) installieren, beim ersten Verbinden den Prüfcode in KeePass bestätigen.

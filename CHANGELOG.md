@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Uninstaller: closes a running KeePass (after the confirmation, KeePass asks about unsaved changes) and the
+  connection helper started by the browser, so the plugin files are removed without a restart.
+
 ## 1.0.9 – 2026-10-27
 
 - Setup: the uninstall entry in Windows now points to the plugin folder instead of the KeePass folder. Third-party

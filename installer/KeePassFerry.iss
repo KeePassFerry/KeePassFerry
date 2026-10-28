@@ -62,6 +62,11 @@ en.NoKeePassExe=No KeePass.exe was found in this folder. Please select the KeePa
 de.FinishHint=Starten Sie KeePass und öffnen Sie Ihre Datenbank. Beim ersten Verbinden zeigen KeePass und der Browser denselben sechsstelligen Code – bestätigen Sie ihn in KeePass.
 en.FinishHint=Start KeePass and open your database. When connecting for the first time, KeePass and the browser show the same six-digit code – confirm it in KeePass.
 
+de.CloseKeePassForUninstall=KeePass läuft noch und verwendet KeePassFerry. KeePass wird jetzt beendet; bei ungespeicherten Änderungen fragt KeePass nach.
+en.CloseKeePassForUninstall=KeePass is still running and uses KeePassFerry. KeePass will now be closed; KeePass asks about unsaved changes.
+de.KeePassStillRunning=KeePass läuft weiterhin. Speichern und beenden Sie KeePass und klicken Sie auf „Wiederholen“. Mit „Abbrechen“ werden die übrigen Dateien erst nach einem Neustart entfernt.
+en.KeePassStillRunning=KeePass is still running. Save and close KeePass, then click Retry. If you click Cancel, the remaining files are removed after a restart.
+
 de.StartKeePass=KeePass wieder starten
 en.StartKeePass=Start KeePass again
 
@@ -209,9 +214,61 @@ begin
   end;
 end;
 
+// Laufende Prozesse "Name" aus dem Ordner Dir zählen, mit Terminate dabei beenden (WMI; bei Fehlern: 0)
+function ProcessesIn(Name, Dir: String; Terminate: Boolean): Integer;
+var
+  Locator, Service, Processes, Process: Variant;
+  I: Integer;
+begin
+  Result := 0;
+  try
+    Locator := CreateOleObject('WbemScripting.SWbemLocator');
+    Service := Locator.ConnectServer('.', 'root\CIMV2');
+    Processes := Service.ExecQuery('SELECT ExecutablePath FROM Win32_Process WHERE Name = ''' + Name + '''');
+    for I := 0 to Processes.Count - 1 do
+    begin
+      Process := Processes.ItemIndex(I);
+      if not VarIsNull(Process.ExecutablePath) then
+        if CompareText(ExtractFileDir(Process.ExecutablePath), RemoveBackslash(Dir)) = 0 then
+        begin
+          Result := Result + 1;
+          if Terminate then Process.Terminate();
+        end;
+    end;
+  except
+  end;
+end;
+
+// Unmittelbar vor dem Löschen (nach der Rückfrage "Sind Sie sicher"): KeePass beenden, sonst sind die Plugin-DLLs
+// geladen und bleiben bis zum Neustart liegen. "--exit-all" schließt KeePass wie über "Beenden" (Rückfrage bei
+// ungespeicherten Änderungen). Den Verbindungs-Helfer startet der Browser, er läuft auch ohne KeePass weiter.
+procedure CloseKeePassAndHost;
+var
+  Dir: String;
+  ResultCode, Waited: Integer;
+begin
+  Dir := ExpandConstant('{app}');
+  if ProcessesIn('KeePass.exe', Dir, False) > 0 then
+  begin
+    if not UninstallSilent then MsgBox(CustomMessage('CloseKeePassForUninstall'), mbInformation, MB_OK);
+    repeat
+      Exec(AddBackslash(Dir) + 'KeePass.exe', '--exit-all', '', SW_SHOWNORMAL, ewNoWait, ResultCode);
+      Waited := 0;
+      while (ProcessesIn('KeePass.exe', Dir, False) > 0) and (Waited < 30) do
+      begin
+        Sleep(1000);
+        Waited := Waited + 1;
+      end;
+    until (ProcessesIn('KeePass.exe', Dir, False) = 0) or UninstallSilent or
+          (MsgBox(CustomMessage('KeePassStillRunning'), mbError, MB_RETRYCANCEL) <> IDRETRY);
+  end;
+  ProcessesIn('KeePassFerryHost.exe', ExpandConstant('{app}\Plugins\KeePassFerry'), True);
+end;
+
 // Beim Deinstallieren die Registrierung des Native-Messaging-Hosts (vom Plugin angelegt) entfernen
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
+  if CurUninstallStep = usUninstall then CloseKeePassAndHost;
   if CurUninstallStep = usPostUninstall then
   begin
     RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Microsoft\Edge\NativeMessagingHosts\keepassferry');
