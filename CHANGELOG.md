@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.10 – 2026-10-28
 
 - Context menu: right-clicking into any input field lists the matching entries; for each entry the username,
   password, one-time code or any custom field can be inserted into exactly that field (values are fetched from
