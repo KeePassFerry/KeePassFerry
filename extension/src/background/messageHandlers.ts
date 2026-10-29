@@ -16,6 +16,7 @@ import { configManager } from "../common/ConfigManager";
 import { Entry } from "../common/model/Entry";
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
 import { kee } from "./KF";
+import { pageStateOf } from "./pageState";
 import { commandManager } from "./commands";
 
 
@@ -360,7 +361,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         this.postMessage({
             action: Action.UnlockState,
             unlocked,
-            resetState: unlocked ? kee.store.state : undefined
+            resetState: unlocked ? pageStateOf(kee.store.state) : undefined
         } as AddonMessage);
     }
     if (msg.action === Action.EntryFilled && msg.filledEntry?.uuid) {

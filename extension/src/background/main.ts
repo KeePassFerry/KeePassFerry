@@ -12,6 +12,7 @@ import { configManager } from "../common/ConfigManager";
 import { Action } from "../common/Action";
 import type { AddonMessage } from "../common/AddonMessage";
 import { NetworkAuth } from "./NetworkAuth";
+import { pageStateOf } from "./pageState";
 
 // only on dev mode
 if (import.meta.hot) {
@@ -114,7 +115,7 @@ function updateForegroundTab(tabId: number) {
                     port.postMessage({
                         isForegroundTab: true,
                         action: Action.DetectForms,
-                        resetState: kee.store.state
+                        resetState: pageStateOf(kee.store.state)
                     } as AddonMessage);
                 } catch (e) {
                     if (KeeLog && KeeLog.warn) KeeLog.warn("Failed to post a message to a foreground tab port. Will remove the port now.");
