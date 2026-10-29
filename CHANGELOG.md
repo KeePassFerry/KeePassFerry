@@ -19,6 +19,14 @@
   username with the same password still counts as another account. A later successful login with the saved password
   withdraws an earlier offer for a mistyped one.
 - Two-factor notice on the page: the button now reads "Save …" like the login notice, so both buttons fit in one line.
+- Saving login details: a further login attempt on the same page is recognised again (e.g. after "wrong password"
+  without the page reloading); before, only the first, mistyped attempt was offered for saving.
+- The "Save login" notice only appears on pages of the website where the details were entered, no longer on other
+  websites opened later in the same tab.
+- Editing an entry with the pencil right after logging in keeps the entry's title (it was replaced by the page title),
+  and editing no longer changes the group preselected for new entries.
+- Removed: the extra Windows notification for the first save offers and the 90-second pause of save notices after
+  editing an entry.
 
 ## 1.0.12 – 2026-10-28
 
