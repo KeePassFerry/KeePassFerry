@@ -14,7 +14,7 @@ damit Seiten-CSS nicht durchschlägt.
 
 export type NoticeKind = "login" | "otp" | "update";
 
-const HOST_ID = "keepassferry-save-notice";
+export const HOST_ID = "keepassferry-save-notice";
 
 const NOTICE_TEXTS: Record<NoticeKind, { title: string; text: string; save: string; saveAction: Action; dismissAction: Action }> = {
     login: {

@@ -4,6 +4,8 @@ import { FilledField } from "./FilledField";
 import { KeeLogger } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import type { AddonMessage } from "../common/AddonMessage";
+import { Action } from "../common/Action";
+import { submittedCredentials } from "../common/submittedLogin";
 import { MatchedField } from "./MatchedField";
 import { Field } from "../common/model/Field";
 import punycode from "punycode/";
@@ -164,20 +166,28 @@ export class FormSaving {
             !this.matchResult.lastFilledOther ||
             this.hasFieldBeenModified(nonEmptyOtherFields, this.matchResult.lastFilledOther);
 
+        const fields = Field.combineDomFieldLists(
+            usernameIndex,
+            nonEmptyOtherFields.map(f => f.field),
+            nonEmptyPasswordFields.map(f => f.field)
+        );
         if (differentPassword || differentOther) {
             const submittedData = {
                 url: url.href,
-                fields: Field.combineDomFieldLists(
-                    usernameIndex,
-                    nonEmptyOtherFields.map(f => f.field),
-                    nonEmptyPasswordFields.map(f => f.field)
-                ),
+                fields,
                 title: siteTitle(doc, url),
                 isPasswordChangeForm,
                 isRegistrationForm
             };
 
             this.myPort.postMessage({ submittedData } as AddonMessage);
+        } else {
+            // Unverändert mit den eingetragenen Daten angemeldet: kein Speichern-Hinweis, aber ein noch offenes Angebot
+            // desselben Benutzers (z. B. für ein vorher vertipptes Passwort) ist damit erledigt
+            this.myPort.postMessage({
+                action: Action.FilledLoginSubmitted,
+                submittedUsername: submittedCredentials(fields).username
+            } as AddonMessage);
         }
     }
 

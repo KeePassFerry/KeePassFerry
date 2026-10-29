@@ -1,3 +1,6 @@
+import { KeeURL } from "./KeeURL";
+import { sameSite } from "./relatedDomains";
+
 /*
 submittedLogin.ts: Abgeschickte Anmeldedaten mit den Einträgen der Seite vergleichen.
 - "known": ein Eintrag hat denselben Benutzernamen und dasselbe Passwort (kein Hinweis)
@@ -29,6 +32,17 @@ export function submittedCredentials(fields: { type: string; value: string }[]):
 
 function sameUsername(a: string, b: string): boolean {
     return (a ?? "").toLowerCase() === (b ?? "").toLowerCase();
+}
+
+// Erledigt eine neue Anmeldung ein noch offenes Angebot (z. B. für ein vertipptes Passwort)? Ja auf derselben Website
+// mit demselben Benutzer; fehlt der Benutzername auf einer Seite (mehrstufige Anmeldung), zählt die Website allein
+export function supersedesSubmission(
+    previous: { url: string; username: string },
+    current: { url: string; username: string }
+): boolean {
+    const domain = (url: string) => KeeURL.fromString(url ?? "")?.domainOrIPAddress;
+    if (!sameSite(domain(previous.url), domain(current.url))) return false;
+    return !previous.username || !current.username || sameUsername(previous.username, current.username);
 }
 
 export function matchSubmittedLogin(

@@ -505,9 +505,15 @@ class Kee {
             ?.items?.find(i => i.itemType === "submittedData");
         if (!item || item.noticeDismissed) return;
         if (!this.store.state.connected || this.store.state.KeePassDatabases.length === 0) return;
+        const top = this.tabStates.get(tabId)?.framePorts?.get(0);
+        // "Passwort aktualisieren" nur auf derselben Website anbieten, nicht auf einer anderen Seite im selben Tab
+        if (item.submittedData?.updateTarget) {
+            const site = (url: string) => KeeURL.fromString(url ?? "")?.domainOrIPAddress;
+            if (!sameSite(site(item.submittedData.url), site(top?.sender?.url ?? top?.sender?.tab?.url))) return;
+        }
         try {
             // Passwort eines vorhandenen Eintrags geändert: Hinweis "aktualisieren?" mit Benutzername bzw. Titel
-            this.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({
+            top?.postMessage({
                 action: Action.ShowSaveNotice,
                 saveNoticeUpdateFor: item.submittedData?.updateTarget?.label
             } as AddonMessage);

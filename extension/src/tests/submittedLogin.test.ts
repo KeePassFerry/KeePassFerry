@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LoginCandidate, matchSubmittedLogin } from "../common/submittedLogin";
+import { LoginCandidate, matchSubmittedLogin, supersedesSubmission } from "../common/submittedLogin";
 
 const entry = (uuid: string, username: string, password: string, dbFileName = "a.kdbx"): LoginCandidate => ({
     uuid,
@@ -70,5 +70,24 @@ describe("matchSubmittedLogin", () => {
     it("ohne Werte ist neu", () => {
         expect(matchSubmittedLogin([], [max])).toEqual({ kind: "new" });
         expect(matchSubmittedLogin([{ type: "boolean", value: "true" }], [max])).toEqual({ kind: "new" });
+    });
+});
+
+describe("supersedesSubmission", () => {
+    const vorher = { url: "https://konto.example.com/login", username: "max@example.com" };
+
+    it("gleicher Benutzer auf derselben Website erledigt das offene Angebot (auch mit anderer Groß-/Kleinschreibung)", () => {
+        expect(supersedesSubmission(vorher, { url: "https://www.example.com/", username: "Max@Example.com" })).toBe(true);
+    });
+
+    it("ohne Benutzernamen (Passwortseite einer mehrstufigen Anmeldung) zählt die Website allein", () => {
+        expect(supersedesSubmission(vorher, { url: "https://konto.example.com/passwort", username: null })).toBe(true);
+        expect(supersedesSubmission({ ...vorher, username: null }, { url: vorher.url, username: "erika@example.com" })).toBe(true);
+    });
+
+    it("anderer Benutzer oder andere Website lässt das Angebot stehen", () => {
+        expect(supersedesSubmission(vorher, { url: vorher.url, username: "erika@example.com" })).toBe(false);
+        expect(supersedesSubmission(vorher, { url: "https://example.org/login", username: "max@example.com" })).toBe(false);
+        expect(supersedesSubmission({ url: null, username: "max@example.com" }, vorher)).toBe(false);
     });
 });

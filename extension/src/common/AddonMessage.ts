@@ -55,6 +55,8 @@ export interface AddonMessage {
     otpIssuer?: string;
     // ShowSaveNotice: Passwort eines vorhandenen Eintrags geändert (Benutzername bzw. Titel des Eintrags)
     saveNoticeUpdateFor?: string;
+    // FilledLoginSubmitted: Benutzername der abgeschickten Anmeldung (fehlt bei reinen Passwortseiten)
+    submittedUsername?: string;
     unlocked?: boolean;
     webauthn?: any;
     otpSetup?: {

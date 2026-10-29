@@ -3,8 +3,8 @@ import { diag } from "./ferryDiag";
 import { handleOtpSetupCandidate, dismissOtpSetup, isOtpSetupPending } from "./otpSetup";
 import { isRepeatedAutoFill, rememberAutoFill } from "./otpRepeat";
 import { sameSite } from "../common/relatedDomains";
-import { submittedCredentials } from "../common/submittedLogin";
-import type { SubmittedData } from "../common/SubmittedData";
+import { submittedCredentials, supersedesSubmission } from "../common/submittedLogin";
+import type { PersistentDataItem } from "./PersistentDataItem";
 import { BROWSER_UPDATE_PLUGIN_VERSION, pluginVersionAtLeast } from "../common/FeatureFlags";
 import { onFieldsAvailable } from "./pageFields";
 import { KeeURL } from "../common/KeeURL";
@@ -177,22 +177,31 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
     }
 }
 
-// Bekannte Anmeldung: eine frühere abweichende Eingabe desselben Benutzers auf derselben Website im Tab
-// (z. B. vertipptes Passwort) nicht mehr zum Speichern bzw. Aktualisieren anbieten
-function dropSupersededSubmission(tabId: number, submitted: SubmittedData) {
-    const state = kee.persistentTabStates.get(tabId);
-    const item = state?.items?.find(i => i.itemType === "submittedData");
+// Neue Anmeldung desselben Benutzers auf derselben Website: eine frühere abweichende Eingabe im Tab (z. B. vertipptes
+// Passwort) nicht mehr zum Speichern bzw. Aktualisieren anbieten und einen schon gezeigten Hinweis schließen
+function dropSupersededSubmission(tabId: number, url: string, username: string) {
+    const item = kee.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
     if (!item?.submittedData) return;
-    const sameWebsite = sameSite(
-        KeeURL.fromString(submitted.url ?? "")?.domainOrIPAddress,
-        KeeURL.fromString(item.submittedData.url ?? "")?.domainOrIPAddress
-    );
-    if (!sameWebsite) return;
-    const user = submittedCredentials(submitted.fields ?? []).username;
-    const previousUser = submittedCredentials(item.submittedData.fields ?? []).username;
-    if (user && previousUser && user.toLowerCase() !== previousUser.toLowerCase()) return;
+    const previous = { url: item.submittedData.url, username: submittedCredentials(item.submittedData.fields ?? []).username };
+    if (supersedesSubmission(previous, { url, username })) removeSubmission(tabId, item);
+}
+
+// "Passwort aktualisieren" kam nicht, weil das Anmeldeformular stehen blieb: Anmeldung fehlgeschlagen, das eingegebene
+// Passwort nicht mehr anbieten (auch nicht später auf einer anderen Seite)
+function dropFailedPasswordUpdate(tabId: number) {
+    const item = kee.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
+    if (item?.submittedData?.updateTarget) removeSubmission(tabId, item);
+}
+
+function removeSubmission(tabId: number, item: PersistentDataItem) {
+    const state = kee.persistentTabStates.get(tabId);
     state.items = state.items.filter(i => i !== item);
     kee.configureBrowserActionIcon();
+    try {
+        kee.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({ action: Action.WithdrawSaveNotice } as AddonMessage);
+    } catch (e) {
+        // Seite lädt gerade neu
+    }
 }
 
 export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMessage) {
@@ -272,6 +281,15 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         }
         diag("seite " + host + " f" + this.sender.frameId, msg.ferryDiag.event, msg.ferryDiag.data);
     }
+    // Nur Formulare mit ausgefülltem Passwortfeld sind Anmeldungen (wie Bitwarden); Einstellungs-, Such- oder
+    // Bankformulare ohne Passwort lösen keinen Speichern-Hinweis aus
+    const submittedHasPassword = !!msg.submittedData?.fields?.some((f: any) => f.type === "password" && f.value);
+    const submittedUser = msg.submittedData ? submittedCredentials(msg.submittedData.fields ?? []).username : null;
+    // Neue Anmeldung desselben Benutzers verdrängt ein offenes Angebot sofort, noch vor der Prüfung gegen KeePass
+    // (sonst zeigt die nächste Seite womöglich das alte Angebot, während die Prüfung läuft)
+    if (msg.submittedData && submittedHasPassword) {
+        dropSupersededSubmission(this.sender.tab.id, msg.submittedData.url, submittedUser);
+    }
     // Schon in KeePass vorhandene Zugangsdaten (auch nur der Benutzername im ersten Schritt
     // mehrstufiger Anmeldungen) lösen keinen Speichern-Hinweis aus; derselbe Benutzer mit anderem Passwort
     // bietet an, den vorhandenen Eintrag zu aktualisieren
@@ -282,12 +300,10 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             ergebnis: submittedMatch.kind
         });
     }
-    // Nur Formulare mit ausgefülltem Passwortfeld sind Anmeldungen (wie Bitwarden); Einstellungs-, Such- oder
-    // Bankformulare ohne Passwort lösen keinen Speichern-Hinweis aus
-    const submittedHasPassword = !!msg.submittedData?.fields?.some((f: any) => f.type === "password" && f.value);
     if (msg.submittedData && submittedMatch.kind === "known") {
         KeeLog.debug("Submitted data matches an existing entry; no save offer");
-        dropSupersededSubmission(this.sender.tab.id, msg.submittedData);
+        // Auch ein bekannter Benutzername allein (erster Schritt einer mehrstufigen Anmeldung) erledigt ein Angebot
+        dropSupersededSubmission(this.sender.tab.id, msg.submittedData.url, submittedUser);
     } else if (msg.submittedData && !submittedHasPassword) {
         KeeLog.debug("Submitted form has no password; no save offer");
     } else if (msg.submittedData) {
@@ -452,6 +468,13 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         } finally {
             await chrome.action.setPopup({ popup: "dist/popup/index.html" });
         }
+    }
+    // Unverändert mit den eingetragenen Daten angemeldet: ein offenes Angebot desselben Benutzers ist erledigt
+    if (msg.action === Action.FilledLoginSubmitted) {
+        dropSupersededSubmission(this.sender.tab.id, this.sender.url ?? this.sender.tab.url, msg.submittedUsername ?? null);
+    }
+    if (msg.action === Action.PasswordUpdateNotShown) {
+        dropFailedPasswordUpdate(this.sender.tab.id);
     }
     if (msg.action === Action.DismissSaveNotice) {
         kee.persistentTabStates

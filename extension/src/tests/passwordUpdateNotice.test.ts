@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cancelPasswordUpdateNotice, offerPasswordUpdateNotice } from "../page/passwordUpdateNotice";
-import { hideSaveNotice } from "../page/SaveNotice";
+
+vi.mock("../common/port", () => ({ Port: { postMessage: vi.fn() } }));
+
+import { Port } from "../common/port";
+import { cancelPasswordUpdateNotice, offerPasswordUpdateNotice, withdrawSaveNotice } from "../page/passwordUpdateNotice";
+import { hideSaveNotice, showSaveNotice } from "../page/SaveNotice";
 
 const notice = () => document.getElementById("keepassferry-save-notice");
 
@@ -17,6 +21,7 @@ function addVisiblePasswordField() {
 
 beforeEach(() => {
     vi.useFakeTimers();
+    vi.mocked(Port.postMessage).mockClear();
     document.body.innerHTML = "";
 });
 
@@ -41,14 +46,44 @@ describe("offerPasswordUpdateNotice", () => {
         input.remove();
         vi.advanceTimersByTime(1000);
         expect(notice()?.dataset.kind).toBe("update");
+        expect(Port.postMessage).not.toHaveBeenCalled();
     });
 
-    it("bietet nichts an, wenn das Anmeldeformular stehen bleibt (Anmeldung fehlgeschlagen)", () => {
+    it("bietet nichts an und meldet den Fehlversuch, wenn das Anmeldeformular stehen bleibt", () => {
         const input = addVisiblePasswordField();
         offerPasswordUpdateNotice("max@example.com");
         vi.advanceTimersByTime(11000);
+        expect(Port.postMessage).toHaveBeenCalledTimes(1);
+        expect(Port.postMessage).toHaveBeenCalledWith({ action: "passwordUpdateNotShown" });
         input.remove();
         vi.advanceTimersByTime(5000);
         expect(notice()).toBeNull();
+    });
+});
+
+describe("withdrawSaveNotice", () => {
+    it("schließt einen gezeigten Hinweis zum Speichern bzw. Aktualisieren", () => {
+        offerPasswordUpdateNotice("max@example.com");
+        withdrawSaveNotice();
+        expect(notice()).toBeNull();
+        showSaveNotice("login");
+        withdrawSaveNotice();
+        expect(notice()).toBeNull();
+    });
+
+    it("beendet das Warten, ohne später etwas anzuzeigen oder zu melden", () => {
+        const input = addVisiblePasswordField();
+        offerPasswordUpdateNotice("max@example.com");
+        withdrawSaveNotice();
+        input.remove();
+        vi.advanceTimersByTime(15000);
+        expect(notice()).toBeNull();
+        expect(Port.postMessage).not.toHaveBeenCalled();
+    });
+
+    it("lässt einen Zwei-Faktor-Hinweis stehen", () => {
+        showSaveNotice("otp", "Testseite");
+        withdrawSaveNotice();
+        expect(notice()?.dataset.kind).toBe("otp");
     });
 });

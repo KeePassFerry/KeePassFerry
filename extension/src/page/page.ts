@@ -10,7 +10,7 @@ import type { AddonMessage } from "../common/AddonMessage";
 import { Action } from "../common/Action";
 import { Port } from "../common/port";
 import { showSaveNotice, hideSaveNotice } from "./SaveNotice";
-import { offerPasswordUpdateNotice, cancelPasswordUpdateNotice } from "./passwordUpdateNotice";
+import { offerPasswordUpdateNotice, cancelPasswordUpdateNotice, withdrawSaveNotice } from "./passwordUpdateNotice";
 import { OtpFields } from "./OtpFields";
 import { availableFieldKinds, fillContextTarget, fillFieldKind, trackContextTarget } from "./fieldFill";
 import { pageDiag } from "./ferryDiagPage";
@@ -331,6 +331,10 @@ if (document.body) {
                 // Passwort eines vorhandenen Eintrags geändert: "aktualisieren?" statt "speichern?"
                 if (m.saveNoticeUpdateFor) offerPasswordUpdateNotice(m.saveNoticeUpdateFor);
                 else showSaveNotice();
+            }
+
+            if (m.action == Action.WithdrawSaveNotice) {
+                withdrawSaveNotice();
             }
 
             if (m.action == Action.UnlockState && m.unlocked && unlockWaitTimer !== null) {
