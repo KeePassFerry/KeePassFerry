@@ -1362,5 +1362,37 @@
   "ferry_notification_click_to_open": {
     "message": "Click to open",
     "description": "KeePassFerry"
-  }
+  },
+    "ferry_menu_add_selection": {
+        "message": "Add \"%s\" to entry …",
+        "description": "KeePassFerry"
+    },
+    "selSave_heading": {
+        "message": "Add to entry",
+        "description": "KeePassFerry"
+    },
+    "selSave_nothing": {
+        "message": "The selection is no longer available. Please select the text again and choose \"Add to entry\" in the context menu.",
+        "description": "KeePassFerry"
+    },
+    "selSave_choose": {
+        "message": "Which entry?",
+        "description": "KeePassFerry"
+    },
+    "selSave_newEntry": {
+        "message": "New entry for this page",
+        "description": "KeePassFerry"
+    },
+    "selSave_error": {
+        "message": "Could not save. Please check that KeePass is unlocked and the plugin is up to date.",
+        "description": "KeePassFerry"
+    },
+    "selSave_next": {
+        "message": "Next",
+        "description": "KeePassFerry"
+    },
+    "ferry_new_entry_group": {
+        "message": "Group",
+        "description": "KeePassFerry"
+    }
 }

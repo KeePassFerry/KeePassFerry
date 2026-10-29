@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Right-click on selected text → "Add "…" to entry": opens the familiar "Edit entry" window with "Add" expanded and
+  the selection (complete, including line breaks) as content; choose recovery code, two-factor key, note or custom
+  field there. The entry last used in the tab is opened directly; otherwise choose an entry from the matches of the
+  page, search all entries, or create a new entry for the page (it is only created in KeePass on "Save"; "Cancel"
+  leaves nothing behind). The selected text is kept when switching the kind. If the database is locked, this
+  deliberate click asks for the unlock first.
+  A new entry can be placed in any group (preselected: the group used last, otherwise the database root).
+- "Add" in the edit window: kinds sorted alphabetically, "Custom field" preselected.
+- Group tree ("Where?" and the group of a new entry) redesigned: one line per group, collapsible, the chosen group
+  marked; only the top level and the path to the chosen group start expanded.
+
 ## 1.0.12 – 2026-10-28
 
 - Right-click menu no longer asks KeePass to unlock a locked database: while locked it does not query KeePass at all

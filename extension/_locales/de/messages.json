@@ -1362,5 +1362,37 @@
     "ferry_notification_click_to_open": {
         "message": "Zum Anzeigen klicken",
         "description": "KeePassFerry"
+    },
+    "ferry_menu_add_selection": {
+        "message": "„%s“ zu Eintrag hinzufügen …",
+        "description": "KeePassFerry"
+    },
+    "selSave_heading": {
+        "message": "Zu Eintrag hinzufügen",
+        "description": "KeePassFerry"
+    },
+    "selSave_nothing": {
+        "message": "Keine Markierung mehr vorhanden. Bitte markiere den Text erneut und wähle im Kontextmenü „Zu Eintrag hinzufügen“.",
+        "description": "KeePassFerry"
+    },
+    "selSave_choose": {
+        "message": "In welchem Eintrag?",
+        "description": "KeePassFerry"
+    },
+    "selSave_newEntry": {
+        "message": "Neuer Eintrag für diese Seite",
+        "description": "KeePassFerry"
+    },
+    "selSave_error": {
+        "message": "Speichern nicht möglich. Bitte prüfe, ob KeePass entsperrt ist und das Plugin aktuell ist.",
+        "description": "KeePassFerry"
+    },
+    "selSave_next": {
+        "message": "Weiter",
+        "description": "KeePassFerry"
+    },
+    "ferry_new_entry_group": {
+        "message": "Gruppe",
+        "description": "KeePassFerry"
     }
 }

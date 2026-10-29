@@ -3,6 +3,7 @@ import { Action } from "../common/Action";
 import { KeeLog } from "../common/Logger";
 import { kee } from "./KF";
 import { Entry } from "../common/model/Entry";
+import { startSelectionSave } from "./selectionSave";
 
 /*
 Kontextmenü je passendem Eintrag: "Anmeldung ausfüllen" (wie bisher) und, bei Rechtsklick in ein Eingabefeld,
@@ -20,6 +21,7 @@ type MenuAction =
 const ALL_CONTEXTS = ["editable", "frame", "image", "link", "page", "password", "selection"];
 const PAGES = ["http://*/*", "https://*/*"];
 const EXTRAS_REFRESH_MS = 10 * 1000;
+const ADD_SELECTION_ID = "kf-add-selection";
 
 export class KFCommands {
     private contextMenuUpdateLock = false;
@@ -81,6 +83,10 @@ export class KFCommands {
                 case Command.GeneratePassword:
                     // Rechtsklick in ein Eingabefeld: der Dialog bietet "Einsetzen" in genau dieses Feld an
                     kee.initiatePasswordGeneration(info.editable && tab?.id != null ? { tabId: tab.id, frameId: info.frameId } : null);
+                    break;
+                case ADD_SELECTION_ID:
+                    // Bewusster Klick: darf eine gesperrte Datenbank entsperren lassen
+                    startSelectionSave(tab, info.frameId, info.selectionText);
                     break;
             }
             const menuAction = this.menuActions.get(id);
@@ -256,6 +262,16 @@ export class KFCommands {
                 // Gesperrt: keine Einträge (samt Werten) aus der Zeit vor dem Sperren behalten
                 this.tabUrlEntries.clear();
                 this.extrasCache.clear();
+            }
+
+            // Markierter Text als Feld/Notiz in einen Eintrag; auch gesperrt sichtbar, fragt beim Aufbau nichts an
+            if (store.state.connected) {
+                chrome.contextMenus.create({
+                    id: ADD_SELECTION_ID,
+                    title: $STR("ferry_menu_add_selection"),
+                    contexts: ["selection"],
+                    documentUrlPatterns: PAGES
+                });
             }
 
             chrome.contextMenus.create({

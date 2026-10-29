@@ -149,7 +149,7 @@ import ExtraPreview from "./ExtraPreview.vue";
 import { fillPageField, pageFieldKinds } from "../pageFields";
 import { readClipboard } from "../clipboard";
 import {
-    canOpenExternally, formatSize, takeExtraEdit, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
+    canOpenExternally, formatSize, takeAddition, takeExtraEdit, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
 } from "../extras";
 
 // "Hinzufügen" im Bearbeiten-Fenster: Wiederherstellungscode, Zwei-Faktor-Schlüssel, Notiz, eigenes Feld oder Bild.
@@ -184,19 +184,22 @@ let nextKey = 1;
 
 export default {
     components: { AttachmentPaste, ExtraPreview },
-    props: ["uuid", "dbFileName", "title"],
+    // notCreatedYet: neuer Eintrag, den erst "Speichern" anlegt; commit() bekommt dann den angelegten Eintrag
+    props: ["uuid", "dbFileName", "title", "notCreatedYet"],
     emits: ["changed"],
     data: () => ({
-        kind: "recovery",
+        // Meist wird ein eigenes Feld hinzugefügt (Kundennummer, Sicherheitsfrage …)
+        kind: "custom",
         name: "",
         value: "",
         // Geschützt sind standardmäßig nur Wiederherstellungscodes (siehe kindChanged)
-        protect: true,
+        protect: false,
         // Plugin kann den Schutz vorhandener Felder umschalten
         protectionSupported: false,
         editProtect: false,
         pendingImage: null as File,
         adding: false,
+        keepValueOnKindChange: false,
         // Älteres Plugin ohne GetEntryExtras/AddEntryText: Bereich nur mit Hinweis
         unsupported: false,
         existing: [] as Row[],
@@ -213,6 +216,7 @@ export default {
         preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false, editKey: null as string }
     }),
     computed: {
+        // Alphabetisch in der jeweiligen Sprache
         kindItems: function () {
             return [
                 { title: this.$i18n("ferry_add_kind_recovery"), value: "recovery" },
@@ -220,7 +224,7 @@ export default {
                 { title: this.$i18n("ferry_add_kind_note"), value: "note" },
                 { title: this.$i18n("ferry_add_kind_custom"), value: "custom" },
                 { title: this.$i18n("ferry_add_kind_image"), value: "image" }
-            ];
+            ].sort((a, b) => a.title.localeCompare(b.title));
         },
         rows: function (): Row[] {
             return [...this.existing, ...this.staged];
@@ -230,7 +234,7 @@ export default {
         },
         looksLikeTotp: function (): boolean {
             const t = (this.value ?? "").trim();
-            return (this.kind === "recovery" || this.kind === "note") && !!this.uriFor(t) && /[2-7]/.test(t);
+            return (this.kind === "recovery" || this.kind === "note" || this.kind === "custom") && !!this.uriFor(t) && /[2-7]/.test(t);
         },
         canAdd: function (): boolean {
             if (!(this.value ?? "").trim()) return false;
@@ -255,8 +259,15 @@ export default {
         }
     },
     mounted: function () {
-        this.name = this.$i18n("ferry_add_kind_recovery");
-        this.loadExisting();
+        // Aus dem Kontextmenü mit markiertem Text gekommen: "Hinzufügen" gleich offen, Text als Inhalt, Art frei wählbar
+        const text = takeAddition(this.uuid);
+        if (text) {
+            this.keepValueOnKindChange = true;
+            this.value = text;
+            this.onValueChanged();
+            this.openAdd();
+        }
+        if (!this.notCreatedYet) this.loadExisting();
         chrome.runtime
             .sendMessage({ keepassferry: "connectionStatus" })
             .then(s => (this.protectionSupported = !!s?.fieldProtection))
@@ -274,7 +285,8 @@ export default {
             return `otpauth://totp/${label}?secret=${secret.replace(/=+$/, "")}&issuer=${label}`;
         },
         kindChanged: function () {
-            this.value = "";
+            // Markierter Text aus dem Kontextmenü bleibt beim Wechsel der Art erhalten
+            if (!this.keepValueOnKindChange) this.value = "";
             this.error = null;
             this.clipboardNotice = null;
             if (this.kind === "recovery") this.name = this.$i18n("ferry_add_kind_recovery");
@@ -288,10 +300,11 @@ export default {
         },
         closeAdd: function () {
             this.adding = false;
+            this.keepValueOnKindChange = false;
             this.value = "";
             this.pendingImage = null;
             this.imageName = "";
-            if (this.kind === "image") this.kind = "recovery";
+            if (this.kind === "image") this.kind = "custom";
         },
         switchToTotp: function () {
             this.kind = "totp";
@@ -374,6 +387,7 @@ export default {
             }
             this.value = "";
             this.adding = false;
+            this.keepValueOnKindChange = false;
         },
         stageTotp: async function (uri: string) {
             if (!uri) return;
@@ -555,9 +569,11 @@ export default {
             else r.removed = !r.removed;
         },
         // Vorgemerktes ins Plugin schreiben; liefert true, wenn alles geklappt hat
-        commit: async function (): Promise<boolean> {
+        commit: async function (target?: { uuid: string; dbFileName: string }): Promise<boolean> {
+            const uuid = target?.uuid ?? this.uuid;
+            const dbFileName = target?.dbFileName ?? this.dbFileName;
             const send = (msg: Record<string, unknown>) =>
-                chrome.runtime.sendMessage({ uuid: this.uuid, dbFileName: this.dbFileName, ...msg });
+                chrome.runtime.sendMessage({ uuid, dbFileName, ...msg });
             let ok = true;
             let totpSaved = false;
             for (const r of this.existing.filter(x => x.removed)) {
@@ -600,11 +616,11 @@ export default {
                 }
                 if (!result) ok = false;
             }
-            if (totpSaved && (await pageFieldKinds()).otp) await fillPageField("otp", this.uuid, this.dbFileName);
+            if (totpSaved && (await pageFieldKinds()).otp) await fillPageField("otp", uuid, dbFileName);
             if (!ok) {
                 this.error = this.$i18n("ferry_add_failed");
                 this.staged = [];
-                await this.loadExisting();
+                if (!target) await this.loadExisting();
             }
             return ok;
         }

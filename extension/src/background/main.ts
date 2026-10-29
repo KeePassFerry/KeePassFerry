@@ -1,6 +1,7 @@
 import { diag } from "./ferryDiag";
 import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup, parseOtpauth } from "./otpSetup";
 import { forgetAutoFill } from "./otpRepeat";
+import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
 import { queryPageFields, fillPageField } from "./pageFields";
 import { FIELD_PROTECTION_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
 import { isFirefox } from "webext-detect-page";
@@ -215,6 +216,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             break;
         case "applyOtpSetup":
             work = applyOtpSetup(kee.foregroundTabId, msg.uuid, msg.dbFileName, !!msg.overwrite);
+            break;
+        case "getSelectionSave":
+            work = getSelectionSaveForPopup(kee.foregroundTabId);
+            break;
+        case "createSelectionEntry":
+            work = createSelectionEntry(kee.foregroundTabId, msg.title ?? "", msg.dbFileName ?? "", msg.groupUuid ?? "");
+            break;
+        case "findEntryForEdit":
+            work = findEntryForEdit(msg.uuid, msg.dbFileName);
+            break;
+        case "discardSelectionSave":
+            forgetSelectionSave(kee.foregroundTabId);
+            work = Promise.resolve(true);
             break;
         case "addImageAttachment":
             work = kee.KeePassRPC.addImageAttachment(msg.uuid, msg.dbFileName, msg.fileName ?? "", msg.data ?? "");

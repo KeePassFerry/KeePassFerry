@@ -1,6 +1,6 @@
 <template>
     <div>
-        <ul>
+        <ul role="tree">
             <TreeItem
                 v-for="item in filteredItems" :key="item.id" :item="item" :indent-level="0"
                 @select="(item: GroupListItem) => handleSelect(item)">

@@ -85,6 +85,25 @@ export function takeExtraEdit(uuid: string): string {
     return p.key;
 }
 
+// Kontextmenü "„…“ zu Eintrag hinzufügen": das Bearbeiten-Fenster öffnet "Hinzufügen" mit diesem Text als Inhalt.
+// Gleiche Gültigkeitsregeln wie oben; gilt nur innerhalb des geöffneten Popups.
+let pendingAddition: { uuid: string; text: string; at: number; takenAt?: number } = null;
+
+export function requestAddition(uuid: string, text: string) {
+    pendingAddition = { uuid, text, at: Date.now() };
+}
+
+export function takeAddition(uuid: string): string {
+    const p = pendingAddition;
+    const now = Date.now();
+    if (!p || p.uuid !== uuid || now - p.at > PENDING_EDIT_MS || (p.takenAt && now - p.takenAt > REMOUNT_GRACE_MS)) {
+        pendingAddition = null;
+        return null;
+    }
+    p.takenAt ??= now;
+    return p.text;
+}
+
 // "Speichern unter": Download über einen Link, der Browser fragt nach dem Ort (bzw. nutzt den Download-Ordner)
 export function saveBlob(blob: Blob, fileName: string) {
     const url = URL.createObjectURL(blob);

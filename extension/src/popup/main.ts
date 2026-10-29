@@ -2,6 +2,7 @@ import { App as VueApp, createApp, h } from "vue";
 import { createVuetify } from "vuetify";
 import App from "./App.vue";
 import OtpSetup from "./OtpSetup.vue";
+import SelectionSave from "./SelectionSave.vue";
 import useStore, { KeeStore } from "../store";
 import { KeeLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
@@ -40,9 +41,12 @@ async function start() {
                         action: Action.GetPasswordProfiles
                     });
                 },
-                // ?otp=1: aus dem Seitenhinweis "Zwei-Faktor-Schlüssel gefunden" geöffnet
+                // ?otp=1: aus dem Seitenhinweis "Zwei-Faktor-Schlüssel gefunden" geöffnet,
+                // ?selection=1: aus dem Kontextmenü "„…“ zu Eintrag hinzufügen"
                 render: () => new URLSearchParams(window.location.search).get("otp") === "1"
                     ? h(OtpSetup)
+                    : new URLSearchParams(window.location.search).get("selection") === "1"
+                    ? h(SelectionSave)
                     : h(App, {
                         matchedEntries: !m.entries ? null : m.entries,
                         siteEntries: (m as any).siteEntries ?? null,

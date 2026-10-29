@@ -5,8 +5,8 @@
                 <tabler-arrow-left class="ferry-ico" />
                 <v-tooltip location="bottom" activator="parent">{{ $i18n("cancel") }}</v-tooltip>
             </button>
-            <span class="ferry-pagehead-title">{{ editingExisting ? $i18n("ferry_edit_entry") : $i18n("create_new_entry") }}</span>
-            <button v-if="editingExisting" type="button" class="ferry-ib" :aria-label="$i18n('open_full_editor')" @click="openFullEntryEditor">
+            <span class="ferry-pagehead-title">{{ editingExisting && !createOnSave ? $i18n("ferry_edit_entry") : $i18n("create_new_entry") }}</span>
+            <button v-if="editingExisting && !createOnSave" type="button" class="ferry-ib" :aria-label="$i18n('open_full_editor')" @click="openFullEntryEditor">
                 <tabler-external-link class="ferry-ico" />
                 <v-tooltip location="start" activator="parent">{{ $i18n("open_full_editor") }}</v-tooltip>
             </button>
@@ -25,6 +25,21 @@
                         </button>
                     </template>
                 </v-text-field>
+                <!-- Neuer Eintrag aus dem Kontextmenü: Gruppe wählen (Baum wie bei "Wo speichern?") -->
+                <div v-if="createOnSave" class="ferry-group-pick">
+                    <button type="button" class="ferry-group-btn" :aria-expanded="groupPickerOpen" @click="groupPickerOpen = !groupPickerOpen">
+                        <tabler-folder class="ferry-ico" />
+                        <span class="ferry-group-btn-text">
+                            <span class="ferry-group-btn-label">{{ $i18n("ferry_new_entry_group") }}</span>
+                            <span class="ferry-group-btn-value">{{ targetGroupLabel }}</span>
+                        </span>
+                        <tabler-chevron-up v-if="groupPickerOpen" class="ferry-ico" />
+                        <tabler-chevron-down v-else class="ferry-ico" />
+                    </button>
+                    <div v-if="groupPickerOpen" class="ferry-where-tree ferry-group-tree">
+                        <GroupTree :items="groupItems" filter-text="" @set-group="pickGroup" />
+                    </div>
+                </div>
                 <FieldEditor
                     v-for="f of saveState.newEntry.fields" :key="f.uuid" :field="f" :removed="pendingRemoval.includes(f.uuid)"
                     @field-value-changed="fieldValueChanged" @field-deleted="fieldDeleted" />
@@ -41,7 +56,7 @@
             <EntryAddition
                 v-if="editingExisting" ref="addition"
                 :uuid="saveState.newEntry.uuid" :db-file-name="saveState.newEntry.database.fileName"
-                :title="saveState.newEntry.title" @changed="additionsChanged = $event" />
+                :title="saveState.newEntry.title" :not-created-yet="!!createOnSave" @changed="additionsChanged = $event" />
         </div>
         <div class="ferry-actionbar ferry-edit-actions">
             <v-spacer />
@@ -84,12 +99,19 @@ import { SearcherAll } from "../../common/SearcherAll";
 import useStore from "../../store";
 import { mapState } from "pinia";
 import { KeeLog } from "~/common/Logger";
+import GroupSelectorTree from "./GroupSelectorTree.vue";
+import { GroupListItem } from "./TreeItem.vue";
 
 export default {
     components: {
         FieldEditor,
-        EntryAddition
+        EntryAddition,
+        GroupTree: GroupSelectorTree
     },
+    // createOnSave: neuer Eintrag aus dem Kontextmenü (markierter Text), den erst "Speichern" in KeePass anlegt;
+    // bekommt die gewählte Gruppe ({ uuid, dbFileName }) und liefert den angelegten Eintrag ({ uuid, dbFileName })
+    // oder null. Abbrechen hinterlässt so nichts.
+    props: { createOnSave: { type: Function, default: null } },
     emits: ["cancel-clicked", "save-where-clicked", "saved-additions-only"],
     setup() {
         const { updateSaveState, removeFieldFromActiveEntry } = useStore();
@@ -110,6 +132,9 @@ export default {
         saving: false,
         // Zum Entfernen vorgemerkte Felder (uuid); entfernt wird erst beim Speichern
         pendingRemoval: [] as string[],
+        // Nur bei createOnSave: Zielgruppe des neuen Eintrags
+        targetGroup: null as { uuid: string; dbFileName: string; label: string },
+        groupPickerOpen: false,
         originalFieldCount: 0
     }),
     computed: {
@@ -149,6 +174,15 @@ export default {
             }
             return kurl.domainWithPort || kurl.url.host;
         },
+        // Gruppenbaum aller offenen Datenbanken; die gewählte Gruppe ist markiert
+        groupItems: function (): GroupListItem[] {
+            const map = (g: Group): GroupListItem =>
+                new GroupListItem(g.uuid, g.title, (g.groups ?? []).map(map), g.uuid === this.targetGroup?.uuid, []);
+            return reactive((this.KeePassDatabases as Database[]).filter(db => db.root).map(db => map(db.root)));
+        },
+        targetGroupLabel: function (): string {
+            return this.targetGroup?.label ?? "—";
+        },
         displayWhereReason: function () {
             if (this.loading || !this.preferToSkipWhere) return null;
             return this.domainMatchesExistingEntry
@@ -167,6 +201,11 @@ export default {
             dbs
         );
         this.preferredGroupUuid = preferredGroupUuid;
+        // Neuer Eintrag aus dem Kontextmenü: zuletzt benutzte Gruppe wie beim normalen Speichern, sonst Wurzel der aktiven DB
+        if (this.createOnSave) {
+            const activeDb = dbs[this.ActiveKeePassDatabaseIndex] ?? dbs[0];
+            this.setTargetGroup(preferredGroupUuid) || this.setTargetGroup(activeDb?.root?.uuid);
+        }
         if (this.preferToSkipWhere) {
             this.preferredDb = preferredDb;
             this.primaryFound = primaryFound;
@@ -182,6 +221,21 @@ export default {
     methods: {
         cancel: function () {
             this.$emit("cancel-clicked");
+        },
+        setTargetGroup: function (uuid: string): boolean {
+            if (!uuid) return false;
+            for (const db of this.KeePassDatabases as Database[]) {
+                const group = db.root ? Group.matchingId(db.root, uuid) : null;
+                if (!group) continue;
+                // Pfad ohne den Namen der Wurzelgruppe ist kürzer; bei der Wurzel selbst ihr Name
+                const label = group.uuid === db.root.uuid ? db.root.title || db.name : (group.path || group.title).split("/").join(" › ");
+                this.targetGroup = { uuid, dbFileName: db.fileName, label };
+                return true;
+            }
+            return false;
+        },
+        pickGroup: function (item: GroupListItem) {
+            if (this.setTargetGroup(item.id)) this.groupPickerOpen = false;
         },
         nextClicked: function () {
             this.applyPendingRemovals();
@@ -203,6 +257,18 @@ export default {
         saveAll: async function () {
             this.saving = true;
             const additions = this.$refs.addition as any;
+            if (this.createOnSave) {
+                // Eintrag mit Titel/Adresse aus diesem Fenster anlegen, dann das Hinzugefügte hineinschreiben
+                const target = this.targetGroup ? await this.createOnSave(this.targetGroup).catch(() => null) : null;
+                if (!target && additions) additions.error = this.$i18n("ferry_add_failed");
+                const ok = target && additions ? await additions.commit(target) : !!target;
+                this.saving = false;
+                if (!ok) return;
+                this.$emit("saved-additions-only");
+                await this.$nextTick();
+                window.close();
+                return;
+            }
             const ok = additions ? await additions.commit() : true;
             if (this.entryChanged) {
                 this.applyPendingRemovals();
@@ -387,5 +453,51 @@ export default {
     font-weight: 600;
     color: var(--ferry-muted);
     margin-bottom: 10px;
+}
+/* Gruppenwahl für neue Einträge: sieht aus wie ein Eingabefeld, klappt den Gruppenbaum auf */
+.ferry-group-pick {
+    margin-bottom: 8px;
+}
+.ferry-group-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    background: rgba(var(--v-theme-on-surface), 0.04);
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.38);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.ferry-group-btn:hover {
+    background: rgba(var(--v-theme-on-surface), 0.07);
+}
+.ferry-group-btn:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: 1px;
+}
+.ferry-group-btn-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+.ferry-group-btn-label {
+    font-size: 12px;
+    opacity: 0.7;
+}
+.ferry-group-btn-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ferry-group-tree {
+    margin-top: 6px;
+    min-height: 0;
+    max-height: 220px;
 }
 </style>
