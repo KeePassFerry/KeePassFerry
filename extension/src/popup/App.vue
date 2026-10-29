@@ -260,6 +260,8 @@ export default {
         ) {
             KeeLog.debug("discarding upon mount");
             this.saveDiscard();
+            // Sofort, nicht erst über die Überwachung von saveState: sonst gilt der verworfene Dialog unten noch als offen
+            this.saveLastActiveAt = null;
         }
 
         // Wurde die Schlüssel-Auswahl ohne Speichern geschlossen, hier erneut anbieten
