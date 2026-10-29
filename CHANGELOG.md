@@ -21,6 +21,8 @@
 - Two-factor notice on the page: the button now reads "Save …" like the login notice, so both buttons fit in one line.
 - "Save …" and "Update …" in the page notice open the dialog directly even if an entry was saved in the popup less than
   two minutes earlier (until now only the main view with "You recently saved an entry" appeared).
+- Multi-step login: the entry carried over from the username page is now remembered together with its database, so a
+  changed password on the password page is offered as "New password detected" instead of "Save login".
 
 ## 1.0.12 – 2026-10-28
 
