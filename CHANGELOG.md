@@ -27,6 +27,10 @@
   and editing no longer changes the group preselected for new entries.
 - Removed: the extra Windows notification for the first save offers and the 90-second pause of save notices after
   editing an entry.
+- Security: the extension's scripts inside web pages (including third-party frames) no longer receive the full
+  internal state. Passwords in the save and edit window, generated passwords, search results, notifications and the
+  database tree with all entries stay in the background, the popup and the extension's own panels; pages only get the
+  connection state and the names of the open databases.
 
 ## 1.0.12 – 2026-10-28
 
