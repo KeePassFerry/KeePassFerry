@@ -23,6 +23,14 @@
   two minutes earlier (until now only the main view with "You recently saved an entry" appeared).
 - Multi-step login: the entry carried over from the username page is now remembered together with its database, so a
   changed password on the password page is offered as "New password detected" instead of "Save login".
+- Saving login details: a further login attempt on the same page is recognised again (e.g. after "wrong password"
+  without the page reloading); before, only the first, mistyped attempt was offered for saving.
+- The "Save login" notice only appears on pages of the website where the details were entered, no longer on other
+  websites opened later in the same tab.
+- Editing an entry with the pencil right after logging in keeps the entry's title (it was replaced by the page title),
+  and editing no longer changes the group preselected for new entries.
+- Removed: the extra Windows notification for the first save offers and the 90-second pause of save notices after
+  editing an entry.
 
 ## 1.0.12 – 2026-10-28
 

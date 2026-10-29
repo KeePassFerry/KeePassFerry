@@ -121,7 +121,7 @@ import { Action } from "../common/Action";
 import { KeeLog } from "../common/Logger";
 import { SaveState } from "../common/SaveState";
 import { Entry } from "../common/model/Entry";
-import { supplementEntryState } from "./supplementEntryState";
+import { supplementEntryState, supplementExistingEntry } from "./supplementEntryState";
 import { reconcileURLs } from "./reconcileURLs";
 import { fetchFavicon, getFaviconUrl } from "./favicon";
 import { autoRecoveryTimeMs, manualRecoveryPromptTimeMs, tooltipDelay } from "../common/Timings";
@@ -364,11 +364,7 @@ export default {
             const ss = JSON.parse(JSON.stringify(this.saveState as SaveState)) as SaveState;
             const { urls, showWarning } = await reconcileURLs(entry.URLs, ss.submittedData.url);
             const updatedSaveState = Object.assign({}, ss);
-            updatedSaveState.newEntry = supplementEntryState(
-                entry,
-                { ...ss, submittedData: { ...ss.submittedData, title: entry.title } },
-                urls
-            );
+            updatedSaveState.newEntry = supplementExistingEntry(entry, ss, urls);
             updatedSaveState.titleResetValue = entry.title;
             updatedSaveState.lastActiveAt = new Date();
             updatedSaveState.showURLMismatchWarning = showWarning;
