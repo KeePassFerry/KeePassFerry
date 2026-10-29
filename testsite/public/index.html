@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Übersicht – Spielwiese</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="kopf">
+        <a class="marke" href="index.html">Spielwiese</a>
+        <nav>
+            <a href="index.html">Übersicht</a>
+            <a href="login.html">Anmelden</a>
+            <a href="registrieren.html">Registrieren</a>
+            <a href="konto.html">Kundenkonto</a>
+        </nav>
+        <span id="angemeldet" class="status"></span>
+    </header>
+    <p class="warnung">Nur zum Testen auf diesem Rechner – hier keine echten Zugangsdaten eingeben.</p>
+    <main>
+        <section class="karte">
+            <h1>Spielwiese für KeePassFerry</h1>
+            <p>Eine Test-Website, die nur auf diesem Rechner läuft. Konten, Passwörter und Zwei-Faktor-Schlüssel liegen
+                nur in diesem Browser. Für KeePass einen Testeintrag mit der Adresse <code>http://127.0.0.1:8080/</code>
+                anlegen oder ihn über den Speichern-Hinweis entstehen lassen.</p>
+        </section>
+        <section class="karte">
+            <h2>Szenarien</h2>
+            <ul class="szenarien">
+                <li><a href="login.html">Anmelden</a> – klassisch: nach dem Absenden lädt die nächste Seite; bei falschem
+                    Passwort erscheint das Formular mit Fehlermeldung wieder.</li>
+                <li><a href="login-spa.html">Anmelden ohne Neuladen</a> – die Seite schaltet nur um (wie viele moderne
+                    Websites).</li>
+                <li><a href="login-schritt1.html">Anmelden in zwei Schritten</a> – erst Benutzername, dann eine eigene
+                    Seite nur mit Passwortfeld.</li>
+                <li><a href="registrieren.html">Registrieren</a> – neues Konto mit Passwort und Wiederholung.</li>
+                <li><a href="passwort-aendern.html">Passwort ändern</a> im Kundenkonto (aktuelles, neues, Wiederholung).</li>
+                <li>Passwort „woanders“ ändern: Knopf in der Tabelle unten. KeePass erfährt davon nichts; danach mit dem
+                    neuen Passwort anmelden.</li>
+                <li>Zwei-Faktor einrichten (angemeldet):
+                    <a href="2fa-einrichten.html?art=link">als Link</a>,
+                    <a href="2fa-einrichten.html?art=text">als Text</a>,
+                    <a href="2fa-einrichten.html?art=qr">als QR-Bild</a>,
+                    <a href="2fa-einrichten.html?art=qr-svg">als QR-SVG</a>.
+                    Danach fragt die Anmeldung nach dem Code.</li>
+            </ul>
+        </section>
+        <section class="karte">
+            <h2>Testkonten</h2>
+            <table>
+                <thead><tr><th>Benutzer</th><th>Passwort</th><th>Zwei-Faktor</th><th></th></tr></thead>
+                <tbody id="konten"></tbody>
+            </table>
+            <p>
+                <button type="button" id="abmelden">Abmelden</button>
+                <button type="button" id="zuruecksetzen">Alles zurücksetzen</button>
+            </p>
+            <p class="leise">„Alles zurücksetzen“ löscht die Testkonten; beim nächsten Besuch gibt es wieder das
+                Beispielkonto demo@spielwiese.test mit dem Passwort Start-Passwort1.</p>
+        </section>
+    </main>
+    <script src="spielwiese.js"></script>
+    <script>Spielwiese.initUebersicht();</script>
+</body>
+</html>

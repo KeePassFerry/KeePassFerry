@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zwei-Faktor-Code – Spielwiese</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="kopf">
+        <a class="marke" href="index.html">Spielwiese</a>
+        <nav>
+            <a href="index.html">Übersicht</a>
+            <a href="login.html">Anmelden</a>
+            <a href="registrieren.html">Registrieren</a>
+            <a href="konto.html">Kundenkonto</a>
+        </nav>
+        <span id="angemeldet" class="status"></span>
+    </header>
+    <p class="warnung">Nur zum Testen auf diesem Rechner – hier keine echten Zugangsdaten eingeben.</p>
+    <main>
+        <section class="karte">
+            <h1>Zwei-Faktor-Code</h1>
+            <p>Gib den Code aus deiner Authenticator-App für <strong id="benutzer-anzeige"></strong> ein.</p>
+            <form action="konto.html" method="post">
+                <label for="code">Einmalcode</label>
+                <input type="text" id="code" name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" required>
+                <div><button type="submit">Bestätigen</button></div>
+            <p id="fehler" class="meldung" role="alert" hidden></p>
+            </form>
+        </section>
+    </main>
+    <script src="spielwiese.js"></script>
+    <script>Spielwiese.init2faCode();</script>
+</body>
+</html>

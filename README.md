@@ -77,6 +77,10 @@ KeePassFerry does not need Kee or KeePassRPC and can be installed alongside them
 
 Releases are built by GitHub Actions when a tag `v*` is pushed (see `.github/workflows/release.yml`).
 
+For manual testing without real accounts, `testsite/` contains a local test website (login, password change,
+multi-step login, two-factor setup and codes): `node testsite/server.mjs`, then open `http://127.0.0.1:8080/`
+(see `testsite/README.md`).
+
 ## Privacy
 
 KeePassFerry has no servers, no telemetry and no tracking. It does not transfer any information to other networked
