@@ -559,6 +559,18 @@
     "message": "Not now",
     "description": "KeePassFerry save notice"
   },
+  "updateNotice_title": {
+    "message": "Update password in KeePass?",
+    "description": "KeePassFerry save notice (password of an existing entry changed)"
+  },
+  "updateNotice_text": {
+    "message": "The password you just entered for “$1” differs from the saved one.",
+    "description": "KeePassFerry save notice (password of an existing entry changed); $1 is the username or entry title"
+  },
+  "updateNotice_save": {
+    "message": "Update …",
+    "description": "KeePassFerry save notice (password of an existing entry changed)"
+  },
   "otp_code_tip": {
     "message": "One-time code, valid for $1 more seconds",
     "description": "KeePassFerry one-time code"

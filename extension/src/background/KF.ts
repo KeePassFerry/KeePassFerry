@@ -1,5 +1,6 @@
 import { offerPendingOtpSetup } from "./otpSetup";
 import { sameSite } from "../common/relatedDomains";
+import { LoginCandidate, SubmittedLoginMatch, matchSubmittedLogin, submittedCredentials } from "../common/submittedLogin";
 import { diag } from "./ferryDiag";
 import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
 import { KeeURL } from "../common/KeeURL";
@@ -505,7 +506,11 @@ class Kee {
         if (!item || item.noticeDismissed) return;
         if (!this.store.state.connected || this.store.state.KeePassDatabases.length === 0) return;
         try {
-            this.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({ action: Action.ShowSaveNotice });
+            // Passwort eines vorhandenen Eintrags geändert: Hinweis "aktualisieren?" mit Benutzername bzw. Titel
+            this.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({
+                action: Action.ShowSaveNotice,
+                saveNoticeUpdateFor: item.submittedData?.updateTarget?.label
+            } as AddonMessage);
         } catch (e) {
             // Seite lädt gerade neu; der Hinweis kommt beim nächsten Verbinden
         }
@@ -611,30 +616,36 @@ class Kee {
         KeeLog.debug("Refresh of Kee's view of the KeePass database initiated.");
     }
 
-    // Prüft abgeschickte Formulardaten gegen KeePass: true, wenn ein Eintrag der Seite denselben Benutzernamen
-    // und (falls mitgeschickt) dasselbe Passwort hat. Ohne Verbindung oder bei Fehlern: false (Hinweis wie bisher).
-    async submittedDataIsKnown(submitted: { url: string; fields: { type: string; value: string }[] }): Promise<boolean> {
+    // Prüft abgeschickte Formulardaten gegen die Einträge der Seite (siehe submittedLogin.ts): bekannt, Passwort eines
+    // vorhandenen Eintrags geändert oder neu. Ohne offene Datenbank oder bei Fehlern: neu (Hinweis wie bisher).
+    async classifySubmittedData(
+        submitted: { url: string; fields: { type: string; value: string }[] },
+        tabId: number
+    ): Promise<SubmittedLoginMatch> {
         try {
-            if (!this.store.state.connected || this.store.state.KeePassDatabases.length === 0) return false;
-            const fields = submitted?.fields ?? [];
-            const password = fields.find(f => f.type === "password" && f.value)?.value ?? null;
-            const username = fields.find(f => f.type !== "password" && f.type !== "boolean" && f.value)?.value ?? null;
-            if (!password && !username) return false;
+            if (!this.store.state.connected || this.store.state.KeePassDatabases.length === 0) return { kind: "new" };
+            const { username, password } = submittedCredentials(submitted?.fields ?? []);
+            if (!password && !username) return { kind: "new" };
             const entries: Entry[] =
                 (await Promise.race([
                     this.KeePassRPC.findLogins(submitted.url, null, null, null, null, null),
                     new Promise<Entry[]>(resolve => self.setTimeout(() => resolve(null), 2000))
                 ])) ?? [];
-            return entries.some(e => {
-                const user = Entry.getUsernameField(e)?.value ?? "";
-                const pass = Entry.getPasswordField(e)?.value ?? "";
-                if (password && pass !== password) return false;
-                if (username && user.toLowerCase() !== username.toLowerCase()) return false;
-                return true;
-            });
+            const candidates: LoginCandidate[] = entries.map(e => ({
+                uuid: e.uuid,
+                dbFileName: e.database?.fileName,
+                title: e.title,
+                username: Entry.getUsernameField(e)?.value ?? "",
+                password: Entry.getPasswordField(e)?.value ?? ""
+            }));
+            // Gerade in diesem Tab ausgefüllter Eintrag derselben Website (für Formulare ohne Benutzerfeld)
+            const last = this.persistentTabStates.get(tabId)?.lastFilledEntry;
+            const domain = KeeURL.fromString(submitted.url)?.domainOrIPAddress;
+            const recent = last && sameSite(last.domain, domain) && last.at > Date.now() - 5 * 60 * 1000 ? last : null;
+            return matchSubmittedLogin(submitted.fields ?? [], candidates, recent);
         } catch (e) {
-            KeeLog.debug("submittedDataIsKnown failed: " + e);
-            return false;
+            KeeLog.debug("classifySubmittedData failed: " + e);
+            return { kind: "new" };
         }
     }
 

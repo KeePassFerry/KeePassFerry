@@ -3,6 +3,8 @@ import { diag } from "./ferryDiag";
 import { handleOtpSetupCandidate, dismissOtpSetup, isOtpSetupPending } from "./otpSetup";
 import { isRepeatedAutoFill, rememberAutoFill } from "./otpRepeat";
 import { sameSite } from "../common/relatedDomains";
+import { submittedCredentials } from "../common/submittedLogin";
+import type { SubmittedData } from "../common/SubmittedData";
 import { BROWSER_UPDATE_PLUGIN_VERSION, pluginVersionAtLeast } from "../common/FeatureFlags";
 import { onFieldsAvailable } from "./pageFields";
 import { KeeURL } from "../common/KeeURL";
@@ -175,6 +177,24 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
     }
 }
 
+// Bekannte Anmeldung: eine frühere abweichende Eingabe desselben Benutzers auf derselben Website im Tab
+// (z. B. vertipptes Passwort) nicht mehr zum Speichern bzw. Aktualisieren anbieten
+function dropSupersededSubmission(tabId: number, submitted: SubmittedData) {
+    const state = kee.persistentTabStates.get(tabId);
+    const item = state?.items?.find(i => i.itemType === "submittedData");
+    if (!item?.submittedData) return;
+    const sameWebsite = sameSite(
+        KeeURL.fromString(submitted.url ?? "")?.domainOrIPAddress,
+        KeeURL.fromString(item.submittedData.url ?? "")?.domainOrIPAddress
+    );
+    if (!sameWebsite) return;
+    const user = submittedCredentials(submitted.fields ?? []).username;
+    const previousUser = submittedCredentials(item.submittedData.fields ?? []).username;
+    if (user && previousUser && user.toLowerCase() !== previousUser.toLowerCase()) return;
+    state.items = state.items.filter(i => i !== item);
+    kee.configureBrowserActionIcon();
+}
+
 export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMessage) {
     if (KeeLog && KeeLog.debug) {
         KeeLog.debug("In background script, received message from page script.");
@@ -253,25 +273,34 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         diag("seite " + host + " f" + this.sender.frameId, msg.ferryDiag.event, msg.ferryDiag.data);
     }
     // Schon in KeePass vorhandene Zugangsdaten (auch nur der Benutzername im ersten Schritt
-    // mehrstufiger Anmeldungen) lösen keinen Speichern-Hinweis aus
-    const submittedKnown = msg.submittedData ? await kee.submittedDataIsKnown(msg.submittedData) : false;
+    // mehrstufiger Anmeldungen) lösen keinen Speichern-Hinweis aus; derselbe Benutzer mit anderem Passwort
+    // bietet an, den vorhandenen Eintrag zu aktualisieren
+    const submittedMatch = msg.submittedData ? await kee.classifySubmittedData(msg.submittedData, this.sender.tab.id) : null;
     if (msg.submittedData) {
         diag("hintergrund", "formular abgeschickt", {
             felder: (msg.submittedData.fields ?? []).map((f: any) => ({ typ: f.type, name: f.name, gefuellt: !!f.value })),
-            bekannt: submittedKnown
+            ergebnis: submittedMatch.kind
         });
     }
     // Nur Formulare mit ausgefülltem Passwortfeld sind Anmeldungen (wie Bitwarden); Einstellungs-, Such- oder
     // Bankformulare ohne Passwort lösen keinen Speichern-Hinweis aus
     const submittedHasPassword = !!msg.submittedData?.fields?.some((f: any) => f.type === "password" && f.value);
-    if (msg.submittedData && submittedKnown) {
+    if (msg.submittedData && submittedMatch.kind === "known") {
         KeeLog.debug("Submitted data matches an existing entry; no save offer");
+        dropSupersededSubmission(this.sender.tab.id, msg.submittedData);
     } else if (msg.submittedData && !submittedHasPassword) {
         KeeLog.debug("Submitted form has no password; no save offer");
     } else if (msg.submittedData) {
+        const target = submittedMatch.kind === "passwordChanged" ? submittedMatch.entry : null;
+        // Bezeichnung im Hinweis nie leer (sonst zeigt die Seite "speichern?" statt "aktualisieren?")
+        const label = target
+            ? target.username || target.title || KeeURL.fromString(msg.submittedData.url ?? "")?.domainOrIPAddress || "?"
+            : null;
         const persistentItem = {
             itemType: "submittedData" as const,
-            submittedData: msg.submittedData,
+            submittedData: target
+                ? { ...msg.submittedData, updateTarget: { uuid: target.uuid, dbFileName: target.dbFileName, label } }
+                : msg.submittedData,
             creationDate: new Date()
         };
 

@@ -7,10 +7,12 @@ SaveNotice.ts zeigt oben rechts in der Seite einen Hinweis mit zwei Knöpfen. Ei
 damit Seiten-CSS nicht durchschlägt.
 - "login": gerade eingegebene Zugangsdaten können gespeichert werden ("Speichern" öffnet das Popup im Speichern-Dialog)
 - "otp": auf der Seite wurde ein Zwei-Faktor-Schlüssel gefunden ("In KeePass speichern" öffnet die Eintragsauswahl)
+- "update": das gerade eingegebene Passwort weicht vom gespeicherten Eintrag ab ("Aktualisieren" öffnet diesen Eintrag
+  mit dem neuen Passwort)
 "Nicht jetzt" blendet den Hinweis für diesen Fund aus.
 */
 
-export type NoticeKind = "login" | "otp";
+export type NoticeKind = "login" | "otp" | "update";
 
 const HOST_ID = "keepassferry-save-notice";
 
@@ -28,6 +30,13 @@ const NOTICE_TEXTS: Record<NoticeKind, { title: string; text: string; save: stri
         save: "otpNotice_save",
         saveAction: Action.OpenOtpSetupPopup,
         dismissAction: Action.DismissOtpSetup
+    },
+    update: {
+        title: "updateNotice_title",
+        text: "updateNotice_text",
+        save: "updateNotice_save",
+        saveAction: Action.OpenSavePopup,
+        dismissAction: Action.DismissSaveNotice
     }
 };
 
