@@ -744,9 +744,12 @@ export class FormFilling {
             this.matchResult
         );
 
-        // Im Tab zuvor gewählter Eintrag (z. B. Benutzername auf Seite 1) wird ohne erneute Auswahl verwendet
-        if (preferredUuid && !this.matchResult.UUID && validEntries.some(e => e.uuid === preferredUuid)) {
-            this.matchResult.UUID = preferredUuid;
+        // Im Tab zuvor gewählter Eintrag (z. B. Benutzername auf Seite 1) wird ohne erneute Auswahl verwendet,
+        // mit seiner Datenbank (sonst meldet "EntryFilled" den Eintrag ohne Datenbank)
+        const preferred = preferredUuid && !this.matchResult.UUID ? validEntries.find(e => e.uuid === preferredUuid) : null;
+        if (preferred) {
+            this.matchResult.UUID = preferred.uuid;
+            this.matchResult.dbFileName = preferred.database?.fileName;
         }
 
         this.fillAndSubmit(true);

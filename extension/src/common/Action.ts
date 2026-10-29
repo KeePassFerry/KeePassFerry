@@ -26,5 +26,11 @@ export const enum Action {
     WebAuthnRequest = "webAuthnRequest",
     QueryFields = "queryFields",
     FillField = "fillField",
-    FillContextTarget = "fillContextTarget"
+    FillContextTarget = "fillContextTarget",
+    // Seite: Anmeldung mit unverändert eingetragenen Daten abgeschickt
+    FilledLoginSubmitted = "filledLoginSubmitted",
+    // Seite: "Passwort aktualisieren" nicht gezeigt, das Anmeldeformular blieb stehen (Anmeldung fehlgeschlagen)
+    PasswordUpdateNotShown = "passwordUpdateNotShown",
+    // Hintergrund: offenes Angebot zum Speichern bzw. Aktualisieren ist erledigt, Hinweis schließen
+    WithdrawSaveNotice = "withdrawSaveNotice"
 }

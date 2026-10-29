@@ -559,6 +559,18 @@
         "message": "Nicht jetzt",
         "description": "KeePassFerry save notice"
     },
+    "updateNotice_title": {
+        "message": "Neues Passwort erkannt",
+        "description": "KeePassFerry save notice (password of an existing entry changed)"
+    },
+    "updateNotice_text": {
+        "message": "Übernimm das neue Passwort für $1 in KeePass. Das alte bleibt in der Eintragshistorie.",
+        "description": "KeePassFerry save notice (password of an existing entry changed); $1 is the username or entry title"
+    },
+    "updateNotice_save": {
+        "message": "Aktualisieren …",
+        "description": "KeePassFerry save notice (password of an existing entry changed)"
+    },
     "otp_code_tip": {
         "message": "Einmalcode, noch $1 Sekunden gültig",
         "description": "KeePassFerry one-time code"
@@ -576,7 +588,7 @@
         "description": "KeePassFerry two-factor setup"
     },
     "otpNotice_save": {
-        "message": "In KeePass speichern …",
+        "message": "Speichern …",
         "description": "KeePassFerry two-factor setup"
     },
     "otpSetup_heading": {
