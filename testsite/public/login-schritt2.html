@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Anmelden – Schritt 2 – Spielwiese</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="kopf">
+        <a class="marke" href="index.html">Spielwiese</a>
+        <nav>
+            <a href="index.html">Übersicht</a>
+            <a href="login.html">Anmelden</a>
+            <a href="registrieren.html">Registrieren</a>
+            <a href="konto.html">Kundenkonto</a>
+        </nav>
+        <span id="angemeldet" class="status"></span>
+    </header>
+    <p class="warnung">Nur zum Testen auf diesem Rechner – hier keine echten Zugangsdaten eingeben.</p>
+    <main>
+        <section class="karte">
+            <h1>Anmelden – Schritt 2 von 2</h1>
+            <p>Anmelden als <strong id="benutzer-anzeige"></strong> · <a href="login-schritt1.html">anderes Konto</a></p>
+            <form action="konto.html" method="post">
+                <label for="passwort">Passwort</label>
+                <input type="password" id="passwort" name="password" autocomplete="current-password" required>
+                <div><button type="submit">Anmelden</button></div>
+            <p id="fehler" class="meldung" role="alert" hidden></p>
+            </form>
+        </section>
+    </main>
+    <script src="spielwiese.js"></script>
+    <script>Spielwiese.initSchritt2();</script>
+</body>
+</html>
