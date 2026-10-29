@@ -166,8 +166,11 @@ export function showSaveNotice(kind: NoticeKind = "login", detail?: string) {
     hideTimer = window.setTimeout(hideSaveNotice, AUTO_HIDE_MS);
 }
 
-export function hideSaveNotice() {
+// Mit Art nur einen Hinweis dieser Art schließen (ein offener Speichern-Hinweis für Zugangsdaten bleibt)
+export function hideSaveNotice(kind?: NoticeKind) {
+    const existing = document.getElementById(HOST_ID);
+    if (kind && existing?.dataset.kind !== kind) return;
     clearTimeout(hideTimer);
     hideTimer = null;
-    document.getElementById(HOST_ID)?.remove();
+    existing?.remove();
 }

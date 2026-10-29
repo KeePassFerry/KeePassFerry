@@ -342,6 +342,11 @@ if (document.body) {
                 showSaveNotice("otp", m.otpIssuer);
             }
 
+            // Schlüssel steht schon in einem Eintrag (erst nach dem Entsperren bzw. Verbinden festgestellt)
+            if (m.action == Action.HideOtpSetupNotice) {
+                hideSaveNotice("otp");
+            }
+
             if (m.action == Action.FillOtp && m.otpCode) {
                 otpFields.fill(m.otpCode, m.otpRemaining, m.otpPeriod);
             } else if (m.action == Action.FillOtp && m.otpIconOnly) {
