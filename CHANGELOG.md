@@ -12,6 +12,10 @@
 - "Add" in the edit window: kinds sorted alphabetically, "Custom field" preselected.
 - Group tree ("Where?" and the group of a new entry) redesigned: one line per group, collapsible, the chosen group
   marked; only the top level and the path to the chosen group start expanded.
+- "Two-factor key found" notice no longer appears when the key on the page is already stored in a matching entry:
+  the extension compares the entry's current code with a code it computes locally from the found key (the key is
+  never sent to KeePass); the code is then filled in as usual. Only checked while the database is unlocked; a key
+  found while locked is checked after unlocking.
 
 ## 1.0.12 – 2026-10-28
 

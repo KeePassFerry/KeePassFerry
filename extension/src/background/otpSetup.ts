@@ -8,6 +8,7 @@ import type { AddonMessage } from "../common/AddonMessage";
 import { diag } from "./ferryDiag";
 import { rememberAutoFill } from "./otpRepeat";
 import { sameSite } from "../common/relatedDomains";
+import { totpMatches } from "../common/totp";
 
 /*
 otpSetup.ts: Einrichtung eines Zwei-Faktor-Schlüssels (TOTP) von einer Webseite.
@@ -27,6 +28,10 @@ interface PendingOtpSetup {
     source: Source;
     at: number;
     dismissed?: boolean;
+    // Bei gesperrter Datenbank gefunden: noch nicht mit den Einträgen verglichen
+    unchecked?: boolean;
+    // Vergleich nach dem Entsperren (gleichzeitige Anfragen warten auf dasselbe Ergebnis)
+    check?: Promise<boolean>;
 }
 
 export interface OtpSetupCandidate {
@@ -167,7 +172,55 @@ export async function isOtpSetupPending(tabId: number, frameUrl: string): Promis
     await inFlight.get(tabId);
     const setup = pending.get(tabId);
     if (!setup || setup.dismissed || Date.now() - setup.at > MAX_AGE_MS) return false;
-    return KeeURL.fromString(frameUrl)?.domainOrIPAddress === setup.domain;
+    if (KeeURL.fromString(frameUrl)?.domainOrIPAddress !== setup.domain) return false;
+    return !(await settleIfStored(tabId, setup));
+}
+
+// Jede Plugin-Anfrage bei gesperrter Datenbank stößt in KeePass die Entsperrabfrage an
+function databaseOpen() {
+    return kee.store.state.connected && kee.store.state.KeePassDatabases.length > 0;
+}
+
+// Steht der Schlüssel schon in einem Eintrag der Seite? Vergleicht nur Codes: das Plugin liefert den aktuellen
+// Code des Eintrags, die Erweiterung berechnet ihn selbst aus dem gefundenen Schlüssel (Secret bleibt hier)
+async function isAlreadyStored(url: string, domain: string, tabId: number, uri: string): Promise<boolean> {
+    const candidates: { uuid: string; dbFileName: string }[] = [];
+    const last = kee.persistentTabStates.get(tabId)?.lastFilledEntry;
+    if (last && sameSite(last.domain, domain)) candidates.push({ uuid: last.uuid, dbFileName: last.dbFileName });
+    try {
+        const found: Entry[] = (await kee.KeePassRPC.findLogins(url, null, null, null, null, null)) ?? [];
+        for (const e of found.slice(0, 10)) {
+            if (!candidates.some(c => c.uuid === e.uuid)) candidates.push({ uuid: e.uuid, dbFileName: e.database.fileName });
+        }
+    } catch (e) {
+        diag("hintergrund", "otp einrichtung: suche fehlgeschlagen", { fehler: String(e) });
+    }
+    for (const c of candidates) {
+        try {
+            const totp = await kee.KeePassRPC.getTotp(c.uuid, c.dbFileName);
+            if (totp?.code && (await totpMatches(uri, totp.code, Date.now()))) {
+                diag("hintergrund", "otp einrichtung: schlüssel schon gespeichert", { uuid: c.uuid });
+                return true;
+            }
+        } catch (e) {
+            // Eintrag ohne TOTP oder Abfrage fehlgeschlagen: nächster Eintrag
+        }
+    }
+    return false;
+}
+
+// Bei gesperrter Datenbank gemerkten Fund nach dem Entsperren prüfen; schon gespeichert -> Fund verwerfen
+function settleIfStored(tabId: number, setup: PendingOtpSetup): Promise<boolean> {
+    if (!setup.check) {
+        if (!setup.unchecked || !databaseOpen()) return Promise.resolve(false);
+        setup.check = isAlreadyStored(setup.url, setup.domain, tabId, setup.uri)
+            .catch(() => false)
+            .then(stored => {
+                if (stored && pending.get(tabId) === setup) pending.delete(tabId);
+                return stored;
+            });
+    }
+    return setup.check;
 }
 
 async function evaluateCandidate(
@@ -219,6 +272,14 @@ async function evaluateCandidate(
     const info = parseOtpauth(uri);
     if (!info) return;
 
+    // Schlüssel schon in einem Eintrag: kein Hinweis, Code wird normal eingetragen.
+    // Gesperrte Datenbank: nicht anfragen (Entsperrabfrage), Hinweis wie bisher und später nachprüfen
+    const open = databaseOpen();
+    if (open && (await isAlreadyStored(frameUrl, domain, tabId, uri))) {
+        if (pending.get(tabId)?.uri === uri) pending.delete(tabId);
+        return;
+    }
+
     const existing = pending.get(tabId);
     if (existing && existing.domain === domain && Date.now() - existing.at < MAX_AGE_MS) {
         if (existing.uri === uri || sourceRank[existing.source] > sourceRank[source]) {
@@ -226,7 +287,7 @@ async function evaluateCandidate(
             return;
         }
     }
-    const entry: PendingOtpSetup = { uri, ...info, url: frameUrl, domain, source, at: Date.now() };
+    const entry: PendingOtpSetup = { uri, ...info, url: frameUrl, domain, source, at: Date.now(), unchecked: !open };
     pending.set(tabId, entry);
     showNotice(tabId, entry);
 }
@@ -243,10 +304,11 @@ function showNotice(tabId: number, setup: PendingOtpSetup) {
 }
 
 // Beim Verbinden eines neuen Top-Frames einen noch offenen Fund derselben Domain erneut anbieten
-export function offerPendingOtpSetup(tabId: number, url: string) {
+export async function offerPendingOtpSetup(tabId: number, url: string) {
     const setup = pending.get(tabId);
     if (!setup || setup.dismissed || Date.now() - setup.at > MAX_AGE_MS) return;
     if (KeeURL.fromString(url)?.domainOrIPAddress !== setup.domain) return;
+    if (await settleIfStored(tabId, setup)) return;
     showNotice(tabId, setup);
 }
 
@@ -271,6 +333,7 @@ export async function getOtpSetupSummary(tabId: number): Promise<{ issuer: strin
     } catch (e) {
         return null;
     }
+    if (await settleIfStored(tabId, setup)) return null;
     return { issuer: setup.issuer || setup.domain };
 }
 
