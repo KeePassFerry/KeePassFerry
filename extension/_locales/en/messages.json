@@ -564,11 +564,11 @@
     "description": "KeePassFerry save notice (password of an existing entry changed)"
   },
   "updateNotice_text": {
-    "message": "Save the new password for $1 in KeePass. The previous one is kept in the entry history.",
+    "message": "Save the new password for $1 in KeePass. The old one stays in the entry history.",
     "description": "KeePassFerry save notice (password of an existing entry changed); $1 is the username or entry title"
   },
   "updateNotice_save": {
-    "message": "Update in KeePass …",
+    "message": "Update …",
     "description": "KeePassFerry save notice (password of an existing entry changed)"
   },
   "otp_code_tip": {
@@ -588,7 +588,7 @@
     "description": "KeePassFerry two-factor setup"
   },
   "otpNotice_save": {
-    "message": "Save in KeePass …",
+    "message": "Save …",
     "description": "KeePassFerry two-factor setup"
   },
   "otpSetup_heading": {
