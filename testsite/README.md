@@ -23,7 +23,7 @@ entstehen lassen. Beispielkonto beim ersten Besuch: `demo@spielwiese.test` / `St
 | Szenario | So geht's | Erwartet |
 | --- | --- | --- |
 | Neue Zugangsdaten | Registrieren oder mit einem Konto anmelden, das noch nicht in KeePass steht | „Zugangsdaten in KeePass speichern?“ |
-| Passwort woanders geändert | In der Übersicht „Passwort woanders ändern“, dann mit dem neuen Passwort anmelden | „Neues Passwort erkannt“; „In KeePass aktualisieren …“ öffnet den vorhandenen Eintrag mit neuem Passwort |
+| Passwort woanders geändert | In der Übersicht „Passwort woanders ändern“, dann mit dem neuen Passwort anmelden | „Neues Passwort erkannt“; „Aktualisieren …“ öffnet den vorhandenen Eintrag mit neuem Passwort |
 | Vertippt | Mit falschem Passwort anmelden (das Formular erscheint wieder) | kein Aktualisieren-Hinweis |
 | Passwort im Kundenkonto ändern | Kundenkonto → Passwort ändern | Aktualisieren-Hinweis für den vorhandenen Eintrag |
 | Anmeldung ohne Neuladen | „Anmelden ohne Neuladen“ | Hinweise erscheinen, sobald das Formular verschwunden ist |
