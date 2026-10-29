@@ -28,7 +28,7 @@ interface PendingOtpSetup {
     source: Source;
     at: number;
     dismissed?: boolean;
-    // Bei gesperrter Datenbank gefunden: noch nicht mit den Einträgen verglichen
+    // Bei gesperrter oder noch nicht verbundener Datenbank gefunden: noch nicht mit den Einträgen verglichen
     unchecked?: boolean;
     // Vergleich nach dem Entsperren (gleichzeitige Anfragen warten auf dasselbe Ergebnis)
     check?: Promise<boolean>;
@@ -195,9 +195,11 @@ async function isAlreadyStored(url: string, domain: string, tabId: number, uri: 
     } catch (e) {
         diag("hintergrund", "otp einrichtung: suche fehlgeschlagen", { fehler: String(e) });
     }
+    let withTotp = 0;
     for (const c of candidates) {
         try {
             const totp = await kee.KeePassRPC.getTotp(c.uuid, c.dbFileName);
+            if (totp?.code) withTotp++;
             if (totp?.code && (await totpMatches(uri, totp.code, Date.now()))) {
                 diag("hintergrund", "otp einrichtung: schlüssel schon gespeichert", { uuid: c.uuid });
                 return true;
@@ -206,21 +208,36 @@ async function isAlreadyStored(url: string, domain: string, tabId: number, uri: 
             // Eintrag ohne TOTP oder Abfrage fehlgeschlagen: nächster Eintrag
         }
     }
+    diag("hintergrund", "otp einrichtung: schlüssel nicht gespeichert", { eintraege: candidates.length, mitOtp: withTotp });
     return false;
 }
 
-// Bei gesperrter Datenbank gemerkten Fund nach dem Entsperren prüfen; schon gespeichert -> Fund verwerfen
+// Ohne offene Datenbank gemerkten Fund prüfen, sobald sie verfügbar ist; schon gespeichert -> Fund verwerfen
+// und den bereits gezeigten Hinweis in der Seite schließen
 function settleIfStored(tabId: number, setup: PendingOtpSetup): Promise<boolean> {
     if (!setup.check) {
         if (!setup.unchecked || !databaseOpen()) return Promise.resolve(false);
         setup.check = isAlreadyStored(setup.url, setup.domain, tabId, setup.uri)
             .catch(() => false)
             .then(stored => {
-                if (stored && pending.get(tabId) === setup) pending.delete(tabId);
+                if (stored && pending.get(tabId) === setup) {
+                    pending.delete(tabId);
+                    hideNotice(tabId);
+                }
                 return stored;
             });
     }
     return setup.check;
+}
+
+// Datenbank ist verfügbar geworden (Start, Verbinden, Entsperren): offene Funde aller Tabs nachprüfen
+export function recheckPendingOtpSetups() {
+    for (const tabId of new Set([...pending.keys(), ...inFlight.keys()])) {
+        (inFlight.get(tabId) ?? Promise.resolve()).then(() => {
+            const setup = pending.get(tabId);
+            if (setup) settleIfStored(tabId, setup);
+        });
+    }
 }
 
 async function evaluateCandidate(
@@ -273,8 +290,10 @@ async function evaluateCandidate(
     if (!info) return;
 
     // Schlüssel schon in einem Eintrag: kein Hinweis, Code wird normal eingetragen.
-    // Gesperrte Datenbank: nicht anfragen (Entsperrabfrage), Hinweis wie bisher und später nachprüfen
+    // Gesperrte oder noch nicht verbundene Datenbank (z. B. kurz nach dem Browserstart): nicht anfragen
+    // (Entsperrabfrage), Hinweis wie bisher; nachgeprüft wird, sobald die Datenbank verfügbar ist
     const open = databaseOpen();
+    if (!open) diag("hintergrund", "otp einrichtung: datenbank nicht verfügbar -> später prüfen");
     if (open && (await isAlreadyStored(frameUrl, domain, tabId, uri))) {
         if (pending.get(tabId)?.uri === uri) pending.delete(tabId);
         return;
@@ -298,6 +317,14 @@ function showNotice(tabId: number, setup: PendingOtpSetup) {
             action: Action.ShowOtpSetupNotice,
             otpIssuer: setup.issuer || setup.domain
         } as AddonMessage);
+    } catch (e) {
+        // Seite lädt gerade neu
+    }
+}
+
+function hideNotice(tabId: number) {
+    try {
+        kee.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({ action: Action.HideOtpSetupNotice } as AddonMessage);
     } catch (e) {
         // Seite lädt gerade neu
     }
