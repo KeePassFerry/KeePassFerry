@@ -13,11 +13,11 @@
 - Group tree ("Where?" and the group of a new entry) redesigned: one line per group, collapsible, the chosen group
   marked; only the top level and the path to the chosen group start expanded.
 - Changed password: if the login details just entered belong to an existing entry (same username) but the password
-  differs, the notice asks "Update password in KeePass?" instead of offering a second entry; "Update …" opens that
-  entry with the new password prefilled (the old one is kept in the entry history). Only offered once no login form is
-  visible any more (a failed login, e.g. a typo, is not offered) and while the database is unlocked; a different
-  username with the same password still counts as another account. A later successful login with the saved password
-  withdraws an earlier offer for a mistyped one.
+  differs, the notice "New password detected" offers to update that entry instead of saving a second one;
+  "Update in KeePass …" opens it with the new password prefilled (the old one is kept in the entry history). Only
+  offered once no login form is visible any more (a failed login, e.g. a typo, is not offered) and while the database
+  is unlocked; a different username with the same password still counts as another account. A later successful login
+  with the saved password withdraws an earlier offer for a mistyped one.
 
 ## 1.0.12 – 2026-10-28
 

@@ -560,15 +560,15 @@
         "description": "KeePassFerry save notice"
     },
     "updateNotice_title": {
-        "message": "Passwort in KeePass aktualisieren?",
+        "message": "Neues Passwort erkannt",
         "description": "KeePassFerry save notice (password of an existing entry changed)"
     },
     "updateNotice_text": {
-        "message": "Das soeben eingegebene Passwort für „$1“ weicht vom gespeicherten ab.",
+        "message": "Übernimm das neue Passwort für $1 in KeePass. Das bisherige bleibt in der Eintragshistorie erhalten.",
         "description": "KeePassFerry save notice (password of an existing entry changed); $1 is the username or entry title"
     },
     "updateNotice_save": {
-        "message": "Aktualisieren …",
+        "message": "In KeePass aktualisieren …",
         "description": "KeePassFerry save notice (password of an existing entry changed)"
     },
     "otp_code_tip": {
