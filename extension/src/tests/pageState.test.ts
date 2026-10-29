@@ -41,6 +41,22 @@ describe("pageStateOf", () => {
         }
     });
 
+    // Wie im Betrieb: der Store verändert das defaults-Objekt selbst (NonReactiveStore: _state = defaults)
+    it("übernimmt nichts aus dem lebenden Zustandsobjekt", () => {
+        const live = defaults as KeeState;
+        const saved = { saveState: live.saveState, generatedPassword: live.generatedPassword, searchResults: live.searchResults, notifications: live.notifications };
+        try {
+            Object.assign(live, fullState());
+            live.saveState.submittedData = { url: "https://bank.example", fields: [{ type: "password", value: "gerade-abgeschickt" }] } as any;
+            const json = JSON.stringify(pageStateOf(live));
+            for (const secret of ["geheim-im-dialog", "gerade-abgeschickt", "erzeugt-123", "aus-suche", "hinweis"]) {
+                expect(json).not.toContain(secret);
+            }
+        } finally {
+            Object.assign(live, saved, { KeePassDatabases: [], connected: false, entryUpdateStartedAtTimestamp: 0 });
+        }
+    });
+
     it("behält, was Seiten-Skripte lesen", () => {
         const s = pageStateOf(fullState());
         expect(s.connected).toBe(true);

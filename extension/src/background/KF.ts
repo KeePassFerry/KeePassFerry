@@ -1,8 +1,8 @@
 import { offerPendingOtpSetup } from "./otpSetup";
-import { pageMutationOf, pageStateOf } from "./pageState";
 import { sameSite } from "../common/relatedDomains";
 import { LoginCandidate, SubmittedLoginMatch, matchSubmittedLogin, submittedCredentials } from "../common/submittedLogin";
 import { diag } from "./ferryDiag";
+import { pageMutationOf, pageStateOf } from "./pageState";
 import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
 import { KeeURL } from "../common/KeeURL";
 import { PersistentTabState } from "./PersistentTabState";

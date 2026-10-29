@@ -1,4 +1,5 @@
-import { defaults, KeeState } from "../store/KeeState";
+import type { KeeState } from "../store/KeeState";
+import { SaveState } from "../common/SaveState";
 import { Database } from "../common/model/Database";
 import { Mutation } from "../store/Mutation";
 import * as types from "../store/mutation-types";
@@ -17,15 +18,26 @@ export function pageDatabasesOf(databases: Database[]): Database[] {
     );
 }
 
+// Jedes Feld frisch aufgebaut: der Store nutzt "defaults" selbst als lebenden Zustand, eine Kopie davon enthielte
+// den aktuellen Speichern-Zustand, das erzeugte Passwort und die Suchergebnisse
 export function pageStateOf(state: KeeState): KeeState {
     return {
-        ...defaults,
-        connected: state.connected,
-        connectedWebsocket: state.connectedWebsocket,
+        latestConnectionError: "",
+        lastKeePassRPCRefresh: 0,
         ActiveKeePassDatabaseIndex: state.ActiveKeePassDatabaseIndex,
         KeePassDatabases: pageDatabasesOf(state.KeePassDatabases),
+        PasswordProfiles: [],
+        notifications: [],
+        connected: state.connected,
+        connectedWebsocket: state.connectedWebsocket,
+        currentSearchTerm: null,
+        loginsFound: false,
+        searchResults: null,
+        saveState: new SaveState(),
+        generatedPassword: "",
+        saveEntryResult: { result: null, receivedAt: new Date(), fileName: null, uuid: null },
         entryUpdateStartedAtTimestamp: state.entryUpdateStartedAtTimestamp
-    } as KeeState;
+    };
 }
 
 // Änderungen für Inhaltsskripte: nur die Werte von pageStateOf; alles andere wird dorthin nicht verteilt (null)
