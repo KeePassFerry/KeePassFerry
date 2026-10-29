@@ -19,6 +19,8 @@
   username with the same password still counts as another account. A later successful login with the saved password
   withdraws an earlier offer for a mistyped one.
 - Two-factor notice on the page: the button now reads "Save …" like the login notice, so both buttons fit in one line.
+- "Save …" and "Update …" in the page notice open the dialog directly even if an entry was saved in the popup less than
+  two minutes earlier (until now only the main view with "You recently saved an entry" appeared).
 
 ## 1.0.12 – 2026-10-28
 
