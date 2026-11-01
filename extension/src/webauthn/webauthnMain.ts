@@ -91,8 +91,10 @@ Bedingte Anfragen (mediation: "conditional", Passkey-Vorschläge im Benutzerfeld
         return out.buffer;
     }
 
+    // Beschreibbar wie bei echten Objekten: Seiten wie GitHub (webauthn-json) setzen z. B. credential.toJSON selbst
     function define(obj: any, props: Record<string, any>) {
-        for (const [k, v] of Object.entries(props)) Object.defineProperty(obj, k, { value: v, enumerable: true });
+        for (const [k, v] of Object.entries(props))
+            Object.defineProperty(obj, k, { value: v, enumerable: true, writable: true, configurable: true });
         return obj;
     }
 

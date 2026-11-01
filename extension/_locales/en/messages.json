@@ -667,8 +667,12 @@
     "message": "KeePassFerry: security warning",
     "description": "KeePassFerry secure channel"
   },
+  "pairing_needs_plugin_update": {
+    "message": "To pair, KeePassFerry needs a newer version of the KeePass plugin. Please update the plugin (KeePass → KeePassFerry → Check for updates) and restart KeePass.",
+    "description": "KeePassFerry secure channel"
+  },
   "security_server_key_changed": {
-    "message": "The KeePass side identifies itself with a different key than before, so KeePassFerry will not connect. If you have reinstalled KeePass or the plugin, reset the pairing in the settings.",
+    "message": "The KeePass side is not the one KeePassFerry is paired with (different key or a different KeePass installation), so KeePassFerry will not connect. If you have set up KeePass or the plugin again, or want to use another KeePass, reset the pairing in the settings.",
     "description": "KeePassFerry secure channel"
   },
   "passkey_create_heading": {
@@ -1272,15 +1276,15 @@
     "description": "KeePassFerry"
   },
   "ferry_menu_insert_username": {
-    "message": "Insert username",
+    "message": "Username",
     "description": "KeePassFerry"
   },
   "ferry_menu_insert_password": {
-    "message": "Insert password",
+    "message": "Password",
     "description": "KeePassFerry"
   },
   "ferry_menu_insert_otp": {
-    "message": "Insert one-time code",
+    "message": "One-time code",
     "description": "KeePassFerry"
   },
   "ferry_extras_attachment_count": {

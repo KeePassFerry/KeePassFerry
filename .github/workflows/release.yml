@@ -1,5 +1,6 @@
 # Baut Plugin, Host und Erweiterung und veröffentlicht ein GitHub-Release.
 # Auslöser: Tag "v1.2.3" (muss zur Version in extension/package.json passen) oder manuell (nur Build, kein Release).
+# Fremde Actions sind auf Commit-SHAs festgelegt (Kommentar = Tag zum Zeitpunkt des Festlegens), Inno Setup auf eine Version.
 name: Release
 
 on:
@@ -17,7 +18,7 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Version bestimmen und prüfen
         shell: pwsh
@@ -48,7 +49,7 @@ jobs:
           New-Item -ItemType Directory -Force (Join-Path $dir "Plugins") | Out-Null
           if (-not (Test-Path (Join-Path $dir "KeePass.exe"))) { throw "KeePass.exe fehlt" }
 
-      - uses: microsoft/setup-msbuild@v3
+      - uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3
 
       - name: Plugin bauen
         shell: pwsh
@@ -62,7 +63,7 @@ jobs:
           dotnet build host/KeePassFerryHost -c Release -nologo
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 24
           cache: npm
@@ -108,7 +109,7 @@ jobs:
       - name: Setup bauen (Inno Setup)
         shell: pwsh
         run: |
-          choco install innosetup -y --no-progress
+          choco install innosetup --version 6.7.1 -y --no-progress
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
           & $iscc "/DAppVersion=$env:VERSION" "/DSourceDir=..\release\KeePassFerry" installer\KeePassFerry.iss
@@ -137,7 +138,7 @@ jobs:
           $notes = if ($end) { $rest[0..($end - 2)] } else { $rest }
           $notes | Out-File release/NOTES.md -Encoding utf8
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: KeePassFerry-${{ env.VERSION }}
           path: |
@@ -149,7 +150,7 @@ jobs:
       # Nur als Entwurf: veröffentlicht wird nach der Signatur mit signing/sign-release.ps1 (Schlüssel nur offline)
       - name: GitHub-Release als Entwurf anlegen
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           draft: true
           name: KeePassFerry ${{ env.VERSION }}

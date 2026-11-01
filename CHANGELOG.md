@@ -5,6 +5,27 @@
 - "Edit entry" window: new "Delete entry" button. After a confirmation the entry is moved to the KeePass recycle bin
   (never deleted permanently; it can be restored in KeePass). If the recycle bin is turned off in the database,
   nothing is deleted and the extension asks you to delete the entry in KeePass. Requires the plugin of this version.
+- Passkeys: registering a passkey on GitHub failed ("Passkey registration failed"). The passkey object returned to the
+  page now has writable properties like a native one, so pages that adjust it (e.g. GitHub's webauthn-json) work.
+- Right-click menu of an entry: the items are now simply "Username", "Password" and "One-time code" (without "Insert").
+- Security hardening (thanks to the review in issue #9):
+  - Once the extension is paired with a KeePass, it no longer connects to a different, unknown KeePass; to switch,
+    reset the pairing in the settings. A new KeePass is only remembered after the pairing with verification code.
+  - Logins saved for https are no longer filled or submitted automatically on an unencrypted http page of the same
+    site (choosing the entry manually still works).
+  - One-click update: the downloaded setup is locked against changes and its checksum is verified again on disk
+    right before it is started.
+  - Pipe: messages before the encrypted channel is established are limited to 64 KB, an unfinished handshake is
+    closed after 5 minutes, and at most 16 connections are accepted at the same time.
+  - The developer extension ID is no longer allowed by default (only with `KeePassFerry.AllowDevExtension` set to
+    true in KeePass.config.xml, for loading the extension unpacked).
+  - Pairing: the verification code now also depends on a secret random value that the extension commits to (by
+    hash) before KeePass answers and reveals only afterwards. Someone in between can no longer search for values that
+    make both sides show the same code. Existing pairings are not affected; a new pairing requires the plugin of this
+    version (an older plugin is asked to update first).
+  - Two-factor setup from a QR image: images from other origins than the page are loaded without cookies.
+  - Release build: third-party GitHub Actions pinned to commit SHAs, Inno Setup to a fixed version.
+  - Removed an unused Kee leftover script.
 
 ## 1.0.13 – 2026-11-01
 

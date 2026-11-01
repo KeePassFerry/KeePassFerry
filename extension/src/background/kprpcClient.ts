@@ -192,7 +192,7 @@ export class kprpcClient {
         this.showConnectionMessage($STRF("pairing_message", [display]));
     }
 
-    showChannelProblem(kind: "denied" | "serverKeyChanged" | "error") {
+    showChannelProblem(kind: "denied" | "serverKeyChanged" | "pairingNeedsUpdate" | "error") {
         chrome.notifications.clear("keepassferry-pairing");
         if (kind === "denied") {
             this.showConnectionMessage($STR("pairing_denied"));
@@ -206,6 +206,8 @@ export class kprpcClient {
                 priority: 2
             });
             this.showConnectionMessage($STR("security_server_key_changed"));
+        } else if (kind === "pairingNeedsUpdate") {
+            this.showConnectionMessage($STR("pairing_needs_plugin_update"));
         }
     }
 

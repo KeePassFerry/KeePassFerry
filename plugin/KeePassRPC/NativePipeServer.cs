@@ -18,6 +18,11 @@ namespace KeePassFerry
     {
         public const string PipeBaseName = "keepassferry";
         internal const int MaxMessageBytes = 64 * 1024 * 1024;
+        // Vor abgeschlossenem Handshake: Hello/Auth sind klein; Zeit reicht auch für die Bestätigung des Prüfcodes
+        internal const int MaxHandshakeMessageBytes = 64 * 1024;
+        private const int HandshakeTimeoutMs = 5 * 60 * 1000;
+        private const int MaxClients = 16;
+        private int _clientCount;
 
         private readonly KeePassRPCService _service;
         private readonly KeePassFerryExt _plugin;
@@ -141,8 +146,26 @@ namespace KeePassFerry
                     continue;
                 }
 
+                if (Interlocked.Increment(ref _clientCount) > MaxClients)
+                {
+                    Interlocked.Decrement(ref _clientCount);
+                    Log("Pipe client rejected: too many connections");
+                    pipe.Dispose();
+                    continue;
+                }
+
                 var transport = new PipeClientTransport(pipe);
-                var clientThread = new Thread(() => ServeClient(transport));
+                var clientThread = new Thread(() =>
+                {
+                    try
+                    {
+                        ServeClient(transport);
+                    }
+                    finally
+                    {
+                        Interlocked.Decrement(ref _clientCount);
+                    }
+                });
                 clientThread.IsBackground = true;
                 clientThread.Name = "KeePassFerryPipeClient";
                 clientThread.Start();
@@ -216,8 +239,10 @@ namespace KeePassFerry
         private void ServeClient(PipeClientTransport transport)
         {
             // Zuerst den verschlüsselten Kanal aufbauen; ohne gültigen Handshake keine RPC-Verbindung
-            SecureChannel channel = SecureChannel.Accept(transport, _plugin.FerryIdentity,
-                KeePassRPCClientConnection.FeaturesOfferedToClients, _plugin.ConfirmFerryPairing);
+            SecureChannel channel;
+            using (new Timer(_ => transport.Close(), null, HandshakeTimeoutMs, Timeout.Infinite))
+                channel = SecureChannel.Accept(transport, _plugin.FerryIdentity,
+                    KeePassRPCClientConnection.FeaturesOfferedToClients, _plugin.ConfirmFerryPairing);
             if (channel == null)
             {
                 Log("Secure channel handshake failed or pairing declined");
@@ -225,6 +250,7 @@ namespace KeePassFerry
                 return;
             }
             Log("Secure channel established");
+            transport.MaxMessageBytes = MaxMessageBytes;
 
             _plugin.AddRPCClientConnection(channel);
             try
@@ -266,6 +292,9 @@ namespace KeePassFerry
         private readonly object _writeLock = new object();
         private volatile bool _closed;
 
+        // Bis zum abgeschlossenen Handshake klein, danach groß (Anhänge, Screenshots)
+        public volatile int MaxMessageBytes = NativePipeServer.MaxHandshakeMessageBytes;
+
         public PipeClientTransport(NamedPipeServerStream pipe)
         {
             _pipe = pipe;
@@ -280,7 +309,7 @@ namespace KeePassFerry
             if (!ReadExactly(header, 0, 4, true))
                 return null;
             int length = BitConverter.ToInt32(header, 0);
-            if (length < 0 || length > NativePipeServer.MaxMessageBytes)
+            if (length < 0 || length > MaxMessageBytes)
                 throw new InvalidDataException("Invalid message length " + length);
             var body = new byte[length];
             ReadExactly(body, 0, length, false);

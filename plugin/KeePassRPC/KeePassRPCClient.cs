@@ -54,7 +54,10 @@ namespace KeePassFerry
             "KEEPASSFERRY_FIELD_PROTECTION",
 
             // KeePassFerry: Eintrag in den Papierkorb verschieben (MoveEntryToRecycleBin)
-            "KEEPASSFERRY_ENTRY_RECYCLE"
+            "KEEPASSFERRY_ENTRY_RECYCLE",
+
+            // KeePassFerry: Prüfcode der Kopplung mit Commit (SecureChannel)
+            SecureChannel.PairingCommitFeature
         };
 
         // Zusätzlich die Produktversion des Plugins ("KEEPASSFERRY_VERSION_1.2.3"): Die Erweiterung erkennt daran ein

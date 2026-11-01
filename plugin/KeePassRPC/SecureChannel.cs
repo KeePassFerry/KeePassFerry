@@ -14,15 +14,19 @@ namespace KeePassFerry
     /// Verschlüsselter, gegenseitig authentisierter Kanal zwischen Erweiterung und Plugin (Protokoll v1).
     ///
     /// Handshake (Klartext-JSON über die Pipe):
-    ///   C→S {"ferry":"hello","v":1,"clientId","clientPub","eph","nonce","name","features"}
+    ///   C→S {"ferry":"hello","v":1,"clientId","clientPub","eph","nonce","name","features"[,"sasCommit"]}
     ///   S→C {"ferry":"hello","v":1,"serverId","serverPub","eph","nonce","sig","features"}
-    ///   C→S {"ferry":"auth","sig"}
+    ///   C→S {"ferry":"auth","sig"[,"sasNonce"]}
     ///   S→C {"ferry":"pairing"} (nur bei unbekanntem Client, danach Bestätigung in KeePass)
     ///   S→C verschlüsselt {"ferry":"ready"} oder Klartext {"ferry":"denied"}
     /// TH = SHA-256("KeePassFerry handshake v1"‖0‖clientId‖0‖clientPub‖ephC‖nonceC‖serverId‖0‖serverPub‖ephS‖nonceS)
     /// Schlüssel = HKDF-SHA-256(ikm = SHA-256(ECDH-Z), salt = TH, info = "KeePassFerry keys v1", 64) → C→S | S→C
     /// Signaturen: ECDSA P-256/SHA-256 über "KeePassFerry server v1"‖TH bzw. "KeePassFerry client v1"‖TH
-    /// Prüfcode (Kopplung): SHA-256("KeePassFerry SAS v1"‖TH), erste 4 Byte big endian mod 10^6
+    /// Prüfcode (Kopplung): SHA-256("KeePassFerry SAS v1"‖TH), erste 4 Byte big endian mod 10^6.
+    /// Mit Commit (Feature KEEPASSFERRY_PAIRING_COMMIT): Der Client legt sich im Hello mit
+    /// sasCommit = SHA-256("KeePassFerry SAS commit v2"‖sasNonce) auf 32 Zufallsbytes fest und nennt sie erst im Auth;
+    /// Prüfcode = SHA-256("KeePassFerry SAS v2"‖TH‖sasNonce). Wer sich dazwischenschaltet, muss seine Werte wählen,
+    /// bevor er sasNonce kennt, und kann deshalb nicht nach gleichen Codes auf beiden Seiten suchen.
     /// Nachrichten: {"ferry":"m","n":Zähler,"c":AES-256-GCM(Chiffrat‖Tag)}, Nonce = 0^4‖Zähler(BE), AAD "KeePassFerry v1",
     /// Zähler je Richtung ab 1 und streng fortlaufend (Wiedereinspielen/Umsortieren → Abbruch)
     /// </summary>
@@ -30,6 +34,7 @@ namespace KeePassFerry
     {
         private static readonly byte[] Aad = Encoding.ASCII.GetBytes("KeePassFerry v1");
         private static readonly Regex ClientIdPattern = new Regex("^[A-Za-z0-9-]{8,64}$");
+        public const string PairingCommitFeature = "KEEPASSFERRY_PAIRING_COMMIT";
 
         private readonly PipeClientTransport _raw;
         private readonly object _sendLock = new object();
@@ -71,6 +76,8 @@ namespace KeePassFerry
                 channel.ClientId = clientId;
                 channel.ClientName = name;
                 channel.ClientFeatures = ToStringArray(hello["features"] as JsonArray);
+                // Ältere Erweiterungen senden keinen Commit; für den Server als Antwortenden ist das alte Verfahren sicher
+                byte[] sasCommit = hello["sasCommit"] != null ? FromB64((string)hello["sasCommit"], 32) : null;
 
                 byte[] serverPub = identity.ServerPublicKey;
                 byte[] serverId = Encoding.UTF8.GetBytes(identity.ServerId);
@@ -113,6 +120,13 @@ namespace KeePassFerry
                 byte[] clientSig = FromB64((string)auth["sig"], 64);
                 if (!VerifyClientSignature(clientPub, Concat(Encoding.ASCII.GetBytes("KeePassFerry client v1"), th), clientSig))
                     return null;
+                byte[] sasNonce = null;
+                if (sasCommit != null)
+                {
+                    sasNonce = FromB64((string)auth["sasNonce"], 32);
+                    byte[] check = FerryCrypto.Sha256(Encoding.ASCII.GetBytes("KeePassFerry SAS commit v2"), sasNonce);
+                    if (!FixedTimeEquals(check, sasCommit)) return null;
+                }
 
                 if (!identity.IsClientPaired(clientId, clientPub))
                 {
@@ -120,7 +134,7 @@ namespace KeePassFerry
                     pairing["ferry"] = "pairing";
                     raw.Send(JsonConvert.ExportToString(pairing));
 
-                    string code = PairingCode(th);
+                    string code = sasNonce != null ? PairingCodeV2(th, sasNonce) : PairingCode(th);
                     if (!identity.TryBeginPairing(clientId) || !ConfirmAndEnd(identity, clientId, name, code, confirmPairing))
                     {
                         var denied = new JsonObject();
@@ -162,6 +176,21 @@ namespace KeePassFerry
             byte[] h = FerryCrypto.Sha256(Encoding.ASCII.GetBytes("KeePassFerry SAS v1"), th);
             uint v = ((uint)h[0] << 24) | ((uint)h[1] << 16) | ((uint)h[2] << 8) | h[3];
             return (v % 1000000).ToString("D6");
+        }
+
+        public static string PairingCodeV2(byte[] th, byte[] sasNonce)
+        {
+            byte[] h = FerryCrypto.Sha256(Encoding.ASCII.GetBytes("KeePassFerry SAS v2"), th, sasNonce);
+            uint v = ((uint)h[0] << 24) | ((uint)h[1] << 16) | ((uint)h[2] << 8) | h[3];
+            return (v % 1000000).ToString("D6");
+        }
+
+        private static bool FixedTimeEquals(byte[] a, byte[] b)
+        {
+            if (a.Length != b.Length) return false;
+            int diff = 0;
+            for (int i = 0; i < a.Length; i++) diff |= a[i] ^ b[i];
+            return diff == 0;
         }
 
         private static bool VerifyClientSignature(byte[] clientPub, byte[] data, byte[] sig)

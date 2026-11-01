@@ -16,6 +16,7 @@ import { Entry } from "../common/model/Entry";
 import punycode from "punycode/";
 import NonReactiveStore from "../store/NonReactiveStore";
 import { findInputsInOpenShadowRoots, isHostedInForm } from "./shadowDom";
+import { httpsEntryOnHttpPage } from "../common/insecurePage";
 
 interface ScoreMatrix {
     score: number;
@@ -1131,6 +1132,13 @@ export class FormFilling {
                 if (!isMatchedLoginRequest || !this.config.manualSubmitOverrideProhibited) {
                     if (matchingLogin.alwaysAutoSubmit) action.submit = true;
                     if (matchingLogin.neverAutoSubmit) action.submit = false;
+                }
+
+                // https-Zugangsdaten nicht von selbst auf einer unverschlüsselten http-Seite eintragen
+                if (!isMatchedLoginRequest && httpsEntryOnHttpPage(window.location.href, matchingLogin.URLs)) {
+                    this.Logger.info("Not auto-filling an https entry on an http page");
+                    action.fill = false;
+                    action.submit = false;
                 }
 
                 if (action.fill || matchResult.mustAutoFillForm) {

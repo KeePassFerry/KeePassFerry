@@ -30,6 +30,9 @@ namespace KeePassFerry
         private const string VersionedSetupPrefix = "KeePassFerry-Setup-";
         private const int MaxRedirects = 5;
 
+        // Bleibt bis zum Ende von KeePass offen: solange kann niemand das geprüfte Setup ändern, ersetzen oder löschen
+        private static FileStream _lockedSetup;
+
         internal static string InstalledVersion
         {
             get
@@ -140,7 +143,22 @@ namespace KeePassFerry
             if (expected != actual) return "checksum_mismatch";
 
             string path = Path.Combine(Path.GetTempPath(), "KeePassFerry-Setup-" + Guid.NewGuid().ToString("N") + ".exe");
-            File.WriteAllBytes(path, setup);
+            using (var file = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                file.Write(setup, 0, setup.Length);
+            // Nur noch lesend geöffnet halten (andere dürfen lesen und ausführen, aber nicht schreiben oder löschen)
+            // und die Datei auf der Platte erneut prüfen, denn gestartet wird diese, nicht der Speicherinhalt
+            var locked = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            string onDisk;
+            using (var sha = SHA256.Create())
+                onDisk = BitConverter.ToString(sha.ComputeHash(locked)).Replace("-", "").ToLowerInvariant();
+            if (onDisk != expected)
+            {
+                locked.Dispose();
+                Log("setup auf der platte verändert");
+                return "checksum_mismatch";
+            }
+            if (_lockedSetup != null) _lockedSetup.Dispose();
+            _lockedSetup = locked;
 
             string keepassDir = Path.GetDirectoryName(WinUtil.GetExecutable());
             string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);

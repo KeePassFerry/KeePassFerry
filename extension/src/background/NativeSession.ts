@@ -24,7 +24,7 @@ export interface NativeSessionCallbacks {
     onClose: () => void;
     onMessage: (obj: any) => void;
     onPairingCode: (code: string) => void;
-    onProblem: (kind: "denied" | "serverKeyChanged" | "error") => void;
+    onProblem: (kind: "denied" | "serverKeyChanged" | "pairingNeedsUpdate" | "error") => void;
     clientFeatures: () => string[];
 }
 
@@ -184,10 +184,14 @@ export class NativeSessionManager {
             },
             onSecurityError: reason => {
                 KeeLog.error("Secure channel error: " + reason);
-                if (reason.includes("SERVER_KEY_CHANGED")) {
-                    // Möglicher Angriff oder neu installiertes KeePass: nicht automatisch weiterverbinden
+                if (reason.includes("SERVER_KEY_CHANGED") || reason.includes("SERVER_UNKNOWN")) {
+                    // Möglicher Angriff oder neu eingerichtetes KeePass: nicht automatisch weiterverbinden
                     this.connectionProhibitedUntil = new Date(Date.now() + 24 * 3600 * 1000);
                     this.cb.onProblem("serverKeyChanged");
+                } else if (reason.includes("PAIRING_NEEDS_PLUGIN_UPDATE")) {
+                    // Erst nach einem Plugin-Update erneut versuchen (KeePass-Neustart verbindet ohnehin neu)
+                    this.connectionProhibitedUntil = new Date(Date.now() + 10 * 60 * 1000);
+                    this.cb.onProblem("pairingNeedsUpdate");
                 } else {
                     this.connectionProhibitedUntil = new Date(Date.now() + 10000);
                     this.cb.onProblem("error");

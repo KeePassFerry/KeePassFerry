@@ -198,6 +198,8 @@ Technical detail: " + ex.Message);
         {
             try
             {
+                NativeHostRegistration.AllowDevExtension =
+                    _host.CustomConfig.GetBool(NativeHostRegistration.AllowDevExtensionConfigKey, false);
                 string registrationError = NativeHostRegistration.Register();
                 if (registrationError != null && logger != null)
                     logger.WriteLine("Native messaging host not registered: " + registrationError);

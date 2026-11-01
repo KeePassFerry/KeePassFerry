@@ -118,12 +118,25 @@ async function decodeOtpQrFromVisibleTab(
     return null;
 }
 
-// Von der Seite gelieferte Bilder (Daten-URL oder https-Adresse) dekodieren; liefert die erste otpauth-TOTP-URI
-async function decodeOtpQrFromImages(images: string[]): Promise<string> {
+// Von der Seite gelieferte Bilder (Daten-URL oder https-Adresse) dekodieren; liefert die erste otpauth-TOTP-URI.
+// Anmeldedaten (Cookies) nur bei Bildern derselben Herkunft wie die Seite mitschicken
+async function decodeOtpQrFromImages(images: string[], frameUrl: string): Promise<string> {
+    let pageOrigin: string = null;
+    try {
+        pageOrigin = new URL(frameUrl).origin;
+    } catch {
+        // ohne gültige Seitenadresse nie mit Anmeldedaten laden
+    }
     for (const src of images.slice(0, 4)) {
         if (!/^(data:image\/|https:)/i.test(src)) continue;
         try {
-            const blob = await (await fetch(src, { credentials: "include" })).blob();
+            let sameOrigin = false;
+            try {
+                sameOrigin = !!pageOrigin && new URL(src).origin === pageOrigin;
+            } catch {
+                continue;
+            }
+            const blob = await (await fetch(src, { credentials: sameOrigin ? "include" : "omit" })).blob();
             const bitmap = await createImageBitmap(blob);
             try {
                 const w = Math.min(bitmap.width, 1600);
@@ -264,7 +277,7 @@ async function evaluateCandidate(
         uri = `otpauth://totp/${encodeURIComponent(domain)}?secret=${secret}&issuer=${encodeURIComponent(domain)}`;
         source = "text";
     } else if (candidate.otpQrImages?.length) {
-        const data = await decodeOtpQrFromImages(candidate.otpQrImages);
+        const data = await decodeOtpQrFromImages(candidate.otpQrImages, frameUrl);
         if (data) {
             uri = data;
             source = "qr";

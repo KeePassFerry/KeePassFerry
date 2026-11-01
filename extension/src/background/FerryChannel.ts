@@ -4,8 +4,12 @@ plugin/KeePassRPC/SecureChannel.cs). Nur WebCrypto, keine weiteren Abhängigkeit
 
 - Je Verbindung frischer ECDH-P-256-Schlüsseltausch → HKDF-SHA-256 → AES-256-GCM je Richtung
 - Erweiterung: dauerhafter ECDSA-P-256-Schlüssel (privater Teil nicht exportierbar), signiert den Handshake
-- KeePass: dauerhafter Server-Schlüssel; beim ersten Kontakt gemerkt (Pinning), danach muss er gleich bleiben
-- Erstkopplung: beide Seiten zeigen denselben 6-stelligen Prüfcode, bestätigt wird in KeePass
+- KeePass: dauerhafter Server-Schlüssel; beim ersten Kontakt gemerkt (Pinning), danach muss er gleich bleiben.
+  Ist schon ein KeePass gemerkt, wird ein unbekanntes abgelehnt (erst nach „Kopplung zurücksetzen“ wieder möglich)
+- Erstkopplung: beide Seiten zeigen denselben 6-stelligen Prüfcode, bestätigt wird in KeePass. Die Erweiterung legt
+  sich vorab per Hash auf eine geheime Zufallszahl fest, die erst nach dem Hello des Servers verraten wird und in den
+  Prüfcode eingeht (Commit): Wer sich dazwischenschaltet, kann so nicht nach gleichen Codes auf beiden Seiten suchen.
+  Ein Plugin ohne dieses Verfahren (KEEPASSFERRY_PAIRING_COMMIT) wird für eine neue Kopplung abgelehnt
 - Nachrichten mit Zähler je Richtung, streng fortlaufend
 */
 
@@ -15,6 +19,8 @@ export interface FerryChannelStore {
     getIdentity(): Promise<CryptoKeyPair>;
     getPinnedServerKey(serverId: string): Promise<string>;
     pinServerKey(serverId: string, publicKeyB64: string): Promise<void>;
+    // Ist schon irgendein KeePass gemerkt? (fehlt nur in Testskripten)
+    hasPinnedServers?(): Promise<boolean>;
 }
 
 export interface FerryChannelEvents {
@@ -67,6 +73,8 @@ function counterNonce(n: number): Uint8Array {
     return nonce;
 }
 
+export const PAIRING_COMMIT_FEATURE = "KEEPASSFERRY_PAIRING_COMMIT";
+
 export function pairingCodeFromHash(h: Uint8Array): string {
     const v = ((h[0] << 24) >>> 0) + (h[1] << 16) + (h[2] << 8) + h[3];
     return (v % 1000000).toString().padStart(6, "0");
@@ -87,6 +95,9 @@ export class FerryChannelClient {
     private serverId: string;
     private serverPubB64: string;
     private serverIsNew = false;
+    private pairingSeen = false;
+    private sasNonce: Uint8Array;
+    private legacyPairing = false;
     private sendChain: Promise<void> = Promise.resolve();
     private receiveChain: Promise<void> = Promise.resolve();
 
@@ -103,6 +114,8 @@ export class FerryChannelClient {
         this.eph = (await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"])) as CryptoKeyPair;
         const ephPub = new Uint8Array(await crypto.subtle.exportKey("raw", this.eph.publicKey));
         this.clientNonce = crypto.getRandomValues(new Uint8Array(16));
+        this.sasNonce = crypto.getRandomValues(new Uint8Array(32));
+        const sasCommit = await sha256(enc.encode("KeePassFerry SAS commit v2"), this.sasNonce);
         this.state = "awaitHello";
         this.events.send({
             ferry: "hello",
@@ -112,7 +125,8 @@ export class FerryChannelClient {
             eph: b64(ephPub),
             nonce: b64(this.clientNonce),
             name: clientName,
-            features: clientFeatures
+            features: clientFeatures,
+            sasCommit: b64(sasCommit)
         });
     }
 
@@ -154,7 +168,12 @@ export class FerryChannelClient {
                 return;
             case "pairing":
                 // Prüfcode wurde schon beim Hello berechnet; jetzt anzeigen
-                if (this.state === "awaitReady" && this.pendingCode) this.events.onPairingCode(this.pendingCode);
+                if (this.state === "awaitReady" && this.pendingCode) {
+                    // Altes Plugin ohne Commit: Prüfcode wäre für einen Angreifer dazwischen vorausberechenbar
+                    if (this.legacyPairing) throw new Error("PAIRING_NEEDS_PLUGIN_UPDATE");
+                    this.pairingSeen = true;
+                    this.events.onPairingCode(this.pendingCode);
+                }
                 return;
             case "denied":
                 this.state = "closed";
@@ -184,6 +203,7 @@ export class FerryChannelClient {
         const pinned = await this.store.getPinnedServerKey(serverId);
         const serverPubB64 = b64(serverPub);
         if (pinned && pinned !== serverPubB64) throw new Error("SERVER_KEY_CHANGED");
+        if (!pinned && (await this.store.hasPinnedServers?.())) throw new Error("SERVER_UNKNOWN");
         this.serverIsNew = !pinned;
         this.serverId = serverId;
         this.serverPubB64 = serverPubB64;
@@ -214,15 +234,20 @@ export class FerryChannelClient {
         okm.fill(0);
         z.fill(0);
 
-        this.pendingCode = pairingCodeFromHash(await sha256(enc.encode("KeePassFerry SAS v1"), th));
         this.serverFeatures = Array.isArray(frame.features) ? frame.features.filter(f => typeof f === "string") : [];
+        this.legacyPairing = !this.serverFeatures.includes(PAIRING_COMMIT_FEATURE);
+        this.pendingCode = pairingCodeFromHash(
+            this.legacyPairing
+                ? await sha256(enc.encode("KeePassFerry SAS v1"), th)
+                : await sha256(enc.encode("KeePassFerry SAS v2"), th, this.sasNonce)
+        );
 
         const identity = await this.store.getIdentity();
         const clientSig = new Uint8Array(
             await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, identity.privateKey, concat(enc.encode("KeePassFerry client v1"), th))
         );
         this.state = "awaitReady";
-        this.events.send({ ferry: "auth", sig: b64(clientSig) });
+        this.events.send({ ferry: "auth", sig: b64(clientSig), sasNonce: b64(this.sasNonce) });
     }
 
     private async onEncrypted(frame: any) {
@@ -238,6 +263,8 @@ export class FerryChannelClient {
         if (this.state === "awaitReady") {
             const msg = JSON.parse(text);
             if (msg?.ferry !== "ready") throw new Error("Expected ready");
+            // Ein neues KeePass muss die Kopplung mit Prüfcode durchlaufen haben, bevor es gemerkt wird
+            if (this.serverIsNew && !this.pairingSeen) throw new Error("Pairing skipped");
             if (this.serverIsNew) await this.store.pinServerKey(this.serverId, this.serverPubB64);
             this.state = "ready";
             this.pendingCode = null;
@@ -306,6 +333,10 @@ export class BrowserFerryChannelStore implements FerryChannelStore {
         const db = await this.openDb();
         const tx = db.transaction(BrowserFerryChannelStore.STORE, "readwrite");
         await this.request(tx.objectStore(BrowserFerryChannelStore.STORE).delete("identity"));
+    }
+
+    hasPinnedServers(): Promise<boolean> {
+        return this.isPaired();
     }
 
     async isPaired(): Promise<boolean> {

@@ -19,14 +19,30 @@ namespace KeePassFerry
         // Früherer Host-Name (Entwicklungsstand bis 21.10.2026), wird beim Registrieren entfernt
         private const string LegacyHostName = "de.blacksun80.keepassferry";
 
-        // Erweiterungs-IDs, die den Host starten dürfen: Microsoft Edge Add-ons (Store) und Entwicklungs-ID
-        // aus dem Manifest-Schlüssel (entpackt geladene Erweiterung)
-        private static readonly string[] AllowedChromiumOrigins =
+        // Erweiterungs-IDs, die den Host starten dürfen: Microsoft Edge Add-ons und Chrome Web Store
+        private static readonly string[] StoreChromiumOrigins =
         {
             "chrome-extension://ghkhbdnhojpeibdjdlgojfdjhedapmhg/",
-            "chrome-extension://fhciciajogahdkbmeliechblahlhpmga/",
-            "chrome-extension://pjafpdemjepcjioimoicjogcmkijighm/"
+            "chrome-extension://fhciciajogahdkbmeliechblahlhpmga/"
         };
+
+        // Entwicklungs-ID aus dem Manifest-Schlüssel (entpackt geladene Erweiterung); nur wenn in KeePass.config.xml
+        // KeePassFerry.AllowDevExtension = true gesetzt ist
+        private const string DevChromiumOrigin = "chrome-extension://pjafpdemjepcjioimoicjogcmkijighm/";
+        internal const string AllowDevExtensionConfigKey = "KeePassFerry.AllowDevExtension";
+        internal static bool AllowDevExtension;
+
+        private static string[] AllowedChromiumOrigins
+        {
+            get
+            {
+                if (!AllowDevExtension) return StoreChromiumOrigins;
+                var all = new string[StoreChromiumOrigins.Length + 1];
+                StoreChromiumOrigins.CopyTo(all, 0);
+                all[all.Length - 1] = DevChromiumOrigin;
+                return all;
+            }
+        }
 
         private static readonly string[] AllowedFirefoxExtensions =
         {
