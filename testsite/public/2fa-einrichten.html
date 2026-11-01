@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zwei-Faktor einrichten – Spielwiese</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="kopf">
+        <a class="marke" href="index.html">Spielwiese</a>
+        <nav>
+            <a href="index.html">Übersicht</a>
+            <a href="login.html">Anmelden</a>
+            <a href="registrieren.html">Registrieren</a>
+            <a href="konto.html">Kundenkonto</a>
+        </nav>
+        <span id="angemeldet" class="status"></span>
+    </header>
+    <p class="warnung">Nur zum Testen auf diesem Rechner – hier keine echten Zugangsdaten eingeben.</p>
+    <main>
+        <section class="karte">
+            <h1>Zwei-Faktor-Authentifizierung einrichten</h1>
+            <p id="hinweis" class="meldung" role="status" hidden></p>
+            <div data-art="link" hidden>
+                <p>Öffne diesen Link auf dem Gerät mit deiner Authenticator-App:</p>
+                <p><a id="otpauth-link" href="#">Schlüssel zur Authenticator-App hinzufügen</a></p>
+            </div>
+            <div data-art="text" hidden>
+                <p>QR-Code scannen geht nicht? Gib diesen Schlüssel manuell in deiner Authenticator-App ein:</p>
+                <p id="schluessel-text" class="schluessel"></p>
+            </div>
+            <div data-art="qr" hidden>
+                <p>Scanne den QR-Code mit deiner Authenticator-App:</p>
+                <div id="qr-bild" class="qr"></div>
+            </div>
+            <div data-art="qr-svg" hidden>
+                <p>Scanne den QR-Code mit deiner Authenticator-App:</p>
+                <div id="qr-svg" class="qr"></div>
+            </div>
+            <form action="konto.html" method="post">
+                <label for="code">Bestätigungscode aus der App</label>
+                <input type="text" id="code" name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" required>
+                <div><button type="submit">Aktivieren</button></div>
+            <p id="fehler" class="meldung" role="alert" hidden></p>
+            </form>
+            <p class="leise">Andere Darstellung:
+                <a href="2fa-einrichten.html?art=link">Link</a> ·
+                <a href="2fa-einrichten.html?art=text">Text</a> ·
+                <a href="2fa-einrichten.html?art=qr">QR-Bild</a> ·
+                <a href="2fa-einrichten.html?art=qr-svg">QR-SVG</a></p>
+        </section>
+    </main>
+    <script src="qr-matrix.js"></script>
+    <script src="spielwiese.js"></script>
+    <script>Spielwiese.init2faEinrichten();</script>
+</body>
+</html>

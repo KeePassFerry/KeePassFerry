@@ -1,0 +1,104 @@
+/* Spielwiese: schlichtes Aussehen einer gewöhnlichen Website */
+:root {
+    --text: #1d2733;
+    --leise: #5b6b7c;
+    --rand: #d5dde6;
+    --flaeche: #ffffff;
+    --grund: #f3f6f9;
+    --akzent: #1d5fbf;
+    --fehler: #b42318;
+    --ok: #157a3c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font: 16px/1.5 "Segoe UI", system-ui, sans-serif;
+    color: var(--text);
+    background: var(--grund);
+}
+
+.kopf {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    padding: 12px 20px;
+    background: var(--flaeche);
+    border-bottom: 1px solid var(--rand);
+}
+
+.marke { font-weight: 700; font-size: 18px; color: var(--akzent); text-decoration: none; }
+.kopf nav { display: flex; gap: 14px; flex-wrap: wrap; }
+.kopf nav a { color: var(--text); }
+.status { margin-left: auto; color: var(--leise); font-size: 14px; }
+
+.warnung {
+    margin: 0;
+    padding: 6px 20px;
+    background: #fff4d6;
+    border-bottom: 1px solid #f0d58a;
+    font-size: 14px;
+}
+
+main { max-width: 760px; margin: 24px auto; padding: 0 16px; }
+
+.karte {
+    background: var(--flaeche);
+    border: 1px solid var(--rand);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+h1 { font-size: 24px; margin: 0 0 12px; }
+h2 { font-size: 18px; margin: 0 0 10px; }
+
+label { display: block; margin: 12px 0 4px; font-weight: 600; }
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    max-width: 360px;
+    padding: 8px 10px;
+    font: inherit;
+    border: 1px solid var(--rand);
+    border-radius: 6px;
+}
+
+#code { max-width: 160px; letter-spacing: 3px; }
+
+button {
+    font: inherit;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--rand);
+    background: var(--flaeche);
+    cursor: pointer;
+}
+
+button[type="submit"], .haupt {
+    margin-top: 16px;
+    background: var(--akzent);
+    border-color: var(--akzent);
+    color: #fff;
+    font-weight: 600;
+}
+
+.meldung { margin: 12px 0 0; padding: 8px 12px; border-radius: 6px; }
+#fehler { background: #fdecea; color: var(--fehler); }
+#hinweis { background: #e7f6ec; color: var(--ok); }
+
+.leise { color: var(--leise); font-size: 14px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rand); vertical-align: top; }
+td button { margin: 0 6px 6px 0; padding: 3px 8px; font-size: 13px; }
+
+ul.szenarien { padding-left: 20px; }
+ul.szenarien li { margin-bottom: 8px; }
+
+.schluessel { font: 600 20px/1.4 Consolas, monospace; letter-spacing: 1px; }
+.qr { margin: 12px 0; }
