@@ -85,7 +85,7 @@ import { Port } from "../../common/port";
 import useStore from "../../store";
 import { KeeURL } from "../../common/KeeURL";
 import { Action } from "../../common/Action";
-import { supplementEntryState } from "../supplementEntryState";
+import { supplementEntryState, supplementExistingEntry } from "../supplementEntryState";
 import { reconcileURLs } from "../reconcileURLs";
 import { SaveState } from "../../common/SaveState";
 import { Entry } from "../../common/model/Entry";
@@ -198,7 +198,7 @@ export default {
                 !!submittedDomain && entry.URLs.some(u => KeeURL.fromString(u)?.domainOrIPAddress === submittedDomain);
             if (sameSite) {
                 const { urls, showWarning } = await reconcileURLs(entry.URLs, ss.submittedData.url);
-                updatedSaveState.newEntry = supplementEntryState(entry, ss, urls);
+                updatedSaveState.newEntry = supplementExistingEntry(entry, ss, urls);
                 updatedSaveState.showURLMismatchWarning = showWarning;
             } else {
                 updatedSaveState.newEntry = supplementEntryState(entry, { ...ss, submittedData: null }, entry.URLs);

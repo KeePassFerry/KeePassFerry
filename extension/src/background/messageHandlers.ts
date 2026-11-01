@@ -130,11 +130,12 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
                 );
             } else {
                 kee.addLogin(entry, parentGroupUuid, dbFileName, clearSubmittedData);
+                // Gruppe nur beim Neuanlegen als Vorauswahl merken, nicht beim Bearbeiten eines vorhandenen Eintrags
+                if (!configManager.current.mruGroup) configManager.current.mruGroup = {};
+                configManager.current.mruGroup[dbFileName] = parentGroupUuid;
+                configManager.current.mruGroup["{<{{<<kee-primary>>}}>}"] = parentGroupUuid;
+                configManager.save();
             }
-            if (!configManager.current.mruGroup) configManager.current.mruGroup = {};
-            configManager.current.mruGroup[dbFileName] = parentGroupUuid;
-            configManager.current.mruGroup["{<{{<<kee-primary>>}}>}"] = parentGroupUuid;
-            configManager.save();
         }
     }
 
@@ -337,28 +338,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
 
         kee.persistentTabStates.get(this.sender.tab.id).items.push(persistentItem);
 
-        // Don't alert the user if it's less than 90 seconds since they initiated an
-        // update request - highly likely that this is just the result of that
-        // operation being submitted to the website.
-        if (kee.store.state.entryUpdateStartedAtTimestamp >= Date.now() - 90000) return;
-
-        if (configManager.current.notificationCountSavePassword < 10) {
-            chrome.notifications.create({
-                type: "basic",
-                iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
-                title: $STR("savePasswordText"),
-                message:
-                    $STR("notification_save_password_tip") +
-                    "\n" +
-                    $STR("notification_only_shown_some_times")
-            });
-            configManager.setASAP({
-                notificationCountSavePassword:
-                    configManager.current.notificationCountSavePassword + 1
-            });
-        }
         kee.configureBrowserActionIcon();
-        kee.startSaveAttention();
         kee.offerSaveNotice(this.sender.tab.id);
     }
     if (msg.action === Action.WebAuthnRequest && msg.webauthn) {

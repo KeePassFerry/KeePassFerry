@@ -247,10 +247,6 @@
         "message": "Speichern",
         "description": ""
     },
-    "savePasswordText": {
-        "message": "Soll KeePassFerry dieses Passwort speichern?",
-        "description": ""
-    },
     "update": {
         "message": "Aktualisieren",
         "description": ""
@@ -358,14 +354,6 @@
     "notification_yellow_background": {
         "message": "Das KeePassFerry-Symbol wird hervorgehoben, wenn eine neue Benachrichtigung vorliegt.",
         "description": "Part of the message within a transient native notification displayed on the user's screen to alert them to a notification in the Kee browser action popup."
-    },
-    "notification_only_shown_some_times": {
-        "message": "Diese ergänzende Pop-up-Benachrichtigung wird nur einige Male angezeigt.",
-        "description": "Appended to the message of a transient native notification displayed on the user's screen when we show the message only a handful of times before assuming they have learnt the contents of the message."
-    },
-    "notification_save_password_tip": {
-        "message": "Öffne KeePassFerry über das Symbol in der Symbolleiste und klicke auf +.",
-        "description": "Part of the message within a transient native notification displayed on the user's screen to tell them how to save a password"
     },
     "loading": {
         "message": "Laden...",

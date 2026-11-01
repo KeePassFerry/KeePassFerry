@@ -10,6 +10,9 @@ import { MatchedField } from "./MatchedField";
 import { Field } from "../common/model/Field";
 import punycode from "punycode/";
 
+// Klick auf den Absende-Knopf und "submit" kurz danach gehören zu einem Versuch
+const SAME_SUBMIT_MS = 1000;
+
 interface SubmitHandlerAttachment {
     target: HTMLElement;
     handler: (e: Event) => void;
@@ -21,6 +24,8 @@ export class FormSaving {
     private formUtils: FormUtils;
     private SubmitHandlerAttachments: SubmitHandlerAttachment[] = [];
     private matchResult: MatchResult; //TODO:5: May be overkill to have all this data available for saving
+    // Letztes ausgewertetes Absenden: Klick auf den Absende-Knopf und das folgende "submit" sind derselbe Versuch
+    private lastSubmit: { form: HTMLFormElement; at: number } = null;
 
     constructor(private myPort: chrome.runtime.Port, logger: KeeLogger, formUtils: FormUtils) {
         this.Logger = logger;
@@ -60,9 +65,11 @@ export class FormSaving {
     private submitHandler(_e: Event, form: HTMLFormElement) {
         this.Logger.debug("submitHandler called");
 
-        // Until the next time we have searched for forms in this page,
-        // don't respond to any form submission related events
-        this.removeAllSubmitHandlers();
+        // Derselbe Versuch löst Klick und "submit" aus: nur einmal auswerten. Die Handler bleiben aktiv, damit ein
+        // weiterer Versuch auf derselben Seite (z. B. nach "Passwort falsch" ohne Neuladen) wieder erkannt wird
+        const now = Date.now();
+        if (this.lastSubmit?.form === form && now - this.lastSubmit.at < SAME_SUBMIT_MS) return;
+        this.lastSubmit = { form, at: now };
 
         const doc = form.ownerDocument;
         const url = new URL(doc.URL);
@@ -70,9 +77,6 @@ export class FormSaving {
 
         const conf = configManager.siteConfigFor(url.href);
         if (conf.preventSaveNotification) return;
-
-        let isPasswordChangeForm = false;
-        let isRegistrationForm = false;
 
         // Get the appropriate fields from the form.
         const passwordFields: MatchedField[] = [];
@@ -124,32 +128,17 @@ export class FormSaving {
 
                 // if there are only two passwords we already know that they match
                 if (passwords.length == 2) {
+                    // Passwort und Wiederholung (Registrierung oder neues Passwort ohne das alte)
                     passwordFields.push(passwords[0]);
-                    //TODO:5: it is also reasonably likely that this indicates a
-                    // sign-up form rather than a password change form. decide
-                    // which here and flag which one it is. for now, we just assume
-                    // it's a sign-up form becuase that is more useful for the user in many cases
-                    isPasswordChangeForm = false;
-                    isRegistrationForm = true;
                 } else {
-                    // Here we assume that any form with 3 passwords on it
-                    // is much more likely to be a change password form than
-                    // a sign-up form (obviously there will be exceptions but
-                    // this is the best we can do for now)
-                    // BUT: have not yet implemented reliable password change feature...
-                    isPasswordChangeForm = false;
-                    isRegistrationForm = false;
-
+                    // Drei Felder: altes Passwort, neues Passwort und Wiederholung; das neue zählt
                     passwordFields.push(passwords[twoPasswordsMatchIndex]);
                 }
             }
         } else if (passwords != null && passwords[0] != null && passwords[0] != undefined) {
             passwordFields.push(passwords[0]);
         }
-        // at this point, at least one passwordField has been chosen and an
-        // oldPasswordField has been chosen if applicable.
-        // we have also determined whether this form fill is likely to
-        // be a new registration form or password change form
+        // at this point, at least one passwordField has been chosen
 
         const nonEmptyPasswordFields = this.removeEmptyFields(passwordFields);
         const nonEmptyOtherFields = this.removeEmptyFields(otherFields);
@@ -175,9 +164,7 @@ export class FormSaving {
             const submittedData = {
                 url: url.href,
                 fields,
-                title: siteTitle(doc, url),
-                isPasswordChangeForm,
-                isRegistrationForm
+                title: siteTitle(doc, url)
             };
 
             this.myPort.postMessage({ submittedData } as AddonMessage);

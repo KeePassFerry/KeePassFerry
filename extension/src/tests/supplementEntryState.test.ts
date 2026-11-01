@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { supplementEntryState } from "../popup/supplementEntryState";
+import { supplementEntryState, supplementExistingEntry } from "../popup/supplementEntryState";
 import { Entry } from "../common/model/Entry";
 import { Field } from "../common/model/Field";
 import { Locator } from "../common/model/Locator";
@@ -34,5 +34,32 @@ describe("supplementEntryState", () => {
         edited.fields[1].value = "neu";
         expect(original.fields[1].value).toBe("geheim");
         expect(edited.fields.length).toBe(2);
+    });
+});
+
+describe("supplementExistingEntry", () => {
+    const abgeschickt = {
+        url: "https://example.com/login",
+        title: "Anmelden – Beispiel GmbH",
+        fields: [
+            new Field({ name: "user", type: "text", value: "nutzer", locators: [new Locator({ type: "text", id: "user" })] }),
+            new Field({ name: "pass", type: "password", value: "neu", locators: [new Locator({ type: "password", id: "pass" })] })
+        ]
+    };
+
+    it("übernimmt das neue Passwort, behält aber den Titel des Eintrags", () => {
+        const original = entry();
+        const edited = supplementExistingEntry(original, { submittedData: abgeschickt } as SaveState, original.URLs);
+        expect(edited.title).toBe("Beispiel");
+        const passwort = edited.fields.find(f => f.type === "password");
+        expect(passwort.value).toBe("neu");
+        expect(passwort.resetValue).toBe("geheim");
+    });
+
+    it("ohne abgeschickte Daten bleibt alles wie beim normalen Bearbeiten", () => {
+        const original = entry();
+        const edited = supplementExistingEntry(original, { submittedData: null } as SaveState, original.URLs);
+        expect(edited.title).toBe("Beispiel");
+        expect(edited.fields.find(f => f.type === "password").value).toBe("geheim");
     });
 });

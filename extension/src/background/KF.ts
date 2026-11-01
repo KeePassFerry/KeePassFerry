@@ -37,7 +37,6 @@ export const OPEN_POPUP_NOTIFICATION_PREFIX = "keepassferry-note-";
 
 class Kee {
     tabStates: Map<number, TabState>;
-    saveAttentionTimer: number = null;
     persistentTabStates: Map<number, PersistentTabState>;
     utils: Utils;
     search: SearcherAll;
@@ -264,14 +263,6 @@ class Kee {
                         isForegroundTab: p.sender.tab.id === this.foregroundTabId
                     } as AddonMessage;
 
-                    if (this.persistentTabStates.get(p.sender.tab.id)) {
-                        this.persistentTabStates.get(p.sender.tab.id).items.forEach(item => {
-                            if (item.itemType === "submittedData") {
-                                connectMessage.submittedData = item.submittedData;
-                            }
-                        });
-                    }
-
                     p.postMessage(connectMessage);
                     this.tabStates
                         .get(p.sender.tab.id)
@@ -391,12 +382,6 @@ class Kee {
                     : "KeePassFerry";
         // Gesperrt: Klick aufs Icon entsperrt direkt (kein Popup dazwischen)
         chrome.action.setPopup({ popup: locked ? "" : "dist/popup/index.html" });
-        if (this.saveAttentionTimer !== null) {
-            // Blinken läuft: nur Icon und Titel setzen, das Badge steuert der Timer
-            chrome.action.setIcon({ path: iconPath });
-            chrome.action.setTitle({ title: title });
-            return;
-        }
         if (locked) {
             this.lockedActionIcon()
                 .then(imageData => chrome.action.setIcon({ imageData }))
@@ -491,13 +476,6 @@ class Kee {
         return result;
     }
 
-    // "Speichern möglich": ruhiges "+" am Symbol; auffällig ist der Hinweis auf der Seite, kein Blinken mehr
-    startSaveAttention() {
-        if (this.saveAttentionTimer !== null) clearInterval(this.saveAttentionTimer);
-        this.saveAttentionTimer = null;
-        this.configureBrowserActionIcon();
-    }
-
     // Schickt den Speichern-Hinweis an den obersten Frame des Tabs, falls noch nicht weggeklickt
     offerSaveNotice(tabId: number) {
         const item = this.persistentTabStates
@@ -506,11 +484,9 @@ class Kee {
         if (!item || item.noticeDismissed) return;
         if (!this.store.state.connected || this.store.state.KeePassDatabases.length === 0) return;
         const top = this.tabStates.get(tabId)?.framePorts?.get(0);
-        // "Passwort aktualisieren" nur auf derselben Website anbieten, nicht auf einer anderen Seite im selben Tab
-        if (item.submittedData?.updateTarget) {
-            const site = (url: string) => KeeURL.fromString(url ?? "")?.domainOrIPAddress;
-            if (!sameSite(site(item.submittedData.url), site(top?.sender?.url ?? top?.sender?.tab?.url))) return;
-        }
+        // Nur auf derselben Website anbieten, nicht auf einer anderen Seite, die später im selben Tab geöffnet wird
+        const site = (url: string) => KeeURL.fromString(url ?? "")?.domainOrIPAddress;
+        if (!sameSite(site(item.submittedData?.url), site(top?.sender?.url ?? top?.sender?.tab?.url))) return;
         try {
             // Passwort eines vorhandenen Eintrags geändert: Hinweis "aktualisieren?" mit Benutzername bzw. Titel
             top?.postMessage({

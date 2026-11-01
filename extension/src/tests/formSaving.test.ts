@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../common/ConfigManager", () => ({ configManager: { siteConfigFor: () => ({}) } }));
 
@@ -14,6 +14,14 @@ beforeAll(() => {
     Object.defineProperty(HTMLElement.prototype, "offsetHeight", { configurable: true, get: () => 20 });
 });
 
+beforeEach(() => {
+    vi.useFakeTimers();
+});
+
+afterEach(() => {
+    vi.useRealTimers();
+});
+
 // Anmeldeformular, das KeePassFerry mit benutzer/passwort ausgefüllt hat
 function filledLoginForm(benutzer: string, passwort: string) {
     document.body.innerHTML = `
@@ -23,8 +31,11 @@ function filledLoginForm(benutzer: string, passwort: string) {
             <button type="submit">Anmelden</button>
         </form>`;
     const form = document.forms[0];
+    // Wie eine Seite, die selbst prüft und nicht neu lädt
+    form.addEventListener("submit", e => e.preventDefault());
     const user = document.getElementById("benutzer") as HTMLInputElement;
     const pass = document.getElementById("passwort") as HTMLInputElement;
+    const button = form.querySelector("button");
     user.value = benutzer;
     pass.value = passwort;
     const port = { postMessage: vi.fn() };
@@ -33,10 +44,12 @@ function filledLoginForm(benutzer: string, passwort: string) {
         lastFilledOther: [{ DOMelement: user, value: benutzer }],
         lastFilledPasswords: [{ DOMelement: pass, value: passwort }]
     } as any);
-    saving.addSubmitHandler(null, form);
+    saving.addSubmitHandler(button, form);
     const submit = () => form.dispatchEvent(new Event("submit", { cancelable: true }));
-    return { pass, port, submit };
+    return { button, pass, port, submit };
 }
+
+const sentPassword = (msg: any) => msg.submittedData?.fields.find((f: any) => f.type === "password").value;
 
 describe("FormSaving beim Absenden", () => {
     it("meldet eine unverändert abgeschickte Anmeldung nur mit dem Benutzernamen, ohne Zugangsdaten", () => {
@@ -53,6 +66,28 @@ describe("FormSaving beim Absenden", () => {
         expect(port.postMessage).toHaveBeenCalledTimes(1);
         const msg = port.postMessage.mock.calls[0][0];
         expect(msg.action).toBeUndefined();
-        expect(msg.submittedData.fields.find((f: any) => f.type === "password").value).toBe("test6");
+        expect(sentPassword(msg)).toBe("test6");
+    });
+
+    it("wertet Klick auf den Absende-Knopf und das folgende Absenden nur einmal aus", () => {
+        const { button, pass, port } = filledLoginForm("max@example.com", "test3");
+        pass.value = "test6";
+        button.click();
+        expect(port.postMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it("erkennt einen weiteren Versuch auf derselben Seite (vertippt, dann richtig, ohne Neuladen)", () => {
+        const { pass, port, submit } = filledLoginForm("max@example.com", "test3");
+        pass.value = "test6";
+        submit();
+        vi.advanceTimersByTime(3000);
+        pass.value = "test3";
+        submit();
+        expect(port.postMessage).toHaveBeenCalledTimes(2);
+        expect(sentPassword(port.postMessage.mock.calls[0][0])).toBe("test6");
+        expect(port.postMessage.mock.calls[1][0]).toEqual({
+            action: "filledLoginSubmitted",
+            submittedUsername: "max@example.com"
+        });
     });
 });
