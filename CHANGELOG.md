@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.14 – 2026-11-01
 
 - "Edit entry" window: new "Delete entry" button. After a confirmation the entry is moved to the KeePass recycle bin
   (never deleted permanently; it can be restored in KeePass). If the recycle bin is turned off in the database,
@@ -25,6 +25,9 @@
     version (an older plugin is asked to update first).
   - Two-factor setup from a QR image: images from other origins than the page are loaded without cookies.
   - Release build: third-party GitHub Actions pinned to commit SHAs, Inno Setup to a fixed version.
+  - Filling the browser's own sign-in dialogs (HTTP basic authentication, proxy) is now off by default, because such
+    dialogs can also be triggered by embedded third-party content. Turn it on in the settings under "Network
+    authentication" if you need it (e.g. for a router or NAS).
   - Removed an unused Kee leftover script.
 
 ## 1.0.13 – 2026-11-01

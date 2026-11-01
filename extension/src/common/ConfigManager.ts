@@ -84,6 +84,7 @@ defaultConfig.ferryPasskeys = true;
 defaultConfig.ferryShowFieldIcons = true;
 defaultConfig.ferryAutoUnlock = false;
 defaultConfig.ferryDisableBrowserPasswordSaving = true;
+defaultConfig.ferryNetworkAuth = false;
 defaultConfig.autoFillFieldsWithExistingValue = false;
 
 export class ConfigManager {
@@ -195,7 +196,8 @@ export class ConfigManager {
             ferryPasskeys: true,
             ferryShowFieldIcons: true,
             ferryAutoUnlock: false,
-            ferryDisableBrowserPasswordSaving: true
+            ferryDisableBrowserPasswordSaving: true,
+            ferryNetworkAuth: false
         };
         for (const [key, value] of Object.entries(ferryDefaults)) {
             if ((this.current as any)[key] === undefined) {

@@ -24,6 +24,8 @@ export class NetworkAuth {
     ): Promise<chrome.webRequest.BlockingResponse> {
         KeeLog.debug("Considering handling request ID: " + requestDetails.requestId);
 
+        // Anmeldefenster können auch eingebettete Fremdinhalte auslösen: nur auf ausdrücklichen Wunsch bedienen
+        if (!configManager.current.ferryNetworkAuth) return { cancel: false };
         if (!kee.store.state.connected || kee.store.state.ActiveKeePassDatabaseIndex < 0) {
             return { cancel: false };
         }

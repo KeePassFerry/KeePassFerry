@@ -1147,6 +1147,14 @@
         "message": "Zwei-Faktor-Einrichtung erkennen",
         "description": "KeePassFerry"
     },
+    "ferry_setting_networkAuth": {
+        "message": "Anmeldefenster des Browsers ausfüllen",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_networkAuth_hint": {
+        "message": "Bietet bei Anmeldefenstern des Browsers (z. B. Router, NAS, Proxy) passende Einträge an. Aus, weil solche Fenster auch von eingebetteten fremden Inhalten ausgelöst werden können.",
+        "description": "KeePassFerry"
+    },
     "ferry_setting_detectOtpSetup_hint": {
         "message": "Bietet an, einen QR-Code oder Schlüssel von der Seite im passenden Eintrag zu speichern.",
         "description": "KeePassFerry"

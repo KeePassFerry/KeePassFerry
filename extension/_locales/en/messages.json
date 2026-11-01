@@ -1147,6 +1147,14 @@
     "message": "Detect two-factor setup",
     "description": "KeePassFerry"
   },
+  "ferry_setting_networkAuth": {
+    "message": "Fill the browser's sign-in dialogs",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_networkAuth_hint": {
+    "message": "Offers matching entries for the browser's own sign-in dialogs (e.g. router, NAS, proxy). Off by default because such dialogs can also be triggered by embedded third-party content.",
+    "description": "KeePassFerry"
+  },
   "ferry_setting_detectOtpSetup_hint": {
     "message": "Offers to save a QR code or key shown on the page in the matching entry.",
     "description": "KeePassFerry"
