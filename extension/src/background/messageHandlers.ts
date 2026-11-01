@@ -452,6 +452,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
     }
     // Unverändert mit den eingetragenen Daten angemeldet: ein offenes Angebot desselben Benutzers ist erledigt
     if (msg.action === Action.FilledLoginSubmitted) {
+        diag("hintergrund", "anmeldung mit ausgefüllten daten abgeschickt", { benutzer: !!msg.submittedUsername });
         dropSupersededSubmission(this.sender.tab.id, this.sender.url ?? this.sender.tab.url, msg.submittedUsername ?? null);
     }
     if (msg.action === Action.PasswordUpdateNotShown) {
