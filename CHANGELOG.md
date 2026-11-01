@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.13 – 2026-11-01
 
 - Right-click on selected text → "Add "…" to entry": opens the familiar "Edit entry" window with "Add" expanded and
   the selection (complete, including line breaks) as content; choose recovery code, two-factor key, note or custom
@@ -21,8 +21,9 @@
 - Two-factor notice on the page: the button now reads "Save …" like the login notice, so both buttons fit in one line.
 - "Save …" and "Update …" in the page notice open the dialog directly even if an entry was saved in the popup less than
   two minutes earlier (until now only the main view with "You recently saved an entry" appeared).
-- Sites that replace the password with asterisks before sending it (e.g. some banks) no longer trigger "New password
-  detected".
+- Sites that replace the password in the field with asterisks right after sending it (e.g. some banks) no longer
+  trigger "New password detected". On such sites a really changed password cannot be detected either; update the
+  entry yourself.
 - Multi-step login: the entry carried over from the username page is now remembered together with its database, so a
   changed password on the password page is offered as "New password detected" instead of "Save login".
 - Saving login details: a further login attempt on the same page is recognised again (e.g. after "wrong password"
