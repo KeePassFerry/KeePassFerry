@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LoginCandidate, matchSubmittedLogin, supersedesSubmission } from "../common/submittedLogin";
+import { LoginCandidate, matchSubmittedLogin, submittedCredentials, supersedesSubmission } from "../common/submittedLogin";
 
 const entry = (uuid: string, username: string, password: string, dbFileName = "a.kdbx"): LoginCandidate => ({
     uuid,
@@ -89,5 +89,11 @@ describe("supersedesSubmission", () => {
         expect(supersedesSubmission(vorher, { url: vorher.url, username: "erika@example.com" })).toBe(false);
         expect(supersedesSubmission(vorher, { url: "https://example.org/login", username: "max@example.com" })).toBe(false);
         expect(supersedesSubmission({ url: null, username: "max@example.com" }, vorher)).toBe(false);
+    });
+});
+
+describe("Maskiertes Passwort", () => {
+    it("zählt nur Sternchen nicht als neues Passwort", () => {
+        expect(submittedCredentials([{ type: "text", value: "max" }, { type: "password", value: "**********" }]).password).toBeNull();
     });
 });

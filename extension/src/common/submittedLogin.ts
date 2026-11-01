@@ -25,9 +25,14 @@ export type SubmittedLoginMatch =
 
 // Benutzername und Passwort wie beim Speichern: erstes ausgefülltes Passwortfeld, erstes ausgefülltes anderes Feld
 export function submittedCredentials(fields: { type: string; value: string }[]): { username: string; password: string } {
-    const password = fields.find(f => f.type === "password" && f.value)?.value ?? null;
+    // Manche Seiten (z. B. Banken) ersetzen das Passwort vor dem Absenden durch Sternchen: dann zählt es nicht
+    const password = fields.find(f => f.type === "password" && f.value && !isMasked(f.value))?.value ?? null;
     const username = fields.find(f => f.type !== "password" && f.type !== "boolean" && f.value)?.value ?? null;
     return { username, password };
+}
+
+function isMasked(value: string): boolean {
+    return /^[*•●∙·]+$/.test(value);
 }
 
 function sameUsername(a: string, b: string): boolean {
