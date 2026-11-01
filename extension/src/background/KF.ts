@@ -2,6 +2,7 @@ import { offerPendingOtpSetup } from "./otpSetup";
 import { sameSite } from "../common/relatedDomains";
 import { LoginCandidate, SubmittedLoginMatch, matchSubmittedLogin, submittedCredentials } from "../common/submittedLogin";
 import { diag } from "./ferryDiag";
+import { pageMutationOf, pageStateOf } from "./pageState";
 import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
 import { KeeURL } from "../common/KeeURL";
 import { PersistentTabState } from "./PersistentTabState";
@@ -92,8 +93,10 @@ class Kee {
 
             const foregroundTabState = this.tabStates.get(this.foregroundTabId);
             if (foregroundTabState) {
+                // Inhaltsskripte in Webseiten: nur Verbindung und Datenbank-Kennungen (siehe pageState.ts)
+                const pageMutation = pageMutationOf(mutationObj);
                 for (const [id, port] of foregroundTabState.framePorts) {
-                    if (port !== excludedPort && !tryPostMessage(port, mutationObj)) {
+                    if (pageMutation && port !== excludedPort && !tryPostMessage(port, pageMutation)) {
                         foregroundTabState.framePorts.delete(id);
                     }
                 }
@@ -202,7 +205,7 @@ class Kee {
                     const tabId = p.sender.tab.id;
                     const frameId = p.sender.frameId;
                     const connectMessage = {
-                        initialState: this.store.state,
+                        initialState: pageStateOf(this.store.state),
                         frameId,
                         tabId,
                         isForegroundTab: tabId === this.foregroundTabId
@@ -730,7 +733,7 @@ class Kee {
             this.foregroundTabId = tab.id;
             this.tabStates.get(tab.id)?.framePorts?.forEach(port => {
                 try {
-                    port.postMessage({ action: Action.DetectForms, resetState: this.store.state } as AddonMessage);
+                    port.postMessage({ action: Action.DetectForms, resetState: pageStateOf(this.store.state) } as AddonMessage);
                 } catch (e) {
                     // Frame gibt es nicht mehr
                 }
