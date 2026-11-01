@@ -310,28 +310,24 @@ Schlüssel und otpauth-URIs entstehen nur hier im Skript, nie im HTML der Seiten
         });
     }
 
-    // Online-Banking wie bei manchen Banken: erst die Kundennummer, dann erscheint im selben Formular das Passwortfeld
-    // und die Kundennummer wandert in ein verstecktes Feld. "Weiter" hat einen eigenen Klick-Handler, der abschickt und
-    // danach das Passwort im Feld durch Sternchen ersetzt. Er ist beim Laden registriert, also vor dem der Erweiterung,
-    // die das Feld deshalb nur noch mit Sternchen liest. Danach Freigabe in der App (eigene Seite).
+    // Online-Banking wie bei manchen Banken: Kundennummer und Passwort im selben Formular, die Kundennummer steht
+    // zusätzlich in einem versteckten Feld. "Weiter" hat einen eigenen Klick-Handler, der abschickt und danach das
+    // Passwort im Feld durch Sternchen ersetzt. Er ist beim Laden registriert, also vor dem der Erweiterung, die das Feld
+    // deshalb nur noch mit Sternchen liest. Danach Freigabe in der App (eigene Seite).
     function initBankLogin() {
         startkontoAnlegen();
         bankkontoAnlegen();
         sichtbarerBenutzer();
         if (parameter("fehler")) zeigeFehler("Kundennummer oder Passwort falsch.");
         const feld = id => document.getElementById(id);
+        const kennungFeld = feld("bankForm:Benutzerkennung");
+        const uebernehmen = () => (feld("bankForm:kundennummer").value = kennungFeld.value.trim());
+        kennungFeld.addEventListener("input", uebernehmen);
+        kennungFeld.addEventListener("change", uebernehmen);
         feld("bankForm:weiter").addEventListener("click", () => {
-            if (feld("schritt-passwort").hidden) {
-                const kennung = feld("bankForm:Benutzerkennung").value.trim();
-                if (!kennung) return zeigeFehler("Bitte die Kundennummer eingeben.");
-                feld("bankForm:kundennummer").value = kennung;
-                $("#kennung-anzeige").textContent = kennung;
-                feld("schritt-kennung").hidden = true;
-                feld("schritt-passwort").hidden = false;
-                feld("bankForm:password").focus();
-                return;
-            }
+            uebernehmen();
             const kennung = feld("bankForm:kundennummer").value;
+            if (!kennung) return zeigeFehler("Bitte die Kundennummer eingeben.");
             const passwortFeld = feld("bankForm:password");
             const richtig = !!konto(kennung) && konto(kennung).passwort === passwortFeld.value;
             // Abgeschickt ist bereits der echte Wert; im Feld bleiben nur Sternchen stehen

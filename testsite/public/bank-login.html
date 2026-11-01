@@ -24,17 +24,12 @@
             <p>Wie manche Banken: Kundennummer und Passwort im selben Formular, „Weiter“ schickt per Skript ab und
                 ersetzt danach das Passwort im Feld durch Sternchen.</p>
             <form id="bankForm" action="#" method="post">
-                <div id="schritt-kennung">
-                    <label for="bankForm:Benutzerkennung">Kundennummer / Benutzerkennung</label>
-                    <input type="text" id="bankForm:Benutzerkennung" name="bankForm:Benutzerkennung" autocomplete="off">
-                </div>
-                <div id="schritt-passwort" hidden>
-                    <p>Kundennummer: <strong id="kennung-anzeige"></strong></p>
-                    <input type="text" id="bankForm:kundennummer" name="bankForm:kundennummer" style="display: none">
-                    <label for="bankForm:password">Passwort</label>
-                    <input type="password" id="bankForm:password" name="bankForm:password" autocomplete="off"
-                        placeholder="Passwort">
-                </div>
+                <label for="bankForm:Benutzerkennung">Kundennummer / Benutzerkennung</label>
+                <input type="text" id="bankForm:Benutzerkennung" name="bankForm:Benutzerkennung" autocomplete="off">
+                <input type="text" id="bankForm:kundennummer" name="bankForm:kundennummer" style="display: none">
+                <label for="bankForm:password">Passwort</label>
+                <input type="password" id="bankForm:password" name="bankForm:password" autocomplete="off"
+                    placeholder="Passwort">
                 <div><button type="button" id="bankForm:weiter">Weiter</button></div>
                 <p id="fehler" class="meldung" role="alert" hidden></p>
             </form>
