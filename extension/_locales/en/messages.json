@@ -1067,6 +1067,34 @@
     "message": "Edit entry",
     "description": "KeePassFerry"
   },
+  "ferry_entry_delete": {
+    "message": "Delete entry",
+    "description": "KeePassFerry"
+  },
+  "ferry_entry_delete_question": {
+    "message": "Move “$1” to the KeePass recycle bin?",
+    "description": "KeePassFerry"
+  },
+  "ferry_entry_delete_hint": {
+    "message": "You can restore it from the recycle bin in KeePass.",
+    "description": "KeePassFerry"
+  },
+  "ferry_entry_delete_confirm": {
+    "message": "Move to recycle bin",
+    "description": "KeePassFerry"
+  },
+  "ferry_entry_delete_disabled": {
+    "message": "The recycle bin is turned off in this database. Please delete the entry directly in KeePass.",
+    "description": "KeePassFerry"
+  },
+  "ferry_entry_delete_in_bin": {
+    "message": "The entry is already in the recycle bin. You can delete it permanently in KeePass.",
+    "description": "KeePassFerry"
+  },
+  "ferry_entry_delete_failed": {
+    "message": "The entry could not be deleted. Is KeePass unlocked?",
+    "description": "KeePassFerry"
+  },
   "ferry_show_details": {
     "message": "Show details",
     "description": "KeePassFerry"

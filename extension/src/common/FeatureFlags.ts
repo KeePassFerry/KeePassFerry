@@ -15,6 +15,9 @@ export const BROWSER_UPDATE_PLUGIN_VERSION = "1.0.8";
 // Plugin kann den Schutz eigener Felder umschalten
 export const FIELD_PROTECTION_FEATURE = "KEEPASSFERRY_FIELD_PROTECTION";
 
+// Plugin kann einen Eintrag in den Papierkorb verschieben
+export const ENTRY_RECYCLE_FEATURE = "KEEPASSFERRY_ENTRY_RECYCLE";
+
 // true, wenn das Plugin mindestens diese Version meldet
 export function pluginVersionAtLeast(features: string[], min: string): boolean {
     const v = pluginVersionFrom(features);

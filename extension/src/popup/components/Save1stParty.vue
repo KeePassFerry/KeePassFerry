@@ -58,7 +58,34 @@
                 :uuid="saveState.newEntry.uuid" :db-file-name="saveState.newEntry.database.fileName"
                 :title="saveState.newEntry.title" :not-created-yet="!!createOnSave" @changed="additionsChanged = $event" />
         </div>
-        <div class="ferry-actionbar ferry-edit-actions">
+        <!-- Eintrag löschen: nur in den Papierkorb von KeePass. Die Rückfrage steht als Kasten an der Stelle der
+             Aktionsleiste, also immer unten sichtbar (das Popup ist höchstens 600 px hoch) -->
+        <div v-if="confirmDelete || deleteMessage" class="ferry-delete-dock">
+            <div class="ferry-note warn ferry-delete-note">
+                <tabler-trash class="ferry-ico" />
+                <div class="ferry-note-text">
+                    <p v-if="deleteMessage">{{ deleteMessage }}</p>
+                    <template v-else>
+                        <p><strong>{{ $i18n("ferry_entry_delete_question", [saveState.newEntry.title]) }}</strong></p>
+                        <p>{{ $i18n("ferry_entry_delete_hint") }}</p>
+                    </template>
+                    <div class="ferry-delete-actions">
+                        <v-btn variant="text" size="small" @click="confirmDelete = false; deleteMessage = null">
+                            {{ deleteMessage ? $i18n("close") : $i18n("cancel") }}
+                        </v-btn>
+                        <v-btn v-if="!deleteMessage" color="error" variant="flat" size="small" :loading="deleting" @click="deleteEntry">
+                            {{ $i18n("ferry_entry_delete_confirm") }}
+                        </v-btn>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div v-else class="ferry-actionbar ferry-edit-actions">
+            <v-btn
+                v-if="editingExisting && !createOnSave && deleteSupported" variant="text" color="error"
+                @click="confirmDelete = true">
+                {{ $i18n("ferry_entry_delete") }}
+            </v-btn>
             <v-spacer />
             <v-btn variant="text" @click="cancel">
                 {{ $i18n("cancel") }}
@@ -135,7 +162,12 @@ export default {
         // Nur bei createOnSave: Zielgruppe des neuen Eintrags
         targetGroup: null as { uuid: string; dbFileName: string; label: string },
         groupPickerOpen: false,
-        originalFieldCount: 0
+        originalFieldCount: 0,
+        // Eintrag löschen (Plugin mit KEEPASSFERRY_ENTRY_RECYCLE): Rückfrage offen, läuft, Meldung bei Misserfolg
+        deleteSupported: false,
+        confirmDelete: false,
+        deleting: false,
+        deleteMessage: null as string
     }),
     computed: {
         ...mapState(useStore, ["saveState", "KeePassDatabases", "ActiveKeePassDatabaseIndex"]),
@@ -194,6 +226,10 @@ export default {
     },
     async mounted() {
         this.originalFieldCount = (this.saveState as SaveState).newEntry.fields.length;
+        chrome.runtime
+            .sendMessage({ keepassferry: "connectionStatus" })
+            .then(s => (this.deleteSupported = !!s?.entryRecycle))
+            .catch(() => undefined);
         this.preferToSkipWhere = configManager.current.rememberMRUGroup;
         const dbs = this.KeePassDatabases as Database[];
         const { preferredGroupUuid, preferredDb, primaryFound } = this.getPreferredGroup(
@@ -283,6 +319,28 @@ export default {
                 await this.$nextTick();
             }
             window.close();
+        },
+        // In den Papierkorb von KeePass (nie endgültig); danach wie Abbrechen: Bearbeiten beenden, Popup schließen
+        deleteEntry: async function () {
+            const e = (this.saveState as SaveState).newEntry;
+            this.deleting = true;
+            const result: string = await chrome.runtime
+                .sendMessage({ keepassferry: "moveEntryToRecycleBin", uuid: e.uuid, dbFileName: e.database.fileName })
+                .catch(() => "error");
+            this.deleting = false;
+            if (result === "recycled") {
+                this.$emit("saved-additions-only");
+                await this.$nextTick();
+                window.close();
+                return;
+            }
+            this.confirmDelete = false;
+            this.deleteMessage =
+                result === "disabled"
+                    ? this.$i18n("ferry_entry_delete_disabled")
+                    : result === "inrecyclebin"
+                        ? this.$i18n("ferry_entry_delete_in_bin")
+                        : this.$i18n("ferry_entry_delete_failed");
         },
         openFullEntryEditor() {
             const entry = (JSON.parse(JSON.stringify(this.saveState)) as SaveState).newEntry;
@@ -413,6 +471,25 @@ export default {
 </script>
 
 <style>
+.ferry-delete-dock {
+    flex: none;
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--ferry-line);
+    background: rgb(var(--v-theme-surface));
+}
+.ferry-delete-note {
+    margin: 0;
+}
+.ferry-delete-note p {
+    margin: 0 0 4px;
+    overflow-wrap: anywhere;
+}
+.ferry-delete-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+}
 /* Bearbeiten als eigene Seite: Kopf und Leiste bleiben stehen, dazwischen scrollt der Inhalt */
 .ferry-edit {
     display: flex;

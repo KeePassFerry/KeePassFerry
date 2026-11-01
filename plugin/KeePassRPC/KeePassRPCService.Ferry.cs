@@ -365,6 +365,25 @@ namespace KeePassFerry
             return true;
         }
 
+        /// <summary>
+        /// Verschiebt einen Eintrag in den Papierkorb seiner Datenbank, nie endgültig. Ergebnis: "recycled",
+        /// "disabled" (Papierkorb in der Datenbank ausgeschaltet, der Eintrag bleibt), "inrecyclebin" (liegt schon dort,
+        /// bleibt), "notfound" oder "error".
+        /// </summary>
+        [JsonRpcMethod]
+        public string MoveEntryToRecycleBin(string uuid, string dbFileName)
+        {
+            if (!EnsureDBisOpen()) return "error";
+            PwDatabase db;
+            PwEntry entry = FindFerryEntry(uuid, dbFileName, out db);
+            if (entry == null || entry.ParentGroup == null) return "notfound";
+            if (!db.RecycleBinEnabled) return "disabled";
+            if (IsInRecycleBin(db, entry)) return "inrecyclebin";
+            MoveToRecycleBin(db, entry);
+            _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), db);
+            return "recycled";
+        }
+
         private PwEntry FindFerryEntry(string uuid, string dbFileName, out PwDatabase db)
         {
             db = SelectDatabase(dbFileName);

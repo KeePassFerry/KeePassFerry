@@ -3,7 +3,7 @@ import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup,
 import { forgetAutoFill } from "./otpRepeat";
 import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
 import { queryPageFields, fillPageField } from "./pageFields";
-import { FIELD_PROTECTION_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
+import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
 import { isFirefox } from "webext-detect-page";
 import { kee, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
 import { commandManager } from "./commands";
@@ -242,7 +242,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     databases: kee.store.state.KeePassDatabases.map(db => db.name || db.fileName),
                     pluginVersion: s.connected ? pluginVersionFrom(features) : null,
                     pluginOutdated: s.connected ? pluginUpdateAvailable(features) : false,
-                    fieldProtection: s.connected && (features ?? []).includes(FIELD_PROTECTION_FEATURE)
+                    fieldProtection: s.connected && (features ?? []).includes(FIELD_PROTECTION_FEATURE),
+                    entryRecycle: s.connected && (features ?? []).includes(ENTRY_RECYCLE_FEATURE)
                 };
             });
             break;
@@ -278,6 +279,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             break;
         case "updateEntryText":
             work = kee.KeePassRPC.updateEntryText(msg.uuid, msg.dbFileName, msg.name ?? "", msg.value ?? "", !!msg.toNotes);
+            break;
+        case "moveEntryToRecycleBin":
+            work = kee.KeePassRPC.moveEntryToRecycleBin(msg.uuid, msg.dbFileName);
             break;
         case "setEntryFieldProtection":
             work = kee.KeePassRPC.setEntryFieldProtection(msg.uuid, msg.dbFileName, msg.name ?? "", !!msg.protect);

@@ -51,7 +51,10 @@ namespace KeePassFerry
             "KPRPC_FEATURE_DTO_V2",
 
             // KeePassFerry: Schutz eigener Felder umschalten (SetEntryFieldProtection)
-            "KEEPASSFERRY_FIELD_PROTECTION"
+            "KEEPASSFERRY_FIELD_PROTECTION",
+
+            // KeePassFerry: Eintrag in den Papierkorb verschieben (MoveEntryToRecycleBin)
+            "KEEPASSFERRY_ENTRY_RECYCLE"
         };
 
         // Zusätzlich die Produktversion des Plugins ("KEEPASSFERRY_VERSION_1.2.3"): Die Erweiterung erkennt daran ein

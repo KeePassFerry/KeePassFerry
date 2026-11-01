@@ -281,6 +281,14 @@ export class jsonrpcClient {
         return !!responses?.[0]?.resultWrapper?.result;
     }
 
+    // Eintrag in den Papierkorb verschieben (nie endgültig): "recycled", "disabled", "inrecyclebin", "notfound", "error"
+    async moveEntryToRecycleBin(uuid: string, dbFileName: string): Promise<string> {
+        const sessionManager = this.sessionManagerForFilename(dbFileName);
+        if (!sessionManager) return "error";
+        const responses = await this.kprpcClient.request([sessionManager], "MoveEntryToRecycleBin", [uuid, dbFileName]);
+        return responses?.[0]?.resultWrapper?.result ?? "error";
+    }
+
     // Eigenes Feld (kind "field") oder Anhang (kind "attachment") entfernen
     async removeEntryExtra(uuid: string, dbFileName: string, kind: string, name: string): Promise<boolean> {
         const sessionManager = this.sessionManagerForFilename(dbFileName);

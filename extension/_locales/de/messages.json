@@ -1067,6 +1067,34 @@
         "message": "Eintrag bearbeiten",
         "description": "KeePassFerry"
     },
+    "ferry_entry_delete": {
+        "message": "Eintrag löschen",
+        "description": "KeePassFerry"
+    },
+    "ferry_entry_delete_question": {
+        "message": "„$1“ in den Papierkorb von KeePass verschieben?",
+        "description": "KeePassFerry"
+    },
+    "ferry_entry_delete_hint": {
+        "message": "Du kannst ihn in KeePass aus dem Papierkorb wiederherstellen.",
+        "description": "KeePassFerry"
+    },
+    "ferry_entry_delete_confirm": {
+        "message": "In den Papierkorb",
+        "description": "KeePassFerry"
+    },
+    "ferry_entry_delete_disabled": {
+        "message": "Der Papierkorb ist in dieser Datenbank ausgeschaltet. Lösche den Eintrag bitte direkt in KeePass.",
+        "description": "KeePassFerry"
+    },
+    "ferry_entry_delete_in_bin": {
+        "message": "Der Eintrag liegt schon im Papierkorb. Endgültig löschen kannst du ihn in KeePass.",
+        "description": "KeePassFerry"
+    },
+    "ferry_entry_delete_failed": {
+        "message": "Der Eintrag konnte nicht gelöscht werden. Ist KeePass entsperrt?",
+        "description": "KeePassFerry"
+    },
     "ferry_show_details": {
         "message": "Details anzeigen",
         "description": "KeePassFerry"

@@ -248,19 +248,7 @@ namespace KeePassFerry
             string status;
             if (IsPasskeyOnly(entry) && db.RecycleBinEnabled && entry.ParentGroup != null)
             {
-                PwGroup recycleBin = db.RootGroup.FindGroup(db.RecycleBinUuid, true);
-                if (recycleBin == null)
-                {
-                    recycleBin = new PwGroup(true, true, KPRes.RecycleBin, PwIcon.TrashBin);
-                    recycleBin.EnableAutoType = false;
-                    recycleBin.EnableSearching = false;
-                    db.RootGroup.AddGroup(recycleBin, true);
-                    db.RecycleBinUuid = recycleBin.Uuid;
-                    db.RecycleBinChanged = DateTime.UtcNow;
-                }
-                entry.ParentGroup.Entries.Remove(entry);
-                recycleBin.AddEntry(entry, true, true);
-                entry.Touch(false);
+                MoveToRecycleBin(db, entry);
                 status = "recycled";
             }
             else
@@ -345,6 +333,24 @@ namespace KeePassFerry
             if (!string.Equals(e.Strings.ReadSafe(FieldRelyingParty), rpId, StringComparison.OrdinalIgnoreCase)) return null;
             if (NormalizeB64Url(e.Strings.ReadSafe(FieldCredentialId)) != NormalizeB64Url(credentialId)) return null;
             return e;
+        }
+
+        // Wie KeePass beim Löschen mit eingeschaltetem Papierkorb: Papierkorb bei Bedarf anlegen, Eintrag hinein verschieben
+        private static void MoveToRecycleBin(PwDatabase db, PwEntry entry)
+        {
+            PwGroup recycleBin = db.RootGroup.FindGroup(db.RecycleBinUuid, true);
+            if (recycleBin == null)
+            {
+                recycleBin = new PwGroup(true, true, KPRes.RecycleBin, PwIcon.TrashBin);
+                recycleBin.EnableAutoType = false;
+                recycleBin.EnableSearching = false;
+                db.RootGroup.AddGroup(recycleBin, true);
+                db.RecycleBinUuid = recycleBin.Uuid;
+                db.RecycleBinChanged = DateTime.UtcNow;
+            }
+            entry.ParentGroup.Entries.Remove(entry);
+            recycleBin.AddEntry(entry, true, true);
+            entry.Touch(false);
         }
 
         private static bool IsInRecycleBin(PwDatabase db, PwEntry e)

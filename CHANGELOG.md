@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- "Edit entry" window: new "Delete entry" button. After a confirmation the entry is moved to the KeePass recycle bin
+  (never deleted permanently; it can be restored in KeePass). If the recycle bin is turned off in the database,
+  nothing is deleted and the extension asks you to delete the entry in KeePass. Requires the plugin of this version.
+
 ## 1.0.13 – 2026-11-01
 
 - Right-click on selected text → "Add "…" to entry": opens the familiar "Edit entry" window with "Add" expanded and
