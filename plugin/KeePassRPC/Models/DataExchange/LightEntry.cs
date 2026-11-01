@@ -13,6 +13,9 @@ namespace KeePassFerry.Models.DataExchange
         public int AttachmentCount;
         public bool HasPasskey;
         public bool HasOtp;
+        // KeePassFerry: Passwort laut Plugin "HIBP Offline Check" in Datenlecks gefunden (Anzahl, falls bekannt)
+        public bool PasswordLeaked;
+        public int PasswordLeakCount;
 
         public LightEntry() { }
 

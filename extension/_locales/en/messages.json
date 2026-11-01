@@ -1147,6 +1147,270 @@
     "message": "Detect two-factor setup",
     "description": "KeePassFerry"
   },
+  "ferry_password_leaked": {
+    "message": "Password found in data breaches",
+    "description": "KeePassFerry: result of the KeePass plugin HIBP Offline Check"
+  },
+  "ferry_password_leaked_count": {
+    "message": "Password found $1 times in data breaches",
+    "description": "KeePassFerry"
+  },
+  "ferry_password_leaked_hint": {
+    "message": "According to \"Have I Been Pwned\" (checked in KeePass). Change it on the website.",
+    "description": "KeePassFerry"
+  },
+  "ferry_change_password": {
+    "message": "Change password",
+    "description": "KeePassFerry"
+  },
+  "ferry_change_password_on_site": {
+    "message": "Change password on the website",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_site_profile": {
+    "message": "Suitable for $1",
+    "description": "KeePassFerry: generator profile from the website's password rules"
+  },
+  "ferry_generator_site_rules_hint": {
+    "message": "Rules of the website, otherwise it rejects the password.",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_rule_range": {
+    "message": "$1–$2 characters",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_rule_exact": {
+    "message": "Exactly $1 characters",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_rule_min": {
+    "message": "At least $1 characters",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_rule_max": {
+    "message": "At most $1 characters",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_rule_special_only": {
+    "message": "Special characters only $1",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_class_upper": {
+    "message": "Uppercase letter",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_class_lower": {
+    "message": "Lowercase letter",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_class_letter": {
+    "message": "Letter",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_class_digit": {
+    "message": "Digit",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_class_special": {
+    "message": "Special character",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_or": {
+    "message": "or",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_popup": {
+    "message": "KeePassFerry $1 – $2 new features",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_earlier": {
+    "message": "Earlier versions",
+    "description": "KeePassFerry"
+  },
+  "ferry_back": {
+    "message": "Back",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_full_changelog": {
+    "message": "Full list of changes",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_14_1_title": {
+    "message": "Delete entry",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_14_1_text": {
+    "message": "In the edit window, \"Delete entry\" moves the entry to the KeePass recycle bin, never permanently.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_14_2_title": {
+    "message": "Passkeys on GitHub",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_14_2_text": {
+    "message": "Registering a passkey on GitHub and similar sites works again.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_14_3_title": {
+    "message": "More security",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_14_3_text": {
+    "message": "Stricter pairing with KeePass, no automatic filling on unencrypted pages, verified updates.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_13_1_title": {
+    "message": "Add selected text to an entry",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_13_1_text": {
+    "message": "Right-click selected text, e.g. recovery codes, to save it in the matching entry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_13_2_title": {
+    "message": "New password detected",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_13_2_text": {
+    "message": "After a password change, KeePassFerry offers to update the existing entry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_13_3_title": {
+    "message": "No duplicate two-factor notice",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_13_3_text": {
+    "message": "If a site's key is already stored, KeePassFerry does not ask again.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_heading": {
+    "message": "News and tips",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_version": {
+    "message": "New in version $1",
+    "description": "KeePassFerry"
+  },
+  "ferry_tips_heading": {
+    "message": "Tips for you",
+    "description": "KeePassFerry"
+  },
+  "ferry_tips_none": {
+    "message": "All set. There are no tips right now.",
+    "description": "KeePassFerry"
+  },
+  "ferry_tips_not_connected": {
+    "message": "Tips appear once KeePass is running and the database is unlocked.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_1_title": {
+    "message": "Detect leaked passwords",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_1_text": {
+    "message": "KeePassFerry warns when a password appears in known data breaches, with a direct way to change it.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_2_title": {
+    "message": "Generator knows the rules of many websites",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_2_text": {
+    "message": "Generated passwords match the website's requirements, e.g. length and allowed special characters.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_3_title": {
+    "message": "Change a password in one click",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_3_text": {
+    "message": "On many websites the key button at an entry opens the page for changing the password directly.",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_dismiss": {
+    "message": "Hide",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_enable": {
+    "message": "Turn on",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_disable": {
+    "message": "Turn off",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_guide": {
+    "message": "Guide",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_hibp_title": {
+    "message": "Check passwords for data breaches",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_hibp_text": {
+    "message": "KeePass checks your passwords at \"Have I Been Pwned\". Only 5 characters of a checksum are sent, never the password.",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_winhello_title": {
+    "message": "Unlock KeePass with Windows Hello",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_winhello_text": {
+    "message": "Fingerprint, face or PIN instead of the master password, with the KeePass plugin KeePassWinHello.",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_otp_title": {
+    "message": "Fill in one-time codes automatically",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_otp_text": {
+    "message": "When you set up two-factor sign-in, KeePassFerry recognises the QR code and saves it in the entry. After that it fills in the codes itself.",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_browsersaving_title": {
+    "message": "Turn off the browser's password saving",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_browsersaving_text": {
+    "message": "The browser still offers to save passwords itself. KeePassFerry takes care of that, so there are no duplicate prompts.",
+    "description": "KeePassFerry"
+  },
+  "ferry_hibp_progress": {
+    "message": "Checked: $1 of $2",
+    "description": "KeePassFerry"
+  },
+  "ferry_hibp_progress_running": {
+    "message": "running …",
+    "description": "KeePassFerry"
+  },
+  "ferry_hibp_progress_leaked": {
+    "message": "$1 in data breaches",
+    "description": "KeePassFerry"
+  },
+  "ferry_security_heading": {
+    "message": "Security",
+    "description": "KeePassFerry"
+  },
+  "ferry_otp_passkeys_heading": {
+    "message": "One-time codes and passkeys",
+    "description": "KeePassFerry"
+  },
+  "ferry_filling_more": {
+    "message": "More",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_hibp": {
+    "message": "Check passwords for data breaches",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_hibp_hint": {
+    "message": "KeePass checks new and changed passwords at \"Have I Been Pwned\" and re-checks all others from time to time. Only the first 5 characters of a checksum are sent, never the password.",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_hibp_unavailable": {
+    "message": "Requires the KeePass plugin 1.0.15 or newer and an unlocked database.",
+    "description": "KeePassFerry"
+  },
   "ferry_setting_networkAuth": {
     "message": "Fill the browser's sign-in dialogs",
     "description": "KeePassFerry"

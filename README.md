@@ -29,6 +29,9 @@
   existing password; supports the WebAuthn Signal API.
 - **Unlock with Windows Hello** in the background: open a login page or click the icon and only the Hello prompt
   appears (requires [KeePassWinHello](https://github.com/sirAndros/KeePassWinHello) or similar).
+- **Leaked passwords:** optional check against "Have I Been Pwned" (k-anonymity, only 5 characters of a checksum
+  leave your PC) with a warning and a direct "Change password" link; the generator follows the password rules of
+  many websites.
 - **Screenshots as attachments** (e.g. security questions) with Ctrl+V.
 - Modern UI with light/dark theme, German and English.
 
@@ -85,7 +88,9 @@ multi-step login, two-factor setup and codes): `node testsite/server.mjs`, then 
 
 KeePassFerry has no servers, no telemetry and no tracking. It does not transfer any information to other networked
 systems unless the user starts it: KeePass's own update check, if enabled in KeePass, reads `version.txt` from
-GitHub, and updates are downloaded from GitHub only when the user starts them. See [PRIVACY.md](PRIVACY.md).
+GitHub, and updates are downloaded from GitHub only when the user starts them. The optional check for leaked
+passwords (off by default) sends only the first 5 characters of a SHA-1 checksum per password to "Have I Been Pwned".
+See [PRIVACY.md](PRIVACY.md).
 
 ## Release integrity
 

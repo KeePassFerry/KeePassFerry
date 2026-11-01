@@ -28,6 +28,9 @@ interface PendingOtpSetup {
     source: Source;
     at: number;
     dismissed?: boolean;
+    // Seite (Dokument des Hauptframes), auf der der Schlüssel erkannt wurde: Neu laden oder eine andere Seite verwirft
+    // den Fund, denn viele Websites (z. B. Amazon) erzeugen dabei einen neuen Schlüssel und der alte gilt nicht mehr
+    documentId?: string;
     // Bei gesperrter oder noch nicht verbundener Datenbank gefunden: noch nicht mit den Einträgen verglichen
     unchecked?: boolean;
     // Vergleich nach dem Entsperren (gleichzeitige Anfragen warten auf dasselbe Ergebnis)
@@ -48,6 +51,31 @@ const pending = new Map<number, PendingOtpSetup>();
 const inFlight = new Map<number, Promise<void>>();
 const lastQrScan = new Map<number, number>();
 const MAX_AGE_MS = 30 * 60 * 1000;
+const SESSION_KEY = "ferryOtpPending";
+
+// Funde auch über einen Neustart des Hintergrunds hinweg merken (Edge/Chrome beenden ihn bei Leerlauf).
+// chrome.storage.session liegt nur im Arbeitsspeicher, ist für Inhaltsskripte gesperrt und endet mit dem Browser
+function persistPending() {
+    const data: Record<string, Omit<PendingOtpSetup, "check">> = {};
+    for (const [tabId, setup] of pending) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { check, ...rest } = setup;
+        data[String(tabId)] = rest;
+    }
+    chrome.storage.session?.set({ [SESSION_KEY]: data }).catch(() => undefined);
+}
+
+const restored: Promise<void> = (async () => {
+    try {
+        const r = await chrome.storage.session?.get(SESSION_KEY);
+        const data = r?.[SESSION_KEY] ?? {};
+        for (const [tabId, setup] of Object.entries<PendingOtpSetup>(data)) {
+            if (!pending.has(Number(tabId)) && Date.now() - setup.at <= MAX_AGE_MS) pending.set(Number(tabId), setup);
+        }
+    } catch (e) {
+        // ohne Wiederherstellung
+    }
+})();
 
 // Prüft eine otpauth-URI (nur TOTP mit Base32-Secret) und liest Aussteller und Konto aus
 export function parseOtpauth(uri: string): { issuer: string; account: string } {
@@ -182,6 +210,7 @@ export function handleOtpSetupCandidate(
 // Auf einer Seite mit neu gefundenem, noch nicht gespeichertem Schlüssel keinen vorhandenen Code eintragen
 // (der vorhandene Code gehört zu einem anderen Schlüssel und würde die Einrichtung verfälschen)
 export async function isOtpSetupPending(tabId: number, frameUrl: string): Promise<boolean> {
+    await restored;
     await inFlight.get(tabId);
     const setup = pending.get(tabId);
     if (!setup || setup.dismissed || Date.now() - setup.at > MAX_AGE_MS) return false;
@@ -235,6 +264,7 @@ function settleIfStored(tabId: number, setup: PendingOtpSetup): Promise<boolean>
             .then(stored => {
                 if (stored && pending.get(tabId) === setup) {
                     pending.delete(tabId);
+                    persistPending();
                     hideNotice(tabId);
                 }
                 return stored;
@@ -266,6 +296,7 @@ async function evaluateCandidate(
 ) {
     const domain = KeeURL.fromString(frameUrl)?.domainOrIPAddress;
     if (!domain) return;
+    await restored;
 
     let uri: string = null;
     let source: Source = null;
@@ -308,19 +339,23 @@ async function evaluateCandidate(
     const open = databaseOpen();
     if (!open) diag("hintergrund", "otp einrichtung: datenbank nicht verfügbar -> später prüfen");
     if (open && (await isAlreadyStored(frameUrl, domain, tabId, uri))) {
-        if (pending.get(tabId)?.uri === uri) pending.delete(tabId);
+        if (pending.get(tabId)?.uri === uri) {
+            pending.delete(tabId);
+            persistPending();
+        }
         return;
     }
 
     const existing = pending.get(tabId);
     if (existing && existing.domain === domain && Date.now() - existing.at < MAX_AGE_MS) {
-        if (existing.uri === uri || sourceRank[existing.source] > sourceRank[source]) {
-            if (!existing.dismissed) showNotice(tabId, existing);
-            return;
-        }
+        // Derselbe Schlüssel erneut gemeldet (die Seite sucht nach Klicks noch einmal): Karte nicht wieder zeigen,
+        // sie wurde für diese Seite schon angeboten (danach weiter über das Popup)
+        if (existing.uri === uri || sourceRank[existing.source] > sourceRank[source]) return;
     }
-    const entry: PendingOtpSetup = { uri, ...info, url: frameUrl, domain, source, at: Date.now(), unchecked: !open };
+    const documentId: string = (kee.tabStates.get(tabId)?.framePorts?.get(0)?.sender as any)?.documentId;
+    const entry: PendingOtpSetup = { uri, ...info, url: frameUrl, domain, source, at: Date.now(), unchecked: !open, documentId };
     pending.set(tabId, entry);
+    persistPending();
     showNotice(tabId, entry);
 }
 
@@ -343,33 +378,52 @@ function hideNotice(tabId: number) {
     }
 }
 
-// Beim Verbinden eines neuen Top-Frames einen noch offenen Fund derselben Domain erneut anbieten
-export async function offerPendingOtpSetup(tabId: number, url: string) {
+// Hauptframe verbindet sich: neue Seite oder neu geladen -> Fund verwerfen (die Seite erkennt einen sichtbaren
+// QR-Code erneut). Dieselbe Seite (Neustart des Hintergrunds, Port neu verbunden) -> Fund erneut anbieten
+export async function offerPendingOtpSetup(tabId: number, url: string, documentId?: string) {
+    await restored;
     const setup = pending.get(tabId);
-    if (!setup || setup.dismissed || Date.now() - setup.at > MAX_AGE_MS) return;
+    if (!setup) return;
+    if (setup.documentId && documentId && setup.documentId !== documentId) {
+        diag("hintergrund", "otp einrichtung: neue seite -> fund verworfen");
+        forgetOtpSetup(tabId);
+        return;
+    }
+    if (setup.dismissed || Date.now() - setup.at > MAX_AGE_MS) return;
     if (KeeURL.fromString(url)?.domainOrIPAddress !== setup.domain) return;
     if (await settleIfStored(tabId, setup)) return;
     showNotice(tabId, setup);
 }
 
-export function dismissOtpSetup(tabId: number) {
+export async function dismissOtpSetup(tabId: number) {
+    await restored;
     const setup = pending.get(tabId);
-    if (setup) setup.dismissed = true;
+    if (setup) {
+        setup.dismissed = true;
+        persistPending();
+    }
 }
 
 export function forgetOtpSetup(tabId: number) {
-    pending.delete(tabId);
+    if (pending.delete(tabId)) persistPending();
     lastQrScan.delete(tabId);
 }
 
 // Noch nicht gespeicherter Fund im Tab (auch nach "Später"), solange der Tab auf derselben Domain ist:
 // das normale Popup bietet dann die Auswahl erneut an (die Seite muss nichts neu erkennen)
 export async function getOtpSetupSummary(tabId: number): Promise<{ issuer: string }> {
+    await restored;
     const setup = pending.get(tabId);
-    if (!setup || Date.now() - setup.at > MAX_AGE_MS) return null;
+    if (!setup || Date.now() - setup.at > MAX_AGE_MS) {
+        diag("hintergrund", "otp hinweis im popup: kein fund", { tab: tabId, offen: pending.size, abgelaufen: !!setup });
+        return null;
+    }
     try {
         const tab = await chrome.tabs.get(tabId);
-        if (KeeURL.fromString(tab?.url)?.domainOrIPAddress !== setup.domain) return null;
+        if (KeeURL.fromString(tab?.url)?.domainOrIPAddress !== setup.domain) {
+            diag("hintergrund", "otp hinweis im popup: andere domain");
+            return null;
+        }
     } catch (e) {
         return null;
     }
@@ -379,6 +433,7 @@ export async function getOtpSetupSummary(tabId: number): Promise<{ issuer: strin
 
 // Daten für die Popup-Ansicht: Fund (ohne Secret) und vorgeschlagene Einträge
 export async function getOtpSetupForPopup(tabId: number) {
+    await restored;
     const setup = pending.get(tabId);
     if (!setup || Date.now() - setup.at > MAX_AGE_MS) return null;
 
@@ -413,6 +468,7 @@ export async function getOtpSetupForPopup(tabId: number) {
 
 // Schlüssel in den gewählten Eintrag schreiben; bei Erfolg den ersten Code in die Seite eintragen
 export async function applyOtpSetup(tabId: number, uuid: string, dbFileName: string, overwrite: boolean) {
+    await restored;
     const setup = pending.get(tabId);
     if (!setup) return { status: "nothing" };
     const result = await kee.KeePassRPC.setTotp(uuid, dbFileName, setup.uri, overwrite);

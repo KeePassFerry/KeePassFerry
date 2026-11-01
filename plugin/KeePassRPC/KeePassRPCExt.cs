@@ -163,6 +163,7 @@ Technical detail: " + ex.Message);
                 _registrationTimer = new System.Windows.Forms.Timer { Interval = 15 * 60 * 1000 };
                 _registrationTimer.Tick += delegate { EnsureHostRegistration(); };
                 _registrationTimer.Start();
+                Hibp = new HibpChecker(host);
                 if (logger != null) logger.WriteLine("RPC server started.");
 
                 // Reste geöffneter Anhang-Kopien (z. B. nach einem Absturz)
@@ -193,6 +194,9 @@ Technical detail: " + ex.Message);
         }
 
         private System.Windows.Forms.Timer _registrationTimer;
+
+        // Passwortprüfung bei "Have I Been Pwned" (nur wenn eingeschaltet)
+        internal HibpChecker Hibp { get; private set; }
 
         private void EnsureHostRegistration()
         {
@@ -589,12 +593,31 @@ Technical detail: " + ex.Message);
                 options.Click += OnToolsOptions;
                 ToolStripMenuItem update = new ToolStripMenuItem(FerryText.T("Nach Updates suchen …", "Check for updates …"));
                 update.Click += OnCheckForUpdates;
+                ToolStripMenuItem hibp = new ToolStripMenuItem(FerryText.T("Passwörter jetzt prüfen (Have I Been Pwned) …",
+                    "Check passwords now (Have I Been Pwned) …"));
+                hibp.Click += OnCheckPasswordsNow;
                 tsmi.DropDownItems.Add(options);
+                tsmi.DropDownItems.Add(hibp);
                 tsmi.DropDownItems.Add(update);
                 return tsmi;
             }
 
             return null;
+        }
+
+        // Menü "Passwörter jetzt prüfen": ohne eingeschaltete Prüfung erst um Zustimmung bitten (Netzzugriff)
+        private void OnCheckPasswordsNow(object sender, EventArgs e)
+        {
+            if (Hibp == null) return;
+            if (!Hibp.Enabled)
+            {
+                if (MessageBox.Show(FerryText.T(
+                        "KeePassFerry prüft deine Passwörter bei „Have I Been Pwned“ auf bekannte Datenlecks. Gesendet werden nur die ersten 5 Zeichen einer Prüfsumme (SHA-1) jedes Passworts, nie das Passwort selbst; verglichen wird auf diesem PC.\r\n\r\nDie Prüfung einschalten? Danach prüft KeePassFerry neue und geänderte Passwörter automatisch und alle anderen gelegentlich erneut.",
+                        "KeePassFerry checks your passwords against known data breaches at \"Have I Been Pwned\". Only the first 5 characters of a checksum (SHA-1) of each password are sent, never the password itself; the comparison happens on this PC.\r\n\r\nTurn on the check? KeePassFerry then checks new and changed passwords automatically and re-checks all others from time to time."),
+                        "KeePassFerry", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                Hibp.Enabled = true;
+            }
+            Hibp.CheckAllNow();
         }
 
         // Menü "Nach Updates suchen": neueste Version zeigen und auf Wunsch per Setup aktualisieren
@@ -629,6 +652,7 @@ Technical detail: " + ex.Message);
         {
             terminating = true;
             if (_registrationTimer != null) _registrationTimer.Dispose();
+            if (Hibp != null) Hibp.Dispose();
             FerryTempFiles.CleanUp();
             if (_RPCServer != null)
                 _RPCServer.Stop();

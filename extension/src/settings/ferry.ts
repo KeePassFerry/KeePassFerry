@@ -71,19 +71,86 @@ async function setupClipboardPermission() {
             input.checked = await chrome.permissions.contains(perm);
         }
     });
-    // Vom Popup aus geöffnet (#clipboard): Schalter zeigen und hervorheben
-    // Erst nach dem vollständigen Aufbau (Übersetzungen, Abschnitte) scrollen, sonst verschiebt sich das Layout danach
-    if (location.hash === "#clipboard") {
-        const show = () =>
-            requestAnimationFrame(() => {
-                const row = document.getElementById("clipboard");
-                row?.scrollIntoView({ block: "center", behavior: "smooth" });
-                row?.classList.add("highlight");
-                input.focus({ preventScroll: true });
-            });
-        if (document.readyState === "complete") setTimeout(show, 150);
-        else window.addEventListener("load", () => setTimeout(show, 150), { once: true });
+}
+
+// Vom Popup aus geöffnet (#clipboard, #hibp): Zeile zeigen und hervorheben
+// Erst nach dem vollständigen Aufbau (Übersetzungen, Abschnitte) scrollen, sonst verschiebt sich das Layout danach
+function highlightFromHash() {
+    const id = location.hash.slice(1);
+    if (!["clipboard", "hibp"].includes(id)) return;
+    const show = () =>
+        requestAnimationFrame(() => {
+            const row = document.getElementById(id);
+            row?.scrollIntoView({ block: "center", behavior: "smooth" });
+            row?.classList.add("highlight");
+            row?.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true });
+        });
+    if (document.readyState === "complete") setTimeout(show, 150);
+    else window.addEventListener("load", () => setTimeout(show, 150), { once: true });
+}
+
+// Schalter "Passwörter bei Have I Been Pwned prüfen": Einstellung liegt im Plugin (dort läuft die Prüfung)
+async function setupHibp() {
+    const input = document.getElementById("ferryHibpCheck") as HTMLInputElement;
+    const hint = document.getElementById("ferryHibpHint");
+    if (!input) return;
+    let supported = false;
+    try {
+        const s = await chrome.runtime.sendMessage({ keepassferry: "connectionStatus" });
+        supported = !!s?.hibpCheck;
+        input.checked = supported ? !!(await chrome.runtime.sendMessage({ keepassferry: "getHibpCheck" })) : false;
+    } catch (e) {
+        supported = false;
     }
+    input.disabled = !supported;
+    if (hint) hint.textContent = supported ? $STR("ferry_setting_hibp_hint") : $STR("ferry_setting_hibp_unavailable");
+    if (!input.dataset.bound) {
+        input.dataset.bound = "1";
+        input.addEventListener("change", async () => {
+            try {
+                await chrome.runtime.sendMessage({ keepassferry: "setHibpCheck", enabled: input.checked });
+            } catch (e) {
+                input.checked = !input.checked;
+            }
+            refreshHibpProgress();
+        });
+    }
+}
+
+// Stand der Passwortprüfung unter dem Schalter (alle 3 s, nur wenn eingeschaltet)
+async function refreshHibpProgress() {
+    const box = document.getElementById("ferryHibpProgress");
+    const input = document.getElementById("ferryHibpCheck") as HTMLInputElement;
+    if (!box || !input) return;
+    let p: { total: number; done: number; leaked: number; running: boolean } = null;
+    if (input.checked && !input.disabled) {
+        try {
+            p = await chrome.runtime.sendMessage({ keepassferry: "getHibpProgress" });
+        } catch (e) {
+            p = null;
+        }
+    }
+    if (!p || !p.total) {
+        box.hidden = true;
+        return;
+    }
+    box.hidden = false;
+    const bar = document.createElement("span");
+    bar.className = "bar";
+    const fill = document.createElement("span");
+    fill.style.width = Math.round((100 * p.done) / p.total) + "%";
+    bar.append(fill);
+    const text = document.createElement("span");
+    text.textContent = $STRF("ferry_hibp_progress", [p.done.toLocaleString(), p.total.toLocaleString()]) +
+        (p.running || p.done < p.total ? " · " + $STR("ferry_hibp_progress_running") : "");
+    const parts: HTMLElement[] = [bar, text];
+    if (p.leaked > 0) {
+        const leaked = document.createElement("span");
+        leaked.className = "leaked";
+        leaked.textContent = $STRF("ferry_hibp_progress_leaked", [p.leaked.toLocaleString()]);
+        parts.push(leaked);
+    }
+    box.replaceChildren(...parts);
 }
 
 async function refreshStatus() {
@@ -154,7 +221,7 @@ function setupResetPairing() {
 }
 
 function setupNav() {
-    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("#ferryNav a"));
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("#ferryNav a[data-panel]"));
     for (const a of links) {
         a.addEventListener("click", e => {
             e.preventDefault();
@@ -181,4 +248,7 @@ setupClipboardPermission();
 setupResetPairing();
 setupNav();
 refreshStatus();
+setupHibp().then(refreshHibpProgress);
+highlightFromHash();
+setInterval(refreshHibpProgress, 3000);
 setInterval(refreshStatus, 2000);

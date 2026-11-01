@@ -14,8 +14,20 @@
                 <v-select
                     v-model="selectedProfile" :items="items" :label="$i18n('password_profile')"
                     variant="outlined" density="comfortable" color="primary"
-                    :hint="$i18n('password_profile_hint')" persistent-hint
-                    @update:model-value="profileChanged" />
+                    :hint="isSiteProfile ? '' : $i18n('password_profile_hint')" :persistent-hint="!isSiteProfile"
+                    :hide-details="isSiteProfile"
+                    @update:model-value="profileChanged">
+                    <template v-if="isSiteProfile" #prepend-inner>
+                        <tabler-world-check class="ferry-ico ferry-gen-site-ico" />
+                    </template>
+                </v-select>
+                <!-- Regeln der Website (Apples Password Manager Resources), sonst lehnt sie das Passwort ab -->
+                <div v-if="isSiteProfile" class="ferry-gen-rules">
+                    <div class="ferry-gen-chips">
+                        <span v-for="c of ruleChips" :key="c" class="ferry-gen-chip">{{ c }}</span>
+                    </div>
+                    <p class="ferry-gen-note">{{ $i18n("ferry_generator_site_rules_hint") }}</p>
+                </div>
                 <div class="ferry-gen-pw" :class="{ hidden: !revealed }">
                     <v-progress-linear v-if="loading" indeterminate color="primary" absolute location="top" />
                     <span class="ferry-gen-value">{{ renderedPassword || "—" }}</span>
@@ -68,6 +80,8 @@ import { Action } from "../../common/Action";
 import { SaveState } from "../../common/SaveState";
 import useStore from "../../store";
 import { mapState } from "pinia";
+import { generatePassword, parsePasswordRules, passwordRulesForHost, summarizeRules } from "../../common/passwordRules";
+import { $STRF } from "../../common/DollarPolyfills";
 
 export default {
     props: ["field", "standalone", "topmost", "canInsert"],
@@ -82,12 +96,41 @@ export default {
         revealed: true,
         loading: false,
         copied: false,
-        cachedGeneratedPassword: ""
+        cachedGeneratedPassword: "",
+        // Passwortregel der aktuellen Website (Domain und Regeltext) oder null
+        siteRule: null as { domain: string; text: string } | null,
+        siteRuleChecked: false
     }),
     computed: {
         ...mapState(useStore, ["PasswordProfiles", "saveState", "generatedPassword"]),
+        siteProfileName: function () {
+            return this.siteRule ? $STRF("ferry_generator_site_profile", [this.siteRule.domain]) : "";
+        },
+        isSiteProfile: function () {
+            return !!this.siteRule && this.selectedProfile === this.siteProfileName;
+        },
         items: function () {
-            return this.PasswordProfiles.map(p => p.name);
+            const profiles = this.PasswordProfiles.map(p => p.name);
+            return this.siteRule ? [this.siteProfileName, ...profiles] : profiles;
+        },
+        ruleChips: function () {
+            if (!this.siteRule) return [];
+            const s = summarizeRules(parsePasswordRules(this.siteRule.text));
+            const chips: string[] = [];
+            if (s.minLength && s.maxLength) {
+                chips.push(s.minLength === s.maxLength
+                    ? $STRF("ferry_generator_rule_exact", [String(s.maxLength)])
+                    : $STRF("ferry_generator_rule_range", [String(s.minLength), String(s.maxLength)]));
+            } else if (s.minLength) chips.push($STRF("ferry_generator_rule_min", [String(s.minLength)]));
+            else if (s.maxLength) chips.push($STRF("ferry_generator_rule_max", [String(s.maxLength)]));
+            for (const set of s.required) {
+                const names = set.includes("upper") && set.includes("lower")
+                    ? ["letter", ...set.filter(c => c !== "upper" && c !== "lower")]
+                    : set;
+                chips.push(names.map(c => this.$i18n("ferry_generator_class_" + c)).join(" " + this.$i18n("ferry_generator_or") + " "));
+            }
+            if (s.specialChars) chips.push($STRF("ferry_generator_rule_special_only", [s.specialChars]));
+            return chips;
         },
         disabled: function () {
             return !this.cachedGeneratedPassword;
@@ -122,13 +165,21 @@ export default {
             this.selectDefaultProfile();
         }
     },
-    mounted: function () {
+    mounted: async function () {
+        await this.loadSiteRule();
         this.selectDefaultProfile();
     },
     methods: {
         // Zuletzt benutztes Profil (sonst das erste) wählen und gleich ein Passwort erzeugen
         selectDefaultProfile: function () {
-            if (this.selectedProfile || !this.items.length) return;
+            if (this.selectedProfile || !this.siteRuleChecked) return;
+            // Website mit bekannten Passwortregeln: passendes Profil vorauswählen
+            if (this.siteRule) {
+                this.selectedProfile = this.siteProfileName;
+                this.profileChanged(this.selectedProfile);
+                return;
+            }
+            if (!this.items.length) return;
             let last = "";
             try {
                 last = localStorage.getItem("ferryPasswordProfile") ?? "";
@@ -162,7 +213,28 @@ export default {
         cancel: function () {
             this.$emit("dialog-closed");
         },
+        // Regel für die Website im aktiven Tab (Popup und Panel auf der Seite gehören zu diesem Tab)
+        loadSiteRule: async function () {
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                const url = tab?.url ? new URL(tab.url) : null;
+                if (url && (url.protocol === "https:" || url.protocol === "http:")) this.siteRule = passwordRulesForHost(url.hostname);
+            } catch (e) {
+                this.siteRule = null;
+            }
+            this.siteRuleChecked = true;
+        },
         profileChanged: function (item: string) {
+            if (this.siteRule && item === this.siteProfileName) {
+                // Lokal erzeugt; das Profil der Website wird nicht als "zuletzt benutzt" gemerkt
+                try {
+                    this.cachedGeneratedPassword = generatePassword(parsePasswordRules(this.siteRule.text));
+                } catch (e) {
+                    this.cachedGeneratedPassword = "";
+                }
+                this.loading = false;
+                return;
+            }
             try {
                 localStorage.setItem("ferryPasswordProfile", item);
             } catch (e) {
@@ -231,6 +303,27 @@ export default {
 .ferry-gen-tools {
     display: flex;
     flex: none;
+}
+.ferry-gen-site-ico {
+    color: rgb(var(--v-theme-primary));
+}
+.ferry-gen-rules {
+    margin-top: 8px;
+}
+.ferry-gen-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.ferry-gen-chip {
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: var(--ferry-field);
+    color: var(--ferry-muted);
+}
+.ferry-gen-rules .ferry-gen-note {
+    margin-top: 6px;
 }
 .ferry-gen-note {
     font-size: 12.5px;

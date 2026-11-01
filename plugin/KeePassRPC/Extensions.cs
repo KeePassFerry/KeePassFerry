@@ -137,7 +137,12 @@ namespace KeePassFerry
         
         public static MatchAccuracyMethod GetMatchAccuracyMethod(this PwEntry entry, URLSummary urlsum, DatabaseConfig dbConf)
         {
-            var conf = entry.GetKPRPCConfigNormalised(dbConf.DefaultMatchAccuracy);
+            return GetMatchAccuracyMethod(entry.GetKPRPCConfigNormalised(dbConf.DefaultMatchAccuracy), urlsum, dbConf);
+        }
+
+        // Mit schon gelesener Eintragskonfiguration (Suche über viele Adressen: nicht je Adresse neu einlesen)
+        public static MatchAccuracyMethod GetMatchAccuracyMethod(EntryConfigv2 conf, URLSummary urlsum, DatabaseConfig dbConf)
+        {
             MatchAccuracyMethod overridenMethod;
             if (urlsum.Domain != null && urlsum.Domain.RegistrableDomain != null &&
                 dbConf.MatchedURLAccuracyOverrides.TryGetValue(urlsum.Domain.RegistrableDomain, out overridenMethod))

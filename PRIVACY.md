@@ -1,6 +1,6 @@
 # Privacy policy / Datenschutzerklärung
 
-_Last updated / Stand: 2026-10-22_
+_Last updated / Stand: 2026-11-02_
 
 ## English
 
@@ -27,8 +27,22 @@ computer**. It does not have servers and does not send any data to the KeePassFe
 - Optional, only if you enable it: a diagnostic log written by the plugin to your Documents folder. It contains
   events and field properties, never passwords, codes or field contents.
 
-**No tracking.** KeePassFerry contains no analytics, advertising or telemetry and makes no network requests of
-its own, except loading website icons (favicons) of the page you are on if you choose to save them with an entry.
+**No tracking.** KeePassFerry contains no analytics, advertising or telemetry. Its own network requests are limited
+to the following, and none of them contains passwords or other content of your KeePass database:
+- Website icons (favicons) of the page you are on, if you choose to save them with an entry.
+- Two-factor setup: a QR code image shown on the current page may be loaded again by the extension to read it; images
+  from other addresses than the page are loaded without cookies.
+- "Change password": when you expand an entry, the extension may ask that entry's website whether it supports the
+  standard address `/.well-known/change-password` (without cookies), to show a button that opens the right page.
+  For many websites the address comes from a built-in list instead (Apple's Password Manager Resources) and no
+  request is made.
+
+**KeePass plugin: checking passwords for data breaches (optional, off by default).** Only if you turn on "Check
+passwords for data breaches", the plugin in KeePass checks your passwords at "Have I Been Pwned"
+(`api.pwnedpasswords.com`, k-anonymity model): for each password it computes a SHA-1 checksum locally and sends only
+the **first 5 characters** of it; the service answers with all known checksums that start with them, and the
+comparison happens on your computer. The password itself, the full checksum, usernames and addresses are never sent.
+The result (found or not) is stored in the entry in your KeePass database.
 
 **KeePass plugin: updates.** If KeePass's own update check is enabled, KeePass reads `version.txt` from GitHub to
 show whether a newer plugin version exists. The plugin downloads a new version from the GitHub release only when
@@ -52,8 +66,19 @@ Computer** verbindet. Es gibt keine Server; es werden keine Daten an die Entwick
 - **Gespeichert in der Erweiterung:** Einstellungen, ein nicht exportierbarer Kopplungsschlüssel und der
   öffentliche Schlüssel deines KeePass. Optional (nur wenn eingeschaltet) ein Diagnoseprotokoll im
   Dokumente-Ordner, ohne Passwörter, Codes oder Feldinhalte.
-- **Kein Tracking**, keine Werbung, keine Telemetrie. Eigene Netzwerkzugriffe nur zum Laden des Website-Symbols
-  (Favicon), wenn du es mit einem Eintrag speicherst.
+- **Kein Tracking**, keine Werbung, keine Telemetrie. Eigene Netzwerkzugriffe nur für Folgendes, nie mit
+  Passwörtern oder anderen Inhalten deiner KeePass-Datenbank: das Website-Symbol (Favicon), wenn du es mit einem
+  Eintrag speicherst; bei der Zwei-Faktor-Einrichtung ggf. erneutes Laden des QR-Bilds der aktuellen Seite (Bilder von
+  anderen Adressen ohne Cookies); beim Aufklappen eines Eintrags ggf. eine Anfrage an dessen Website, ob sie die
+  Standardadresse `/.well-known/change-password` unterstützt (ohne Cookies), für den Knopf „Passwort ändern“. Für viele
+  Websites stammt die Adresse stattdessen aus einer mitgelieferten Liste (Apples „Password Manager Resources“), dann
+  gibt es keine Anfrage.
+- **KeePass-Plugin, Prüfung auf Datenlecks (optional, standardmäßig aus):** Nur wenn du „Passwörter auf Datenlecks
+  prüfen“ einschaltest, prüft das Plugin in KeePass deine Passwörter bei „Have I Been Pwned“
+  (`api.pwnedpasswords.com`, k-Anonymität): Für jedes Passwort wird lokal eine SHA-1-Prüfsumme berechnet und nur deren
+  **erste 5 Zeichen** gesendet; der Dienst antwortet mit allen bekannten Prüfsummen, die so beginnen, verglichen wird
+  auf deinem Computer. Das Passwort selbst, die vollständige Prüfsumme, Benutzernamen und Adressen werden nie gesendet.
+  Das Ergebnis (gefunden oder nicht) steht im Eintrag in deiner KeePass-Datenbank.
 - **KeePass-Plugin, Updates:** Ist die Update-Prüfung von KeePass eingeschaltet, liest KeePass `version.txt` von
   GitHub, um eine neuere Plugin-Version anzuzeigen. Eine neue Version lädt das Plugin nur, wenn du das Update selbst
   startest („Jetzt aktualisieren“ oder „Nach Updates suchen“). Dabei werden keine persönlichen Daten übertragen,

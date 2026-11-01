@@ -22,6 +22,17 @@
                         <v-tooltip location="start" activator="parent">{{ $i18n("discard_changes") }}</v-tooltip>
                     </button>
                 </div>
+                <!-- Nach einem Update einmal: Neuigkeiten dieser Version (Einstellungen > Neuigkeiten und Tipps) -->
+                <div v-if="news && !otpPending && !showSaveRecovery" class="ferry-note ferry-news-note" role="button" tabindex="0"
+                    @click="openNews" @keyup.enter="openNews">
+                    <tabler-sparkles class="ferry-ico" />
+                    <span class="ferry-note-text">{{ $i18n("ferry_news_popup", [news.version, String(news.items.length)]) }}</span>
+                    <tabler-chevron-right class="ferry-ico ferry-news-chevron" />
+                    <button type="button" class="ferry-ib" :aria-label="$i18n('close')" @click.stop="dismissNews">
+                        <tabler-x class="ferry-ico" />
+                        <v-tooltip location="start" activator="parent">{{ $i18n("close") }}</v-tooltip>
+                    </button>
+                </div>
                 <div v-if="otpPending && databaseIsOpen && !showSaveStart" class="ferry-note">
                     <tabler-shield-lock class="ferry-ico" />
                     <span class="ferry-note-text">{{ $i18n("ferry_otp_pending", [otpPending.issuer]) }}</span>
@@ -98,12 +109,17 @@
                     <tabler-app-window class="ferry-ico" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_open_keepass_label") }}</v-tooltip>
                 </button>
+                <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_news_heading')" @click="openNews">
+                    <tabler-sparkles class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">{{ $i18n("ferry_news_heading") }}</v-tooltip>
+                </button>
                 <button type="button" class="ferry-ib" :aria-label="$i18n('Menu_Button_options_label')" @click="showOptions">
                     <tabler-settings class="ferry-ico" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_options_label") }}</v-tooltip>
                 </button>
             </footer>
         </div>
+        <NewsView v-if="showNews" @close="showNews = false" />
         <PasswordGenerator v-if="showPasswordGenerator" :standalone="true" @dialog-closed="passwordGeneratorClosed"
             @copy-to-clipboard="copyToClipboard" />
     </v-app>
@@ -116,6 +132,7 @@ import SearchResults from "./components/SearchResults.vue";
 import Save1stParty from "./components/Save1stParty.vue";
 import SaveWhere from "./components/SaveWhere.vue";
 import PasswordGenerator from "../common/components/PasswordGenerator.vue";
+import NewsView from "./components/NewsView.vue";
 import { Port } from "../common/port";
 import { Action } from "../common/Action";
 import { KeeLog } from "../common/Logger";
@@ -134,6 +151,7 @@ import { AddonMessage } from "../common/AddonMessage";
 import useStore from "../store";
 import { mapState } from "pinia";
 import punycode from "punycode/";
+import { markNewsSeen, unseenNews } from "../common/whatsNew";
 
 export default {
     components: {
@@ -142,8 +160,7 @@ export default {
         SearchInput: SearchInput,
         Save1stParty: Save1stParty,
         SaveWhere: SaveWhere,
-        PasswordGenerator: PasswordGenerator
-    },
+        PasswordGenerator: PasswordGenerator, NewsView },
     props: ["matchedEntries", "siteEntries", "frameId"],
     setup() {
         const { updateSaveState, updateSaveEntryResult } = useStore();
@@ -171,9 +188,11 @@ export default {
             manualRecoveryPromptTimeMs: manualRecoveryPromptTimeMs,
             autoRecoveryTimeMs: autoRecoveryTimeMs,
             showPasswordGenerator: false,
+            showNews: false,
             lastSaveEntryResult: null,
             // Noch nicht gespeicherter Zwei-Faktor-Schlüssel der aktuellen Seite
-            otpPending: null as { issuer: string }
+            otpPending: null as { issuer: string },
+            news: null as { version: string; items: unknown[] }
         };
     },
     computed: {
@@ -264,6 +283,8 @@ export default {
             this.saveLastActiveAt = null;
         }
 
+        unseenNews().then(n => (this.news = n));
+
         // Wurde die Schlüssel-Auswahl ohne Speichern geschlossen, hier erneut anbieten
         chrome.runtime.sendMessage({ keepassferry: "getOtpSetupSummary" })
             .then(s => (this.otpPending = s ?? null))
@@ -296,6 +317,14 @@ export default {
         // Dieselbe Ansicht wie aus dem Seitenhinweis (popup/main.ts rendert bei ?otp=1 die Auswahl)
         openOtpSetup: function () {
             window.location.search = "?otp=1";
+        },
+        openNews: function () {
+            this.news = null;
+            this.showNews = true;
+        },
+        dismissNews: async function () {
+            this.news = null;
+            await markNewsSeen();
         },
         discardOtpSetup: function () {
             this.otpPending = null;
@@ -479,6 +508,15 @@ export default {
 </script>
 
 <style>
+.ferry-news-note {
+    cursor: pointer;
+}
+.ferry-news-note:hover {
+    background: rgba(var(--v-theme-primary), 0.11);
+}
+.ferry-news-note .ferry-news-chevron {
+    color: var(--ferry-muted);
+}
 .text-truncate{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 
 /* Popup-Rahmen: Kopf, scrollender Inhalt, Fuß; feste Höhe 600 px */

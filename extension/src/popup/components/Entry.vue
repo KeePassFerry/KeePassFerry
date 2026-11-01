@@ -28,6 +28,10 @@
                         <tabler-shield-lock class="ferry-ico" />
                         <v-tooltip location="top" activator="parent">{{ $i18n("ferry_extras_has_otp") }}</v-tooltip>
                     </span>
+                    <span v-if="entrySummary.passwordLeaked" class="ferry-entry-mark ferry-entry-leak">
+                        <tabler-alert-triangle class="ferry-ico" />
+                        <v-tooltip location="top" activator="parent">{{ $i18n("ferry_password_leaked") }}</v-tooltip>
+                    </span>
                     <span v-if="entrySummary.attachmentCount" class="ferry-entry-mark">
                         <tabler-paperclip class="ferry-ico" />
                         <v-tooltip location="top" activator="parent">
@@ -46,6 +50,12 @@
                 </span>
             </span>
             <button
+                v-if="expanded && changeUrl" type="button" class="ferry-ib"
+                :aria-label="$i18n('ferry_change_password')" @click.stop="openChangePassword">
+                <tabler-key class="ferry-ico" />
+                <v-tooltip location="top" activator="parent">{{ $i18n("ferry_change_password_on_site") }}</v-tooltip>
+            </button>
+            <button
                 v-if="expanded && entrySummary.fullDetails" type="button" class="ferry-ib"
                 :aria-label="$i18n('ferry_edit_entry')" @click.stop="editEntry">
                 <tabler-pencil class="ferry-ico" />
@@ -60,6 +70,18 @@
             </button>
         </div>
         <div v-if="expanded && entrySummary.fullDetails" class="ferry-entry-details">
+            <!-- Ergebnis von "HIBP Offline Check" in KeePass; KeePassFerry prüft selbst nichts -->
+            <div v-if="entrySummary.passwordLeaked" class="ferry-note danger ferry-leak-note">
+                <tabler-alert-triangle class="ferry-ico" />
+                <div class="ferry-note-text">
+                    <p class="ferry-leak-title">{{ leakTitle }}</p>
+                    <p class="ferry-leak-hint">{{ $i18n("ferry_password_leaked_hint") }}</p>
+                    <v-btn variant="outlined" size="small" rounded="lg" class="ferry-leak-btn" @click.stop="openChangePassword">
+                        <tabler-external-link class="ferry-ico" />
+                        {{ $i18n("ferry_change_password") }}
+                    </v-btn>
+                </div>
+            </div>
             <Field
                 v-for="f of allFields" :key="f.uuid" :field="f" :kind="fillKind(f)"
                 :uuid="entrySummary.uuid" :db-file-name="entrySummary.dbFileName" />
@@ -92,7 +114,7 @@ import { Entry } from "../../common/model/Entry";
 import { EntrySummary } from "../../common/model/EntrySummary";
 import { tooltipDelay } from "../../common/Timings";
 import { mapState } from "pinia";
-import { $STR } from "~/common/DollarPolyfills";
+import { $STR, $STRF } from "~/common/DollarPolyfills";
 
 export default {
     components: { Field, OtpRow, EntryExtras },
@@ -105,7 +127,10 @@ export default {
     data: (vm: any) => ({
         expanded: !!vm.startExpanded,
         focussed: false,
-        tooltipDelay: tooltipDelay
+        tooltipDelay: tooltipDelay,
+        // Adresse zum Passwortändern auf der Website (Apples Liste oder /.well-known/change-password)
+        changeUrl: null as string,
+        changeUrlChecked: false
     }),
     computed: {
         ...mapState(useStore, ["saveState"]),
@@ -154,10 +179,20 @@ export default {
             const e = this.entrySummary.fullDetails as Entry;
             return e.database.name + " > " + e.parentGroup.path;
         },
+        leakTitle: function () {
+            const n = (this.entrySummary as EntrySummary).passwordLeakCount;
+            return n > 0
+                ? $STRF("ferry_password_leaked_count", [n.toLocaleString()])
+                : $STR("ferry_password_leaked");
+        },
         isMatchedEntry: function () {
             const e = this.entrySummary as EntrySummary;
             return typeof e.isPreferredMatch === "boolean";
         }
+    },
+    mounted() {
+        this.lookupChangeUrl(true);
+        if (this.expanded) this.lookupChangeUrl();
     },
     methods: {
         // Benutzername- und Passwortzeile können in die Seite eingetragen werden, andere Felder nicht
@@ -174,6 +209,7 @@ export default {
             }
         },
         showFullDetails() {
+            this.lookupChangeUrl();
             if (!this.expanded && !this.entrySummary.fullDetails) {
                 Port.postMessage({
                     findMatches: {
@@ -186,6 +222,27 @@ export default {
         },
         hideFullDetails() {
             this.expanded = false;
+        },
+        // Erst Apples Liste (ohne Netz), beim Aufklappen auch /.well-known/change-password bei der Website selbst
+        async lookupChangeUrl(quick = false) {
+            if (this.changeUrl || (!quick && this.changeUrlChecked)) return;
+            const url = (this.entrySummary as EntrySummary).url;
+            if (!url) return;
+            try {
+                const found = await chrome.runtime.sendMessage({ keepassferry: "changePasswordUrl", url, quick });
+                if (found) this.changeUrl = found;
+            } catch (e) {
+                // ohne Knopf
+            }
+            if (!quick) this.changeUrlChecked = true;
+        },
+        async openChangePassword() {
+            if (!this.changeUrl && !this.changeUrlChecked) await this.lookupChangeUrl();
+            // Ohne bekannte Adresse: die Website des Eintrags
+            const target = this.changeUrl || (this.entrySummary as EntrySummary).url;
+            if (!target) return;
+            chrome.tabs.create({ url: target });
+            window.close();
         },
         async editEntry() {
             const ss = this.saveState as SaveState;
@@ -346,6 +403,34 @@ export default {
 }
 .ferry-entry-details {
     padding: 0 8px 8px 12px;
+}
+.ferry-entry-mark.ferry-entry-leak {
+    color: rgb(var(--v-theme-error));
+}
+.ferry-leak-note {
+    align-items: flex-start;
+    margin: 0 0 8px;
+}
+.ferry-leak-note > .ferry-ico {
+    margin-top: 1px;
+}
+.ferry-leak-note p {
+    margin: 0;
+}
+.ferry-leak-title {
+    font-weight: 600;
+    color: rgb(var(--v-theme-error));
+}
+.ferry-leak-hint {
+    font-size: 12px;
+    color: var(--ferry-muted);
+    margin: 2px 0 8px !important;
+}
+.ferry-leak-btn .ferry-ico {
+    width: 15px;
+    height: 15px;
+    margin-right: 4px;
+    color: inherit;
 }
 .ferry-pref {
     margin: 2px 0 0 38px;

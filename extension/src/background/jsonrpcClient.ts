@@ -1,3 +1,4 @@
+import { diag } from "./ferryDiag";
 import { kprpcClient } from "./kprpcClient";
 import { SessionType } from "../common/SessionType";
 import { PasswordProfile } from "../common/model/PasswordProfile";
@@ -169,6 +170,7 @@ export class jsonrpcClient {
         }
 
         const request = async (urls: string[]): Promise<Entry[]> => {
+            const started = Date.now();
             const sessionResponses = await this.kprpcClient.request(sessionManagers, "FindLogins", [
                 urls,
                 null,
@@ -187,6 +189,7 @@ export class jsonrpcClient {
                     found.push(...sessionResponse.resultWrapper.result.map((res: EntryDto) => Entry.fromKPRPCEntryDTO(res, db)));
                 }
             }
+            diag("hintergrund", "suche in keepass", { ms: Date.now() - started, adressen: urls.length, eintrag: !!uuid, treffer: found.length });
             return found;
         };
 
@@ -279,6 +282,37 @@ export class jsonrpcClient {
         if (!sessionManager) return false;
         const responses = await this.kprpcClient.request([sessionManager], "SetEntryFieldProtection", [uuid, dbFileName, name, protect]);
         return !!responses?.[0]?.resultWrapper?.result;
+    }
+
+    // Passwortprüfung bei Have I Been Pwned (Einstellung liegt im Plugin, die Prüfung läuft dort)
+    async getHibpCheck(): Promise<boolean> {
+        const sessionManager = this.kprpcClient.getPrimarySessionManager();
+        if (!sessionManager) return false;
+        const responses = await this.kprpcClient.request([sessionManager], "GetHibpCheck", []);
+        return !!responses?.[0]?.resultWrapper?.result;
+    }
+
+    async setHibpCheck(enabled: boolean): Promise<boolean> {
+        const sessionManager = this.kprpcClient.getPrimarySessionManager();
+        if (!sessionManager) return false;
+        const responses = await this.kprpcClient.request([sessionManager], "SetHibpCheck", [enabled]);
+        return !!responses?.[0]?.resultWrapper?.result;
+    }
+
+    // Fortschritt der Passwortprüfung: { total, done, leaked, running } (nur Anzahlen)
+    async getHibpProgress(): Promise<{ total: number; done: number; leaked: number; running: boolean }> {
+        const sessionManager = this.kprpcClient.getPrimarySessionManager();
+        if (!sessionManager) return null;
+        const responses = await this.kprpcClient.request([sessionManager], "GetHibpProgress", []);
+        return responses?.[0]?.resultWrapper?.result ?? null;
+    }
+
+    // Merkmale für die Tipps: { winHello, anyOtp, hibpCheck } (keine Inhalte)
+    async getFerryTips(): Promise<{ winHello: boolean; anyOtp: boolean; hibpCheck: boolean }> {
+        const sessionManager = this.kprpcClient.getPrimarySessionManager();
+        if (!sessionManager) return null;
+        const responses = await this.kprpcClient.request([sessionManager], "GetFerryTips", []);
+        return responses?.[0]?.resultWrapper?.result ?? null;
     }
 
     // Eintrag in den Papierkorb verschieben (nie endgültig): "recycled", "disabled", "inrecyclebin", "notfound", "error"

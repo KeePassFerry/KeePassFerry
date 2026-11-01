@@ -132,6 +132,9 @@ Eine Fläche, Zeilen mit feinen Trennlinien, Symbole einheitlich 18 px (Tabler),
 .ferry-note.warn {
     background: rgba(var(--v-theme-warning), 0.12);
 }
+.ferry-note.danger {
+    background: rgba(var(--v-theme-error), 0.09);
+}
 .ferry-note .ferry-note-text {
     flex: 1;
     min-width: 0;
@@ -144,6 +147,9 @@ Eine Fläche, Zeilen mit feinen Trennlinien, Symbole einheitlich 18 px (Tabler),
 }
 .ferry-note.warn .ferry-ico {
     color: rgb(var(--v-theme-warning));
+}
+.ferry-note.danger .ferry-ico {
+    color: rgb(var(--v-theme-error));
 }
 
 /* Feste Leiste unten (Abbrechen/Speichern) */

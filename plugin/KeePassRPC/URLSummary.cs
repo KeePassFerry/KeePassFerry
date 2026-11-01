@@ -17,7 +17,30 @@ namespace KeePassFerry
             Domain = domain;
         }
 
+        // Ergebnisse merken: eine Suche vergleicht jede Adresse jedes Eintrags mit jeder gesuchten Adresse (bei
+        // zugehörigen Domains wie den Amazon-Ländern rund 20) und die Zerlegung mit der Public-Suffix-Liste ist teuer
+        private static readonly System.Collections.Generic.Dictionary<string, URLSummary> Cache =
+            new System.Collections.Generic.Dictionary<string, URLSummary>();
+        private const int CacheLimit = 8192;
+
         public static URLSummary FromURL(string URL)
+        {
+            if (URL == null) return Parse("");
+            lock (Cache)
+            {
+                URLSummary cached;
+                if (Cache.TryGetValue(URL, out cached)) return cached;
+            }
+            URLSummary summary = Parse(URL);
+            lock (Cache)
+            {
+                if (Cache.Count >= CacheLimit) Cache.Clear();
+                Cache[URL] = summary;
+            }
+            return summary;
+        }
+
+        private static URLSummary Parse(string URL)
         {
             if (URL.StartsWith("data:"))
             {

@@ -86,11 +86,28 @@ function isVisible(el: HTMLElement): boolean {
     if (el.offsetWidth <= 0 && el.offsetHeight <= 0) return false;
     // Inhalt eines zugeklappten <details> (Chromium: content-visibility: hidden) behält seine Maße, ist aber nicht zu sehen.
     // Sonst landet der Code z. B. im verborgenen Feld "App entfernen" und die Seite schickt es selbst ab.
-    if (typeof el.checkVisibility === "function" && !el.checkVisibility()) return false;
+    if (typeof el.checkVisibility === "function" && !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true } as any)) return false;
     const closedDetails = el.closest("details:not([open])");
     if (closedDetails && !el.closest("summary")?.parentElement?.isSameNode(closedDetails)) return false;
     const style = getComputedStyle(el);
-    return style.visibility !== "hidden" && style.display !== "none";
+    if (style.visibility === "hidden" || style.display === "none") return false;
+    return !isClippedAway(el);
+}
+
+// Zugeklappte Bereiche, die nur über Höhe 0 und overflow: hidden verborgen sind (z. B. Amazon: QR-Code der
+// Authentifizierungs-App, bevor diese Option gewählt ist). Scrollbereiche zählen nicht: dort kann man hinscrollen.
+function isClippedAway(el: HTMLElement): boolean {
+    const r = el.getBoundingClientRect();
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+        const s = getComputedStyle(p);
+        const clips = /hidden|clip/.test(s.overflowX) || /hidden|clip/.test(s.overflowY);
+        if (!clips) continue;
+        const pr = p.getBoundingClientRect();
+        const w = Math.min(r.right, pr.right) - Math.max(r.left, pr.left);
+        const h = Math.min(r.bottom, pr.bottom) - Math.max(r.top, pr.top);
+        if (w < 2 || h < 2) return true;
+    }
+    return false;
 }
 
 export function isEditable(el: HTMLInputElement): boolean {
@@ -354,7 +371,16 @@ export class OtpFields {
             attributeFilter: ["src", "href", "open", "hidden"]
         });
         document.addEventListener("load", this.onImageLoad, true);
+        // Aufklappen per Klasse oder Stil (z. B. Amazon: Option "Authentifizierungs-App" wählen) meldet der Observer
+        // nicht: nach Klicks und Änderungen erneut suchen, einmal sofort und einmal nach der Aufklapp-Animation
+        document.addEventListener("click", this.onInteraction, true);
+        document.addEventListener("change", this.onInteraction, true);
     }
+
+    private onInteraction = () => {
+        this.scanSoon();
+        window.setTimeout(() => this.scanSoon(), 800);
+    };
 
     private scan() {
         const setupReported = this.scanSetup();
@@ -616,5 +642,7 @@ export class OtpFields {
         this.observer?.disconnect();
         this.observer = null;
         document.removeEventListener("load", this.onImageLoad, true);
+        document.removeEventListener("click", this.onInteraction, true);
+        document.removeEventListener("change", this.onInteraction, true);
     }
 }

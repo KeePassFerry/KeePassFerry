@@ -182,6 +182,8 @@ namespace KeePassFerry
             {
                 if (incomingField.ValuePath == PwDefs.PasswordField)
                 {
+                    // Neues Passwort: alter Leck-Status gilt nicht mehr (die Prüfung, falls eingeschaltet, folgt)
+                    if (pwe.Strings.ReadSafe(PwDefs.PasswordField) != incomingField.Value) HibpChecker.Invalidate(pwe);
                     pwe.Strings.Set(PwDefs.PasswordField,
                         new ProtectedString(_host.Database.MemoryProtection.ProtectPassword, incomingField.Value));
                 }

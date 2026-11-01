@@ -132,6 +132,7 @@ class Kee {
             }
             switch (name) {
                 case "browserPopup": {
+                    const popupStart = Date.now();
                     clearTimeout(this.currentSearchTermTimer);
                     p.onMessage.addListener(browserPopupMessageHandler.bind(p));
                     p.onDisconnect.addListener(() => {
@@ -185,6 +186,11 @@ class Kee {
                         const siteEntries = await this.siteEntriesForPopup(this.foregroundTabId);
                         if (siteEntries.length > 0) (connectMessage as any).siteEntries = siteEntries;
                     }
+                    diag("hintergrund", "popup verbunden", {
+                        ms: Date.now() - popupStart,
+                        treffer: connectMessage.entries?.length ?? 0,
+                        seitenEintraege: (connectMessage as any).siteEntries?.length ?? 0
+                    });
 
                     try {
                         p.postMessage(connectMessage);
@@ -242,7 +248,7 @@ class Kee {
                     p.postMessage(connectMessage);
                     if (frameId === 0) {
                         this.offerSaveNotice(tabId);
-                        offerPendingOtpSetup(tabId, p.sender.url ?? p.sender.tab.url);
+                        offerPendingOtpSetup(tabId, p.sender.url ?? p.sender.tab.url, (p.sender as any).documentId);
                         // Neue Seite im aktiven Tab: Kontextmenü auch ohne Anmeldeformular mit den Treffern der Adresse
                         if (tabId === this.foregroundTabId) commandManager.scheduleContextMenuUpdate();
                     }

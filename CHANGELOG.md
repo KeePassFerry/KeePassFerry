@@ -1,5 +1,34 @@
 # Changelog
 
+English · [Deutsch](#deutsch)
+
+## Unreleased
+
+- Password generator: on websites with known password rules (e.g. 5–8 characters, only certain special characters)
+  the profile "Suitable for <site>" is preselected and generates a password the website accepts; the rules are shown
+  as small chips. Rules from Apple's Password Manager Resources (MIT licence, bundled, no network access).
+- "Change password on the website": a key button at an expanded entry opens the website's change-password page
+  (from Apple's list, otherwise the standard address /.well-known/change-password if the website supports it).
+- Leaked passwords: if the KeePass plugin "HIBP Offline Check" has marked an entry's password as found in data
+  breaches, the entry shows a red warning with a "Change password" button. KeePassFerry itself checks nothing and
+  sends nothing; the status field of that plugin is no longer listed as a custom field. Requires the plugin of this
+  version.
+- Check passwords for data breaches (optional, off by default): when turned on, KeePass checks new and changed
+  passwords at "Have I Been Pwned" and re-checks all others from time to time; only the first 5 characters of a
+  checksum (SHA-1) are sent, never the password. The result is written to the same field as "HIBP Offline Check";
+  a notification appears when a password is newly found in a breach. Also in the KeePass menu "KeePassFerry → Check
+  passwords now".
+- News and tips in the popup (✨ in the footer): what's new in this version, earlier versions to expand and tips for
+  what is still missing (e.g. Windows Hello, breach check). After an update a notice appears once.
+- Faster popup on sites with many related domains (e.g. Amazon's country sites): the plugin no longer re-reads each
+  entry's settings for every searched address (search over 18 Amazon domains: about 1.2 s → 80 ms).
+- Two-factor setup: a QR code in a collapsed part of the page (e.g. Amazon before choosing "Authenticator app") is
+  no longer detected; it is detected as soon as it becomes visible. The "Two-factor key found" notice appears once
+  per page and key, and a key found on a page is discarded when the page is reloaded or left (many sites create a
+  new key each time, so the popup no longer offers an outdated key). A key found on the current page survives a
+  restart of the extension's background.
+- Settings: the sections are in the same order as in the navigation.
+
 ## 1.0.14 – 2026-11-01
 
 - "Edit entry" window: new "Delete entry" button. After a confirmation the entry is moved to the KeePass recycle bin
@@ -235,3 +264,302 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 - No save prompt when the submitted data already exists in KeePass (including multi-step logins).
 - Redesigned popup, settings, matching-logins list and dialogs; light and dark theme; German and English texts.
 - Optional diagnostic log (no secrets).
+
+---
+
+# Deutsch
+
+## Unveröffentlicht
+
+- Passwort-Generator: Auf Websites mit bekannten Passwortregeln (z. B. 5–8 Zeichen, nur bestimmte Sonderzeichen) ist
+  das Profil „Passend für <Website>“ vorausgewählt und erzeugt ein Passwort, das die Website annimmt; die Regeln stehen
+  als kleine Chips darunter. Regeln aus Apples „Password Manager Resources“ (MIT-Lizenz, mitgeliefert, kein Netzzugriff).
+- „Passwort auf der Website ändern“: Ein Schlüssel-Knopf am aufgeklappten Eintrag öffnet die Seite zum Ändern des
+  Passworts (aus Apples Liste, sonst die Standardadresse /.well-known/change-password, wenn die Website sie unterstützt).
+- Geleakte Passwörter: Hat das KeePass-Plugin „HIBP Offline Check“ das Passwort eines Eintrags als in Datenlecks
+  gefunden markiert, zeigt der Eintrag eine rote Warnung mit dem Knopf „Passwort ändern“. Das Statusfeld dieses Plugins
+  erscheint nicht mehr als eigenes Feld. Erfordert das Plugin dieser Version.
+- Passwörter auf Datenlecks prüfen (optional, standardmäßig aus): Eingeschaltet prüft KeePass neue und geänderte
+  Passwörter bei „Have I Been Pwned“ und alle anderen gelegentlich erneut; gesendet werden nur die ersten 5 Zeichen
+  einer Prüfsumme (SHA-1), nie das Passwort. Ergebnis im selben Feld wie bei „HIBP Offline Check“; Meldung, wenn ein
+  Passwort neu als geleakt erkannt wird. Zusätzlich im KeePass-Menü „KeePassFerry → Passwörter jetzt prüfen“.
+- Neuigkeiten und Tipps im Popup (✨ in der Fußleiste): Neuerungen der Version, frühere Versionen zum Aufklappen und
+  Tipps für das, was noch fehlt (z. B. Windows Hello, Prüfung auf Datenlecks). Nach einem Update einmal ein Hinweis.
+- Schnelleres Popup auf Websites mit vielen zugehörigen Domains (z. B. Amazons Länderseiten): Das Plugin liest die
+  Einstellungen eines Eintrags nicht mehr für jede gesuchte Adresse neu ein (Suche über 18 Amazon-Domains: etwa 1,2 s →
+  80 ms).
+- Zwei-Faktor-Einrichtung: Ein QR-Code in einem zugeklappten Teil der Seite (z. B. bei Amazon, bevor
+  „Authentifizierungs-App“ gewählt ist) wird nicht mehr erkannt, sondern erst, sobald er sichtbar ist. Der Hinweis
+  „Zwei-Faktor-Schlüssel gefunden“ erscheint einmal je Seite und Schlüssel; ein gefundener Schlüssel wird beim Neuladen
+  oder Verlassen der Seite verworfen (viele Websites erzeugen dann einen neuen, das Popup bietet so keinen veralteten
+  mehr an). Ein Fund auf der aktuellen Seite übersteht einen Neustart des Hintergrunds der Erweiterung.
+- Einstellungen: Die Abschnitte stehen in derselben Reihenfolge wie in der Navigation.
+
+## 1.0.14 – 2026-11-01
+
+- Fenster „Eintrag bearbeiten“: neuer Knopf „Eintrag löschen“. Nach einer Rückfrage wandert der Eintrag in den
+  Papierkorb von KeePass (nie endgültig gelöscht, in KeePass wiederherstellbar). Ist der Papierkorb in der Datenbank
+  ausgeschaltet, wird nichts gelöscht und die Erweiterung bittet, den Eintrag in KeePass zu löschen. Erfordert das
+  Plugin dieser Version.
+- Passkeys: Das Registrieren eines Passkeys bei GitHub schlug fehl („Passkey registration failed“). Das an die Seite
+  zurückgegebene Passkey-Objekt hat jetzt wie ein echtes änderbare Eigenschaften; Seiten, die es anpassen (z. B.
+  GitHubs webauthn-json), funktionieren.
+- Rechtsklick-Menü eines Eintrags: Die Punkte heißen jetzt einfach „Benutzername“, „Passwort“ und „Einmalcode“ (ohne
+  „einfügen“).
+- Mehr Sicherheit (Dank an die Prüfung in Issue #9):
+  - Ist die Erweiterung mit einem KeePass gekoppelt, verbindet sie sich mit keinem anderen, unbekannten KeePass mehr;
+    zum Wechseln die Kopplung in den Einstellungen zurücksetzen. Ein neues KeePass wird erst nach der Kopplung mit
+    Prüfcode gemerkt.
+  - Für https gespeicherte Anmeldungen werden auf einer unverschlüsselten http-Seite derselben Website nicht mehr
+    automatisch ausgefüllt oder abgeschickt (manuell auswählen geht weiterhin).
+  - Update mit einem Klick: Das heruntergeladene Setup wird gegen Änderungen gesperrt und direkt vor dem Start auf der
+    Platte erneut geprüft.
+  - Pipe: Nachrichten vor dem Aufbau des verschlüsselten Kanals sind auf 64 KB begrenzt, ein unfertiger Handshake wird
+    nach 5 Minuten getrennt, höchstens 16 Verbindungen gleichzeitig.
+  - Die Entwicklungs-ID der Erweiterung ist nicht mehr standardmäßig zugelassen (nur mit
+    `KeePassFerry.AllowDevExtension` = true in KeePass.config.xml, für die entpackt geladene Erweiterung).
+  - Kopplung: Der Prüfcode hängt jetzt auch von einer geheimen Zufallszahl ab, auf die sich die Erweiterung (per Hash)
+    festlegt, bevor KeePass antwortet, und die sie erst danach verrät. Wer sich dazwischenschaltet, kann so nicht mehr
+    nach Werten suchen, die auf beiden Seiten denselben Code ergeben. Bestehende Kopplungen sind nicht betroffen; eine
+    neue Kopplung braucht das Plugin dieser Version (ein älteres wird um ein Update gebeten).
+  - Zwei-Faktor-Einrichtung aus einem QR-Bild: Bilder von anderen Adressen als der Seite werden ohne Cookies geladen.
+  - Release-Build: fremde GitHub Actions auf Commit-SHAs festgelegt, Inno Setup auf eine feste Version.
+  - Ausfüllen der Anmeldefenster des Browsers (HTTP-Basic-Auth, Proxy) ist jetzt standardmäßig aus, weil solche
+    Fenster auch von eingebetteten fremden Inhalten ausgelöst werden können. Bei Bedarf (z. B. Router, NAS) in den
+    Einstellungen unter „Netzwerkanmeldung“ einschalten.
+  - Ungenutztes Kee-Skript entfernt.
+
+## 1.0.13 – 2026-11-01
+
+- Rechtsklick auf markierten Text → „„…“ zu Eintrag hinzufügen“: öffnet das bekannte Fenster „Eintrag bearbeiten“ mit
+  aufgeklapptem „Hinzufügen“ und der Markierung (vollständig, mit Zeilenumbrüchen) als Inhalt; dort Wiederherstellungscode,
+  Zwei-Faktor-Schlüssel, Notiz oder eigenes Feld wählen. Der zuletzt im Tab benutzte Eintrag öffnet sich direkt; sonst
+  einen Eintrag aus den Treffern der Seite wählen, alle Einträge durchsuchen oder einen neuen Eintrag für die Seite
+  anlegen (er entsteht in KeePass erst beim „Speichern“; „Abbrechen“ hinterlässt nichts). Der markierte Text bleibt beim
+  Wechsel der Art erhalten. Bei gesperrter Datenbank fragt dieser bewusste Klick zuerst nach dem Entsperren.
+  Ein neuer Eintrag kann in jede Gruppe (vorausgewählt: die zuletzt benutzte, sonst die oberste der Datenbank).
+- „Hinzufügen“ im Bearbeiten-Fenster: Arten alphabetisch sortiert, „Eigenes Feld“ vorausgewählt.
+- Gruppenbaum („Wohin?“ und Gruppe eines neuen Eintrags) neu gestaltet: eine Zeile je Gruppe, aufklappbar, die gewählte
+  Gruppe markiert; anfangs nur die oberste Ebene und der Weg zur gewählten Gruppe aufgeklappt.
+- Geändertes Passwort: Gehören die gerade eingegebenen Anmeldedaten zu einem vorhandenen Eintrag (gleicher
+  Benutzername), aber das Passwort ist anders, bietet der Hinweis „Neues Passwort erkannt“ an, diesen Eintrag zu
+  aktualisieren statt einen zweiten zu speichern; „Aktualisieren …“ öffnet ihn mit dem neuen Passwort (das alte bleibt in
+  der Chronik des Eintrags). Nur, wenn kein Anmeldeformular mehr sichtbar ist (eine fehlgeschlagene Anmeldung, z. B.
+  Tippfehler, wird nicht angeboten) und die Datenbank entsperrt ist; ein anderer Benutzername mit gleichem Passwort gilt
+  weiter als anderes Konto. Eine spätere erfolgreiche Anmeldung mit dem gespeicherten Passwort zieht ein früheres Angebot
+  für ein vertipptes zurück.
+- Zwei-Faktor-Hinweis auf der Seite: Der Knopf heißt jetzt wie beim Anmelde-Hinweis „Speichern …“, beide Knöpfe passen
+  in eine Zeile.
+- „Speichern …“ und „Aktualisieren …“ im Seitenhinweis öffnen den Dialog direkt, auch wenn weniger als zwei Minuten zuvor
+  im Popup ein Eintrag gespeichert wurde (bisher erschien nur die Hauptansicht mit „Du hast kürzlich einen Eintrag
+  gespeichert“).
+- Websites, die das Passwort im Feld gleich nach dem Absenden durch Sternchen ersetzen (z. B. manche Banken), lösen
+  kein „Neues Passwort erkannt“ mehr aus. Auf solchen Seiten lässt sich auch ein wirklich geändertes Passwort nicht
+  erkennen; dann den Eintrag selbst aktualisieren.
+- Mehrstufige Anmeldung: Der von der Benutzernamen-Seite übernommene Eintrag wird samt Datenbank gemerkt, ein
+  geändertes Passwort auf der Passwort-Seite erscheint so als „Neues Passwort erkannt“ statt „Anmeldung speichern“.
+- Anmeldedaten speichern: Ein weiterer Anmeldeversuch auf derselben Seite wird wieder erkannt (z. B. nach „falsches
+  Passwort“ ohne Neuladen); bisher wurde nur der erste, vertippte Versuch zum Speichern angeboten.
+- Der Hinweis „Anmeldung speichern“ erscheint nur auf Seiten der Website, auf der die Daten eingegeben wurden, nicht
+  mehr auf später im selben Tab geöffneten anderen Websites.
+- Bearbeiten eines Eintrags mit dem Stift direkt nach der Anmeldung behält den Titel des Eintrags (er wurde durch den
+  Seitentitel ersetzt), und Bearbeiten ändert nicht mehr die für neue Einträge vorausgewählte Gruppe.
+- Entfernt: die zusätzliche Windows-Benachrichtigung bei den ersten Speicherangeboten und die 90-Sekunden-Pause der
+  Speicherhinweise nach dem Bearbeiten eines Eintrags.
+- Sicherheit: Die Skripte der Erweiterung in Webseiten (auch in fremden Frames) erhalten nicht mehr den vollständigen
+  internen Zustand. Passwörter im Speichern- und Bearbeiten-Fenster, erzeugte Passwörter, Suchergebnisse,
+  Benachrichtigungen und der Datenbankbaum mit allen Einträgen bleiben im Hintergrund, im Popup und in den eigenen
+  Fenstern der Erweiterung; Seiten erhalten nur den Verbindungsstatus und die Namen der geöffneten Datenbanken.
+- Der Hinweis „Zwei-Faktor-Schlüssel gefunden“ erscheint nicht mehr, wenn der Schlüssel der Seite schon in einem
+  passenden Eintrag steht: Die Erweiterung vergleicht den aktuellen Code des Eintrags mit einem Code, den sie lokal aus
+  dem gefundenen Schlüssel berechnet (der Schlüssel geht nie an KeePass); der Code wird dann wie gewohnt ausgefüllt.
+  Geprüft nur bei entsperrter Datenbank; ein Schlüssel, der bei gesperrter Datenbank oder vor dem Verbinden mit KeePass
+  gefunden wird (z. B. direkt nach dem Browserstart), wird geprüft, sobald die Datenbank verfügbar ist, und der Hinweis
+  verschwindet dann.
+
+## 1.0.12 – 2026-10-28
+
+- Das Rechtsklick-Menü bittet KeePass nicht mehr, eine gesperrte Datenbank zu entsperren: Solange sie gesperrt ist,
+  fragt es KeePass gar nicht (seit 1.0.11 löste jedes Laden einer Seite oder jeder Tabwechsel die Entsperrabfrage aus).
+  Nach dem Entsperren, z. B. per Klick auf das Symbol, wird das Menü mit den passenden Einträgen neu aufgebaut.
+
+## 1.0.11 – 2026-10-28
+
+- Das Rechtsklick-Menü zeigt die passenden Einträge auch auf Seiten ohne Anmeldeformular (z. B. eine Seite mit nur
+  einem Suchfeld); es wird bei jedem Laden einer Seite im aktiven Tab neu aufgebaut.
+- Erweiterung: zeigt „Neue Version für KeePass verfügbar“ mit „Jetzt aktualisieren“, wenn das Plugin älter ist als die
+  für diese Erweiterung empfohlene Version (nicht erst, wenn es nicht mehr passt). Dafür ist keine Netzabfrage nötig.
+- Update aus KeePass: Nach dem Neustart meldet eine Windows-Benachrichtigung das Ergebnis (Version alt → neu, Klick
+  öffnet die Änderungen), ohne die Entsperrabfrage zu blockieren; auch ein fehlgeschlagenes Update wird gemeldet.
+- Die Registrierung im Browser (Native-Messaging-Host) wird beim Öffnen einer Datenbank und alle 15 Minuten geprüft und
+  repariert, falls sie z. B. ein Aufräumprogramm entfernt hat.
+
+## 1.0.10 – 2026-10-28
+
+- Kontextmenü: Ein Rechtsklick in ein beliebiges Eingabefeld zeigt die passenden Einträge; je Eintrag lassen sich
+  Benutzername, Passwort, Einmalcode oder jedes eigene Feld genau in dieses Feld einsetzen (die Werte kommen erst beim
+  Klick aus KeePass). Funktioniert auch auf Seiten ohne erkanntes Anmeldeformular, z. B. bei Sicherheitsfragen nach der
+  Anmeldung.
+- Das Kontextmenü wird aktualisiert, sobald eine Seite ihre Treffer meldet (auch nach dem Speichern der Datenbank),
+  ohne Neuladen.
+- Per Rechtsklick in ein Feld geöffneter Passwort-Generator: neuer Knopf „Einsetzen“ trägt das Passwort in dieses Feld
+  ein.
+- Eigene Felder: Der Schutz („Geschützt“) lässt sich beim Bearbeiten eines Felds im Popup ein- und ausschalten
+  (erfordert das Plugin dieser Version). Neue eigene Felder sind standardmäßig ungeschützt; Wiederherstellungscodes
+  bleiben geschützt.
+- Deinstallation: beendet ein laufendes KeePass (nach der Rückfrage fragt KeePass nach ungespeicherten Änderungen) und
+  den vom Browser gestarteten Verbindungshelfer, so werden die Plugin-Dateien ohne Neustart entfernt.
+
+## 1.0.9 – 2026-10-27
+
+- Setup: Der Deinstallationseintrag in Windows zeigt jetzt auf den Plugin-Ordner statt auf den KeePass-Ordner. Fremde
+  Deinstallationsprogramme (z. B. HiBit, Revo) boten nach dem Entfernen von KeePassFerry den ganzen KeePass-Ordner als
+  Reste an.
+- Trefferliste: Einträge mit Passkey oder Einmalcode (OTP) tragen ein kleines Symbol.
+- Passkey-Dialog: Titel und Benutzername des Eintrags erscheinen vollständig, Hinweise wie „hat einen Passkey“ darunter.
+- Popup: bis zu 30 Einträge für die aktuelle Website.
+
+## 1.0.8 – 2026-10-24
+
+- Zugehörige Domains: Ein Eintrag für eine Domain eines Anbieters wird auch auf dessen anderen Domains angeboten, z. B.
+  outlook.com auf login.live.com (Microsoft, Google, Apple, Amazon, eBay, PayPal, Ubiquiti, Proton, Atlassian, X und
+  andere). Solche Treffer stehen nach den direkten und tragen „Zugehörige Domain: …“. Mehrseitige Anmeldungen behalten
+  den auf der ersten Seite gewählten Eintrag über diese Domains hinweg (z. B. login.microsoftonline.com →
+  login.live.com), auch für Einmalcodes.
+- Fenster für die Netzwerkanmeldung neu gestaltet: Website in der Kopfzeile, Einträge als Karten, Knopf „Selbst
+  eingeben“.
+- Plugin-Update aus dem Browser blockiert die Verbindung nicht mehr: Das Plugin antwortet sofort und erledigt Download,
+  Signaturprüfung und Setup in KeePass, das dafür nach vorne kommt, damit die Windows-Abfrage sichtbar ist; die Schritte
+  stehen im Diagnoseprotokoll. Bei Plugins vor 1.0.8 öffnet der Knopf stattdessen die Release-Seite.
+- Windows-Benachrichtigungen zeigen den eigentlichen Hinweis und öffnen beim Klick das Popup.
+- Bearbeiten-Fenster: Benutzername und Passwort lassen sich nicht mehr entfernen, das Entfernen anderer erkannter Felder
+  wird bis zum „Speichern“ nur vorgemerkt; behoben, dass das Bearbeiten-Fenster den in der Trefferliste gezeigten
+  Eintrag änderte.
+- Einstellungen: fehlende Texte für das Suchfeld der Websites.
+
+## 1.0.7 – 2026-10-24
+
+- Notizen, eigene Felder (z. B. Wiederherstellungscodes) und Anhänge eines Eintrags erscheinen im aufgeklappten Eintrag
+  und im Bearbeiten-Fenster; die Liste markiert Einträge mit Notizen oder Anhängen. Ein Klick auf den Text öffnet eine
+  Vorschau (Bilder, Notizen, geschützte Werte nur auf Wunsch); Bilder, PDF, Text und Notizen lassen sich mit dem
+  Standardprogramm von Windows öffnen (über das Plugin: verschlüsselte, schreibgeschützte temporäre Kopie, die nach zwei
+  Minuten, beim Sperren und beim Beenden gelöscht wird).
+- Bearbeiten-Fenster: Notizen und eigene Felder lassen sich bearbeiten und entfernen, eingefügte Bilder benennen und
+  umbenennen; alle Änderungen gelten mit „Speichern“. Das Entfernen zusätzlich erkannter Felder wird bis zum
+  „Speichern“ nur vorgemerkt (rückgängig möglich); Benutzername und Passwort lassen sich nicht mehr entfernen. Speichern
+  nur von Ergänzungen lässt das Popup nicht mehr im Bearbeiten-Modus.
+- Einfügen aus der Zwischenablage per Knopf statt globalem Strg+V; die optionale Berechtigung für die Zwischenablage
+  wird in den Einstellungen erteilt. Bearbeiten eines Eintrags behält dessen Adressen und Felder und zeigt nicht mehr
+  die Warnung „andere Website“.
+- Speichern: dieselbe Regel für den Benutzernamen wie beim Ausfüllen (kein „vollständiger Name“ mehr als Benutzername),
+  der Name der Website als Titel des Eintrags.
+- Liste der passenden Anmeldungen: Breite nach dem längsten Eintrag, vollständiger Text als Tooltip.
+- Einmalcodes: kein Ausfüllen in versteckte Felder (z. B. in einem zugeklappten Bereich), derselbe Code wird auf einer
+  Seite nie zweimal automatisch ausgefüllt (Seiten, die selbst absenden und neu laden, laufen nicht mehr im Kreis),
+  später erscheinende Codefelder (aufgeklappter Bereich, Dialog) werden gefunden, und das Feldsymbol erscheint auch bei
+  Codefeldern über gezeichneten Ziffernkästchen. Ein gefundener, aber nicht gespeicherter Zwei-Faktor-Schlüssel wird
+  beim Öffnen des Popups erneut angeboten.
+- Tooltips an allen Symbolknöpfen, fehlende Texte in den Einstellungen ergänzt.
+- Die Erweiterung braucht Plugin 1.0.7 (neue Funktionen für Anhänge und Notizen); ältere Plugins bekommen den
+  Update-Hinweis.
+
+## 1.0.6 – 2026-10-22
+
+- Google Chrome: Das Plugin akzeptiert die KeePassFerry-Erweiterung aus dem Chrome Web Store; das Setup bietet an, auch
+  ihre Store-Seite für Chrome zu öffnen.
+- Das Manifest der Erweiterung nutzt Pfade ohne führendes `./` (vom Chrome Web Store verlangt).
+
+## 1.0.5 – 2026-10-22
+
+- KeePass zeigt überall KeePassFerry statt Kee: neues Optionen-Fenster (Speicherverhalten, gekoppelte Browser mit
+  „Kopplung entfernen“, Version und Update-Prüfung), Reiter für Eintrag, Gruppe und Datenbank sowie Dialoge auf Deutsch
+  und Englisch mit KeePassFerry-Symbolen. Der Gruppen-Reiter gibt eine Gruppe für den Browser frei; die oberste Gruppe
+  freizugeben bedeutet die ganze Datenbank. Sicherungen erzeugter Passwörter landen in „KeePassFerry – erzeugte
+  Passwörter“.
+- Die nicht erreichbare Kee-Anmeldung (SRP), Kee-Willkommens- und Neue-Datenbank-Dialoge und -Orte entfernt;
+  Verbindungen werden nur über den gekoppelten, verschlüsselten Kanal angenommen. Plugin-Einstellungen nutzen eigene
+  Schlüssel `KeePassFerry.*`.
+- Die eigene Update-Prüfung von KeePass prüft die Signatur von `version.txt` (Release-Schlüssel).
+- Setup: startet KeePass nach der Installation wieder (auch bei Updates mit einem Klick); Deinstallationsprogramm im
+  Plugin-Ordner mit KeePassFerry-Symbol.
+- Erweiterung: ungenutzte Kee-Dateien, Stile und Texte entfernt, eine Berechtigung weniger (`unlimitedStorage`),
+  kleineres Paket (ohne Source-Maps); die Unit-Tests laufen wieder.
+
+## 1.0.4 – 2026-10-22
+
+- Windows-Setup (`KeePassFerry-Setup.exe`): findet KeePass, installiert das Plugin nach `Plugins\KeePassFerry`, beendet
+  und startet KeePass bei Bedarf neu und bietet an, für jeden installierten Browser die Store-Seite der Erweiterung zu
+  öffnen.
+- KeePass-Menü „KeePassFerry“ mit „Optionen …“ und „Nach Updates suchen …“; die eigene Update-Prüfung von KeePass kennt
+  jetzt KeePassFerry.
+- Das Plugin meldet der Erweiterung seine Version. Ist das Plugin älter als die Erweiterung (der Store aktualisiert nur
+  die Erweiterung), zeigt das Popup einen Hinweis mit „Jetzt aktualisieren“: Das Plugin lädt das Setup aus dem
+  GitHub-Release und installiert es nur, wenn die Prüfsummenliste mit dem KeePassFerry-Release-Schlüssel signiert ist
+  (RSA 3072, offline aufbewahrt), eine neuere als die installierte Version nennt und zur geladenen Datei passt. Downloads
+  folgen Weiterleitungen nur über HTTPS zu github.com und githubusercontent.com. Releases werden erst nach dem Signieren
+  veröffentlicht.
+- Willkommensseite mit Download-Knopf für das Setup und aktualisierten Installationsschritten.
+- Einstellungen: neue Symbole und Farben, passend zum Popup.
+
+## 1.0.3 – 2026-10-22
+
+- Neuer Einstellungsabschnitt „KeePassFerry“: Einmalcodes automatisch ausfüllen, Zwei-Faktor-Einrichtung erkennen,
+  Passkeys mit KeePassFerry, Symbole in Eingabefeldern, gesperrte Datenbank sofort entsperren (standardmäßig aus),
+  Passwortspeicherung von Edge ausschalten (bisher immer an).
+- Einmalcodes werden nicht mehr in Felder für Codes per SMS, E-Mail oder WhatsApp ausgefüllt (erkannt am Seitentext);
+  über das Symbol lässt sich der App-Code weiterhin auf Wunsch eintragen.
+- Dialog für die Netzwerkanmeldung neu gestaltet; die Installationsseite nutzt das neue Design.
+- Keine „Was ist neu“-Seite mehr nach Updates (die alte Kee-Seite warb für Kee Vault).
+- Übrig gebliebene Kee-Vault-Anbindung, SRP-Kopplung und alte Kee-Seiten entfernt; die Symbolleiste blinkt beim
+  Speicherangebot nicht mehr (der Seitenhinweis ersetzt das).
+
+## 1.0.2 – 2026-10-21
+
+- Neues Popup-Design: eine flache Fläche, Eintragszeilen statt Karten, einheitliche Tabler-Symbole, kompakte Hinweise,
+  Aktionen in der Fußleiste; Bearbeiten und Gruppenwahl als eigene Seiten mit fester Speichern-Leiste; neu gestalteter
+  Passwort-Generator und Dialog für die Zwei-Faktor-Einrichtung. Helles und dunkles Design.
+- Eintrag bearbeiten: Wiederherstellungscode, Zwei-Faktor-Schlüssel, Notiz, eigenes Feld oder Bild (Einfügen mit
+  Strg+V) hinzufügen; zusätzliche Felder und Anhänge auflisten und entfernen; alles gilt mit einem einzigen „Speichern“.
+- Popup: „In Seite eintragen“ neben Kopieren für Benutzername, Passwort und Einmalcode.
+- Erkennung der Anmeldefelder wie in Chromium: `autocomplete`, das letzte Textfeld vor dem Passwortfeld oder ein
+  einzelnes anmeldeartiges Feld im ersten Schritt mehrstufiger Anmeldungen. Keine Feldsymbole mehr in Namens-, IBAN-
+  oder Einstellungsfeldern; kein Speicherangebot für Formulare ohne Passwort.
+- Gesperrte Datenbank: keine automatische Windows-Hello-Abfrage mehr. Anmelde- und Codefelder zeigen ein
+  Schloss-Symbol; ein Klick darauf oder auf das Symbol in der Symbolleiste entsperrt und füllt dann aus. Das Symbol in
+  der Symbolleiste zeigt dasselbe Schloss.
+- Einmalcodes: geteilte Codekästchen (eine Ziffer je Feld) werden ausgefüllt, mit dem Gültigkeitsring daneben; der Code
+  des richtigen Kontos, wenn sich mehrere Konten eine Website teilen; QR-Codes in iframes werden erkannt; Tooltip mit
+  laufender Zeit.
+- Feldsymbole halten Abstand zu Knöpfen der Website (z. B. Passwort anzeigen) und verschwinden, wenn ein Dialog oder
+  eine Leiste sie verdeckt.
+- Behoben: Das Popup zeigte nach dem Bearbeiten eines Eintrags alte Daten.
+- Store-Eintrag auf Deutsch und Englisch; veraltete Kee-Übersetzungen entfernt.
+- Plugin: neue Funktionen zum Hinzufügen von Textfeldern, Auflisten und Entfernen von Feldern und Anhängen (mit
+  Chronik des Eintrags).
+
+## 1.0.1 – 2026-10-21
+
+- Plugin: Die Erweiterung aus Microsoft Edge Add-ons darf sich verbinden (ID `ghkhbdnhojpeibdjdlgojfdjhedapmhg`),
+  zusätzlich zur entpackten Entwicklungsfassung. Diese Plugin-Version vor der Erweiterung aus dem Store installieren.
+
+## 1.0.0 – 2026-10-21
+
+Erste Version von KeePassFerry (Fork von Kee 4.1 und KeePassRPC 2.0.2).
+
+- Native Messaging und eine Named Pipe je Benutzer statt eines WebSocket-Ports; nur der mitgelieferte Host darf sich
+  verbinden.
+- Neuer sicherer Kanal: ECDH P-256, HKDF-SHA-256, AES-256-GCM, Schutz gegen Wiedereinspielen, Kopplung mit einem
+  sechsstelligen Code, der in KeePass bestätigt wird. Kopplung in den Einstellungen zurücksetzen.
+- Einmalcodes (TOTP, RFC 6238; `otpauth://` und KeePass-Felder `TimeOtp-*`): automatisches Ausfüllen, schwebendes
+  Symbol mit Gültigkeitsring, Kopieren im Popup, Einrichtung aus QR-Code oder Schlüssel in den richtigen vorhandenen
+  Eintrag.
+- Passkeys (WebAuthn, ES256) in KeePassXC-kompatiblen Feldern gespeichert, bevorzugt im vorhandenen Anmeldeeintrag;
+  WebAuthn Signal API (entfernte Passkeys, umbenannte Konten).
+- Entsperren im Hintergrund: Eine Anmeldeseite, ein Klick auf das Symbol oder ein Feldsymbol löst nur die
+  Windows-Hello-Abfrage aus, im Vordergrund und mit Fokus.
+- Die Auswahl eines Eintrags unter mehreren Treffern füllt Benutzername und Passwort aus.
+- Mit Strg+V eingefügte Bildschirmfotos werden komprimiert und als Anhang des Eintrags gespeichert.
+- Kein Speicherangebot, wenn die abgeschickten Daten schon in KeePass stehen (auch bei mehrstufigen Anmeldungen).
+- Popup, Einstellungen, Liste der passenden Anmeldungen und Dialoge neu gestaltet; helles und dunkles Design; Texte auf
+  Deutsch und Englisch.
+- Optionales Diagnoseprotokoll (ohne Geheimnisse).

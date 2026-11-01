@@ -57,7 +57,10 @@ namespace KeePassFerry
             "KEEPASSFERRY_ENTRY_RECYCLE",
 
             // KeePassFerry: Prüfcode der Kopplung mit Commit (SecureChannel)
-            SecureChannel.PairingCommitFeature
+            SecureChannel.PairingCommitFeature,
+
+            // KeePassFerry: Passwortprüfung bei Have I Been Pwned (GetHibpCheck/SetHibpCheck) und Tipps (GetFerryTips)
+            "KEEPASSFERRY_HIBP_CHECK"
         };
 
         // Zusätzlich die Produktversion des Plugins ("KEEPASSFERRY_VERSION_1.2.3"): Die Erweiterung erkennt daran ein

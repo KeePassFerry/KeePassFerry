@@ -211,6 +211,9 @@ namespace KeePassFerry
             target.AttachmentCount = (int)pwe.Binaries.UCount;
             target.HasPasskey = !string.IsNullOrEmpty(pwe.Strings.ReadSafe(FieldCredentialId));
             target.HasOtp = Totp.HasTotp(pwe);
+            int leakCount;
+            target.PasswordLeaked = HibpStatus.IsLeaked(pwe, out leakCount);
+            target.PasswordLeakCount = leakCount;
         }
 
         private Group GetGroupFromPwGroup(PwGroup pwg)
@@ -275,6 +278,7 @@ namespace KeePassFerry
                         Type = FieldType.Password,
                         MatcherConfigs = new[] { mc }
                     });
+                    if (pwe.Strings.ReadSafe(PwDefs.PasswordField) != kpff.Value) HibpChecker.Invalidate(pwe);
                     pwe.Strings.Set(PwDefs.PasswordField,
                         new ProtectedString(_host.Database.MemoryProtection.ProtectPassword, kpff.Value));
                     firstPasswordFound = true;

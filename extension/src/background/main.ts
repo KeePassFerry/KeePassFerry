@@ -3,7 +3,8 @@ import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup,
 import { forgetAutoFill } from "./otpRepeat";
 import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
 import { queryPageFields, fillPageField } from "./pageFields";
-import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
+import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
+import { markNewsSeen } from "../common/whatsNew";
 import { isFirefox } from "webext-detect-page";
 import { kee, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
 import { commandManager } from "./commands";
@@ -13,6 +14,16 @@ import { Action } from "../common/Action";
 import type { AddonMessage } from "../common/AddonMessage";
 import { NetworkAuth } from "./NetworkAuth";
 import { pageStateOf } from "./pageState";
+import { appleChangePasswordUrl, changePasswordUrl } from "./changePassword";
+
+function appleChangePasswordUrlFor(entryUrl: string): string {
+    try {
+        const u = new URL(entryUrl);
+        return u.protocol === "https:" ? appleChangePasswordUrl(u.hostname) : null;
+    } catch {
+        return null;
+    }
+}
 
 // only on dev mode
 if (import.meta.hot) {
@@ -174,6 +185,8 @@ if (!isFirefox()) {
 
 chrome.runtime.onInstalled.addListener(async function (details) {
     if (details.reason === "install") {
+        // Neue Nutzer bekommen die Installationsseite, keinen Hinweis "Neu in dieser Version"
+        markNewsSeen();
         chrome.tabs.create({
             url: "/dist/install-notes/index.html"
         });
@@ -243,7 +256,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     pluginVersion: s.connected ? pluginVersionFrom(features) : null,
                     pluginOutdated: s.connected ? pluginUpdateAvailable(features) : false,
                     fieldProtection: s.connected && (features ?? []).includes(FIELD_PROTECTION_FEATURE),
-                    entryRecycle: s.connected && (features ?? []).includes(ENTRY_RECYCLE_FEATURE)
+                    entryRecycle: s.connected && (features ?? []).includes(ENTRY_RECYCLE_FEATURE),
+                    hibpCheck: s.connected && (features ?? []).includes(HIBP_CHECK_FEATURE)
                 };
             });
             break;
@@ -300,6 +314,28 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             break;
         case "resetPairing":
             work = kee.KeePassRPC.kprpcClient.nativeSessionManager.resetPairing().then(() => true);
+            break;
+        case "getHibpCheck":
+            work = kee.KeePassRPC.getHibpCheck();
+            break;
+        case "setHibpCheck":
+            work = kee.KeePassRPC.setHibpCheck(!!msg.enabled);
+            break;
+        case "getHibpProgress":
+            work = kee.KeePassRPC.getHibpProgress();
+            break;
+        case "getFerryTips":
+            work = kee.KeePassRPC.getFerryTips();
+            break;
+        case "popupTiming":
+            diag("popup", "angezeigt", msg.timing ?? {});
+            work = Promise.resolve(true);
+            break;
+        case "changePasswordUrl":
+            // quick: nur Apples Liste (ohne Netz), sonst auch /.well-known/change-password bei der Website prüfen
+            work = msg.quick
+                ? Promise.resolve(appleChangePasswordUrlFor(msg.url))
+                : changePasswordUrl(msg.url ?? "");
             break;
         default:
             sendResponse(null);

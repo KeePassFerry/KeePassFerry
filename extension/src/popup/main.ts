@@ -21,8 +21,12 @@ const piniaInstance = createPinia();
 let vueApp: VueApp<Element>;
 let store: KeeStore;
 
+// Diagnose: Zeiten seit dem Öffnen des Popups (performance.now() zählt ab dem Laden der Seite)
+const timing: Record<string, number> = { skript: Math.round(performance.now()) };
+
 async function start() {
     await configManager.load();
+    timing.einstellungen = Math.round(performance.now());
     KeeLog.debug("popup starting");
     KeeLog.attachConfig(configManager.current);
     Port.startup("browserPopup");
@@ -31,6 +35,7 @@ async function start() {
         KeeLog.debug("In browser popup script, received message from background script.");
 
         if (m.initialState) {
+        timing.daten = Math.round(performance.now());
 
         try {
             vueApp = createApp({
@@ -65,6 +70,11 @@ async function start() {
             store.$patch(m.initialState);
 
             vueApp.mount("#main");
+            timing.angezeigt = Math.round(performance.now());
+            window.setTimeout(() => {
+                timing.fertig = Math.round(performance.now());
+                chrome.runtime.sendMessage({ keepassferry: "popupTiming", timing }).catch(() => undefined);
+            }, 0);
             //TODO:f: Sometimes popup size is wrong initially. Possibly only when in dev
             // mode and it's much slower to load everything? In any case, might be
             // affected by timing of when we mount the main app to the popup DOM

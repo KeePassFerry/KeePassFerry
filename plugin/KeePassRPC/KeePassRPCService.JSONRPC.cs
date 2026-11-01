@@ -875,7 +875,7 @@ namespace KeePassFerry
                         {
                             foreach (string URL in URLs)
                             {
-                                var mam = pwe.GetMatchAccuracyMethod(URLHostnameAndPorts[URL], dbConf);
+                                var mam = Extensions.GetMatchAccuracyMethod(conf, URLHostnameAndPorts[URL], dbConf);
                                 int accuracy =
                                     BestMatchAccuracyForAnyURL(pwe, conf, URL, URLHostnameAndPorts[URL], mam);
                                 if (accuracy > bestMatchAccuracy)
@@ -1336,7 +1336,7 @@ namespace KeePassFerry
                         {
                             foreach (string url in urls)
                             {
-                                var mam = pwe.GetMatchAccuracyMethod(urlHostnameAndPorts[url], dbConf);
+                                var mam = Extensions.GetMatchAccuracyMethod(conf, urlHostnameAndPorts[url], dbConf);
                                 int accuracy =
                                     BestMatchAccuracyForAnyURL(pwe, conf, url, urlHostnameAndPorts[url], mam);
                                 if (accuracy > bestMatchAccuracy)

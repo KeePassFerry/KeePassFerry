@@ -20,6 +20,8 @@ export class EntrySummary {
     attachmentCount: number;
     hasPasskey: boolean;
     hasOtp: boolean;
+    passwordLeaked: boolean;
+    passwordLeakCount: number;
     // Nur über eine zugehörige Domain gefunden (siehe Entry.relatedDomain)
     relatedDomain?: string;
 
@@ -40,6 +42,8 @@ export class EntrySummary {
         this.attachmentCount = e.attachmentCount || 0;
         this.hasPasskey = !!e.hasPasskey;
         this.hasOtp = !!e.hasOtp;
+        this.passwordLeaked = !!e.passwordLeaked;
+        this.passwordLeakCount = e.passwordLeakCount ?? 0;
         this.relatedDomain = e.relatedDomain;
     }
 
@@ -59,6 +63,8 @@ export class EntrySummary {
             attachmentCount: entry.attachmentCount,
             hasPasskey: entry.hasPasskey,
             hasOtp: entry.hasOtp,
+            passwordLeaked: entry.passwordLeaked,
+            passwordLeakCount: entry.passwordLeakCount,
             relatedDomain: entry.relatedDomain
         });
     }
@@ -81,7 +87,9 @@ export class EntrySummary {
             hasNotes: entrySummaryDto.hasNotes,
             attachmentCount: entrySummaryDto.attachmentCount,
             hasPasskey: entrySummaryDto.hasPasskey,
-            hasOtp: entrySummaryDto.hasOtp
+            hasOtp: entrySummaryDto.hasOtp,
+            passwordLeaked: entrySummaryDto.passwordLeaked,
+            passwordLeakCount: entrySummaryDto.passwordLeakCount
         });
     }
 }

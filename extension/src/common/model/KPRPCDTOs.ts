@@ -91,6 +91,8 @@ export class EntryDto {
     // KeePassFerry-Plugin ab 1.0.9
     hasPasskey?: boolean;
     hasOtp?: boolean;
+    passwordLeaked?: boolean;
+    passwordLeakCount?: number;
 }
 
 export class EntrySummaryDto {
@@ -106,6 +108,8 @@ export class EntrySummaryDto {
     // KeePassFerry-Plugin ab 1.0.9
     hasPasskey?: boolean;
     hasOtp?: boolean;
+    passwordLeaked?: boolean;
+    passwordLeakCount?: number;
 }
 
 // tslint:disable-next-line:class-name

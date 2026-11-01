@@ -384,6 +384,74 @@ namespace KeePassFerry
             return "recycled";
         }
 
+        /// <summary>Ist die Passwortprüfung bei Have I Been Pwned eingeschaltet?</summary>
+        [JsonRpcMethod]
+        public bool GetHibpCheck()
+        {
+            HibpChecker hibp = _keePassRpcPlugin.Hibp;
+            return hibp != null && hibp.Enabled;
+        }
+
+        /// <summary>Passwortprüfung ein- oder ausschalten (Einstellung der Erweiterung, gespeichert in KeePass)</summary>
+        [JsonRpcMethod]
+        public bool SetHibpCheck(bool enabled)
+        {
+            HibpChecker hibp = _keePassRpcPlugin.Hibp;
+            if (hibp == null) return false;
+            _host.MainWindow.BeginInvoke(new Action(delegate { hibp.Enabled = enabled; }));
+            return enabled;
+        }
+
+        /// <summary>Fortschritt der Passwortprüfung: { total, done, leaked, running } (nur Anzahlen)</summary>
+        [JsonRpcMethod]
+        public Jayrock.Json.JsonObject GetHibpProgress()
+        {
+            var result = new Jayrock.Json.JsonObject();
+            HibpChecker hibp = _keePassRpcPlugin.Hibp;
+            if (hibp == null) return result;
+            int total = 0, done = 0, leaked = 0;
+            bool running = false;
+            // Wie die übrigen Abfragen im Thread der Verbindung (kein Warten auf die Oberfläche); ändert KeePass
+            // gleichzeitig Einträge, fehlt die Anzeige eben dieses eine Mal
+            try
+            {
+                hibp.Progress(out total, out done, out leaked, out running);
+            }
+            catch (InvalidOperationException)
+            {
+                return result;
+            }
+            result["total"] = total;
+            result["done"] = done;
+            result["leaked"] = leaked;
+            result["running"] = running;
+            return result;
+        }
+
+        /// <summary>
+        /// Merkmale für die Tipps der Erweiterung (keine Inhalte): KeePassWinHello geladen, irgendein Eintrag mit
+        /// Einmalcode in den geöffneten Datenbanken, Passwortprüfung eingeschaltet
+        /// </summary>
+        [JsonRpcMethod]
+        public Jayrock.Json.JsonObject GetFerryTips()
+        {
+            var result = new Jayrock.Json.JsonObject();
+            bool winHello = false;
+            foreach (System.Reflection.Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+                if (a.GetName().Name.IndexOf("WinHello", StringComparison.OrdinalIgnoreCase) >= 0) { winHello = true; break; }
+            bool anyOtp = false;
+            foreach (PwDatabase db in _host.MainWindow.DocumentManager.GetOpenDatabases())
+            {
+                foreach (PwEntry e in db.RootGroup.GetEntries(true))
+                    if (Totp.HasTotp(e)) { anyOtp = true; break; }
+                if (anyOtp) break;
+            }
+            result["winHello"] = winHello;
+            result["anyOtp"] = anyOtp;
+            result["hibpCheck"] = GetHibpCheck();
+            return result;
+        }
+
         private PwEntry FindFerryEntry(string uuid, string dbFileName, out PwDatabase db)
         {
             db = SelectDatabase(dbFileName);
@@ -409,7 +477,8 @@ namespace KeePassFerry
                 || name.StartsWith("TimeOtp-", StringComparison.OrdinalIgnoreCase)
                 || name.StartsWith("HmacOtp-", StringComparison.OrdinalIgnoreCase)
                 || name.StartsWith("KPRPC", StringComparison.OrdinalIgnoreCase)
-                || name.StartsWith("KPEX_", StringComparison.OrdinalIgnoreCase);
+                || name.StartsWith("KPEX_", StringComparison.OrdinalIgnoreCase)
+                || HibpStatus.IsStatusField(name);
         }
 
         private static string UniqueStringName(PwEntry entry, string name)

@@ -49,6 +49,9 @@ export class Entry {
     readonly attachmentCount: number;
     readonly hasPasskey: boolean;
     readonly hasOtp: boolean;
+    // Passwort laut "HIBP Offline Check" in KeePass geleakt (Anzahl, falls bekannt)
+    readonly passwordLeaked: boolean;
+    readonly passwordLeakCount: number;
 
     // How relevant this entry is to the current form in
     // the browser - transient (not stored in KeePass)
@@ -79,6 +82,8 @@ export class Entry {
         this.attachmentCount = e.attachmentCount || 0;
         this.hasPasskey = !!e.hasPasskey;
         this.hasOtp = !!e.hasOtp;
+        this.passwordLeaked = !!e.passwordLeaked;
+        this.passwordLeakCount = e.passwordLeakCount ?? 0;
         this.relevanceScore = e.relevanceScore;
         this.lowFieldMatchRatio = e.lowFieldMatchRatio;
         this.formIndex = e.formIndex;
@@ -137,7 +142,9 @@ export class Entry {
             hasNotes: entryDto.hasNotes,
             attachmentCount: entryDto.attachmentCount,
             hasPasskey: entryDto.hasPasskey,
-            hasOtp: entryDto.hasOtp
+            hasOtp: entryDto.hasOtp,
+            passwordLeaked: entryDto.passwordLeaked,
+            passwordLeakCount: entryDto.passwordLeakCount
         });
 
         return entry;
