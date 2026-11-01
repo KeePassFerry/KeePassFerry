@@ -122,6 +122,7 @@ import { KeeLog } from "../common/Logger";
 import { SaveState } from "../common/SaveState";
 import { Entry } from "../common/model/Entry";
 import { supplementEntryState } from "./supplementEntryState";
+import { reconcileURLs } from "./reconcileURLs";
 import { fetchFavicon, getFaviconUrl } from "./favicon";
 import { autoRecoveryTimeMs, manualRecoveryPromptTimeMs, tooltipDelay } from "../common/Timings";
 import { SaveEntryResult } from "../common/SaveEntryResult";
@@ -259,6 +260,8 @@ export default {
         ) {
             KeeLog.debug("discarding upon mount");
             this.saveDiscard();
+            // Sofort, nicht erst über die Überwachung von saveState: sonst gilt der verworfene Dialog unten noch als offen
+            this.saveLastActiveAt = null;
         }
 
         // Wurde die Schlüssel-Auswahl ohne Speichern geschlossen, hier erneut anbieten
@@ -273,7 +276,10 @@ export default {
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
             if (this.hasSubmittedData && !this.showSaveStart) {
-                await this.saveStart();
+                // Passwort eines vorhandenen Eintrags geändert: diesen Eintrag öffnen statt einen neuen anzulegen
+                const target = (this.saveState as SaveState).submittedData?.updateTarget;
+                if (target) await this.updateStart(target);
+                else await this.saveStart();
             }
         }
 
@@ -335,6 +341,38 @@ export default {
             KeeLog.debug("updating saveState");
             this.updateSaveState(updatedSaveState);
             //this.saveLastActiveAt = updatedSaveState.lastActiveAt;
+        },
+        // Hinweis "Passwort aktualisieren": den Eintrag wie mit dem Stift öffnen, neues Passwort vorbelegt (der alte Wert
+        // bleibt über "Zurücksetzen" erreichbar; beim Speichern legt KeePass ihn in der Eintragshistorie ab). Der Titel
+        // des Eintrags bleibt. Eintrag nicht mehr gefunden: wie bisher als neuen Eintrag speichern
+        updateStart: async function (target: { uuid: string; dbFileName: string }) {
+            let raw: any = null;
+            try {
+                raw = await chrome.runtime.sendMessage({
+                    keepassferry: "findEntryForEdit",
+                    uuid: target.uuid,
+                    dbFileName: target.dbFileName
+                });
+            } catch (e) {
+                KeeLog.debug("Entry for password update not found: " + e);
+            }
+            if (!raw) {
+                await this.saveStart();
+                return;
+            }
+            const entry = new Entry(raw);
+            const ss = JSON.parse(JSON.stringify(this.saveState as SaveState)) as SaveState;
+            const { urls, showWarning } = await reconcileURLs(entry.URLs, ss.submittedData.url);
+            const updatedSaveState = Object.assign({}, ss);
+            updatedSaveState.newEntry = supplementEntryState(
+                entry,
+                { ...ss, submittedData: { ...ss.submittedData, title: entry.title } },
+                urls
+            );
+            updatedSaveState.titleResetValue = entry.title;
+            updatedSaveState.lastActiveAt = new Date();
+            updatedSaveState.showURLMismatchWarning = showWarning;
+            this.updateSaveState(updatedSaveState);
         },
         saveRecover: function () {
             const ss = JSON.parse(JSON.stringify(this.saveState as SaveState));
