@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Anmeldung freigeben – Spielwiese</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="kopf">
+        <a class="marke" href="index.html">Spielwiese</a>
+        <nav>
+            <a href="index.html">Übersicht</a>
+            <a href="login.html">Anmelden</a>
+            <a href="registrieren.html">Registrieren</a>
+            <a href="konto.html">Kundenkonto</a>
+        </nav>
+        <span id="angemeldet" class="status"></span>
+    </header>
+    <p class="warnung">Nur zum Testen auf diesem Rechner – hier keine echten Zugangsdaten eingeben.</p>
+    <main>
+        <section class="karte">
+            <h1>Anmeldung freigeben</h1>
+            <p>Bitte bestätigen Sie die Anmeldung von <strong id="benutzer-anzeige"></strong> in Ihrer App.</p>
+            <p id="warten" class="meldung">Warte auf Freigabe …</p>
+            <div><button type="button" id="freigeben">Freigabe in der App simulieren</button></div>
+        </section>
+    </main>
+    <script src="spielwiese.js"></script>
+    <script>Spielwiese.initBankFreigabe();</script>
+</body>
+</html>

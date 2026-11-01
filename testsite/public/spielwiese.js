@@ -33,6 +33,16 @@ Schlüssel und otpauth-URIs entstehen nur hier im Skript, nie im HTML der Seiten
         speichereKonten({ "demo@spielwiese.test": { passwort: "Start-Passwort1", otpSecret: null } });
     }
 
+    // Konto für das Online-Banking (Kundennummer statt E-Mail), wird ergänzt, ohne andere Konten anzufassen
+    const BANK_KUNDENNUMMER = "4711000123";
+
+    function bankkontoAnlegen() {
+        const k = konten();
+        if (k[BANK_KUNDENNUMMER]) return;
+        k[BANK_KUNDENNUMMER] = { passwort: "Bank-Start1", otpSecret: null };
+        speichereKonten(k);
+    }
+
     function konto(benutzer) {
         return benutzer ? konten()[benutzer.trim().toLowerCase()] || null : null;
     }
@@ -300,6 +310,56 @@ Schlüssel und otpauth-URIs entstehen nur hier im Skript, nie im HTML der Seiten
         });
     }
 
+    // Online-Banking wie bei manchen Banken: erst die Kundennummer, dann erscheint im selben Formular das Passwortfeld
+    // und die Kundennummer wandert in ein verstecktes Feld. "Weiter" hat einen eigenen Klick-Handler, der abschickt und
+    // danach das Passwort im Feld durch Sternchen ersetzt. Er ist beim Laden registriert, also vor dem der Erweiterung,
+    // die das Feld deshalb nur noch mit Sternchen liest. Danach Freigabe in der App (eigene Seite).
+    function initBankLogin() {
+        startkontoAnlegen();
+        bankkontoAnlegen();
+        sichtbarerBenutzer();
+        if (parameter("fehler")) zeigeFehler("Kundennummer oder Passwort falsch.");
+        const feld = id => document.getElementById(id);
+        feld("bankForm:weiter").addEventListener("click", () => {
+            if (feld("schritt-passwort").hidden) {
+                const kennung = feld("bankForm:Benutzerkennung").value.trim();
+                if (!kennung) return zeigeFehler("Bitte die Kundennummer eingeben.");
+                feld("bankForm:kundennummer").value = kennung;
+                $("#kennung-anzeige").textContent = kennung;
+                feld("schritt-kennung").hidden = true;
+                feld("schritt-passwort").hidden = false;
+                feld("bankForm:password").focus();
+                return;
+            }
+            const kennung = feld("bankForm:kundennummer").value;
+            const passwortFeld = feld("bankForm:password");
+            const richtig = !!konto(kennung) && konto(kennung).passwort === passwortFeld.value;
+            // Abgeschickt ist bereits der echte Wert; im Feld bleiben nur Sternchen stehen
+            passwortFeld.value = "*".repeat(passwortFeld.value.length);
+            if (!richtig) {
+                weiter("bank-login.html?fehler=1");
+                return;
+            }
+            anmelden(kennung, true);
+            weiter("bank-freigabe.html");
+        });
+    }
+
+    // Freigabe der Banking-Anmeldung in der App (hier per Knopf)
+    function initBankFreigabe() {
+        const s = sitzung();
+        if (!s || !s.zweiterFaktorOffen || !konto(s.benutzer)) {
+            location.href = "bank-login.html";
+            return;
+        }
+        sichtbarerBenutzer();
+        $("#benutzer-anzeige").textContent = s.benutzer;
+        $("#freigeben").addEventListener("click", () => {
+            anmelden(s.benutzer, false);
+            weiter("konto.html?hinweis=angemeldet");
+        });
+    }
+
     // Mehrstufig, Schritt 1: nur der Benutzername
     function initSchritt1() {
         startkontoAnlegen();
@@ -495,6 +555,8 @@ Schlüssel und otpauth-URIs entstehen nur hier im Skript, nie im HTML der Seiten
         initSpaLogin,
         initSchritt1,
         initSchritt2,
+        initBankLogin,
+        initBankFreigabe,
         initRegistrieren,
         initKonto,
         initPasswortAendern,
