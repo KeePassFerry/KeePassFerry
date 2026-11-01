@@ -19,6 +19,7 @@ export const enum Action {
     EntryFilled = "entryFilled",
     OtpSetupCandidate = "otpSetupCandidate",
     ShowOtpSetupNotice = "showOtpSetupNotice",
+    HideOtpSetupNotice = "hideOtpSetupNotice",
     OpenOtpSetupPopup = "openOtpSetupPopup",
     DismissOtpSetup = "dismissOtpSetup",
     QueryUnlocked = "queryUnlocked",

@@ -1,4 +1,4 @@
-import { offerPendingOtpSetup } from "./otpSetup";
+import { offerPendingOtpSetup, recheckPendingOtpSetups } from "./otpSetup";
 import { sameSite } from "../common/relatedDomains";
 import { LoginCandidate, SubmittedLoginMatch, matchSubmittedLogin, submittedCredentials } from "../common/submittedLogin";
 import { diag } from "./ferryDiag";
@@ -724,6 +724,8 @@ class Kee {
 
         // Nach dem Entsperren die Seite im aktiven Tab sofort neu durchsuchen (damit gleich ausgefüllt wird)
         if (becameAvailable) this.rescanActiveTab();
+        // Ohne offene Datenbank gefundene Zwei-Faktor-Schlüssel nachprüfen (schon gespeichert -> Hinweis weg)
+        if (becameAvailable) recheckPendingOtpSetups();
     }
 
     private async rescanActiveTab() {
