@@ -2,7 +2,7 @@
 Erzeugt den Release-Signaturschlüssel von KeePassFerry (RSA 3072) – einmalig.
 - Privater Schlüssel: außerhalb des Repos (Standard %USERPROFILE%\.keepassferry\release-signing-key.xml),
   nur für den aktuellen Benutzer lesbar. Zusätzlich in KeePass sichern; nie auf GitHub hochladen.
-- Öffentlicher Schlüssel: plugin/KeePassRPC/FerryReleaseKey.cs (wird ins Plugin eingebaut).
+- Öffentlicher Schlüssel: plugin/KeePassFerry/FerryReleaseKey.cs (wird ins Plugin eingebaut).
 Das Plugin installiert Updates nur, wenn SHA256SUMS.txt mit diesem Schlüssel signiert ist (signing/sign-release.ps1).
 #>
 param(
@@ -23,7 +23,7 @@ New-Item -ItemType Directory -Force $dir | Out-Null
 # Nur der aktuelle Benutzer darf die Datei lesen
 icacls $KeyPath /inheritance:r /grant:r "$($env:USERDOMAIN)\$($env:USERNAME):F" | Out-Null
 
-$cs = Join-Path $PSScriptRoot "..\plugin\KeePassRPC\FerryReleaseKey.cs"
+$cs = Join-Path $PSScriptRoot "..\plugin\KeePassFerry\FerryReleaseKey.cs"
 $code = @"
 namespace KeePassFerry
 {
@@ -39,7 +39,7 @@ namespace KeePassFerry
 $fingerprint = (Get-FileHash -InputStream ([IO.MemoryStream]::new([Text.Encoding]::ASCII.GetBytes($public))) -Algorithm SHA256).Hash.Substring(0, 16)
 ""
 "Privater Schlüssel: $KeyPath"
-"Öffentlicher Schlüssel eingetragen in plugin/KeePassRPC/FerryReleaseKey.cs"
+"Öffentlicher Schlüssel eingetragen in plugin/KeePassFerry/FerryReleaseKey.cs"
 "Fingerabdruck (öffentlich): $fingerprint"
 ""
 "Wichtig: Die Datei mit dem privaten Schlüssel zusätzlich als Anhang in KeePass sichern."

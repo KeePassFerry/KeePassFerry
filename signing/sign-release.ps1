@@ -51,7 +51,7 @@ try {
     $rsa.Dispose()
 
     # Gegenprobe mit dem öffentlichen Schlüssel, der ins Plugin eingebaut ist
-    $cs = Get-Content (Join-Path $PSScriptRoot "..\plugin\KeePassRPC\FerryReleaseKey.cs") -Raw
+    $cs = Get-Content (Join-Path $PSScriptRoot "..\plugin\KeePassFerry\FerryReleaseKey.cs") -Raw
     $public = [regex]::Match($cs, '<RSAKeyValue>.*?</RSAKeyValue>').Value
     if (-not $public) { throw "Kein öffentlicher Schlüssel in FerryReleaseKey.cs" }
     $check = New-Object System.Security.Cryptography.RSACng

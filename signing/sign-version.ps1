@@ -24,7 +24,7 @@ $sig = $rsa.SignData($data, [Security.Cryptography.HashAlgorithmName]::SHA512, [
 $rsa.Dispose()
 
 # Gegenprobe mit dem öffentlichen Schlüssel im Plugin
-$cs = Get-Content (Join-Path $PSScriptRoot "..\plugin\KeePassRPC\FerryReleaseKey.cs") -Raw
+$cs = Get-Content (Join-Path $PSScriptRoot "..\plugin\KeePassFerry\FerryReleaseKey.cs") -Raw
 $public = [regex]::Match($cs, '<RSAKeyValue>.*?</RSAKeyValue>').Value
 $check = New-Object System.Security.Cryptography.RSACng
 $check.FromXmlString($public)
