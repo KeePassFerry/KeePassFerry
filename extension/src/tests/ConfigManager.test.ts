@@ -3,11 +3,11 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import { SiteConfig } from "../common/config";
 
-const urlStringPage1 = "https://www.kee.pm/examplePage?param=whatever";
-const urlStringPage2 = "https://www.kee.pm/otherPage";
+const urlStringPage1 = "https://www.example.com/examplePage?param=whatever";
+const urlStringPage2 = "https://www.example.com/otherPage";
 
-const urlStringDomain1 = "https://kee.pm";
-const urlStringHost1 = "https://www.kee.pm";
+const urlStringDomain1 = "https://example.com";
+const urlStringHost1 = "https://www.example.com";
 
 const exampleEntryUUID1 = "1111";
 const exampleEntryUUID2 = "2222";

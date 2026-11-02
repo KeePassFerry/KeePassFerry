@@ -137,8 +137,11 @@ const STYLE = `
 export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
     document.getElementById(HOST_ID)?.remove();
     return new Promise(resolve => {
+        // Eigener modaler <dialog> im Top Layer: Seiten, die ihre Passkey-Abfrage selbst als modalen Dialog zeigen
+        // (z. B. Sony), legen sonst alles andere darunter und machen es unklickbar – egal welcher z-index
+        const layer = document.createElement("dialog");
+        layer.id = HOST_ID;
         const host = document.createElement("div");
-        host.id = HOST_ID;
         const shadow = host.attachShadow({ mode: "closed" });
         const style = document.createElement("style");
         style.textContent = STYLE;
@@ -249,7 +252,12 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
 
         const finish = (result: DialogResult) => {
             document.removeEventListener("keydown", onKey, true);
-            host.remove();
+            try {
+                if (layer.open) layer.close();
+            } catch (e) {
+                // schon geschlossen
+            }
+            layer.remove();
             resolve(result);
         };
         const onKey = (e: KeyboardEvent) => {
@@ -271,10 +279,30 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
         });
         document.addEventListener("keydown", onKey, true);
 
+        // Esc schließt einen modalen Dialog von selbst; wie Abbrechen behandeln (onKey greift meist vorher)
+        layer.addEventListener("cancel", e => {
+            e.preventDefault();
+            finish({ action: "cancel" });
+        });
+
         dialog.append(head, question, list, warning, actions);
         backdrop.append(dialog);
         shadow.append(style, backdrop);
-        (document.body ?? document.documentElement).appendChild(host);
+        layer.append(host);
+        (document.body ?? document.documentElement).appendChild(layer);
+        // Seiten-CSS für <dialog> neutralisieren; unser Hintergrund und Rahmen kommen aus dem Shadow DOM
+        layer.setAttribute(
+            "style",
+            "all: initial !important; display: block !important; position: fixed !important; inset: 0 !important;" +
+                " width: 100vw !important; height: 100vh !important; max-width: none !important; max-height: none !important;" +
+                " margin: 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important;" +
+                " overflow: visible !important; z-index: 2147483647 !important;"
+        );
+        try {
+            layer.showModal();
+        } catch (e) {
+            // Ohne Top Layer (sehr alte Browser): wie bisher als feste Ebene mit höchstem z-index
+        }
         refresh();
         // Bei Entfernen-Rückfragen steht der Fokus auf "Behalten"
         (opts.danger ? cancel : primary).focus();

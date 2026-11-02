@@ -1,5 +1,5 @@
 import type { AddonMessage } from "./AddonMessage";
-import { KeeLog } from "./Logger";
+import { FerryLog } from "./Logger";
 
 class ContentPortManager {
     private port: chrome.runtime.Port;
@@ -16,7 +16,7 @@ class ContentPortManager {
         try {
             this.port.postMessage(msg);
         } catch (e) {
-            if (KeeLog && KeeLog.warn) KeeLog.warn("Failed to post a message. If the addon has just auto-updated this is expected.");
+            if (FerryLog && FerryLog.warn) FerryLog.warn("Failed to post a message. If the addon has just auto-updated this is expected.");
         }
     }
 

@@ -1,8 +1,8 @@
 import jsQR from "jsqr";
-import { kee } from "./KF";
-import { KeeURL } from "../common/KeeURL";
+import { ferry } from "./KF";
+import { FerryURL } from "../common/FerryURL";
 import { Action } from "../common/Action";
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { Entry } from "../common/model/Entry";
 import type { AddonMessage } from "../common/AddonMessage";
 import { diag } from "./ferryDiag";
@@ -214,23 +214,23 @@ export async function isOtpSetupPending(tabId: number, frameUrl: string): Promis
     await inFlight.get(tabId);
     const setup = pending.get(tabId);
     if (!setup || setup.dismissed || Date.now() - setup.at > MAX_AGE_MS) return false;
-    if (KeeURL.fromString(frameUrl)?.domainOrIPAddress !== setup.domain) return false;
+    if (FerryURL.fromString(frameUrl)?.domainOrIPAddress !== setup.domain) return false;
     return !(await settleIfStored(tabId, setup));
 }
 
 // Jede Plugin-Anfrage bei gesperrter Datenbank stößt in KeePass die Entsperrabfrage an
 function databaseOpen() {
-    return kee.store.state.connected && kee.store.state.KeePassDatabases.length > 0;
+    return ferry.store.state.connected && ferry.store.state.KeePassDatabases.length > 0;
 }
 
 // Steht der Schlüssel schon in einem Eintrag der Seite? Vergleicht nur Codes: das Plugin liefert den aktuellen
 // Code des Eintrags, die Erweiterung berechnet ihn selbst aus dem gefundenen Schlüssel (Secret bleibt hier)
 async function isAlreadyStored(url: string, domain: string, tabId: number, uri: string): Promise<boolean> {
     const candidates: { uuid: string; dbFileName: string }[] = [];
-    const last = kee.persistentTabStates.get(tabId)?.lastFilledEntry;
+    const last = ferry.persistentTabStates.get(tabId)?.lastFilledEntry;
     if (last && sameSite(last.domain, domain)) candidates.push({ uuid: last.uuid, dbFileName: last.dbFileName });
     try {
-        const found: Entry[] = (await kee.KeePassRPC.findLogins(url, null, null, null, null, null)) ?? [];
+        const found: Entry[] = (await ferry.rpc.findLogins(url, null, null, null, null, null)) ?? [];
         for (const e of found.slice(0, 10)) {
             if (!candidates.some(c => c.uuid === e.uuid)) candidates.push({ uuid: e.uuid, dbFileName: e.database.fileName });
         }
@@ -240,7 +240,7 @@ async function isAlreadyStored(url: string, domain: string, tabId: number, uri: 
     let withTotp = 0;
     for (const c of candidates) {
         try {
-            const totp = await kee.KeePassRPC.getTotp(c.uuid, c.dbFileName);
+            const totp = await ferry.rpc.getTotp(c.uuid, c.dbFileName);
             if (totp?.code) withTotp++;
             if (totp?.code && (await totpMatches(uri, totp.code, Date.now()))) {
                 diag("hintergrund", "otp einrichtung: schlüssel schon gespeichert", { uuid: c.uuid });
@@ -294,7 +294,7 @@ async function evaluateCandidate(
         viewportWidth?: number;
     }
 ) {
-    const domain = KeeURL.fromString(frameUrl)?.domainOrIPAddress;
+    const domain = FerryURL.fromString(frameUrl)?.domainOrIPAddress;
     if (!domain) return;
     await restored;
 
@@ -326,7 +326,7 @@ async function evaluateCandidate(
                 source = "qr";
             }
         } catch (e) {
-            KeeLog.debug("QR scan failed: " + e);
+            FerryLog.debug("QR scan failed: " + e);
         }
     }
     if (!uri) return;
@@ -352,7 +352,7 @@ async function evaluateCandidate(
         // sie wurde für diese Seite schon angeboten (danach weiter über das Popup)
         if (existing.uri === uri || sourceRank[existing.source] > sourceRank[source]) return;
     }
-    const documentId: string = (kee.tabStates.get(tabId)?.framePorts?.get(0)?.sender as any)?.documentId;
+    const documentId: string = (ferry.tabStates.get(tabId)?.framePorts?.get(0)?.sender as any)?.documentId;
     const entry: PendingOtpSetup = { uri, ...info, url: frameUrl, domain, source, at: Date.now(), unchecked: !open, documentId };
     pending.set(tabId, entry);
     persistPending();
@@ -361,7 +361,7 @@ async function evaluateCandidate(
 
 function showNotice(tabId: number, setup: PendingOtpSetup) {
     try {
-        kee.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({
+        ferry.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({
             action: Action.ShowOtpSetupNotice,
             otpIssuer: setup.issuer || setup.domain
         } as AddonMessage);
@@ -372,7 +372,7 @@ function showNotice(tabId: number, setup: PendingOtpSetup) {
 
 function hideNotice(tabId: number) {
     try {
-        kee.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({ action: Action.HideOtpSetupNotice } as AddonMessage);
+        ferry.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({ action: Action.HideOtpSetupNotice } as AddonMessage);
     } catch (e) {
         // Seite lädt gerade neu
     }
@@ -390,7 +390,7 @@ export async function offerPendingOtpSetup(tabId: number, url: string, documentI
         return;
     }
     if (setup.dismissed || Date.now() - setup.at > MAX_AGE_MS) return;
-    if (KeeURL.fromString(url)?.domainOrIPAddress !== setup.domain) return;
+    if (FerryURL.fromString(url)?.domainOrIPAddress !== setup.domain) return;
     if (await settleIfStored(tabId, setup)) return;
     showNotice(tabId, setup);
 }
@@ -420,7 +420,7 @@ export async function getOtpSetupSummary(tabId: number): Promise<{ issuer: strin
     }
     try {
         const tab = await chrome.tabs.get(tabId);
-        if (KeeURL.fromString(tab?.url)?.domainOrIPAddress !== setup.domain) {
+        if (FerryURL.fromString(tab?.url)?.domainOrIPAddress !== setup.domain) {
             diag("hintergrund", "otp hinweis im popup: andere domain");
             return null;
         }
@@ -439,15 +439,15 @@ export async function getOtpSetupForPopup(tabId: number) {
 
     const candidates: OtpSetupCandidate[] = [];
     const seen = new Set<string>();
-    const last = kee.persistentTabStates.get(tabId)?.lastFilledEntry;
-    const found: Entry[] = (await kee.KeePassRPC.findLogins(setup.url, null, null, null, null, null)) ?? [];
+    const last = ferry.persistentTabStates.get(tabId)?.lastFilledEntry;
+    const found: Entry[] = (await ferry.rpc.findLogins(setup.url, null, null, null, null, null)) ?? [];
     const ordered = last && sameSite(last.domain, setup.domain)
         ? [...found.filter(e => e.uuid === last.uuid), ...found.filter(e => e.uuid !== last.uuid)]
         : found;
     for (const e of ordered.slice(0, 8)) {
         if (seen.has(e.uuid)) continue;
         seen.add(e.uuid);
-        const totp = await kee.KeePassRPC.getTotp(e.uuid, e.database.fileName);
+        const totp = await ferry.rpc.getTotp(e.uuid, e.database.fileName);
         candidates.push({
             uuid: e.uuid,
             dbFileName: e.database.fileName,
@@ -471,18 +471,18 @@ export async function applyOtpSetup(tabId: number, uuid: string, dbFileName: str
     await restored;
     const setup = pending.get(tabId);
     if (!setup) return { status: "nothing" };
-    const result = await kee.KeePassRPC.setTotp(uuid, dbFileName, setup.uri, overwrite);
+    const result = await ferry.rpc.setTotp(uuid, dbFileName, setup.uri, overwrite);
     if (result?.status === "ok") {
         forgetOtpSetup(tabId);
         // Gewählter Eintrag gilt ab jetzt als benutzt: weitere Code-Anfragen dieser Seite nehmen genau ihn
-        if (!kee.persistentTabStates.get(tabId)) kee.persistentTabStates.set(tabId, { items: [] });
-        kee.persistentTabStates.get(tabId).lastFilledEntry = { uuid, dbFileName, domain: setup.domain, at: Date.now() };
-        const totp = await kee.KeePassRPC.getTotp(uuid, dbFileName);
+        if (!ferry.persistentTabStates.get(tabId)) ferry.persistentTabStates.set(tabId, { items: [] });
+        ferry.persistentTabStates.get(tabId).lastFilledEntry = { uuid, dbFileName, domain: setup.domain, at: Date.now() };
+        const totp = await ferry.rpc.getTotp(uuid, dbFileName);
         const code = totp?.code ?? result.code;
         if (code) {
             // Lädt die Seite nach dem Absenden neu (z. B. "ungültig"), denselben Code nicht noch einmal von selbst eintragen
             await rememberAutoFill(tabId, setup.domain, code);
-            kee.tabStates.get(tabId)?.framePorts?.forEach(port => {
+            ferry.tabStates.get(tabId)?.framePorts?.forEach(port => {
                 try {
                     // Mit Restzeit, damit am Feld der Gültigkeitsring startet
                     port.postMessage({

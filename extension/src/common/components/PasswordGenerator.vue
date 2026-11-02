@@ -50,6 +50,11 @@
                         </v-btn>
                     </div>
                 </div>
+                <!-- KeePass sichert jedes erzeugte Passwort (falls ein Speichern auf der Website schiefgeht) -->
+                <p v-if="backupGroup && renderedPassword" class="ferry-gen-note ferry-gen-backup">
+                    <tabler-database class="ferry-ico" />
+                    {{ $i18n("ferry_generator_backup_hint", [backupGroup]) }}
+                </p>
                 <template v-if="!standalone">
                     <p class="ferry-gen-note">{{ $i18n("password_will_be_set_on_field") }}</p>
                     <v-checkbox v-model="forceCopy" :label="$i18n('also_copy_to_clipboard')" density="compact" color="primary" hide-details />
@@ -91,6 +96,8 @@ export default {
         return { updateGeneratedPassword };
     },
     data: () => ({
+        // Gruppe in KeePass, in der das erzeugte Passwort gesichert wird (null: keine Sicherung bzw. unbekannt)
+        backupGroup: null as string,
         selectedProfile: "",
         forceCopy: false,
         revealed: true,
@@ -99,7 +106,8 @@ export default {
         cachedGeneratedPassword: "",
         // Passwortregel der aktuellen Website (Domain und Regeltext) oder null
         siteRule: null as { domain: string; text: string } | null,
-        siteRuleChecked: false
+        siteRuleChecked: false,
+        siteUrl: null as string
     }),
     computed: {
         ...mapState(useStore, ["PasswordProfiles", "saveState", "generatedPassword"]),
@@ -166,6 +174,10 @@ export default {
         }
     },
     mounted: async function () {
+        chrome.runtime
+            .sendMessage({ keepassferry: "getPasswordBackupInfo" })
+            .then(info => (this.backupGroup = info?.enabled ? info.group : null))
+            .catch(() => undefined);
         await this.loadSiteRule();
         this.selectDefaultProfile();
     },
@@ -218,7 +230,10 @@ export default {
             try {
                 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
                 const url = tab?.url ? new URL(tab.url) : null;
-                if (url && (url.protocol === "https:" || url.protocol === "http:")) this.siteRule = passwordRulesForHost(url.hostname);
+                if (url && (url.protocol === "https:" || url.protocol === "http:")) {
+                    this.siteRule = passwordRulesForHost(url.hostname);
+                    this.siteUrl = url.href;
+                }
             } catch (e) {
                 this.siteRule = null;
             }
@@ -233,6 +248,12 @@ export default {
                     this.cachedGeneratedPassword = "";
                 }
                 this.loading = false;
+                // Wie beim Erzeugen über KeePass: Sicherung in "Generierte Passwörter"
+                if (this.cachedGeneratedPassword) {
+                    chrome.runtime
+                        .sendMessage({ keepassferry: "backupGeneratedPassword", password: this.cachedGeneratedPassword, url: this.siteUrl })
+                        .catch(() => undefined);
+                }
                 return;
             }
             try {
@@ -339,5 +360,15 @@ export default {
 }
 .ferry-gen-actions .v-btn {
     min-width: 112px;
+}
+.ferry-gen-backup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ferry-gen-backup .ferry-ico {
+    flex: none;
+    width: 14px;
+    height: 14px;
 }
 </style>

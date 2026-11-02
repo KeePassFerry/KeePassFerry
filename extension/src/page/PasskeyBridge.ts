@@ -18,6 +18,9 @@ export class PasskeyBridge {
     private aborted = new Set<number>();
 
     public start() {
+        // Undurchsichtiger Ursprung (Sandbox-iframe, about:blank, data:): keine Passkeys, und postMessage mit dem Ziel
+        // 'null' würde "Invalid target origin" werfen
+        if (window.location.origin === "null") return;
         window.addEventListener("message", ev => this.onPageMessage(ev));
         this.announce();
     }

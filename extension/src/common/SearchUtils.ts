@@ -1,4 +1,4 @@
-import { KeeLog } from "./Logger";
+import { FerryLog } from "./Logger";
 import { SearchConfig } from "./model/SearchConfig";
 import { EntrySummary } from "./model/EntrySummary";
 import { Group } from "./model/Group";
@@ -72,7 +72,7 @@ export function resolveConfig(config: Partial<SearchConfig>) {
     if (!config) config = {};
     else {
         if (config.version != 1) {
-            KeeLog.warn("Unknown search config version. Will use version 1 defaults");
+            FerryLog.warn("Unknown search config version. Will use version 1 defaults");
         }
     }
 

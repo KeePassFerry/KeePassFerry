@@ -34,7 +34,7 @@ v-for="(entry, index) of deduplicatedSearchResults" :key="entry.uuid" :ref="setN
 
 <script lang="ts">
 import Entry from "./Entry.vue";
-import { KeeLog } from "../../common/Logger";
+import { FerryLog } from "../../common/Logger";
 import { EntrySummary } from "../../common/model/EntrySummary";
 import { Entry as ModelEntry } from "../../common/model/Entry";
 import { SearcherMatchedOnly } from "../../common/SearcherMatchedOnly";
@@ -76,11 +76,11 @@ export default {
     },
     watch: {
         matchedEntries: function (newVal) {
-            KeeLog.debug("about to reinit");
+            FerryLog.debug("about to reinit");
             this.initAndSearchMatchedEntries(newVal);
         },
         currentSearchTerm: function (newVal) {
-            KeeLog.debug("about to reexecute");
+            FerryLog.debug("about to reexecute");
             this.searchOnlyMatches.execute(
                 newVal,
                 this.onSearchOnlyMatchesComplete.bind(this)
@@ -92,7 +92,7 @@ export default {
         this.bNodes = [];
     },
     created() {
-        KeeLog.debug("created. about to init");
+        FerryLog.debug("created. about to init");
         this.initAndSearchMatchedEntries(this.matchedEntries);
     },
     methods: {
@@ -103,7 +103,7 @@ export default {
             if (node) this.bNodes.push(node);
         },
         onSearchOnlyMatchesComplete(entrySummaries: EntrySummary[]) {
-            KeeLog.debug("onSearchOnlyMatchesComplete");
+            FerryLog.debug("onSearchOnlyMatchesComplete");
             entrySummaries = entrySummaries.sort(function (a, b) {
                 if (a.relevanceScore > b.relevanceScore) return -1;
                 if (a.relevanceScore < b.relevanceScore) return 1;
@@ -154,7 +154,7 @@ export default {
             this.searchOnlyMatches = new SearcherMatchedOnly(
                 matchedEntries?.map(e => EntrySummary.fromEntry(e))
             );
-            KeeLog.debug("about to execute");
+            FerryLog.debug("about to execute");
             this.searchOnlyMatches.execute(
                 this.currentSearchTerm,
                 this.onSearchOnlyMatchesComplete.bind(this)

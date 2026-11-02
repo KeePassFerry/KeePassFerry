@@ -8,8 +8,8 @@
             "name": "Launch",
             "type": "mono",
             "request": "launch",
-            "program": "${workspaceRoot}/KeePassRPC/bin/Debug/KeePass.exe",
-            "cwd": "${workspaceRoot}/KeePassRPC/bin/Debug/"
+            "program": "${workspaceRoot}/KeePassFerry/bin/Debug/KeePass.exe",
+            "cwd": "${workspaceRoot}/KeePassFerry/bin/Debug/"
         },
         {
             "name": "Attach",

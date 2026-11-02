@@ -15,7 +15,7 @@
 */
 import { isErrorLike, serializeError } from "serialize-error";
 
-export class KeeLogger {
+export class FerryLogger {
     public defaultLevel = 2;
     private outputStarted = false;
     private config = { logLevel: this.defaultLevel };
@@ -93,9 +93,9 @@ export class KeeLogger {
         // enable the code below and the relevant PersistentLogger lines
         // in background.ts
         // const logEntry = {logLevel, timestamp: Date.now(), message};
-        // if (window.KeePersistentLogger) {
+        // if (window.FerryPersistentLogger) {
         //     // Will only be true in the background process
-        //     window.KeePersistentLogger.emit(logEntry);
+        //     window.FerryPersistentLogger.emit(logEntry);
         // } else {
         //     chrome.runtime.sendMessage(logEntry);
         // }
@@ -108,4 +108,4 @@ export class KeeLogger {
     }
 }
 
-export const KeeLog = new KeeLogger();
+export const FerryLog = new FerryLogger();

@@ -1,4 +1,4 @@
-import { KeeLog } from "./Logger";
+import { FerryLog } from "./Logger";
 import { isChrome, isExtensionContext } from "webext-detect-page";
 
 // https://issues.chromium.org/issues/40738001
@@ -11,7 +11,7 @@ export async function copyStringToClipboard(value: string) {
             await mv3ClipboardWorkaround(value);
             return;
         } catch (e) {
-            KeeLog.error("Failed to write to clipboard using MV3 offscreen workaround");
+            FerryLog.error("Failed to write to clipboard using MV3 offscreen workaround");
         }
     }
     try {
@@ -22,8 +22,7 @@ export async function copyStringToClipboard(value: string) {
     } catch (e) {
         try {
             // Fallback to old textarea hack if required.
-            // See https://github.com/kee-org/browser-addon/issues/273
-            // and https://bugs.chromium.org/p/chromium/issues/detail?id=874848
+            // See https://bugs.chromium.org/p/chromium/issues/detail?id=874848
             const copyFrom = document.createElement("textarea");
             copyFrom.textContent = value;
             const body = document.getElementsByTagName("body")[0];
@@ -31,9 +30,9 @@ export async function copyStringToClipboard(value: string) {
             copyFrom.select();
             document.execCommand("copy");
             body.removeChild(copyFrom);
-            KeeLog.info("Failed to write to clipboard using modern API so used the fallback hack");
+            FerryLog.info("Failed to write to clipboard using modern API so used the fallback hack");
         } catch (e2) {
-            KeeLog.error("Failed to write to clipboard using modern API and fallback hack");
+            FerryLog.error("Failed to write to clipboard using modern API and fallback hack");
         }
     }
 }

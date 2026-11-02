@@ -1,6 +1,6 @@
 import { utils } from "../utils";
 import { Locator } from "./Locator";
-import { FieldDto, FormFieldTypeDTO } from "./KPRPCDTOs";
+import { FieldDto, FormFieldTypeDTO } from "./PluginDTOs";
 
 export type FieldType = "password" | "text" | "existing" | "boolean" | "otp" | "some-chars";
 
@@ -45,7 +45,7 @@ export class Field {
         replacementIfProtected: string
     ) {
         if (field.type === "boolean") {
-            return field.value === "KEEFOX_CHECKED_FLAG_TRUE" ? $STR("enabled") : $STR("disabled");
+            return field.value === "KEEPASSFERRY_CHECKED_TRUE" ? $STR("enabled") : $STR("disabled");
         } else {
             return field.type === "password" && !revealPasswords
                 ? replacementIfProtected
@@ -133,7 +133,7 @@ export class Field {
         });
     }
 
-    static fromKPRPCFieldDTO(f: FieldDto) {
+    static fromPluginFieldDTO(f: FieldDto) {
         let type: FieldType = "text";
         let locatorType = "text";
 
@@ -180,7 +180,7 @@ export class Field {
         });
     }
 
-    static toKPRPCFieldDTO(f: Field, isUsername: boolean) {
+    static toPluginFieldDTO(f: Field, isUsername: boolean) {
         let fft: FormFieldTypeDTO;
 
         switch (f.locators[0].type) {

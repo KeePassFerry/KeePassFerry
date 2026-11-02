@@ -3,10 +3,10 @@ import "../common/ferry-ui.css";
 import { ferryVuetifyOptions } from "../common/ferryTheme";
 import { FrameState } from "../common/FrameState";
 import { Action } from "../common/Action";
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import { AddonMessage } from "../common/AddonMessage";
-import useStore, { KeeStore } from "../store";
+import useStore, { FerryStore } from "../store";
 import { Port } from "../common/port";
 import { App, createApp } from "vue";
 import { createVuetify } from "vuetify";
@@ -24,12 +24,12 @@ function updateFrameState(newState: FrameState) {
 }
 
 let vueApp: App<Element>;
-let store: KeeStore;
+let store: FerryStore;
 
 async function start() {
     await configManager.load();
-    KeeLog.debug("iframe page starting");
-    KeeLog.attachConfig(configManager.current);
+    FerryLog.debug("iframe page starting");
+    FerryLog.attachConfig(configManager.current);
     Port.startup("iframe_" + parentFrameId);
 
     const darkTheme = params["theme"] === "dark";
@@ -37,7 +37,7 @@ async function start() {
     switch (params["panel"]) {
         case "generatePassword":
             Port.raw.onMessage.addListener(function (m: AddonMessage) {
-                KeeLog.debug("In iframe script, received message from background script");
+                FerryLog.debug("In iframe script, received message from background script");
 
                 if (m.initialState) {
                     try {
@@ -62,7 +62,7 @@ async function start() {
                             action: Action.GetPasswordProfiles
                         });
                     } catch (e) {
-                        KeeLog.error("Failed to create user interface.", e);
+                        FerryLog.error("Failed to create user interface.", e);
                     }
                 }
                 if (m.mutation) {
@@ -74,7 +74,7 @@ async function start() {
             break;
     }
 
-    KeeLog.info("iframe page ready");
+    FerryLog.info("iframe page ready");
 }
 
 let matchedLoginsPanel: MatchedLoginsPanel;

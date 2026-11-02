@@ -1,4 +1,4 @@
-import { KeeURL } from "./KeeURL";
+import { FerryURL } from "./FerryURL";
 import { sameSite } from "./relatedDomains";
 
 /*
@@ -45,7 +45,7 @@ export function supersedesSubmission(
     previous: { url: string; username: string },
     current: { url: string; username: string }
 ): boolean {
-    const domain = (url: string) => KeeURL.fromString(url ?? "")?.domainOrIPAddress;
+    const domain = (url: string) => FerryURL.fromString(url ?? "")?.domainOrIPAddress;
     if (!sameSite(domain(previous.url), domain(current.url))) return false;
     return !previous.username || !current.username || sameUsername(previous.username, current.username);
 }

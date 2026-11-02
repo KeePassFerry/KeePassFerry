@@ -9,18 +9,19 @@ damit Seiten-CSS nicht durchschlägt.
 - "otp": auf der Seite wurde ein Zwei-Faktor-Schlüssel gefunden ("In KeePass speichern" öffnet die Eintragsauswahl)
 - "update": das gerade eingegebene Passwort weicht vom gespeicherten Eintrag ab ("Aktualisieren" öffnet diesen Eintrag
   mit dem neuen Passwort)
+- "saved": Eintrag gerade in KeePass gespeichert (nur Bestätigung mit "Schließen", verschwindet nach wenigen Sekunden)
 - "expiring"/"expired": Passwort des ausgefüllten Eintrags läuft bald ab bzw. ist abgelaufen ("Passwort ändern" öffnet
   die Änderungsseite der Website, "Später" blendet ihn für diesen Eintrag bis morgen aus). Verdrängt keinen anderen Hinweis.
 "Nicht jetzt" blendet den Hinweis für diesen Fund aus.
 */
 
-export type NoticeKind = "login" | "otp" | "update" | "expiring" | "expired";
+export type NoticeKind = "login" | "otp" | "update" | "saved" | "expiring" | "expired";
 
 export const HOST_ID = "keepassferry-save-notice";
 
 const NOTICE_TEXTS: Record<
     NoticeKind,
-    { title: string; text: string; save: string; dismiss?: string; saveAction: Action; dismissAction: Action }
+    { title: string; text: string; save: string; dismiss?: string; saveAction: Action; dismissAction: Action; hideAfterMs?: number }
 > = {
     login: {
         title: "saveNotice_title",
@@ -42,6 +43,16 @@ const NOTICE_TEXTS: Record<
         save: "updateNotice_save",
         saveAction: Action.OpenSavePopup,
         dismissAction: Action.DismissSaveNotice
+    },
+    // Nur Bestätigung, ohne zweiten Knopf ("In KeePass öffnen" stört im kurzen Hinweis)
+    saved: {
+        title: "ferry_saved_title",
+        text: null,
+        save: null,
+        dismiss: "close",
+        saveAction: null,
+        dismissAction: null,
+        hideAfterMs: 6000
     },
     // Überschrift und Text kommen fertig vom Hintergrund (Tage, Datum)
     expiring: {
@@ -67,6 +78,7 @@ const ACCENT: Record<NoticeKind, string> = {
     login: "#16a34a",
     otp: "#16a34a",
     update: "#16a34a",
+    saved: "#16a34a",
     expiring: "#d97706",
     expired: "#dc2626"
 };
@@ -109,7 +121,7 @@ export function showSaveNotice(kind: NoticeKind = "login", detail?: string, fixe
     const isExpiry = kind === "expiring" || kind === "expired";
     const existing = document.getElementById(HOST_ID);
     if (existing) {
-        if (existing.dataset.kind === kind) return;
+        if (existing.dataset.kind === kind && kind !== "saved") return;
         // Ablauf-Hinweis nur, wenn nichts anderes offen ist; er selbst weicht jedem anderen Hinweis
         if (isExpiry) return;
         // Ein OTP-Fund ersetzt einen offenen Speichern-Hinweis nicht umgekehrt
@@ -190,25 +202,28 @@ export function showSaveNotice(kind: NoticeKind = "login", detail?: string, fixe
     dismiss.type = "button";
     dismiss.textContent = $STR(texts.dismiss ?? "saveNotice_dismiss");
     dismiss.addEventListener("click", () => {
-        Port.postMessage({ action: texts.dismissAction } as AddonMessage);
+        if (texts.dismissAction) Port.postMessage({ action: texts.dismissAction } as AddonMessage);
         hideSaveNotice();
     });
-    const save = document.createElement("button");
-    save.type = "button";
-    save.className = "primary";
-    save.textContent = $STR(texts.save);
-    save.addEventListener("click", () => {
-        Port.postMessage({ action: texts.saveAction } as AddonMessage);
-        hideSaveNotice();
-    });
-    buttons.append(dismiss, save);
+    buttons.append(dismiss);
+    if (texts.save) {
+        const save = document.createElement("button");
+        save.type = "button";
+        save.className = "primary";
+        save.textContent = $STR(texts.save);
+        save.addEventListener("click", () => {
+            Port.postMessage({ action: texts.saveAction } as AddonMessage);
+            hideSaveNotice();
+        });
+        buttons.append(save);
+    }
 
     box.append(head, text, buttons);
     shadow.append(style, box);
     document.body.appendChild(host);
 
     clearTimeout(hideTimer);
-    hideTimer = window.setTimeout(hideSaveNotice, AUTO_HIDE_MS);
+    hideTimer = window.setTimeout(hideSaveNotice, texts.hideAfterMs ?? AUTO_HIDE_MS);
 }
 
 // Mit Art nur einen Hinweis dieser Art schließen (ein offener Speichern-Hinweis für Zugangsdaten bleibt)

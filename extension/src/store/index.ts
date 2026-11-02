@@ -1,13 +1,13 @@
 import { defineStore, _GettersTree } from "pinia";
 
-import { KeeState, defaults } from "./KeeState";
+import { FerryState, defaults } from "./FerryState";
 import { SaveState } from "../common/SaveState";
 import { SessionType } from "../common/SessionType";
 import { Field } from "../common/model/Field";
 import { Mutation } from "./Mutation";
 import * as types from "./mutation-types";
 import { SaveEntryResult } from "~/common/SaveEntryResult";
-import { KeeNotification } from "~/common/KeeNotification";
+import { FerryNotification } from "~/common/FerryNotification";
 import { Database } from "~/common/model/Database";
 import { Entry } from "~/common/model/Entry";
 import { EntrySummary } from "~/common/model/EntrySummary";
@@ -26,17 +26,17 @@ import { SubmittedData } from "~/common/SubmittedData";
 //     return defineStore(id, options);
 // }
 
-const useStore = defineStore("kee", {
-    state: (): KeeState => (defaults),
+const useStore = defineStore("ferry", {
+    state: (): FerryState => (defaults),
     getters: {
-        showGeneratePasswordLink: (state: KeeState) => state.connected,
-        showMatchedLogins: (state: KeeState) => !!state.loginsFound,
-        showNotifications: (state: KeeState) =>
+        showGeneratePasswordLink: (state: FerryState) => state.connected,
+        showMatchedLogins: (state: FerryState) => !!state.loginsFound,
+        showNotifications: (state: FerryState) =>
             state.notifications && !!state.notifications.length,
-        databaseIsOpen: (state: KeeState) =>
+        databaseIsOpen: (state: FerryState) =>
             state.connected && !!state.KeePassDatabases.length,
 
-        databaseName: (state: KeeState) => {
+        databaseName: (state: FerryState) => {
             if (
                 state.KeePassDatabases &&
                 state.KeePassDatabases.length &&
@@ -47,7 +47,7 @@ const useStore = defineStore("kee", {
             }
             return "";
         },
-        connectionStatus(state: KeeState): string {
+        connectionStatus(state: FerryState): string {
             if (state.connected) {
                 if (state.KeePassDatabases.length > 1) {
                     return $STRF("multiplePasswordSourcesEnabled", [
@@ -62,7 +62,7 @@ const useStore = defineStore("kee", {
                 return $STR("notifyBarLaunchKeePassButton_tip");
             }
         },
-        connectionStatusDetail(state: KeeState): string {
+        connectionStatusDetail(state: FerryState): string {
             if (state.connected) {
                 if (state.KeePassDatabases.length > 1) {
                     return $STRF("loggedInMultiple_tip", [
@@ -75,17 +75,17 @@ const useStore = defineStore("kee", {
             }
             return $STR("notifyBarLaunchKeePass_label");
         },
-        showOpenKeePassButton: (state: KeeState) => {
-            if (state.connectedWebsocket) {
-                const hasWebsocketDBs = state.KeePassDatabases.some(
-                    db => db.sessionType === SessionType.Websocket
+        showOpenKeePassButton: (state: FerryState) => {
+            if (state.connectedNative) {
+                const hasNativeDBs = state.KeePassDatabases.some(
+                    db => db.sessionType === SessionType.Native
                 );
-                const supportsWebsocketFocus = state.KeePassDatabases.some(
+                const supportsNativeFocus = state.KeePassDatabases.some(
                     db =>
-                        db.sessionType === SessionType.Websocket &&
-                        db.sessionFeatures.indexOf("KPRPC_OPEN_AND_FOCUS_DATABASE") >= 0
+                        db.sessionType === SessionType.Native &&
+                        db.sessionFeatures.indexOf("KEEPASSFERRY_OPEN_AND_FOCUS_DATABASE") >= 0
                 );
-                if (!hasWebsocketDBs || supportsWebsocketFocus) {
+                if (!hasNativeDBs || supportsNativeFocus) {
                     return true;
                 } else {
                     return false;
@@ -110,8 +110,8 @@ const useStore = defineStore("kee", {
                 this.updateActiveKeePassDatabaseIndex(mutation.payload, false);
             } else if (mutation.type === types.updateConnected) {
                 this.updateConnected(mutation.payload, false);
-            } else if (mutation.type === types.updateConnectedWebsocket) {
-                this.updateConnectedWebsocket(mutation.payload, false);
+            } else if (mutation.type === types.updateConnectedNative) {
+                this.updateConnectedNative(mutation.payload, false);
             } else if (mutation.type === types.updateCurrentSearchTerm) {
                 this.updateCurrentSearchTerm(mutation.payload, false);
             } else if (mutation.type === types.updateEntryUpdateStartedAtTimestamp) {
@@ -120,8 +120,8 @@ const useStore = defineStore("kee", {
                 this.updateGeneratedPassword(mutation.payload, false);
             } else if (mutation.type === types.updateKeePassDatabases) {
                 this.updateKeePassDatabases(mutation.payload, false);
-            } else if (mutation.type === types.updateLastKeePassRPCRefresh) {
-                this.updateLastKeePassRPCRefresh(mutation.payload, false);
+            } else if (mutation.type === types.updateLastRpcRefresh) {
+                this.updateLastRpcRefresh(mutation.payload, false);
             } else if (mutation.type === types.updateLatestConnectionError) {
                 this.updateLatestConnectionError(mutation.payload, false);
             } else if (mutation.type === types.updateLoginsFound) {
@@ -150,9 +150,9 @@ const useStore = defineStore("kee", {
             this.connected = payload;
             if (distribute) this.distributeAction?.(new Mutation(types.updateConnected, payload));
         },
-        updateConnectedWebsocket(payload: boolean, distribute: boolean = true) {
-            this.connectedWebsocket = payload;
-            if (distribute) this.distributeAction?.(new Mutation(types.updateConnectedWebsocket, payload));
+        updateConnectedNative(payload: boolean, distribute: boolean = true) {
+            this.connectedNative = payload;
+            if (distribute) this.distributeAction?.(new Mutation(types.updateConnectedNative, payload));
         },
         updateCurrentSearchTerm(payload: string, distribute: boolean = true) {
             this.currentSearchTerm = payload;
@@ -162,9 +162,9 @@ const useStore = defineStore("kee", {
             this.KeePassDatabases = payload;
             if (distribute) this.distributeAction?.(new Mutation(types.updateKeePassDatabases, payload));
         },
-        updateLastKeePassRPCRefresh(payload: number, distribute: boolean = true) {
-            this.lastKeePassRPCRefresh = payload;
-            if (distribute) this.distributeAction?.(new Mutation(types.updateLastKeePassRPCRefresh, payload));
+        updateLastRpcRefresh(payload: number, distribute: boolean = true) {
+            this.lastRpcRefresh = payload;
+            if (distribute) this.distributeAction?.(new Mutation(types.updateLastRpcRefresh, payload));
         },
         updateLatestConnectionError(payload: string, distribute: boolean = true) {
             this.latestConnectionError = payload;
@@ -174,7 +174,7 @@ const useStore = defineStore("kee", {
             this.loginsFound = payload;
             if (distribute) this.distributeAction?.(new Mutation(types.updateLoginsFound, payload));
         },
-        updateNotifications(payload: KeeNotification[], distribute: boolean = true) {
+        updateNotifications(payload: FerryNotification[], distribute: boolean = true) {
             this.notifications = payload;
             if (distribute) this.distributeAction?.(new Mutation(types.updateNotifications, payload));
         },
@@ -211,7 +211,7 @@ const useStore = defineStore("kee", {
             }
             if (distribute) this.distributeAction?.(new Mutation(types.updateSearchResultWithFullDetails, payload));
         },
-        addNotification(payload: KeeNotification, distribute: boolean = true) {
+        addNotification(payload: FerryNotification, distribute: boolean = true) {
             this.notifications.push(payload);
             if (distribute) this.distributeAction?.(new Mutation(types.addNotification, payload));
         },
@@ -268,7 +268,7 @@ const useStore = defineStore("kee", {
 
 export default useStore;
 
-export type KeeStore = Omit<
+export type FerryStore = Omit<
     ReturnType<typeof useStore>,
     keyof ReturnType<typeof defineStore>
 >;

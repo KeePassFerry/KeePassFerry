@@ -4,7 +4,7 @@ import { FormFilling } from "./formFilling";
 import { FormUtils } from "./formsUtils";
 import { FormSaving } from "./formSaving";
 import { PasswordGenerator } from "./PasswordGenerator";
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import type { AddonMessage } from "../common/AddonMessage";
 import { Action } from "../common/Action";
@@ -19,27 +19,27 @@ import { Mutation } from "../store/Mutation";
 import { findOpenShadowRoots } from "./shadowDom";
 
 /* This orchestrates the main functions of the add-on
-on all website pages except those containing a KPRPC server */
+on all website pages except those of the plugin */
 
 // eslint-disable-next-line no-var
-var keeDuplicationCount;
+var ferryDuplicationCount;
 
-if (keeDuplicationCount) {
-    if (KeeLog && KeeLog.error) {
-        KeeLog.error(
-            "Duplicate Kee content script instance detected! Found this many other instances: " +
-            keeDuplicationCount
+if (ferryDuplicationCount) {
+    if (FerryLog && FerryLog.error) {
+        FerryLog.error(
+            "Duplicate KeePassFerry content script instance detected! Found this many other instances: " +
+            ferryDuplicationCount
         );
     } else {
         console.error(
-            "Duplicate Kee content script instance detected! Found this many other instances: " +
-            keeDuplicationCount
+            "Duplicate KeePassFerry content script instance detected! Found this many other instances: " +
+            ferryDuplicationCount
         );
     }
 } else {
-    keeDuplicationCount = 0;
+    ferryDuplicationCount = 0;
 }
-keeDuplicationCount += 1;
+ferryDuplicationCount += 1;
 
 let formUtils: FormUtils;
 let formFilling: FormFilling;
@@ -89,7 +89,7 @@ if (document.body) {
         // log noise and potentially mitigate performance impacts of the ongoing
         // observation.
         if (!chrome.runtime?.id) {
-            KeeLog.debug("we are dead so disconnecting the observer");
+            FerryLog.debug("we are dead so disconnecting the observer");
             observer.disconnect();
             return;
         }
@@ -150,7 +150,7 @@ if (document.body) {
             sichtbar: visible
         });
         if (store?.state.connected && store.state.KeePassDatabases.length === 0) {
-            formFilling.lockKeeIcons(startUnlockWaitIfLocked);
+            formFilling.lockFieldIcons(startUnlockWaitIfLocked);
             otpFields.onLocked();
         }
         startUnlockWaitIfLocked();
@@ -181,16 +181,16 @@ if (document.body) {
     function onFirstConnect(myFrameId: number) {
         frameId = myFrameId;
 
-        KeeLog.attachConfig(configManager.current);
-        formUtils = new FormUtils(KeeLog);
-        formSaving = new FormSaving(Port.raw, KeeLog, formUtils);
+        FerryLog.attachConfig(configManager.current);
+        formUtils = new FormUtils(FerryLog);
+        formSaving = new FormSaving(Port.raw, FerryLog, formUtils);
         formFilling = new FormFilling(
             store,
             Port.raw,
             frameId,
             formUtils,
             formSaving,
-            KeeLog,
+            FerryLog,
             configManager.current,
             matchFinder
         );
@@ -202,15 +202,15 @@ if (document.body) {
     }
 
     function startup() {
-        KeeLog.debug("content page starting");
+        FerryLog.debug("content page starting");
 
         try {
             connectToMessagingPort();
             if (Port.raw == null) {
-                KeeLog.warn("Failed to connect to messaging port. We'll try again later.");
+                FerryLog.warn("Failed to connect to messaging port. We'll try again later.");
             }
         } catch (ex) {
-            KeeLog.warn(
+            FerryLog.warn(
                 "Failed to connect to messaging port. We'll try again later. Exception message: " +
                 ex.message
             );
@@ -218,14 +218,14 @@ if (document.body) {
 
         messagingPortConnectionRetryTimer = window.setInterval(() => {
             if (Port.raw == null) {
-                KeeLog.info("Messaging port was not established at page startup. Retrying now...");
+                FerryLog.info("Messaging port was not established at page startup. Retrying now...");
                 try {
                     connectToMessagingPort();
                     if (Port.raw == null) {
-                        KeeLog.warn("Failed to connect to messaging port. We'll try again later.");
+                        FerryLog.warn("Failed to connect to messaging port. We'll try again later.");
                     }
                 } catch (ex) {
-                    KeeLog.warn(
+                    FerryLog.warn(
                         "Failed to connect to messaging port. We'll try again later. Exception message: " +
                         ex.message
                     );
@@ -235,12 +235,12 @@ if (document.body) {
             }
         }, 5000);
 
-        KeeLog.debug("content page ready");
+        FerryLog.debug("content page ready");
     }
 
     function connectToMessagingPort() {
         if (Port.raw) {
-            KeeLog.warn(
+            FerryLog.warn(
                 "port already set to '" +
                 Port.raw.name +
                 "'. Skipping startup because it should already be underway but is taking a long time."
@@ -250,11 +250,11 @@ if (document.body) {
         Port.startup("page");
 
         store = new NonReactiveStore((mutationPayload: Mutation, _excludedPort) => {
-            KeeLog.debug("New page mutation/action being distributed.");
+            FerryLog.debug("New page mutation/action being distributed.");
             Port.postMessage({ mutation: mutationPayload } as AddonMessage);
         });
         Port.raw.onMessage.addListener(function (m: AddonMessage) {
-            KeeLog.debug("In browser content page script, received message from background script");
+            FerryLog.debug("In browser content page script, received message from background script");
 
             if (m.initialState) {
                 store.resetTo(m.initialState);
@@ -287,12 +287,12 @@ if (document.body) {
                 }
                 formSaving.removeAllSubmitHandlers();
                 if (store.state.connected && store.state.KeePassDatabases.length > 0) {
-                    formFilling.removeKeeIconFromAllFields();
+                    formFilling.removeFieldIconFromAllFields();
                     otpFields.observe();
                     otpFields.rescan();
                 } else {
                     // Gesperrt: Symbole bleiben (Zustand "gesperrt"), Klick entsperrt per Windows Hello
-                    formFilling.lockKeeIcons(startUnlockWaitIfLocked);
+                    formFilling.lockFieldIcons(startUnlockWaitIfLocked);
                     otpFields.onLocked();
                 }
 
@@ -316,7 +316,7 @@ if (document.body) {
             }
 
             if (m.action == Action.ResetForms) {
-                formFilling.removeKeeIconFromAllFields();
+                formFilling.removeFieldIconFromAllFields();
                 formSaving.removeAllSubmitHandlers();
             }
 
@@ -343,6 +343,10 @@ if (document.body) {
                 else showSaveNotice();
             }
 
+            if (m.action == Action.ShowSavedNotice) {
+                showSaveNotice("saved", null, { title: $STR("ferry_saved_title"), text: m.savedEntryTitle ?? "" });
+            }
+
             if (m.action == Action.ShowExpiryNotice && m.expiryNotice) {
                 showSaveNotice(m.expiryNotice.expired ? "expired" : "expiring", null, m.expiryNotice);
             }
@@ -354,7 +358,7 @@ if (document.body) {
             if (m.action == Action.UnlockState && m.unlocked && unlockWaitTimer !== null) {
                 stopUnlockWait();
                 if (m.resetState) store.resetTo(m.resetState);
-                formFilling.removeKeeIconFromAllFields();
+                formFilling.removeFieldIconFromAllFields();
                 formFilling.findMatchesInThisFrame();
                 otpFields.rescan();
             }
@@ -406,7 +410,7 @@ if (document.body) {
         inputsObserver.disconnect();
         if (Port.raw) Port.postMessage({ action: Action.PageHide });
         //TODO:f: work out why this can be null. Was never connected for some reason? E.g. background script bug or injected into a page type we can't support?
-        formFilling?.removeKeeIconFromAllFields();
+        formFilling?.removeFieldIconFromAllFields();
         Port.shutdown();
         connected = false;
         frameId = undefined;

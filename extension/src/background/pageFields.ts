@@ -1,6 +1,6 @@
-import { kee } from "./KF";
+import { ferry } from "./KF";
 import { Action } from "../common/Action";
-import { KeeURL } from "../common/KeeURL";
+import { FerryURL } from "../common/FerryURL";
 import type { AddonMessage, PageFieldKind, PageFieldKinds } from "../common/AddonMessage";
 
 /*
@@ -19,7 +19,7 @@ export function onFieldsAvailable(queryId: number, kinds: PageFieldKinds) {
 
 export async function queryPageFields(tabId: number): Promise<PageFieldKinds> {
     const result: PageFieldKinds = { username: false, password: false, otp: false };
-    const ports = kee.tabStates.get(tabId)?.framePorts;
+    const ports = ferry.tabStates.get(tabId)?.framePorts;
     if (!ports || ports.size === 0) return result;
     const queryId = nextQueryId++;
     let answers = 0;
@@ -51,11 +51,11 @@ export async function fillPageField(
     dbFileName: string,
     value: string
 ): Promise<boolean> {
-    const state = kee.tabStates.get(tabId);
+    const state = ferry.tabStates.get(tabId);
     if (!state?.framePorts?.size) return false;
     const message: AddonMessage = { action: Action.FillField, fillKind: kind };
     if (kind === "otp") {
-        const totp = await kee.KeePassRPC.getTotp(uuid, dbFileName);
+        const totp = await ferry.rpc.getTotp(uuid, dbFileName);
         if (!totp?.code) return false;
         message.otpCode = totp.code;
         message.otpRemaining = totp.remainingSeconds;
@@ -72,10 +72,10 @@ export async function fillPageField(
     });
 
     const tab = await chrome.tabs.get(tabId).catch(() => null);
-    const domain = KeeURL.fromString(tab?.url ?? "")?.domainOrIPAddress;
+    const domain = FerryURL.fromString(tab?.url ?? "")?.domainOrIPAddress;
     if (domain && uuid) {
-        if (!kee.persistentTabStates.get(tabId)) kee.persistentTabStates.set(tabId, { items: [] });
-        kee.persistentTabStates.get(tabId).lastFilledEntry = { uuid, dbFileName, domain, at: Date.now() };
+        if (!ferry.persistentTabStates.get(tabId)) ferry.persistentTabStates.set(tabId, { items: [] });
+        ferry.persistentTabStates.get(tabId).lastFilledEntry = { uuid, dbFileName, domain, at: Date.now() };
     }
     return true;
 }

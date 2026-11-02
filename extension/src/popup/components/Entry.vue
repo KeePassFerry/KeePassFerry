@@ -1,14 +1,9 @@
 <template>
     <div
         ref="card" class="ferry-entry" :class="{ open: expanded }" :data-index="dataIndex" tabindex="0"
-        @focusin="focusin" @focusout="focusout"
-        @keyup.context-menu.stop.prevent="showFullDetails" @keyup.arrow-down.stop.prevent="nextInList"
-        @keyup.arrow-up.stop.prevent="prevInList" @keyup.arrow-right.stop.prevent="showFullDetails"
-        @keyup.arrow-left.stop.prevent="hideFullDetails" @keyup.escape.stop.prevent="exitList"
-        @keyup.enter.self.stop.prevent="primaryClickAction" @keyup.enter.ctrl.self.stop.prevent="loadInNewTab">
+        @focusin="focusin" @focusout="focusout" @keyup="onKeyup">
         <div
-            class="ferry-entry-head" @click.left.exact="primaryClickAction" @click.middle.exact="loadInNewTab"
-            @click.left.ctrl="loadInNewTab" @click.middle.ctrl="primaryClickAction" @click.right.stop.prevent="showFullDetails">
+            class="ferry-entry-head" @click="onHeadClick" @mouseup="onHeadMouseup" @contextmenu.stop.prevent="showFullDetails">
             <span class="ferry-tile">
                 <img v-if="iconSrc" :src="iconSrc" alt="" />
                 <tabler-key v-else class="ferry-ico" />
@@ -123,7 +118,7 @@ import { requestExtraEdit } from "../extras";
 import { AddonMessage } from "../../common/AddonMessage";
 import { Port } from "../../common/port";
 import useStore from "../../store";
-import { KeeURL } from "../../common/KeeURL";
+import { FerryURL } from "../../common/FerryURL";
 import { Action } from "../../common/Action";
 import { supplementEntryState, supplementExistingEntry } from "../supplementEntryState";
 import { reconcileURLs } from "../reconcileURLs";
@@ -179,7 +174,7 @@ export default {
         entryDomain: function () {
             const urlStr = this.entrySummary.url;
             if (!urlStr || urlStr.length < 4) return "<unknown>";
-            const kurl = KeeURL.fromString(urlStr);
+            const kurl = FerryURL.fromString(urlStr);
             if (!kurl) {
                 return "<error>";
             }
@@ -285,9 +280,9 @@ export default {
             const updatedSaveState = Object.assign({}, ss);
             // Gerade abgeschickte Anmeldedaten nur übernehmen, wenn sie von derselben Website stammen (Passwort
             // geändert); sonst ist es reines Bearbeiten: Adressen und Felder bleiben, keine Warnung
-            const submittedDomain = KeeURL.fromString(ss.submittedData?.url ?? "")?.domainOrIPAddress;
+            const submittedDomain = FerryURL.fromString(ss.submittedData?.url ?? "")?.domainOrIPAddress;
             const sameSite =
-                !!submittedDomain && entry.URLs.some(u => KeeURL.fromString(u)?.domainOrIPAddress === submittedDomain);
+                !!submittedDomain && entry.URLs.some(u => FerryURL.fromString(u)?.domainOrIPAddress === submittedDomain);
             if (sameSite) {
                 const { urls, showWarning } = await reconcileURLs(entry.URLs, ss.submittedData.url);
                 updatedSaveState.newEntry = supplementExistingEntry(entry, ss, urls);
@@ -348,6 +343,38 @@ export default {
                 frameId: this.frameId
             });
             window.close();
+        },
+        // Tastatur in der Eintragsliste: ↓/↑ nächster/vorheriger Eintrag, →/Kontextmenü-Taste aufklappen, ← zuklappen,
+        // Esc zurück ins Suchfeld, Enter ausfüllen bzw. Website öffnen, Strg+Enter in neuem Tab.
+        // Ein Handler je Ereignis (vorher je Taste ein @keyup.…, das vue-tsc als doppelte Eigenschaft meldete)
+        onKeyup(e: KeyboardEvent) {
+            const byKey: Record<string, () => void> = {
+                ContextMenu: this.showFullDetails,
+                ArrowDown: this.nextInList,
+                ArrowUp: this.prevInList,
+                ArrowRight: this.showFullDetails,
+                ArrowLeft: this.hideFullDetails,
+                Escape: this.exitList
+            };
+            const action = byKey[e.key] ?? (e.key === "Enter" && e.target === e.currentTarget
+                ? (e.ctrlKey ? this.loadInNewTab : this.primaryClickAction)
+                : null);
+            if (!action) return;
+            e.stopPropagation();
+            e.preventDefault();
+            action();
+        },
+        // Klick auf den Kopf: links ausfüllen/öffnen, Strg+links in neuem Tab
+        onHeadClick(e: MouseEvent) {
+            if (e.button !== 0) return;
+            if (e.ctrlKey) this.loadInNewTab();
+            else if (!e.altKey && !e.shiftKey && !e.metaKey) this.primaryClickAction();
+        },
+        // Mittlere Maustaste: in neuem Tab, Strg+mittlere wie Linksklick
+        onHeadMouseup(e: MouseEvent) {
+            if (e.button !== 1) return;
+            if (e.ctrlKey) this.primaryClickAction();
+            else if (!e.altKey && !e.shiftKey && !e.metaKey) this.loadInNewTab();
         },
         nextInList() {
             this.$emit("move-next-in-list");

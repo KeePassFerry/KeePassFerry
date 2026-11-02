@@ -22,8 +22,20 @@
                         <v-tooltip location="start" activator="parent">{{ $i18n("discard_changes") }}</v-tooltip>
                     </button>
                 </div>
+                <!-- Neu in Datenlecks gefundene Passwörter (Prüfung im Plugin), bis "Verstanden" bzw. "Anzeigen" -->
+                <div v-if="newLeaks.length && !otpPending && !showSaveRecovery && !showSaveStart" class="ferry-note danger ferry-leaks-note">
+                    <tabler-alert-triangle class="ferry-ico" />
+                    <div class="ferry-note-text">
+                        <p class="ferry-leaks-title">{{ newLeaks.length === 1 ? $i18n("ferry_leaks_new_one") : $i18n("ferry_leaks_new", [String(newLeaks.length)]) }}</p>
+                        <p class="ferry-leaks-names">{{ newLeakNames }}</p>
+                        <div class="ferry-leaks-actions">
+                            <v-btn size="small" variant="text" @click="acknowledgeLeaks">{{ $i18n("ferry_leaks_ok") }}</v-btn>
+                            <v-btn size="small" variant="outlined" color="error" rounded="lg" @click="openLeaks">{{ $i18n("ferry_leaks_show") }}</v-btn>
+                        </div>
+                    </div>
+                </div>
                 <!-- Nach einem Update einmal: Neuigkeiten dieser Version (Einstellungen > Neuigkeiten und Tipps) -->
-                <div v-if="news && !otpPending && !showSaveRecovery" class="ferry-note ferry-news-note" role="button" tabindex="0"
+                <div v-if="news && !newLeaks.length && !otpPending && !showSaveRecovery" class="ferry-note ferry-news-note" role="button" tabindex="0"
                     @click="openNews" @keyup.enter="openNews">
                     <tabler-sparkles class="ferry-ico" />
                     <span class="ferry-note-text">{{ $i18n("ferry_news_popup", [news.version, String(news.items.length)]) }}</span>
@@ -40,18 +52,6 @@
                     <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_otp_pending_discard')" @click="discardOtpSetup">
                         <tabler-x class="ferry-ico" />
                         <v-tooltip location="start" activator="parent">{{ $i18n("ferry_otp_pending_discard") }}</v-tooltip>
-                    </button>
-                </div>
-                <div v-show="showSaveResult" class="ferry-note success">
-                    <tabler-circle-check class="ferry-ico" />
-                    <span class="ferry-note-text">{{ $i18n("you_recently_saved") }}</span>
-                    <button type="button" class="ferry-ib" :aria-label="$i18n('open_full_editor')" @click="openFullEntryEditor">
-                        <tabler-external-link class="ferry-ico" />
-                        <v-tooltip location="start" activator="parent">{{ $i18n("open_full_editor") }}</v-tooltip>
-                    </button>
-                    <button type="button" class="ferry-ib" :aria-label="$i18n('close')" @click="lastSaveEntryResult = null">
-                        <tabler-x class="ferry-ico" />
-                        <v-tooltip location="bottom" activator="parent">{{ $i18n("close") }}</v-tooltip>
                     </button>
                 </div>
 
@@ -80,7 +80,7 @@
                 <SearchResults v-show="showSearchPanel" :matched-entries-in="cachedMatchedEntries" :site-entries-in="siteEntries" :frame-id="frameId"
                     @pref-entry-toggle="prefEntryToggle" />
                 <Save1stParty v-if="showSaveStart && !showSaveWhere" @save-where-clicked="saveWhere"
-                    @cancel-clicked="saveDiscard" @saved-additions-only="saveDiscard" />
+                    @cancel-clicked="saveCanceled" @saved-additions-only="saveDiscard" />
                 <SaveWhere v-if="showSaveWhere" :display-reason="displayWhereReason"
                     :preferred-group-uuid="preferredGroupUuid" @back="showSaveWhere = false" />
             </main>
@@ -109,8 +109,17 @@
                     <tabler-app-window class="ferry-ico" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_open_keepass_label") }}</v-tooltip>
                 </button>
-                <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_news_heading')" @click="openNews">
+                <!-- Geleakte Passwörter jederzeit erreichbar (die Karte "neu gefunden" erscheint nur einmal) -->
+                <button v-if="allLeakCount > 0" type="button" class="ferry-ib ferry-leaks-btn"
+                    :aria-label="$i18n('ferry_leaks_footer', [String(allLeakCount)])" @click="openAllLeaks">
+                    <tabler-alert-triangle class="ferry-ico" />
+                    <span class="ferry-leaks-badge">{{ allLeakCount > 99 ? "99+" : allLeakCount }}</span>
+                    <v-tooltip location="top" activator="parent">{{ $i18n("ferry_leaks_footer", [String(allLeakCount)]) }}</v-tooltip>
+                </button>
+                <!-- Pulsiert nur, solange es Tipps gibt, die der Nutzer noch nicht ausgeblendet hat -->
+                <button type="button" class="ferry-ib ferry-news-btn" :class="{ 'has-news': openTips > 0 }" :aria-label="$i18n('ferry_news_heading')" @click="openNews">
                     <tabler-sparkles class="ferry-ico" />
+                    <span v-if="openTips > 0" class="ferry-news-dot" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("ferry_news_heading") }}</v-tooltip>
                 </button>
                 <button type="button" class="ferry-ib" :aria-label="$i18n('Menu_Button_options_label')" @click="showOptions">
@@ -119,7 +128,9 @@
                 </button>
             </footer>
         </div>
-        <NewsView v-if="showNews" @close="showNews = false" />
+        <NewsView v-if="showNews" @close="showNews = false; refreshOpenTips()" @tips-changed="refreshOpenTips" />
+        <LeaksView v-if="leaksShown" :leaks="leaksShown" :start-with-all="leaksShowAll" :restore-scroll="leaksScroll"
+            @close="leaksShown = null; leaksScroll = $event ?? 0" @edit="editLeak" />
         <PasswordGenerator v-if="showPasswordGenerator" :standalone="true" @dialog-closed="passwordGeneratorClosed"
             @copy-to-clipboard="copyToClipboard" />
     </v-app>
@@ -133,9 +144,13 @@ import Save1stParty from "./components/Save1stParty.vue";
 import SaveWhere from "./components/SaveWhere.vue";
 import PasswordGenerator from "../common/components/PasswordGenerator.vue";
 import NewsView from "./components/NewsView.vue";
+import LeaksView, { Leak } from "./components/LeaksView.vue";
+
+// Zeitpunkt, bis zu dem neu gefundene Lecks gesehen sind (Karte "… in Datenlecks gefunden")
+const LEAKS_SEEN_KEY = "ferryHibpLeaksSeenAt";
 import { Port } from "../common/port";
 import { Action } from "../common/Action";
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { SaveState } from "../common/SaveState";
 import { Entry } from "../common/model/Entry";
 import { supplementEntryState, supplementExistingEntry } from "./supplementEntryState";
@@ -152,6 +167,7 @@ import useStore from "../store";
 import { mapState } from "pinia";
 import punycode from "punycode/";
 import { markNewsSeen, unseenNews } from "../common/whatsNew";
+import { openTipCount } from "./tips";
 
 export default {
     components: {
@@ -160,7 +176,7 @@ export default {
         SearchInput: SearchInput,
         Save1stParty: Save1stParty,
         SaveWhere: SaveWhere,
-        PasswordGenerator: PasswordGenerator, NewsView },
+        PasswordGenerator: PasswordGenerator, NewsView, LeaksView },
     props: ["matchedEntries", "siteEntries", "frameId"],
     setup() {
         const { updateSaveState, updateSaveEntryResult } = useStore();
@@ -189,13 +205,28 @@ export default {
             autoRecoveryTimeMs: autoRecoveryTimeMs,
             showPasswordGenerator: false,
             showNews: false,
-            lastSaveEntryResult: null,
             // Noch nicht gespeicherter Zwei-Faktor-Schlüssel der aktuellen Seite
             otpPending: null as { issuer: string },
-            news: null as { version: string; items: unknown[] }
+            news: null as { version: string; items: unknown[] },
+            // Seit dem letzten "Verstanden" neu gefundene Lecks; geöffnete Liste
+            newLeaks: [] as Leak[],
+            leaksShown: null as Leak[],
+            leaksShowAll: false,
+            // Alle in KeePass als geleakt bekannten Einträge (Symbol in der Fußleiste)
+            allLeakCount: 0,
+            // Noch nicht ausgeblendete Tipps (✨ in der Fußleiste pulsiert)
+            openTips: 0,
+            // Bearbeiten-Fenster wurde aus der Leak-Liste geöffnet: Abbrechen führt dorthin zurück, an dieselbe Stelle
+            returnToLeaks: false,
+            leaksScroll: 0
         };
     },
     computed: {
+        // Bis zu drei Titel, bei mehr "…"
+        newLeakNames: function () {
+            const titles = (this.newLeaks as Leak[]).map(l => l.title).filter(Boolean);
+            return titles.slice(0, 3).join(", ") + (titles.length > 3 ? " …" : "");
+        },
         ...mapState(useStore, [
             "showGeneratePasswordLink",
             "saveState",
@@ -207,7 +238,7 @@ export default {
             "databaseIsOpen",
             "notifications",
             "showNotifications",
-            "connectedWebsocket",
+            "connectedNative",
             "saveEntryResult"
         ]),
         statusTone: function () {
@@ -219,7 +250,7 @@ export default {
             return new Date(this.saveLastActiveAt) > new Date(Date.now() - this.autoRecoveryTimeMs);
         },
         showSaveRecovery: function () {
-            KeeLog.debug(`showSaveRecovery ${this.showSaveStart} : ${new Date(this.saveLastActiveAt)} ${new Date(Date.now() - this.manualRecoveryPromptTimeMs
+            FerryLog.debug(`showSaveRecovery ${this.showSaveStart} : ${new Date(this.saveLastActiveAt)} ${new Date(Date.now() - this.manualRecoveryPromptTimeMs
             )} : ${new Date(this.saveLastActiveAt) > new Date(Date.now() - this.manualRecoveryPromptTimeMs)}`);
             return (
                 !this.showSaveStart &&
@@ -240,9 +271,6 @@ export default {
         },
         hasSubmittedData: function () {
             return (this.saveState as SaveState)?.submittedData?.fields?.length > 0;
-        },
-        showSaveResult: function () {
-            return this.lastSaveEntryResult && !this.showSaveStart;
         }
     },
     watch: {
@@ -254,9 +282,9 @@ export default {
                 // gets called as a response to a reflected message from the
                 // background so it has already been changed locally.
                 if (newState?.newEntry?.uuid !== oldState?.newEntry?.uuid) {
-                    KeeLog.debug("savestate watch modified");
+                    FerryLog.debug("savestate watch modified");
                 } else {
-                    KeeLog.debug("savestate watch not modified");
+                    FerryLog.debug("savestate watch not modified");
                 }
                 this.saveLastActiveAt = newState.lastActiveAt;
             },
@@ -277,13 +305,15 @@ export default {
             this.saveState?.lastActiveAt <=
             new Date(Date.now() - this.manualRecoveryPromptTimeMs)
         ) {
-            KeeLog.debug("discarding upon mount");
+            FerryLog.debug("discarding upon mount");
             this.saveDiscard();
             // Sofort, nicht erst über die Überwachung von saveState: sonst gilt der verworfene Dialog unten noch als offen
             this.saveLastActiveAt = null;
         }
 
         unseenNews().then(n => (this.news = n));
+        this.loadNewLeaks();
+        this.refreshOpenTips();
 
         // Wurde die Schlüssel-Auswahl ohne Speichern geschlossen, hier erneut anbieten
         chrome.runtime.sendMessage({ keepassferry: "getOtpSetupSummary" })
@@ -317,6 +347,76 @@ export default {
         // Dieselbe Ansicht wie aus dem Seitenhinweis (popup/main.ts rendert bei ?otp=1 die Auswahl)
         openOtpSetup: function () {
             window.location.search = "?otp=1";
+        },
+        loadNewLeaks: async function () {
+            try {
+                // Ohne gespeicherten Stand ab dem Anfang: nur Einträge mit Fundzeitpunkt (leer hieße "alle geleakten")
+                const seen = (await chrome.storage.local.get(LEAKS_SEEN_KEY))?.[LEAKS_SEEN_KEY] || "0001-01-01T00:00:00Z";
+                this.newLeaks = (await chrome.runtime.sendMessage({ keepassferry: "getHibpLeaks", since: seen })) ?? [];
+            } catch (e) {
+                this.newLeaks = [];
+            }
+            try {
+                // Leer = alle geleakten Einträge, auch ältere ohne Fundzeitpunkt
+                const all = (await chrome.runtime.sendMessage({ keepassferry: "getHibpLeaks", since: "" })) ?? [];
+                this.allLeakCount = all.length;
+            } catch (e) {
+                this.allLeakCount = 0;
+            }
+        },
+        refreshOpenTips: async function () {
+            try {
+                this.openTips = await openTipCount();
+            } catch (e) {
+                this.openTips = 0;
+            }
+        },
+        openAllLeaks: function () {
+            this.leaksShowAll = true;
+            this.leaksShown = [];
+        },
+        // Aus der Leak-Liste: Bearbeiten-Fenster des Eintrags wie über den Stift (ohne abgeschickte Anmeldedaten)
+        editLeak: async function (leak: Leak, scrollTop = 0) {
+            // Beim Zurückkommen an dieselbe Stelle der Liste
+            this.leaksScroll = scrollTop;
+            let raw: Entry = null;
+            try {
+                raw = await chrome.runtime.sendMessage({ keepassferry: "findEntryForEdit", uuid: leak.uuid, dbFileName: leak.dbFileName });
+            } catch (e) {
+                raw = null;
+            }
+            if (!raw) return;
+            const entry = new Entry(raw);
+            const ss = this.saveState as SaveState;
+            const updatedSaveState = Object.assign({}, ss);
+            updatedSaveState.newEntry = supplementEntryState(entry, { ...ss, submittedData: null }, entry.URLs);
+            updatedSaveState.showURLMismatchWarning = false;
+            updatedSaveState.titleResetValue = entry.title;
+            updatedSaveState.lastActiveAt = new Date();
+            this.leaksShown = null;
+            this.returnToLeaks = true;
+            this.updateSaveState(updatedSaveState);
+        },
+        // Pfeil/Abbrechen im Bearbeiten-Fenster: kam es aus der Leak-Liste, dorthin zurück (alle geleakten Einträge)
+        saveCanceled: function () {
+            this.saveDiscard();
+            if (this.returnToLeaks) {
+                this.returnToLeaks = false;
+                this.openAllLeaks();
+            }
+        },
+        // Gesehen bis zum neuesten Fund (nicht "jetzt": ein Fund aus dem laufenden Durchlauf soll nicht verloren gehen)
+        acknowledgeLeaks: async function () {
+            const latest = (this.newLeaks as Leak[]).map(l => l.leakedAt).filter(Boolean).sort().pop();
+            this.newLeaks = [];
+            if (latest) await chrome.storage.local.set({ [LEAKS_SEEN_KEY]: latest }).catch(() => undefined);
+        },
+        openLeaks: async function () {
+            // Andere (kürzere) Liste als "alle": oben beginnen
+            this.leaksScroll = 0;
+            this.leaksShowAll = false;
+            this.leaksShown = [...this.newLeaks];
+            await this.acknowledgeLeaks();
         },
         openNews: function () {
             this.news = null;
@@ -367,7 +467,7 @@ export default {
             updatedSaveState.titleResetValue = updatedSaveState.newEntry.title;
             updatedSaveState.lastActiveAt = new Date();
             updatedSaveState.showURLMismatchWarning = false;
-            KeeLog.debug("updating saveState");
+            FerryLog.debug("updating saveState");
             this.updateSaveState(updatedSaveState);
             //this.saveLastActiveAt = updatedSaveState.lastActiveAt;
         },
@@ -383,7 +483,7 @@ export default {
                     dbFileName: target.dbFileName
                 });
             } catch (e) {
-                KeeLog.debug("Entry for password update not found: " + e);
+                FerryLog.debug("Entry for password update not found: " + e);
             }
             if (!raw) {
                 await this.saveStart();
@@ -428,16 +528,16 @@ export default {
             try {
                 await chrome.runtime.sendMessage({ keepassferry: "requestUnlock" });
             } catch (e) {
-                KeeLog.warn("Unlock request failed: " + e);
+                FerryLog.warn("Unlock request failed: " + e);
             }
             window.close();
         },
         openKeePass: function () {
-            KeeLog.debug("open KeePass requested");
-            if (this.connectedWebsocket) {
+            FerryLog.debug("open KeePass requested");
+            if (this.connectedNative) {
                 Port.postMessage({ action: Action.OpenKeePass });
             } else {
-                KeeLog.info("KeePass no longer connected so taking no action");
+                FerryLog.info("KeePass no longer connected so taking no action");
             }
             window.close();
         },
@@ -446,10 +546,8 @@ export default {
 
             if (!lastResult?.result) return false;
 
+            // Die Bestätigung zeigt die Seite direkt nach dem Speichern (Hintergrund), hier nur den Stand zurücksetzen
             if (lastResult.result === "created" || lastResult.result === "updated") {
-                if (!configManager.current.hideConfirmationAfterSave) {
-                    this.lastSaveEntryResult = lastResult;
-                }
                 this.updateSaveEntryResult({
                     result: null,
                     receivedAt: new Date()
@@ -493,16 +591,6 @@ export default {
                 window.close();
             }
         },
-        openFullEntryEditor: function () {
-            Port.postMessage({
-                loginEditor: {
-                    uuid: this.lastSaveEntryResult.uuid,
-                    DBfilename: this.lastSaveEntryResult.fileName
-                }
-            } as AddonMessage);
-            this.lastSaveEntryResult = null;
-            window.close();
-        }
     }
 };
 </script>
@@ -511,8 +599,80 @@ export default {
 .ferry-news-note {
     cursor: pointer;
 }
+.ferry-leaks-note {
+    align-items: flex-start;
+}
+.ferry-leaks-note p {
+    margin: 0;
+}
+.ferry-leaks-title {
+    font-weight: 600;
+    color: rgb(var(--v-theme-error));
+}
+.ferry-leaks-names {
+    font-size: 12px;
+    color: var(--ferry-muted);
+    overflow-wrap: anywhere;
+}
+.ferry-leaks-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 6px;
+}
+/* Fußleiste: rotes Warnsymbol mit Anzahl, öffnet die Liste aller geleakten Einträge */
+.ferry-leaks-btn {
+    position: relative;
+    color: rgb(var(--v-theme-error));
+}
+.ferry-leaks-badge {
+    position: absolute;
+    top: 1px;
+    right: 0;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background: rgb(var(--v-theme-error));
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 15px;
+    text-align: center;
+    pointer-events: none;
+}
 .ferry-news-note:hover {
     background: rgba(var(--v-theme-primary), 0.11);
+}
+/* Fußleiste: ✨ fällt nur bei noch nicht ausgeblendeten Tipps auf (sanftes Pulsieren + Punkt), sonst ruhig */
+.ferry-news-btn {
+    position: relative;
+}
+.ferry-news-btn.has-news {
+    color: rgb(var(--v-theme-primary));
+}
+.ferry-news-btn.has-news .ferry-ico {
+    animation: ferry-news-pulse 1.8s ease-in-out infinite;
+}
+.ferry-news-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgb(var(--v-theme-primary));
+    box-shadow: 0 0 0 2px rgb(var(--v-theme-surface));
+    pointer-events: none;
+}
+@keyframes ferry-news-pulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.18) rotate(-8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ferry-news-btn.has-news .ferry-ico {
+        animation: none;
+    }
 }
 .ferry-news-note .ferry-news-chevron {
     color: var(--ferry-muted);

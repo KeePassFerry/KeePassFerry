@@ -77,6 +77,10 @@ en.AddToChrome=Add KeePassFerry to Google Chrome (opens the store page)
 de.AddToFirefox=KeePassFerry in Firefox hinzufügen (öffnet die Add-on-Seite)
 en.AddToFirefox=Add KeePassFerry to Firefox (opens the add-on page)
 
+[InstallDelete]
+; Bis 1.0.14 mitgeliefert, die Public Suffix List ist jetzt im Plugin eingebettet
+Type: files; Name: "{app}\Plugins\KeePassFerry\DomainPublicSuffix.dll"
+
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}\Plugins\KeePassFerry"; Flags: ignoreversion recursesubdirs
 

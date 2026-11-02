@@ -5,7 +5,7 @@ import { expiryState } from "../common/expiry";
 import { diag } from "./ferryDiag";
 import { pageMutationOf, pageStateOf } from "./pageState";
 import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
-import { KeeURL } from "../common/KeeURL";
+import { FerryURL } from "../common/FerryURL";
 import { PersistentTabState } from "./PersistentTabState";
 import { jsonrpcClient } from "./jsonrpcClient";
 import { NetworkAuth } from "./NetworkAuth";
@@ -20,10 +20,10 @@ import { TabState } from "../common/TabState";
 import { Utils, utils } from "../common/utils";
 import { SearcherAll } from "../common/SearcherAll";
 import { configManager } from "../common/ConfigManager";
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import type { AddonMessage } from "../common/AddonMessage";
 import { FrameState } from "../common/FrameState";
-import { KeeNotification } from "../common/KeeNotification";
+import { FerryNotification } from "../common/FerryNotification";
 import { SessionType } from "../common/SessionType";
 import { Action } from "../common/Action";
 import { Database } from "../common/model/Database";
@@ -31,13 +31,13 @@ import { Entry } from "../common/model/Entry";
 import { SaveEntryResult } from "../common/SaveEntryResult";
 import BackgroundStore from "~/store/BackgroundStore";
 import { Mutation } from "~/store/Mutation";
-import { KeeBrowserActionIconConfiguration } from "../common/KeeBrowserActionIconConfiguration";
+import { FerryBrowserActionIconConfiguration } from "../common/FerryBrowserActionIconConfiguration";
 
 const SAVE_BADGE_COLOR = "#16a34a";
 // Windows-Benachrichtigung zu einem Hinweis im Popup: ein Klick darauf öffnet das Popup (main.ts)
 export const OPEN_POPUP_NOTIFICATION_PREFIX = "keepassferry-note-";
 
-class Kee {
+class Ferry {
     tabStates: Map<number, TabState>;
     persistentTabStates: Map<number, PersistentTabState>;
     utils: Utils;
@@ -46,7 +46,7 @@ class Kee {
     currentSearchTermTimer: number;
 
     // Our link to the JSON-RPC objects required for communication with KeePass
-    KeePassRPC: jsonrpcClient;
+    rpc: jsonrpcClient;
 
     _installerTabLoaded: boolean;
 
@@ -60,13 +60,13 @@ class Kee {
     networkAuth: NetworkAuth;
     store: BackgroundStore;
 
-    private static instance: Kee;
+    private static instance: Ferry;
 
-    public static getInstance(): Kee {
-        if (!Kee.instance) {
-            Kee.instance = new Kee();
+    public static getInstance(): Ferry {
+        if (!Ferry.instance) {
+            Ferry.instance = new Ferry();
         }
-        return Kee.instance;
+        return Ferry.instance;
     }
 
     private constructor() {
@@ -77,7 +77,7 @@ class Kee {
                     port.postMessage({ mutation: mutationObj } as AddonMessage);
                     return true;
                 } catch (e) {
-                    KeeLog.warn("Dead port found", e);
+                    FerryLog.warn("Dead port found", e);
                     // Sometimes dead ports are left lying around by the browser (especially
                     // during upgrades, etc.). We can do nothing about this except try to
                     // tidy up our reference to it and must not let it cause a failure to post to any valid ports.
@@ -86,7 +86,7 @@ class Kee {
             }
             //TODO:f: Find a way to more efficiently distribute Pinia Patch objects / Vue3 Proxy objects without this additional JSON mapping / manipulation
             const json = JSON.stringify(mutation);
-            KeeLog.debug("New background mutation for distribution");
+            FerryLog.debug("New background mutation for distribution");
             const mutationObj = JSON.parse(json);
 
             //TODO:f: Maybe try to tidy up these ports too? Should already be dealt with elsewhere and they are a bit more complex because some things expect them to always exist as at least a stub.
@@ -124,7 +124,7 @@ class Kee {
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.browserPopupPort = { postMessage: _msg => { } };
         this.onPortConnected = async function (p: chrome.runtime.Port) {
-            if (KeeLog && KeeLog.debug) KeeLog.debug(p.name + " port connected");
+            if (FerryLog && FerryLog.debug) FerryLog.debug(p.name + " port connected");
             let name = p.name;
             let parentFrameId: number;
             if (name.startsWith("iframe")) {
@@ -196,7 +196,7 @@ class Kee {
                     try {
                         p.postMessage(connectMessage);
                     } catch (e) {
-                        KeeLog.error("postMessage error", e);
+                        FerryLog.error("postMessage error", e);
                     }
                     this.browserPopupPort = p;
 
@@ -292,7 +292,7 @@ class Kee {
     }
 
     async init(): Promise<boolean> {
-        this._keeBrowserStartup();
+        this._browserStartup();
 
         // Edges eigene Passwortspeicherung nur abschalten, wenn gewünscht (Einstellung, Standard an)
         try {
@@ -302,20 +302,20 @@ class Kee {
                 await chrome.privacy.services.passwordSavingEnabled.clear({});
             }
         } catch (e) {
-            KeeLog.warn("Could not change the browser's password saving setting: " + e);
+            FerryLog.warn("Could not change the browser's password saving setting: " + e);
         }
 
         if (chrome.runtime.lastError != null) {
-            KeeLog.warn(
-                "KeeFox was unable to disable built-in password manager saving - confusion may ensue! " +
+            FerryLog.warn(
+                "KeePassFerry was unable to disable built-in password manager saving - confusion may ensue! " +
                 chrome.runtime.lastError.message
             );
         }
         return true;
     }
 
-    notifyUser(notification: KeeNotification, nativeNotification?: NativeNotification) {
-        this.removeUserNotifications((n: KeeNotification) => n.name != notification.name);
+    notifyUser(notification: FerryNotification, nativeNotification?: NativeNotification) {
+        this.removeUserNotifications((n: FerryNotification) => n.name != notification.name);
         this.store.addNotification(notification);
         this.configureBrowserActionIcon();
         if (nativeNotification) {
@@ -342,12 +342,12 @@ class Kee {
         }
     }
 
-    removeUserNotifications(unlessTrue: (notification: KeeNotification) => boolean) {
+    removeUserNotifications(unlessTrue: (notification: FerryNotification) => boolean) {
         this.store.updateNotifications(this.store.state.notifications.filter(unlessTrue));
     }
 
     configureBrowserActionIcon() {
-        const actionConfig = new KeeBrowserActionIconConfiguration();
+        const actionConfig = new FerryBrowserActionIconConfiguration();
 
         actionConfig.saveAvailable = false;
         if (this.persistentTabStates.get(this.foregroundTabId)) {
@@ -453,7 +453,7 @@ class Kee {
             letzterVersuchVorSek: this.unlockAttempt ? Math.round((Date.now() - this.unlockAttempt.at) / 1000) : null
         });
         if (!this.store.state.connected || this.store.state.KeePassDatabases.length > 0) return "notLocked";
-        const domain = KeeURL.fromString(url ?? "")?.domainOrIPAddress ?? "";
+        const domain = FerryURL.fromString(url ?? "")?.domainOrIPAddress ?? "";
         const now = Date.now();
         if (!manual) {
             if (now < this.unlockGlobalPauseUntil) return "paused";
@@ -469,7 +469,7 @@ class Kee {
         // Bewusster Klick: immer an KeePass weitergeben (holt ggf. den offenen Dialog nach vorne)
         if (!manual && this.unlockAttempt && now - this.unlockAttempt.at < 30000) return "busy";
 
-        const result = await this.KeePassRPC.requestUnlock();
+        const result = await this.rpc.requestUnlock();
         diag("hintergrund", "entsperren angestoßen", { manuell: manual, ergebnis: result });
         if (result !== "started") return result;
         const attempt = { domain, at: now };
@@ -495,7 +495,7 @@ class Kee {
         if (!this.store.state.connected || this.store.state.KeePassDatabases.length === 0) return;
         const top = this.tabStates.get(tabId)?.framePorts?.get(0);
         // Nur auf derselben Website anbieten, nicht auf einer anderen Seite, die später im selben Tab geöffnet wird
-        const site = (url: string) => KeeURL.fromString(url ?? "")?.domainOrIPAddress;
+        const site = (url: string) => FerryURL.fromString(url ?? "")?.domainOrIPAddress;
         if (!sameSite(site(item.submittedData?.url), site(top?.sender?.url ?? top?.sender?.tab?.url))) return;
         try {
             // Passwort eines vorhandenen Eintrags geändert: Hinweis "aktualisieren?" mit Benutzername bzw. Titel
@@ -512,12 +512,12 @@ class Kee {
     // Ist der zuletzt im Tab ausgefüllte Eintrag bekannt (gleiche Domain, < 15 min), zählt nur dieser.
     // Sonst nur, wenn genau ein passender Eintrag der Seite ein TOTP hat (mehrere Konten = nicht eindeutig).
     async findTotpCode(tabId: number, url: string): Promise<{ code: string; remainingSeconds: number; period: number }> {
-        const domain = KeeURL.fromString(url)?.domainOrIPAddress;
+        const domain = FerryURL.fromString(url)?.domainOrIPAddress;
         if (!domain) return null;
 
         const getTotp = async (candidate: { uuid: string; dbFileName: string }) => {
             try {
-                const result = await this.KeePassRPC.getTotp(candidate.uuid, candidate.dbFileName);
+                const result = await this.rpc.getTotp(candidate.uuid, candidate.dbFileName);
                 diag("hintergrund", "otp eintrag geprüft", { uuid: candidate.uuid, hatOtp: !!result?.code });
                 return result?.code ? result : null;
             } catch (e) {
@@ -538,7 +538,7 @@ class Kee {
                 hatOtp: !!result
             });
         } else {
-            const found = await this.KeePassRPC.findLogins(url, null, null, null, null, null);
+            const found = await this.rpc.findLogins(url, null, null, null, null, null);
             const withTotp: { candidate: { uuid: string; dbFileName: string }; result: typeof result }[] = [];
             for (const entry of (found ?? []).slice(0, 10)) {
                 const candidate = { uuid: entry.uuid, dbFileName: entry.database.fileName };
@@ -571,41 +571,41 @@ class Kee {
         chrome.action.setIcon({ path: "/assets/images/48.png" });
     }
 
-    _keeBrowserStartup() {
-        KeeLog.debug("Kee initialising");
-        this.KeePassRPC = new jsonrpcClient(this.store);
-        KeeLog.info(
-            "Kee initialised OK although the connection to a KeePassRPC server is probably not established just yet..."
+    _browserStartup() {
+        FerryLog.debug("KeePassFerry initialising");
+        this.rpc = new jsonrpcClient(this.store);
+        FerryLog.info(
+            "KeePassFerry initialised; the connection to KeePass may not be established yet"
         );
     }
 
-    // Temporarily disable Kee. Used (for e.g.) when KeePass is shut down.
-    _pauseKee() {
-        KeeLog.debug("Pausing Kee.");
+    // Temporarily disable KeePassFerry. Used (for e.g.) when KeePass is shut down.
+    _pauseFerry() {
+        FerryLog.debug("Pausing KeePassFerry.");
         this.store.updateKeePassDatabases([]);
         this.store.updateActiveKeePassDatabaseIndex(-1);
         this.store.updateConnected(false);
-        this.store.updateConnectedWebsocket(false);
+        this.store.updateConnectedNative(false);
         this.store.updateCurrentSearchTerm(null);
         this.store.updateSearchResults(null);
 
         try {
             this.refreshFormStatus(Action.ResetForms);
         } catch (e) {
-            KeeLog.error(
-                "Uncaught exception posting message in _pauseKee: " + e.message + " : " + e.stack
+            FerryLog.error(
+                "Uncaught exception posting message in _pauseFerry: " + e.message + " : " + e.stack
             );
         }
         this.configureBrowserActionIcon();
 
         commandManager.setupContextMenuItems();
 
-        KeeLog.info("Kee paused.");
+        FerryLog.info("KeePassFerry paused.");
     }
 
     _refreshKPDB() {
         this.getAllDatabases();
-        KeeLog.debug("Refresh of Kee's view of the KeePass database initiated.");
+        FerryLog.debug("Refresh of KeePassFerry's view of the KeePass database initiated.");
     }
 
     // Prüft abgeschickte Formulardaten gegen die Einträge der Seite (siehe submittedLogin.ts): bekannt, Passwort eines
@@ -620,7 +620,7 @@ class Kee {
             if (!password && !username) return { kind: "new" };
             const entries: Entry[] =
                 (await Promise.race([
-                    this.KeePassRPC.findLogins(submitted.url, null, null, null, null, null),
+                    this.rpc.findLogins(submitted.url, null, null, null, null, null),
                     new Promise<Entry[]>(resolve => self.setTimeout(() => resolve(null), 2000))
                 ])) ?? [];
             const candidates: LoginCandidate[] = entries.map(e => ({
@@ -632,11 +632,11 @@ class Kee {
             }));
             // Gerade in diesem Tab ausgefüllter Eintrag derselben Website (für Formulare ohne Benutzerfeld)
             const last = this.persistentTabStates.get(tabId)?.lastFilledEntry;
-            const domain = KeeURL.fromString(submitted.url)?.domainOrIPAddress;
+            const domain = FerryURL.fromString(submitted.url)?.domainOrIPAddress;
             const recent = last && sameSite(last.domain, domain) && last.at > Date.now() - 5 * 60 * 1000 ? last : null;
             return matchSubmittedLogin(submitted.fields ?? [], candidates, recent);
         } catch (e) {
-            KeeLog.debug("classifySubmittedData failed: " + e);
+            FerryLog.debug("classifySubmittedData failed: " + e);
             return { kind: "new" };
         }
     }
@@ -654,20 +654,20 @@ class Kee {
 
             const result: Entry[] = [];
             const last = this.persistentTabStates.get(tabId)?.lastFilledEntry;
-            const domain = KeeURL.fromString(tab.url)?.domainOrIPAddress;
+            const domain = FerryURL.fromString(tab.url)?.domainOrIPAddress;
             if (last && sameSite(last.domain, domain)) {
-                const lastEntries: Entry[] = (await timeout(this.KeePassRPC.findLogins(tab.url, null, last.uuid, last.dbFileName, null, null))) ?? [];
+                const lastEntries: Entry[] = (await timeout(this.rpc.findLogins(tab.url, null, last.uuid, last.dbFileName, null, null))) ?? [];
                 // Abfrage über die ID filtert im Plugin nicht: abgelaufene bei "Ausblenden" hier aussortieren
                 const expired = (e: Entry) => expiryState(e.expiryTime, 0)?.kind === "expired";
-                const hideExpired = lastEntries.some(expired) && (await this.KeePassRPC.getHideExpired().catch(() => false));
+                const hideExpired = lastEntries.some(expired) && (await this.rpc.getHideExpired().catch(() => false));
                 result.push(...lastEntries.filter(e => e.uuid === last.uuid && !(hideExpired && expired(e))));
             }
-            const found: Entry[] = (await timeout(this.KeePassRPC.findLogins(tab.url, null, null, null, null, null))) ?? [];
+            const found: Entry[] = (await timeout(this.rpc.findLogins(tab.url, null, null, null, null, null))) ?? [];
             for (const e of found) if (!result.some(r => r.uuid === e.uuid)) result.push(e);
             // Seiten großer Anbieter (z. B. Microsoft) passen mit zugehörigen Domains zu vielen Einträgen; die Liste scrollt
             return result.slice(0, 30);
         } catch (e) {
-            KeeLog.debug("siteEntriesForPopup failed: " + e);
+            FerryLog.debug("siteEntriesForPopup failed: " + e);
             return [];
         }
     }
@@ -693,7 +693,7 @@ class Kee {
             newDatabases.map(db => db.fileName).join("|");
 
         this.store.updateConnected(true);
-        this.store.updateConnectedWebsocket(this.KeePassRPC.websocketSessionManagerIsActive);
+        this.store.updateConnectedNative(this.rpc.nativeSessionIsActive);
         this.store.updateKeePassDatabases(newDatabases);
         this.store.updateActiveKeePassDatabaseIndex(newDatabaseActiveIndex);
         if (newDatabases.length > 0) this.unlockAttempt = null;
@@ -704,12 +704,22 @@ class Kee {
                 return old?.fullDetails ? { ...r, fullDetails: old.fullDetails } : r;
             });
             this.store.updateSearchResults(merged);
+            // Übernommene Details können veraltet sein (z. B. Benutzername gerade geändert): frisch aus KeePass nachladen
+            for (const r of merged) {
+                if (!r.fullDetails) continue;
+                this.rpc.findLogins(null, null, r.uuid, r.dbFileName, null, null)
+                    .then((found: Entry[]) => {
+                        const fresh = found?.find(e => e.uuid === r.uuid);
+                        if (fresh) this.store.updateSearchResultWithFullDetails(fresh);
+                    })
+                    .catch(() => undefined);
+            }
         } else {
             this.store.updateSearchResults(null);
             this.store.updateCurrentSearchTerm(null);
         }
 
-        KeeLog.info("Number of databases open: " + newDatabases.length);
+        FerryLog.info("Number of databases open: " + newDatabases.length);
 
         this.configureBrowserActionIcon();
 
@@ -722,7 +732,7 @@ class Kee {
         try {
             this.refreshFormStatus(Action.DetectForms);
         } catch (e) {
-            KeeLog.error(
+            FerryLog.error(
                 "Uncaught exception posting message in updateKeePassDatabases: " +
                 e.message +
                 " : " +
@@ -751,7 +761,7 @@ class Kee {
                 }
             });
         } catch (e) {
-            KeeLog.debug("Rescan after unlock failed: " + e);
+            FerryLog.debug("Rescan after unlock failed: " + e);
         }
     }
 
@@ -781,12 +791,12 @@ class Kee {
                         port.postMessage({ action } as AddonMessage);
                     }
                 } catch (e) {
-                    if (KeeLog && KeeLog.info) {
-                        KeeLog.info(
+                    if (FerryLog && FerryLog.info) {
+                        FerryLog.info(
                             "failed to request form field reset/update on tab " +
                             tabId +
                             ". Assuming port is broken (possible browser bug) and deleting the port. " +
-                            "Kee may no longer work in the affected tab, if indeed the tab even " +
+                            "KeePassFerry may no longer work in the affected tab, if indeed the tab even " +
                             "exists any more. The exception that caused this is: " +
                             e.message +
                             " : " +
@@ -806,26 +816,26 @@ class Kee {
     }
 
     openKeePass() {
-        const hasWebsocketDBs = this.store.state.KeePassDatabases.some(
-            db => db.sessionType === SessionType.Websocket
+        const hasNativeDBs = this.store.state.KeePassDatabases.some(
+            db => db.sessionType === SessionType.Native
         );
-        const supportsWebsocketFocus = this.store.state.KeePassDatabases.some(
+        const supportsNativeFocus = this.store.state.KeePassDatabases.some(
             db =>
-                db.sessionType === SessionType.Websocket &&
-                db.sessionFeatures.indexOf("KPRPC_OPEN_AND_FOCUS_DATABASE") >= 0
+                db.sessionType === SessionType.Native &&
+                db.sessionFeatures.indexOf("KEEPASSFERRY_OPEN_AND_FOCUS_DATABASE") >= 0
         );
 
-        if (hasWebsocketDBs && !supportsWebsocketFocus) {
-            KeeLog.warn(
-                "Can't open KeePass because KeePassRPC version does not support KPRPC_OPEN_AND_FOCUS_DATABASE"
+        if (hasNativeDBs && !supportsNativeFocus) {
+            FerryLog.warn(
+                "Can't open KeePass because the plugin version does not support KEEPASSFERRY_OPEN_AND_FOCUS_DATABASE"
             );
             return;
         }
 
         this.selectDatabase(
             this.getKeePassFileNameToOpen(),
-            !hasWebsocketDBs,
-            SessionType.Websocket
+            !hasNativeDBs,
+            SessionType.Native
         );
     }
 
@@ -853,7 +863,7 @@ class Kee {
 
     /*******************************************
     / These functions are essentially wrappers for the actions that
-    / Kee needs to take against KeePass via the KeePassRPC plugin connection.
+    / KeePassFerry takes against KeePass via the plugin connection.
     /*******************************************/
 
     getDatabaseName(index) {
@@ -880,10 +890,10 @@ class Kee {
 
     selectDatabase(fileName, requestReturnFocus, sessionType?: SessionType) {
         try {
-            this.KeePassRPC.selectDB(fileName, requestReturnFocus, sessionType);
+            this.rpc.selectDB(fileName, requestReturnFocus, sessionType);
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
@@ -892,10 +902,10 @@ class Kee {
 
     selectAndFocusDatabase(keepassFilename: string) {
         try {
-            return this.KeePassRPC.selectAndFocusDatabase(keepassFilename);
+            return this.rpc.selectAndFocusDatabase(keepassFilename);
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
@@ -909,15 +919,15 @@ class Kee {
         clearSubmittedData: () => void
     ) {
         try {
-            const newEntry = await this.KeePassRPC.addLogin(entry, parentUUID, dbFileName);
+            const newEntry = await this.rpc.addLogin(entry, parentUUID, dbFileName);
             const success = this.recordEntrySaveResult("created", newEntry);
             if (success) {
                 clearSubmittedData();
                 await this.refreshAfterEntryChange();
             }
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
@@ -931,15 +941,15 @@ class Kee {
         clearSubmittedData: () => void
     ) {
         try {
-            const changedEntry = await this.KeePassRPC.updateLogin(entry, oldLoginUUID, dbFileName);
+            const changedEntry = await this.rpc.updateLogin(entry, oldLoginUUID, dbFileName);
             const success = this.recordEntrySaveResult("updated", changedEntry);
             if (success) {
                 clearSubmittedData();
                 await this.refreshAfterEntryChange();
             }
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
@@ -950,19 +960,19 @@ class Kee {
     // suchen lassen (sonst zeigen Popup und Feldsymbole die beim Laden der Seite gefundenen, alten Daten)
     async refreshAfterEntryChange() {
         try {
-            await this.KeePassRPC.getAllDatabases();
+            await this.rpc.getAllDatabases();
         } catch (e) {
-            KeeLog.debug("Refresh after entry change failed: " + e);
+            FerryLog.debug("Refresh after entry change failed: " + e);
         }
         this.refreshFormStatus(Action.DetectForms);
     }
 
     getAllDatabases() {
         try {
-            return this.KeePassRPC.getAllDatabases();
+            return this.rpc.getAllDatabases();
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
@@ -971,7 +981,7 @@ class Kee {
 
     async findLogins(fullURL, httpRealm, uuid, dbFileName, freeText, username) {
         try {
-            return this.KeePassRPC.findLogins(
+            return this.rpc.findLogins(
                 fullURL,
                 httpRealm,
                 uuid,
@@ -980,8 +990,8 @@ class Kee {
                 username
             );
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
@@ -990,10 +1000,10 @@ class Kee {
 
     launchLoginEditor(uuid, dbFileName) {
         try {
-            this.KeePassRPC.launchLoginEditor(uuid, dbFileName);
+            this.rpc.launchLoginEditor(uuid, dbFileName);
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
@@ -1002,10 +1012,10 @@ class Kee {
 
     launchGroupEditor(uuid, dbFileName) {
         try {
-            this.KeePassRPC.launchGroupEditor(uuid, dbFileName);
+            this.rpc.launchGroupEditor(uuid, dbFileName);
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
@@ -1014,10 +1024,10 @@ class Kee {
 
     async getPasswordProfiles() {
         try {
-            return this.KeePassRPC.getPasswordProfiles();
+            return this.rpc.getPasswordProfiles();
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
@@ -1026,70 +1036,70 @@ class Kee {
 
     async generatePassword(profileName: string, url: string) {
         try {
-            return this.KeePassRPC.generatePassword(profileName, url);
+            return this.rpc.generatePassword(profileName, url);
         } catch (e) {
-            KeeLog.error(
-                "Unexpected exception while connecting to KeePassRPC. Please inform the Kee team that they should be handling this exception: " +
+            FerryLog.error(
+                "Unexpected exception while talking to the KeePassFerry plugin: " +
                 e
             );
             throw e;
         }
     }
 
-    // Could use multiple callback functions but just one keeps KeePassRPC simpler
+    // Could use multiple callback functions but just one keeps the plugin simpler
     // this is only called once no matter how many windows are open. so functions
     // within need to handle all open windows for now, that just means every
     // window although in future maybe there could be a need to store a list of
     // relevant windows and call those instead
-    KPRPCListener(sig) {
+    FerryListener(sig) {
         const sigTime = Date();
 
-        KeeLog.debug("Signal received by KPRPCListener (" + sig + ") @" + sigTime);
+        FerryLog.debug("Signal received by FerryListener (" + sig + ") @" + sigTime);
 
         let refresh = false;
 
         switch (sig) {
             case "0":
-                KeeLog.warn("KeePassRPC is requesting authentication [deprecated].");
+                FerryLog.warn("The plugin is requesting authentication [deprecated].");
                 break;
             case "3":
-                KeeLog.info("KeePass' currently active DB is about to be opened.");
+                FerryLog.info("KeePass' currently active DB is about to be opened.");
                 break;
             case "4":
-                KeeLog.info("KeePass' currently active DB has just been opened.");
+                FerryLog.info("KeePass' currently active DB has just been opened.");
                 refresh = true;
                 break;
             case "5":
-                KeeLog.info("KeePass' currently active DB is about to be closed.");
+                FerryLog.info("KeePass' currently active DB is about to be closed.");
                 break;
             case "6":
-                KeeLog.info("KeePass' currently active DB has just been closed.");
+                FerryLog.info("KeePass' currently active DB has just been closed.");
                 refresh = true;
                 break;
             case "7":
-                KeeLog.info("KeePass' currently active DB is about to be saved.");
+                FerryLog.info("KeePass' currently active DB is about to be saved.");
                 break;
             case "8":
-                KeeLog.info("KeePass' currently active DB has just been saved.");
+                FerryLog.info("KeePass' currently active DB has just been saved.");
                 refresh = true;
                 break;
             case "9":
-                KeeLog.info("KeePass' currently active DB is about to be deleted.");
+                FerryLog.info("KeePass' currently active DB is about to be deleted.");
                 break;
             case "10":
-                KeeLog.info("KeePass' currently active DB has just been deleted.");
+                FerryLog.info("KeePass' currently active DB has just been deleted.");
                 break;
             case "11":
-                KeeLog.info("KeePass' active DB has been changed/selected.");
+                FerryLog.info("KeePass' active DB has been changed/selected.");
                 refresh = true;
                 break;
             case "12":
-                KeeLog.info(
+                FerryLog.info(
                     "KeePass is shutting down. [deprecated: Now inferred from connection loss]"
                 );
                 break;
             default:
-                KeeLog.error("Invalid signal received by KPRPCListener (" + sig + ")");
+                FerryLog.error("Invalid signal received by FerryListener (" + sig + ")");
                 break;
         }
 
@@ -1097,11 +1107,11 @@ class Kee {
 
         const now = new Date().getTime();
         if (refresh) {
-            this.store.updateLastKeePassRPCRefresh(now);
+            this.store.updateLastRpcRefresh(now);
             this._refreshKPDB();
         }
 
-        KeeLog.debug("Signal handled. @" + sigTime);
+        FerryLog.debug("Signal handled. @" + sigTime);
     }
 
     createTabStateIfMissing(tabId: number) {
@@ -1132,4 +1142,4 @@ class Kee {
     }
 }
 
-export const kee = Kee.getInstance();
+export const ferry = Ferry.getInstance();

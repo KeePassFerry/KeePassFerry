@@ -1,6 +1,6 @@
 import { Icon } from "./Icon";
 import { utils } from "../utils";
-import { GroupSummaryDto } from "./KPRPCDTOs";
+import { GroupSummaryDto } from "./PluginDTOs";
 import { Group } from "./Group";
 
 export class GroupSummary {
@@ -16,7 +16,7 @@ export class GroupSummary {
         this.path = g.path || "UNKNOWN PATH";
     }
 
-    public static fromKPRPCGroupSummaryDTO(groupSummaryDto: GroupSummaryDto) {
+    public static fromPluginGroupSummaryDTO(groupSummaryDto: GroupSummaryDto) {
         return new GroupSummary({
             title: groupSummaryDto.title,
             uuid: groupSummaryDto.uniqueID,

@@ -1,11 +1,11 @@
 import * as types from "./mutation-types";
-import { defaults, type KeeState } from "./KeeState";
+import { defaults, type FerryState } from "./FerryState";
 import { SaveState } from "../common/SaveState";
 import { Entry } from "../common/model/Entry";
 import { SaveEntryResult } from "../common/SaveEntryResult";
 import { Field } from "../common/model/Field";
 import { Database } from "../common/model/Database";
-import { KeeNotification } from "../common/KeeNotification";
+import { FerryNotification } from "../common/FerryNotification";
 import { PasswordProfile } from "../common/model/PasswordProfile";
 import type { SubmittedData } from "../common/SubmittedData";
 import { EntrySummary } from "../common/model/EntrySummary";
@@ -14,7 +14,7 @@ import { Mutation } from "./Mutation";
 function undefAbort(payload) {
     if (payload === undefined) {
         throw new Error(
-            "FATAL! undefined value sent to commit that must never set an undefined value. No-one knows what will happen now but Kee is probably broken in some way until a browser restart."
+            "FATAL! undefined value sent to commit that must never set an undefined value. No-one knows what will happen now but KeePassFerry is probably broken in some way until a browser restart."
         );
     }
 }
@@ -23,9 +23,9 @@ declare type BackgroundDistributor = (mutation: Mutation, excludedPort?: chrome.
 
 export default class NonReactiveStore {
 
-    private _state: KeeState = defaults;
+    private _state: FerryState = defaults;
 
-    public get state() : KeeState {
+    public get state() : FerryState {
         return this._state;
     }
 
@@ -42,8 +42,8 @@ export default class NonReactiveStore {
             this.updateActiveKeePassDatabaseIndex(mutation.payload, false);
         } else if (mutation.type === types.updateConnected) {
             this.updateConnected(mutation.payload, false);
-        } else if (mutation.type === types.updateConnectedWebsocket) {
-            this.updateConnectedWebsocket(mutation.payload, false);
+        } else if (mutation.type === types.updateConnectedNative) {
+            this.updateConnectedNative(mutation.payload, false);
         } else if (mutation.type === types.updateCurrentSearchTerm) {
             this.updateCurrentSearchTerm(mutation.payload, false);
         } else if (mutation.type === types.updateEntryUpdateStartedAtTimestamp) {
@@ -52,8 +52,8 @@ export default class NonReactiveStore {
             this.updateGeneratedPassword(mutation.payload, false);
         } else if (mutation.type === types.updateKeePassDatabases) {
             this.updateKeePassDatabases(mutation.payload, false);
-        } else if (mutation.type === types.updateLastKeePassRPCRefresh) {
-            this.updateLastKeePassRPCRefresh(mutation.payload, false);
+        } else if (mutation.type === types.updateLastRpcRefresh) {
+            this.updateLastRpcRefresh(mutation.payload, false);
         } else if (mutation.type === types.updateLatestConnectionError) {
             this.updateLatestConnectionError(mutation.payload, false);
         } else if (mutation.type === types.updateLoginsFound) {
@@ -75,7 +75,7 @@ export default class NonReactiveStore {
         }
     }
 
-    public resetTo(s: KeeState) {
+    public resetTo(s: FerryState) {
         this._state = s;
     }
 
@@ -89,10 +89,10 @@ export default class NonReactiveStore {
         this.state.connected = payload;
         if (distribute) this.distributeAction?.(new Mutation(types.updateConnected, payload));
     }
-    public updateConnectedWebsocket(payload: boolean, distribute: boolean = true) {
+    public updateConnectedNative(payload: boolean, distribute: boolean = true) {
         undefAbort(payload);
-        this.state.connectedWebsocket = payload;
-        if (distribute) this.distributeAction?.(new Mutation(types.updateConnectedWebsocket, payload));
+        this.state.connectedNative = payload;
+        if (distribute) this.distributeAction?.(new Mutation(types.updateConnectedNative, payload));
     }
     public updateCurrentSearchTerm(payload: string, distribute: boolean = true) {
         undefAbort(payload);
@@ -104,10 +104,10 @@ export default class NonReactiveStore {
         this.state.KeePassDatabases = payload;
         if (distribute) this.distributeAction?.(new Mutation(types.updateKeePassDatabases, payload));
     }
-    public updateLastKeePassRPCRefresh(payload: number, distribute: boolean = true) {
+    public updateLastRpcRefresh(payload: number, distribute: boolean = true) {
         undefAbort(payload);
-        this.state.lastKeePassRPCRefresh = payload;
-        if (distribute) this.distributeAction?.(new Mutation(types.updateLastKeePassRPCRefresh, payload));
+        this.state.lastRpcRefresh = payload;
+        if (distribute) this.distributeAction?.(new Mutation(types.updateLastRpcRefresh, payload));
     }
     public updateLatestConnectionError(payload: string, distribute: boolean = true) {
         undefAbort(payload);
@@ -119,7 +119,7 @@ export default class NonReactiveStore {
         this.state.loginsFound = payload;
         if (distribute) this.distributeAction?.(new Mutation(types.updateLoginsFound, payload));
     }
-    public updateNotifications(payload: KeeNotification[], distribute: boolean = true) {
+    public updateNotifications(payload: FerryNotification[], distribute: boolean = true) {
         undefAbort(payload);
         this.state.notifications = payload;
         if (distribute) this.distributeAction?.(new Mutation(types.updateNotifications, payload));
@@ -163,7 +163,7 @@ export default class NonReactiveStore {
         }
         if (distribute) this.distributeAction?.(new Mutation(types.updateSearchResultWithFullDetails, payload));
     }
-    public addNotification(payload: KeeNotification, distribute: boolean = true) {
+    public addNotification(payload: FerryNotification, distribute: boolean = true) {
         undefAbort(payload);
         this.state.notifications.push(payload);
         if (distribute) this.distributeAction?.(new Mutation(types.addNotification, payload));

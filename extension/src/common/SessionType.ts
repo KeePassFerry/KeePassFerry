@@ -1,4 +1,4 @@
 export enum SessionType {
     Event = "event",
-    Websocket = "websocket"
+    Native = "native"
 }

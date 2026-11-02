@@ -37,6 +37,12 @@ The password rules and change-password addresses in
 
 The data is updated with `extension/scripts/update-site-data.ts` from a fixed commit of that repository.
 
+## Public Suffix List (Mozilla)
+[`extension/src/common/siteData/public_suffix_list.dat`](extension/src/common/siteData/public_suffix_list.dat) is the
+**Public Suffix List** (<https://publicsuffix.org>), included unchanged and licensed under the
+**Mozilla Public License 2.0** (<https://mozilla.org/MPL/2.0/>). It is parsed with **publicsuffixlist.js** by
+Raymond Hill (Apache License 2.0, via npm). The list is updated with `extension/scripts/update-public-suffix-list.ts`.
+
 ## Trademarks
 "Kee" and "Kee Vault" are trademarks of Kee Vault Ltd. KeePassFerry is an independent project and is not
 affiliated with or endorsed by Kee Vault Ltd or by the KeePass project. "KeePass" refers to

@@ -4,7 +4,7 @@ ferry.ts: Ergänzungen der Einstellungsseite
 - Hell/Dunkel nach Einstellung bzw. System
 - Seitennavigation: aktiver Abschnitt beim Scrollen
 */
-import { configManager } from "../common/ConfigManager";
+import { CONFIG_PREFIX, configManager } from "../common/ConfigManager";
 
 type Status = {
     hostRunning: boolean;
@@ -115,6 +115,12 @@ function setupPluginSettings() {
                 // Hintergrund startet gerade neu; beim nächsten Laden zeigt die Seite den gespeicherten Stand
             }
             refreshHibpProgress();
+        } else if (target?.id === "ferryPasswordBackup") {
+            try {
+                await chrome.runtime.sendMessage({ keepassferry: "setPasswordBackup", enabled: target.checked });
+            } catch (err) {
+                // wie oben
+            }
         } else if (target?.id === "ferryExpiryMode") {
             try {
                 await chrome.runtime.sendMessage({ keepassferry: "setHideExpired", hide: target.value === "hide" });
@@ -135,19 +141,39 @@ async function loadPluginSettings() {
         s = null;
     }
     const hibpSupported = !!s?.hibpCheck;
-    const expirySupported = !!s?.expiry;
-    let hibp = false;
-    let hide = false;
+    let backup: { setting?: boolean; group?: string } = null;
     try {
-        if (hibpSupported) hibp = !!(await chrome.runtime.sendMessage({ keepassferry: "getHibpCheck" }));
-        if (expirySupported) hide = !!(await chrome.runtime.sendMessage({ keepassferry: "getHideExpired" }));
+        backup = await chrome.runtime.sendMessage({ keepassferry: "getPasswordBackupInfo" });
     } catch (e) {
-        // ohne Verbindung bleibt der angezeigte Stand
+        backup = null;
     }
+    const backupInput = document.getElementById("ferryPasswordBackup") as HTMLInputElement;
+    const backupHint = document.getElementById("ferryPasswordBackupHint");
+    if (backupInput) {
+        backupInput.checked = backup ? !!backup.setting : true;
+        backupInput.disabled = !backup;
+    }
+    if (backupHint) {
+        backupHint.textContent = backup
+            ? $STRF("ferry_setting_passwordBackup_hint", [backup.group || $STR("ferry_backup_group_default")])
+            : $STR("ferry_setting_passwordBackup_unavailable");
+    }
+    const expirySupported = !!s?.expiry;
+    // null = keine Antwort: dann den angezeigten Stand nicht überschreiben (sonst stünde "aus" da, obwohl es an ist)
+    const ask = async (request: string): Promise<boolean> => {
+        try {
+            const r = await chrome.runtime.sendMessage({ keepassferry: request });
+            return r === true || r === false ? r : null;
+        } catch (e) {
+            return null;
+        }
+    };
+    const hibp = hibpSupported ? await ask("getHibpCheck") : null;
+    const hide = expirySupported ? await ask("getHideExpired") : null;
     const hibpInput = document.getElementById("ferryHibpCheck") as HTMLInputElement;
     const hibpHint = document.getElementById("ferryHibpHint");
     if (hibpInput) {
-        hibpInput.checked = hibp;
+        if (hibp !== null) hibpInput.checked = hibp;
         hibpInput.disabled = !hibpSupported;
     }
     if (hibpHint) hibpHint.textContent = hibpSupported ? $STR("ferry_setting_hibp_hint") : $STR("ferry_setting_hibp_unavailable");
@@ -157,7 +183,7 @@ async function loadPluginSettings() {
     const warn = document.getElementById("ferryExpiryWarnDays") as HTMLSelectElement;
     const modeHint = document.getElementById("ferryExpiryModeHint");
     if (mode) {
-        mode.value = hide ? "hide" : "remind";
+        if (hide !== null) mode.value = hide ? "hide" : "remind";
         mode.disabled = !expirySupported;
     }
     if (warn) {
@@ -295,6 +321,7 @@ function setupNav() {
     for (const a of links) {
         a.addEventListener("click", e => {
             e.preventDefault();
+            for (const other of links) other.classList.toggle("active", other === a);
             document.getElementById(a.dataset.panel)?.scrollIntoView({ behavior: "smooth", block: "start" });
         });
     }
@@ -311,6 +338,11 @@ function setupNav() {
         const panel = document.getElementById(a.dataset.panel);
         if (panel) observer.observe(panel);
     }
+    // Die letzten Abschnitte erreichen den oberen Bereich nie, wenn die Seite zu Ende ist: unten den letzten markieren
+    window.addEventListener("scroll", () => {
+        if (window.innerHeight + window.scrollY < document.documentElement.scrollHeight - 4) return;
+        for (const a of links) a.classList.toggle("active", a === links[links.length - 1]);
+    }, { passive: true });
 }
 
 setupTheme();
@@ -319,6 +351,15 @@ setupResetPairing();
 setupNav();
 refreshStatus();
 setupPluginSettings();
+// Im Popup geänderte Einstellungen (z. B. "Neue Einträge immer hier speichern"): beim Zurückkehren neu laden, damit
+// die Seite nicht den alten Stand zeigt
+let changedWhileHidden = false;
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === "local" && document.hidden && Object.keys(changes).some(k => k.startsWith(CONFIG_PREFIX))) changedWhileHidden = true;
+});
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && changedWhileHidden) location.reload();
+});
 loadPluginSettings();
 highlightFromHash();
 setInterval(refreshHibpProgress, 3000);

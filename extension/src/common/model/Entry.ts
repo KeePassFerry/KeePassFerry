@@ -2,7 +2,7 @@ import { Icon } from "./Icon";
 import { Database } from "./Database";
 import { utils } from "../utils";
 import { Field } from "./Field";
-import { EntryDto, FormFieldTypeDTO } from "./KPRPCDTOs";
+import { EntryDto, FormFieldTypeDTO } from "./PluginDTOs";
 import { DatabaseSummary } from "./DatabaseSummary";
 import { GroupSummary } from "./GroupSummary";
 
@@ -107,7 +107,7 @@ export class Entry {
         return entry.fields.find(f => f.type === "password");
     }
 
-    public static fromKPRPCEntryDTO(entryDto: EntryDto, db: DatabaseSummary) {
+    public static fromPluginEntryDTO(entryDto: EntryDto, db: DatabaseSummary) {
         const sortedFields: Field[] = [];
         let maximumPage = 1;
         const usernameIndex = entryDto.formFieldList.findIndex(
@@ -117,7 +117,7 @@ export class Entry {
         const unsortedFields = entryDto.formFieldList.map(f => {
             if (f.page > maximumPage) maximumPage = f.page;
 
-            return Field.fromKPRPCFieldDTO(f);
+            return Field.fromPluginFieldDTO(f);
         });
         const firstPasswordIndex = unsortedFields.findIndex(f => f.type === "password");
 
@@ -140,7 +140,7 @@ export class Entry {
             neverAutoSubmit: entryDto.neverAutoSubmit,
             alwaysAutoSubmit: entryDto.alwaysAutoSubmit,
             icon: { version: 1, iconImageData: entryDto.iconImageData },
-            parentGroup: GroupSummary.fromKPRPCGroupSummaryDTO(entryDto.parent),
+            parentGroup: GroupSummary.fromPluginGroupSummaryDTO(entryDto.parent),
             database: db,
             matchAccuracy: entryDto.matchAccuracy,
             httpRealm: entryDto.hTTPRealm,
@@ -160,11 +160,11 @@ export class Entry {
         return entry;
     }
 
-    public static toKPRPCEntryDTO(entry: Entry) {
+    public static toPluginEntryDTO(entry: Entry) {
         const entryDto = new EntryDto();
         entryDto.alwaysAutoFill = entry.alwaysAutoFill;
         entryDto.alwaysAutoSubmit = entry.alwaysAutoSubmit;
-        entryDto.formFieldList = entry.fields.map((f, i) => Field.toKPRPCFieldDTO(f, i === 0));
+        entryDto.formFieldList = entry.fields.map((f, i) => Field.toPluginFieldDTO(f, i === 0));
         entryDto.hTTPRealm = entry.httpRealm;
         entryDto.iconImageData = entry.icon.iconImageData;
         entryDto.neverAutoFill = entry.neverAutoFill;

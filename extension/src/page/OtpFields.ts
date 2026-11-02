@@ -2,7 +2,8 @@ import { Port } from "../common/port";
 import { Action } from "../common/Action";
 import type { AddonMessage } from "../common/AddonMessage";
 import { findInputsInOpenShadowRoots } from "./shadowDom";
-import { KeeFieldIcon } from "./keeFieldIcon";
+import { isVisible } from "./visibility";
+import { FerryFieldIcon } from "./ferryFieldIcon";
 import { FloatingFieldIcons } from "./FloatingFieldIcons";
 import { pageDiag } from "./ferryDiagPage";
 import { configManager } from "../common/ConfigManager";
@@ -80,34 +81,6 @@ function rawHintText(el: HTMLInputElement): string {
         for (const id of labelledBy.split(/\s+/)) parts.push(document.getElementById(id)?.textContent);
     }
     return parts.filter(Boolean).join(" ");
-}
-
-function isVisible(el: HTMLElement): boolean {
-    if (el.offsetWidth <= 0 && el.offsetHeight <= 0) return false;
-    // Inhalt eines zugeklappten <details> (Chromium: content-visibility: hidden) behält seine Maße, ist aber nicht zu sehen.
-    // Sonst landet der Code z. B. im verborgenen Feld "App entfernen" und die Seite schickt es selbst ab.
-    if (typeof el.checkVisibility === "function" && !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true } as any)) return false;
-    const closedDetails = el.closest("details:not([open])");
-    if (closedDetails && !el.closest("summary")?.parentElement?.isSameNode(closedDetails)) return false;
-    const style = getComputedStyle(el);
-    if (style.visibility === "hidden" || style.display === "none") return false;
-    return !isClippedAway(el);
-}
-
-// Zugeklappte Bereiche, die nur über Höhe 0 und overflow: hidden verborgen sind (z. B. Amazon: QR-Code der
-// Authentifizierungs-App, bevor diese Option gewählt ist). Scrollbereiche zählen nicht: dort kann man hinscrollen.
-function isClippedAway(el: HTMLElement): boolean {
-    const r = el.getBoundingClientRect();
-    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
-        const s = getComputedStyle(p);
-        const clips = /hidden|clip/.test(s.overflowX) || /hidden|clip/.test(s.overflowY);
-        if (!clips) continue;
-        const pr = p.getBoundingClientRect();
-        const w = Math.min(r.right, pr.right) - Math.max(r.left, pr.left);
-        const h = Math.min(r.bottom, pr.bottom) - Math.max(r.top, pr.top);
-        if (w < 2 || h < 2) return true;
-    }
-    return false;
 }
 
 export function isEditable(el: HTMLInputElement): boolean {
@@ -466,8 +439,8 @@ export class OtpFields {
         const el = this.iconField;
         if (!el?.isConnected) return;
         this.icons.setLabel(el, $STR("ferry_otp_icon_locked"));
-        KeeFieldIcon.lockedIcon().then(image => {
-            if (this.iconField === el && this.countdownTimer === null) this.icons.setImage(el, image, KeeFieldIcon.LOCKED_ICON_WIDTH);
+        FerryFieldIcon.lockedIcon().then(image => {
+            if (this.iconField === el && this.countdownTimer === null) this.icons.setImage(el, image, FerryFieldIcon.LOCKED_ICON_WIDTH);
         });
     }
 
@@ -554,7 +527,7 @@ export class OtpFields {
         if (this.iconField) this.icons.remove(this.iconField);
         this.iconField = el;
         this.icons.add(el, {
-            image: KeeFieldIcon.FERRY_ICON_32,
+            image: FerryFieldIcon.FERRY_ICON_32,
             width: 16,
             label: $STR("ferry_otp_icon_label"),
             outside,
@@ -589,7 +562,7 @@ export class OtpFields {
                     this.forceNextFill = true;
                     Port.postMessage({ action: Action.RequestOtp, url: window.location.href } as AddonMessage);
                 } else {
-                    this.icons.setImage(el, KeeFieldIcon.FERRY_ICON_32, 16);
+                    this.icons.setImage(el, FerryFieldIcon.FERRY_ICON_32, 16);
                     this.icons.setLabel(el, $STR("ferry_otp_icon_label"));
                 }
                 return;
@@ -626,7 +599,7 @@ export class OtpFields {
         }
         this.keyImage = new Image();
         this.keyImage.onload = draw;
-        this.keyImage.src = KeeFieldIcon.FERRY_ICON_32;
+        this.keyImage.src = FerryFieldIcon.FERRY_ICON_32;
     }
 
     public reset() {

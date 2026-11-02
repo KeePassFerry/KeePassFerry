@@ -1,6 +1,6 @@
 /*
 FerryChannel.ts: Client-Seite des verschlüsselten Kanals zum KeePass-Plugin (Protokoll v1, siehe
-plugin/KeePassRPC/SecureChannel.cs). Nur WebCrypto, keine weiteren Abhängigkeiten (auch in Node testbar).
+plugin/KeePassFerry/SecureChannel.cs). Nur WebCrypto, keine weiteren Abhängigkeiten (auch in Node testbar).
 
 - Je Verbindung frischer ECDH-P-256-Schlüsseltausch → HKDF-SHA-256 → AES-256-GCM je Richtung
 - Erweiterung: dauerhafter ECDSA-P-256-Schlüssel (privater Teil nicht exportierbar), signiert den Handshake

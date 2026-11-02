@@ -1,7 +1,5 @@
 export type ButtonAction =
-    | "enableHighSecurityKPRPCConnection"
     | "disableNotifyWhenEntryUpdated"
-    | "loadUrlUpgradeKee"
     | "startPluginUpdate"
     | "launchLoginEditorFromNotification";
 

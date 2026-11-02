@@ -1,9 +1,9 @@
 export const updateActiveKeePassDatabaseIndex = "updateActiveKeePassDatabaseIndex";
 export const updateConnected = "updateConnected";
-export const updateConnectedWebsocket = "updateConnectedWebsocket";
+export const updateConnectedNative = "updateConnectedNative";
 export const updateCurrentSearchTerm = "updateCurrentSearchTerm";
 export const updateLatestConnectionError = "updateLatestConnectionError";
-export const updateLastKeePassRPCRefresh = "updateLastKeePassRPCRefresh";
+export const updateLastRpcRefresh = "updateLastRpcRefresh";
 export const updateKeePassDatabases = "updateKeePassDatabases";
 export const updatePasswordProfiles = "updatePasswordProfiles";
 export const updateGeneratedPassword = "updateGeneratedPassword";

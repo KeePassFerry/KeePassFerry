@@ -3,12 +3,12 @@ import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup,
 import { forgetAutoFill } from "./otpRepeat";
 import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
 import { queryPageFields, fillPageField } from "./pageFields";
-import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, EXPIRY_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
+import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, HIBP_LEAKS_FEATURE, PASSWORD_BACKUP_INFO_FEATURE, EXPIRY_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
 import { markNewsSeen } from "../common/whatsNew";
 import { isFirefox } from "webext-detect-page";
-import { kee, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
+import { ferry, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
 import { commandManager } from "./commands";
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import { Action } from "../common/Action";
 import type { AddonMessage } from "../common/AddonMessage";
@@ -49,7 +49,7 @@ let initialising = false;
 const userBusySeconds = 60 * 15;
 const maxUpdateDelayMinutes = 60 * 8;
 
-// window.KeePersistentLogger = new PersistentLogger();
+// window.FerryPersistentLogger = new PersistentLogger();
 
 const networkAuth = new NetworkAuth();
 
@@ -72,10 +72,10 @@ async function ensureStarted() {
         await configManager.load();
         console.debug("LIFECYCLE: startup");
         // Useful for interactive debugging:
-        // window.KeePersistentLogger.init(configManager.current.logLevel >= 4);
-        KeeLog.attachConfig(configManager.current);
+        // window.FerryPersistentLogger.init(configManager.current.logLevel >= 4);
+        FerryLog.attachConfig(configManager.current);
         await showReleaseNotesAfterUpdate();
-        resolveInitialised(await kee.init());
+        resolveInitialised(await ferry.init());
         hasInitialised = true;
         chrome.action.enable();
         console.debug("LIFECYCLE: main enabled action");
@@ -97,7 +97,7 @@ async function showReleaseNotesAfterUpdate() {
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1700797
     // Also seems Chrome fails if it is also recovering from a crashed browser
     // as part of the initial install operation (may only be possible in development)
-    // KeePassFerry öffnet nach einem Update keine Seite (die alte Kee-Seite warb für Kee Vault); die Änderungen
+    // KeePassFerry öffnet nach einem Update keine Seite (die alte Kee-Seite warb für KeePassFerry Vault); die Änderungen
     // stehen im CHANGELOG bzw. im GitHub-Release. Das Merkmal bleibt für den verzögerten Neustart (Alarm unten).
     if (configManager.current.mustShowReleaseNotesAtStartup) {
         configManager.setASAP({ mustShowReleaseNotesAtStartup: false });
@@ -107,30 +107,30 @@ async function showReleaseNotesAfterUpdate() {
 function onTabActivated(tabId) {
     updateForegroundTab(tabId);
 
-    if (kee) {
-        // May not have set up kee yet
+    if (ferry) {
+        // May not have set up KeePassFerry yet
         commandManager.setupContextMenuItems();
     }
 }
 
 function updateForegroundTab(tabId: number) {
-    if (kee && kee.foregroundTabId !== tabId) {
-        // May not have set up kee yet
-        kee.foregroundTabId = tabId;
-        const ports = kee.tabStates.get(tabId)?.framePorts;
+    if (ferry && ferry.foregroundTabId !== tabId) {
+        // May not have set up KeePassFerry yet
+        ferry.foregroundTabId = tabId;
+        const ports = ferry.tabStates.get(tabId)?.framePorts;
         if (ports) {
             // May not have set up port yet
-            if (KeeLog && KeeLog.debug) KeeLog.debug("kee activated on tab: " + tabId);
+            if (FerryLog && FerryLog.debug) FerryLog.debug("KeePassFerry activated on tab: " + tabId);
 
             ports.forEach((port, frameIndex) => {
                 try {
                     port.postMessage({
                         isForegroundTab: true,
                         action: Action.DetectForms,
-                        resetState: pageStateOf(kee.store.state)
+                        resetState: pageStateOf(ferry.store.state)
                     } as AddonMessage);
                 } catch (e) {
-                    if (KeeLog && KeeLog.warn) KeeLog.warn("Failed to post a message to a foreground tab port. Will remove the port now.");
+                    if (FerryLog && FerryLog.warn) FerryLog.warn("Failed to post a message to a foreground tab port. Will remove the port now.");
                     ports.delete(frameIndex);
                 }
             });
@@ -153,21 +153,26 @@ if (!isFirefox()) {
                 // Firefox used to open every new tab with an about page so maybe it was important
                 // to not block that injection but I think that is no longer an issue so we can
                 // avoid the log noise by skipping those pages now.
-                if (tab.url && tab.url.startsWith("about:")) return;
-                if (tab.url && tab.url.startsWith("chrome://")) return;
+                if (tab.url && /^(about|chrome|edge):/.test(tab.url)) return;
+                // Seiten ohne Zugriff für Erweiterungen (Add-on-Stores, PDF-Ansicht, Fehlerseiten) lehnen das Einspielen
+                // ab: je Tab abfangen, sonst erscheinen die übrigen Ablehnungen als "Uncaught" in der Fehlerliste
+                const quiet = (p: Promise<unknown>) =>
+                    p.catch(e => {
+                        if (FerryLog && FerryLog.debug) FerryLog.debug("Content script not injected into tab " + tab.id + ": " + e?.message);
+                    });
                 if (script?.js?.length > 0) {
-                    loadOperations.push(chrome.scripting.executeScript({
+                    loadOperations.push(quiet(chrome.scripting.executeScript({
                         target: { tabId: tab.id, allFrames },
                         files: script.js,
                         // Passkey-Skript gehört in die Seitenwelt (MAIN), alle anderen in die Erweiterungswelt
                         world: (script as any).world === "MAIN" ? "MAIN" : "ISOLATED"
-                    } as any));
+                    } as any)));
                 }
                 if (script?.css?.length > 0) {
-                    loadOperations.push(chrome.scripting.insertCSS({
+                    loadOperations.push(quiet(chrome.scripting.insertCSS({
                         target: { tabId: tab.id, allFrames },
                         files: script.css
-                    }));
+                    })));
                 }
             };
             try {
@@ -176,7 +181,7 @@ if (!isFirefox()) {
                 await Promise.all(loadOperations);
             } catch (e) {
                 if (!(e.message as string).endsWith(" is showing error page")) {
-                    if (KeeLog && KeeLog.error) KeeLog.error(e.message);
+                    if (FerryLog && FerryLog.error) FerryLog.error(e.message);
                     else console.error(e);
                 }
             }
@@ -195,7 +200,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 });
 
 chrome.windows.onFocusChanged.addListener(async function (windowId) {
-    if (KeeLog && KeeLog.debug) KeeLog.debug("Focus changed for id: " + windowId);
+    if (FerryLog && FerryLog.debug) FerryLog.debug("Focus changed for id: " + windowId);
     if (windowId !== chrome.windows.WINDOW_ID_NONE) {
         const tabs = await chrome.tabs.query({
             active: true,
@@ -210,50 +215,50 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (!request) return;
     // Nur Seiten der Erweiterung selbst (Popup); Inhaltsskripte haben die URL der Webseite als Absender
     const fromExtensionPage = sender.id === chrome.runtime.id && !!sender.url?.startsWith(chrome.runtime.getURL(""));
-    if (!fromExtensionPage || !kee?.KeePassRPC) {
+    if (!fromExtensionPage || !ferry?.rpc) {
         sendResponse(null);
         return;
     }
     let work: Promise<any>;
     switch (request) {
         case "getTotp":
-            work = kee.KeePassRPC.getTotp(msg.uuid, msg.dbFileName);
+            work = ferry.rpc.getTotp(msg.uuid, msg.dbFileName);
             break;
         case "getOtpSetup":
-            work = getOtpSetupForPopup(kee.foregroundTabId);
+            work = getOtpSetupForPopup(ferry.foregroundTabId);
             break;
         case "getOtpSetupSummary":
-            work = getOtpSetupSummary(kee.foregroundTabId);
+            work = getOtpSetupSummary(ferry.foregroundTabId);
             break;
         case "discardOtpSetup":
-            forgetOtpSetup(kee.foregroundTabId);
+            forgetOtpSetup(ferry.foregroundTabId);
             work = Promise.resolve(true);
             break;
         case "applyOtpSetup":
-            work = applyOtpSetup(kee.foregroundTabId, msg.uuid, msg.dbFileName, !!msg.overwrite);
+            work = applyOtpSetup(ferry.foregroundTabId, msg.uuid, msg.dbFileName, !!msg.overwrite);
             break;
         case "getSelectionSave":
-            work = getSelectionSaveForPopup(kee.foregroundTabId);
+            work = getSelectionSaveForPopup(ferry.foregroundTabId);
             break;
         case "createSelectionEntry":
-            work = createSelectionEntry(kee.foregroundTabId, msg.title ?? "", msg.dbFileName ?? "", msg.groupUuid ?? "");
+            work = createSelectionEntry(ferry.foregroundTabId, msg.title ?? "", msg.dbFileName ?? "", msg.groupUuid ?? "");
             break;
         case "findEntryForEdit":
             work = findEntryForEdit(msg.uuid, msg.dbFileName);
             break;
         case "discardSelectionSave":
-            forgetSelectionSave(kee.foregroundTabId);
+            forgetSelectionSave(ferry.foregroundTabId);
             work = Promise.resolve(true);
             break;
         case "addImageAttachment":
-            work = kee.KeePassRPC.addImageAttachment(msg.uuid, msg.dbFileName, msg.fileName ?? "", msg.data ?? "");
+            work = ferry.rpc.addImageAttachment(msg.uuid, msg.dbFileName, msg.fileName ?? "", msg.data ?? "");
             break;
         case "connectionStatus":
-            work = kee.KeePassRPC.kprpcClient.nativeSessionManager.status().then(s => {
-                const features = kee.KeePassRPC.kprpcClient.nativeSessionManager.features();
+            work = ferry.rpc.pluginClient.nativeSessionManager.status().then(s => {
+                const features = ferry.rpc.pluginClient.nativeSessionManager.features();
                 return {
                     ...s,
-                    databases: kee.store.state.KeePassDatabases.map(db => db.name || db.fileName),
+                    databases: ferry.store.state.KeePassDatabases.map(db => db.name || db.fileName),
                     pluginVersion: s.connected ? pluginVersionFrom(features) : null,
                     pluginOutdated: s.connected ? pluginUpdateAvailable(features) : false,
                     fieldProtection: s.connected && (features ?? []).includes(FIELD_PROTECTION_FEATURE),
@@ -265,85 +270,103 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             break;
         case "requestUnlock":
             work = chrome.tabs.query({ active: true, lastFocusedWindow: true }).then(async ([tab]) => {
-                const result = await kee.requestBackgroundUnlock(tab?.id ?? -1, tab?.url ?? "", true);
-                if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) kee.openKeePass();
+                const result = await ferry.requestBackgroundUnlock(tab?.id ?? -1, tab?.url ?? "", true);
+                if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) ferry.openKeePass();
                 return result;
             });
             break;
         case "getEntryExtras":
-            work = kee.KeePassRPC.getEntryExtras(msg.uuid, msg.dbFileName);
+            work = ferry.rpc.getEntryExtras(msg.uuid, msg.dbFileName);
             break;
         case "getEntryAttachment":
-            work = kee.KeePassRPC.getEntryAttachment(msg.uuid, msg.dbFileName, msg.name);
+            work = ferry.rpc.getEntryAttachment(msg.uuid, msg.dbFileName, msg.name);
             break;
         case "openEntryAttachmentExternally":
-            work = kee.KeePassRPC.openEntryAttachmentExternally(msg.uuid, msg.dbFileName, msg.name);
+            work = ferry.rpc.openEntryAttachmentExternally(msg.uuid, msg.dbFileName, msg.name);
             break;
         case "openEntryNotesExternally":
-            work = kee.KeePassRPC.openEntryNotesExternally(msg.uuid, msg.dbFileName, msg.fileName ?? "");
+            work = ferry.rpc.openEntryNotesExternally(msg.uuid, msg.dbFileName, msg.fileName ?? "");
             break;
         case "getEntryFieldValue":
-            work = kee.KeePassRPC.getEntryFieldValue(msg.uuid, msg.dbFileName, msg.name);
+            work = ferry.rpc.getEntryFieldValue(msg.uuid, msg.dbFileName, msg.name);
             break;
         case "removeEntryExtra":
-            work = kee.KeePassRPC.removeEntryExtra(msg.uuid, msg.dbFileName, msg.kind, msg.name);
+            work = ferry.rpc.removeEntryExtra(msg.uuid, msg.dbFileName, msg.kind, msg.name);
             work.then(() => commandManager.entryExtrasChanged(msg.uuid, msg.dbFileName), () => undefined);
             break;
         case "addEntryText":
-            work = kee.KeePassRPC.addEntryText(msg.uuid, msg.dbFileName, msg.fieldName ?? "", msg.value ?? "", !!msg.protect, !!msg.toNotes);
+            work = ferry.rpc.addEntryText(msg.uuid, msg.dbFileName, msg.fieldName ?? "", msg.value ?? "", !!msg.protect, !!msg.toNotes);
             work.then(() => commandManager.entryExtrasChanged(msg.uuid, msg.dbFileName), () => undefined);
             break;
         case "updateEntryText":
-            work = kee.KeePassRPC.updateEntryText(msg.uuid, msg.dbFileName, msg.name ?? "", msg.value ?? "", !!msg.toNotes);
+            work = ferry.rpc.updateEntryText(msg.uuid, msg.dbFileName, msg.name ?? "", msg.value ?? "", !!msg.toNotes);
             break;
         case "moveEntryToRecycleBin":
-            work = kee.KeePassRPC.moveEntryToRecycleBin(msg.uuid, msg.dbFileName);
+            work = ferry.rpc.moveEntryToRecycleBin(msg.uuid, msg.dbFileName);
             break;
         case "setEntryFieldProtection":
-            work = kee.KeePassRPC.setEntryFieldProtection(msg.uuid, msg.dbFileName, msg.name ?? "", !!msg.protect);
+            work = ferry.rpc.setEntryFieldProtection(msg.uuid, msg.dbFileName, msg.name ?? "", !!msg.protect);
             break;
         case "setTotp":
             // Aus dem Popup eingefügter Schlüssel/QR-Code; nur gültige otpauth-TOTP-URIs
             work = parseOtpauth(msg.uri ?? "")
-                ? kee.KeePassRPC.setTotp(msg.uuid, msg.dbFileName, msg.uri, !!msg.overwrite)
+                ? ferry.rpc.setTotp(msg.uuid, msg.dbFileName, msg.uri, !!msg.overwrite)
                 : Promise.resolve({ status: "invalid" });
             break;
         case "pageFields":
-            work = queryPageFields(kee.foregroundTabId);
+            work = queryPageFields(ferry.foregroundTabId);
             break;
         case "fillField":
-            work = fillPageField(kee.foregroundTabId, msg.kind, msg.uuid, msg.dbFileName, msg.value);
+            work = fillPageField(ferry.foregroundTabId, msg.kind, msg.uuid, msg.dbFileName, msg.value);
             break;
         case "resetPairing":
-            work = kee.KeePassRPC.kprpcClient.nativeSessionManager.resetPairing().then(() => true);
+            work = ferry.rpc.pluginClient.nativeSessionManager.resetPairing().then(() => true);
             break;
         case "getHibpCheck":
-            work = kee.KeePassRPC.getHibpCheck();
+            work = ferry.rpc.getHibpCheck();
             break;
         case "setHibpCheck":
             // Danach Einträge neu laden: ohne Prüfung zeigt das Popup keine Leak-Hinweise mehr
-            work = kee.KeePassRPC.setHibpCheck(!!msg.enabled).then(async result => {
-                await kee.refreshAfterEntryChange();
-                kee.redetectFormsInAllTabs();
+            work = ferry.rpc.setHibpCheck(!!msg.enabled).then(async result => {
+                await ferry.refreshAfterEntryChange();
+                ferry.redetectFormsInAllTabs();
                 return result;
             });
             break;
         case "getHideExpired":
-            work = kee.KeePassRPC.getHideExpired();
+            work = ferry.rpc.getHideExpired();
             break;
         case "setHideExpired":
             // Danach Einträge, Seitentreffer und Kontextmenü neu laden (abgelaufene verschwinden bzw. kommen zurück)
-            work = kee.KeePassRPC.setHideExpired(!!msg.hide).then(async result => {
-                await kee.refreshAfterEntryChange();
-                kee.redetectFormsInAllTabs();
+            work = ferry.rpc.setHideExpired(!!msg.hide).then(async result => {
+                await ferry.refreshAfterEntryChange();
+                ferry.redetectFormsInAllTabs();
                 return result;
             });
             break;
+        case "getPasswordBackupInfo":
+            work = (ferry.rpc.pluginClient.nativeSessionManager.features() ?? []).includes(PASSWORD_BACKUP_INFO_FEATURE)
+                ? ferry.rpc.getPasswordBackupInfo()
+                : Promise.resolve(null);
+            break;
+        case "setPasswordBackup":
+            work = ferry.rpc.setPasswordBackup(!!msg.enabled);
+            break;
+        case "backupGeneratedPassword":
+            work = (ferry.rpc.pluginClient.nativeSessionManager.features() ?? []).includes(PASSWORD_BACKUP_INFO_FEATURE)
+                ? ferry.rpc.backupGeneratedPassword(msg.password ?? "", msg.url ?? "")
+                : Promise.resolve(false);
+            break;
+        case "getHibpLeaks":
+            work = (ferry.rpc.pluginClient.nativeSessionManager.features() ?? []).includes(HIBP_LEAKS_FEATURE)
+                ? ferry.rpc.getHibpLeaks(msg.since ?? "")
+                : Promise.resolve([]);
+            break;
         case "getHibpProgress":
-            work = kee.KeePassRPC.getHibpProgress();
+            work = ferry.rpc.getHibpProgress();
             break;
         case "getFerryTips":
-            work = kee.KeePassRPC.getFerryTips();
+            work = ferry.rpc.getFerryTips();
             break;
         case "popupTiming":
             diag("popup", "angezeigt", msg.timing ?? {});
@@ -362,7 +385,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Änderungen an Einträgen aus dem Popup: Ansicht und Seitentreffer auffrischen
     if (["setTotp", "addEntryText", "updateEntryText", "removeEntryExtra", "addImageAttachment", "applyOtpSetup"].includes(request)) {
         work = work.then(async result => {
-            await kee.refreshAfterEntryChange();
+            await ferry.refreshAfterEntryChange();
             return result;
         });
     }
@@ -372,13 +395,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 // Klick aufs Icon ohne Popup (nur im Zustand "verbunden, aber gesperrt"): KeePass zum Entsperren nach vorne holen
 chrome.action.onClicked.addListener(async () => {
-    if (!kee) return;
-    diag("hintergrund", "symbol geklickt (gesperrt-modus)", { verbunden: kee.store.state.connected });
-    if (kee.store.state.connected) {
+    if (!ferry) return;
+    diag("hintergrund", "symbol geklickt (gesperrt-modus)", { verbunden: ferry.store.state.connected });
+    if (ferry.store.state.connected) {
         // Bewusster Klick: ohne Bremsen im Hintergrund entsperren (Windows Hello), sonst wie bisher KeePass holen
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        const result = await kee.requestBackgroundUnlock(tab?.id ?? -1, tab?.url ?? "", true);
-        if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) kee.openKeePass();
+        const result = await ferry.requestBackgroundUnlock(tab?.id ?? -1, tab?.url ?? "", true);
+        if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) ferry.openKeePass();
         return;
     }
     // Zustand hat sich inzwischen geändert: normales Popup zeigen
@@ -386,7 +409,7 @@ chrome.action.onClicked.addListener(async () => {
     try {
         await chrome.action.openPopup();
     } catch (e) {
-        KeeLog.warn("Could not open popup: " + e);
+        FerryLog.warn("Could not open popup: " + e);
     }
 });
 
@@ -399,21 +422,21 @@ chrome.notifications.onClicked.addListener(async id => {
         if (win?.id != null) await chrome.windows.update(win.id, { focused: true });
         await chrome.action.openPopup();
     } catch (e) {
-        KeeLog.warn("Could not open popup from notification: " + e);
+        FerryLog.warn("Could not open popup from notification: " + e);
     }
 });
 
 // Geschlossener Tab: abgefangene Zugangsdaten und gemerkten Eintrag sofort verwerfen
 chrome.tabs.onRemoved.addListener(tabId => {
-    kee?.persistentTabStates?.delete(tabId);
+    ferry?.persistentTabStates?.delete(tabId);
     forgetOtpSetup(tabId);
     forgetAutoFill(tabId);
     forgetExpiryNotice(tabId);
-    kee?.deleteTabState?.(tabId);
+    ferry?.deleteTabState?.(tabId);
 });
 
 chrome.tabs.onActivated.addListener(event => {
-    if (KeeLog && KeeLog.debug) KeeLog.debug("Tab activated with id: " + event.tabId);
+    if (FerryLog && FerryLog.debug) FerryLog.debug("Tab activated with id: " + event.tabId);
     onTabActivated(event.tabId);
 });
 
@@ -469,7 +492,7 @@ const keepAlive = () => setInterval(chrome.runtime.getPlatformInfo, 22500);
 chrome.runtime.onStartup.addListener(keepAlive);
 keepAlive();
 
-// This alarm lets us restart our regular polling (for KeePassRPC presence) and avoid
+// This alarm lets us restart our regular polling (for plugin presence) and avoid
 // unnecessary user delays during page loads, etc. by ensuring that we are reactivated
 // shortly after any unexpected crashes, operating system standby/resume events, etc.
 chrome.alarms.create("ensureActive", { periodInMinutes: 0.5 });
@@ -483,18 +506,18 @@ chrome.runtime.onConnect.addListener(async port => {
     // may lead to some noisy warnings so maybe one day we can add some extra defence here.
     await initialised;
     console.debug("LIFECYCLE: init port completed");
-    kee.onPortConnected(port);
+    ferry.onPortConnected(port);
 });
 
 // With MV3 we must always listen to httpauth requests and decide whether to handle them
-// based on whether we have already initialised the pinia store, got connected to KPRPC, have open DBs, etc.
+// based on whether we have already initialised the pinia store, got connected to the plugin, have open DBs, etc.
 if (isFirefox()) {
     chrome.webRequest.onAuthRequired.addListener(
         async (requestDetails): Promise<chrome.webRequest.BlockingResponse> => {
-            if (KeeLog?.debug) KeeLog.debug("onAuthRequired request started");
+            if (FerryLog?.debug) FerryLog.debug("onAuthRequired request started");
             // We may crash at startup / session restore if we're not initialised yet
             await Promise.race([initialised, new Promise(resolve => self.setTimeout(resolve, 20000))]);
-            if (KeeLog?.debug) KeeLog.debug("onAuthRequired request ongoing");
+            if (FerryLog?.debug) FerryLog.debug("onAuthRequired request ongoing");
             const result = await networkAuth.provideCredentialsAsync(requestDetails);
             return result;
         },
@@ -504,13 +527,13 @@ if (isFirefox()) {
 } else {
     chrome.webRequest.onAuthRequired.addListener(
         (requestDetails, callback) => {
-            if (KeeLog?.debug) KeeLog.debug("onAuthRequired request started");
+            if (FerryLog?.debug) FerryLog.debug("onAuthRequired request started");
             Promise.race([
                 initialised,
                 new Promise(resolve => self.setTimeout(resolve, 20000))
             ])
             .then(() => {
-                if (KeeLog?.debug) KeeLog.debug("onAuthRequired request ongoing");
+                if (FerryLog?.debug) FerryLog.debug("onAuthRequired request ongoing");
                 networkAuth.provideCredentialsAsyncBlockingCallback(requestDetails, callback);
             });
         },
@@ -527,10 +550,10 @@ if (isFirefox()) {
 // https://issues.chromium.org/issues/41483002
 // chrome.webRequest.onAuthRequired.addListener(
 //     async (requestDetails): Promise<chrome.webRequest.BlockingResponse> => {
-//         if (KeeLog?.debug) KeeLog.debug("onAuthRequired request started");
+//         if (FerryLog?.debug) FerryLog.debug("onAuthRequired request started");
 //         // We may crash at startup / session restore if we're not initialised yet
 //         await Promise.race([initialised, new Promise(resolve => self.setTimeout(resolve, 20000))]);
-//         if (KeeLog?.debug) KeeLog.debug("onAuthRequired request ongoing");
+//         if (FerryLog?.debug) FerryLog.debug("onAuthRequired request ongoing");
 //         const result = await networkAuth.provideCredentialsAsync(requestDetails);
 //         return result;
 //     },

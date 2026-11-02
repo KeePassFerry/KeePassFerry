@@ -1,6 +1,7 @@
 import punycode from "punycode/";
 import publicSuffixList from "@gorhill/publicsuffixlist";
-import { pslData } from "./PublicSuffixListData";
+// Public Suffix List (Mozilla, MPL-2.0) unverändert als Datei; aktualisieren mit scripts/update-public-suffix-list.ts
+import pslData from "./siteData/public_suffix_list.dat?raw";
 
 export class Utils {
     private pslInitialised = false;

@@ -10,7 +10,7 @@ describe("sameSite", () => {
         expect(sameSite(null, "live.com")).toBe(false);
     });
 });
-import { KeeURL } from "../common/KeeURL";
+import { FerryURL } from "../common/FerryURL";
 
 describe("relatedDomains", () => {
     it("findet die anderen Domains der Gruppe", () => {
@@ -49,7 +49,7 @@ describe("Liste zugehöriger Domains", () => {
             expect(group.length).toBeGreaterThan(1);
             for (const d of group) all.add(d);
         }
-        for (const d of all) expect(KeeURL.fromString("https://login." + d + "/")?.domainOrIPAddress, d).toBe(d);
+        for (const d of all) expect(FerryURL.fromString("https://login." + d + "/")?.domainOrIPAddress, d).toBe(d);
     });
 });
 

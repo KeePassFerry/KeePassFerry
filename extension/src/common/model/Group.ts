@@ -1,7 +1,7 @@
 import { EntrySummary } from "./EntrySummary";
 import { Icon } from "./Icon";
 import { utils } from "../utils";
-import { GroupDto } from "./KPRPCDTOs";
+import { GroupDto } from "./PluginDTOs";
 
 export class Group {
     readonly title: string;
@@ -10,7 +10,7 @@ export class Group {
     readonly path: string;
     readonly entrySummaries: EntrySummary[];
     readonly groups: Group[];
-    //childEntries: Entry[] - this is only needed if we ever request GetAllDatabases(true) but Kee currently has no need for this KPRPC feature
+    //childEntries: Entry[] - this is only needed if we ever request GetAllDatabases(true) but KeePassFerry currently has no need for this plugin feature
 
     constructor(g: Partial<Group>) {
         this.title = g.title || "";
@@ -21,17 +21,17 @@ export class Group {
         this.groups = g.groups || [];
     }
 
-    public static fromKPRPCGroupDTO(groupDto: GroupDto, dbFileName: string) {
+    public static fromPluginGroupDTO(groupDto: GroupDto, dbFileName: string) {
         return new Group({
             title: groupDto.title,
             uuid: groupDto.uniqueID,
             icon: { version: 1, iconImageData: groupDto.iconImageData },
             path: groupDto.path,
             entrySummaries: groupDto.childLightEntries.map(childLightEntry =>
-                EntrySummary.fromKPRPCEntrySummaryDTO(childLightEntry, groupDto.path, dbFileName)
+                EntrySummary.fromPluginEntrySummaryDTO(childLightEntry, groupDto.path, dbFileName)
             ),
             groups: groupDto.childGroups.map(childGroup =>
-                this.fromKPRPCGroupDTO(childGroup, dbFileName)
+                this.fromPluginGroupDTO(childGroup, dbFileName)
             )
         });
     }

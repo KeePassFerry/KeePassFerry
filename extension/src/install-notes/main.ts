@@ -1,6 +1,6 @@
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
-import useStore, { KeeStore } from "../store";
+import useStore, { FerryStore } from "../store";
 import { App, createApp } from "vue";
 import { createVuetify } from "vuetify";
 import Root from "./App.vue";
@@ -12,12 +12,12 @@ import { IPCPiniaPlugin } from "../common/IPCPiniaPlugin";
 import { ferryVuetifyOptions } from "../common/ferryTheme";
 
 let vueApp: App<Element>;
-let store: KeeStore;
+let store: FerryStore;
 
 async function start() {
     await configManager.load();
-    KeeLog.debug("install notes page starting");
-    KeeLog.attachConfig(configManager.current);
+    FerryLog.debug("install notes page starting");
+    FerryLog.attachConfig(configManager.current);
 
     //const darkTheme = params["theme"] === "dark";
 
@@ -38,10 +38,10 @@ async function start() {
         vueApp.mount("#main");
 
     } catch (e) {
-        KeeLog.error("Failed to create user interface.", e);
+        FerryLog.error("Failed to create user interface.", e);
     }
 
-    KeeLog.info("install notes page ready");
+    FerryLog.info("install notes page ready");
 }
 
 // const params: { [key: string]: string } = {};

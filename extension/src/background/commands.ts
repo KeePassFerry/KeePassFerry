@@ -1,7 +1,7 @@
 import { Command } from "./Command";
 import { Action } from "../common/Action";
-import { KeeLog } from "../common/Logger";
-import { kee } from "./KF";
+import { FerryLog } from "../common/Logger";
+import { ferry } from "./KF";
 import { Entry } from "../common/model/Entry";
 import { startSelectionSave } from "./selectionSave";
 
@@ -35,12 +35,12 @@ export class KFCommands {
 
     public init() {
         chrome.commands.onCommand.addListener(command => {
-            const store = kee.store;
+            const store = ferry.store;
             switch (command) {
                 case Command.DetectForms:
                     if (store.state.connected && store.state.ActiveKeePassDatabaseIndex >= 0) {
-                        kee.tabStates
-                            .get(kee.foregroundTabId)
+                        ferry.tabStates
+                            .get(ferry.foregroundTabId)
                             .framePorts.forEach(port => {
                                 port.postMessage({
                                     action: Action.DetectForms
@@ -50,29 +50,29 @@ export class KFCommands {
                     break;
                 case Command.PrimaryAction:
                     if (store.state.ActiveKeePassDatabaseIndex < 0) {
-                        kee.loginToPasswordManager();
+                        ferry.loginToPasswordManager();
                     } else {
-                        kee.tabStates
-                            .get(kee.foregroundTabId)
+                        ferry.tabStates
+                            .get(ferry.foregroundTabId)
                             .framePorts.forEach(port => {
                                 port.postMessage({ action: Action.Primary });
                             }, this);
                     }
                     break;
                 case Command.GeneratePassword:
-                    kee.initiatePasswordGeneration();
+                    ferry.initiatePasswordGeneration();
                     break;
             }
         });
 
         chrome.contextMenus.onClicked.addListener((info, tab) => {
             const id = info.menuItemId as string;
-            const store = kee.store;
+            const store = ferry.store;
             switch (id) {
                 case Command.DetectForms:
                     if (store.state.connected && store.state.ActiveKeePassDatabaseIndex >= 0) {
-                        kee.tabStates
-                            .get(kee.foregroundTabId)
+                        ferry.tabStates
+                            .get(ferry.foregroundTabId)
                             .framePorts.forEach(port => {
                                 port.postMessage({
                                     action: Action.DetectForms
@@ -82,7 +82,7 @@ export class KFCommands {
                     break;
                 case Command.GeneratePassword:
                     // Rechtsklick in ein Eingabefeld: der Dialog bietet "Einsetzen" in genau dieses Feld an
-                    kee.initiatePasswordGeneration(info.editable && tab?.id != null ? { tabId: tab.id, frameId: info.frameId } : null);
+                    ferry.initiatePasswordGeneration(info.editable && tab?.id != null ? { tabId: tab.id, frameId: info.frameId } : null);
                     break;
                 case ADD_SELECTION_ID:
                     // Bewusster Klick: darf eine gesperrte Datenbank entsperren lassen
@@ -90,12 +90,12 @@ export class KFCommands {
                     break;
             }
             const menuAction = this.menuActions.get(id);
-            if (menuAction) this.runMenuAction(menuAction, tab?.id ?? kee.foregroundTabId, info.frameId);
+            if (menuAction) this.runMenuAction(menuAction, tab?.id ?? ferry.foregroundTabId, info.frameId);
         });
     }
 
     private async runMenuAction(a: MenuAction, tabId: number, clickedFrameId: number) {
-        const ports = kee.tabStates.get(tabId)?.framePorts;
+        const ports = ferry.tabStates.get(tabId)?.framePorts;
         if (!ports) return;
         if (a.kind === "login") {
             ports.get(a.frameId)?.postMessage({ action: Action.ManualFill, selectedEntryIndex: a.index });
@@ -104,10 +104,10 @@ export class KFCommands {
         let value: string = null;
         try {
             if (a.kind === "value") value = a.value;
-            else if (a.kind === "otp") value = (await kee.KeePassRPC.getTotp(a.uuid, a.dbFileName))?.code ?? null;
-            else value = await kee.KeePassRPC.getEntryFieldValue(a.uuid, a.dbFileName, a.name);
+            else if (a.kind === "otp") value = (await ferry.rpc.getTotp(a.uuid, a.dbFileName))?.code ?? null;
+            else value = await ferry.rpc.getEntryFieldValue(a.uuid, a.dbFileName, a.name);
         } catch (e) {
-            KeeLog.warn("Context menu value failed: " + e);
+            FerryLog.warn("Context menu value failed: " + e);
         }
         if (value == null) return;
         ports.get(clickedFrameId)?.postMessage({ action: Action.FillContextTarget, fillValue: value });
@@ -120,7 +120,7 @@ export class KFCommands {
     // Jede Plugin-Anfrage bei gesperrter Datenbank stößt in KeePass die Entsperrabfrage an (EnsureDBisOpen).
     // Das Menü fragt deshalb nur bei offener Datenbank an; entsperrt wird nur durch den Nutzer (z. B. Klick aufs Symbol).
     private static databaseOpen() {
-        return kee.store.state.connected && kee.store.state.KeePassDatabases.length > 0;
+        return ferry.store.state.connected && ferry.store.state.KeePassDatabases.length > 0;
     }
 
     // Eigene Felder eines Eintrags wurden im Popup geändert: Menü sofort mit den neuen Namen aufbauen
@@ -140,7 +140,7 @@ export class KFCommands {
                 if (cached && Date.now() - cached.at < EXTRAS_REFRESH_MS) return;
                 let names: string[] = cached?.names ?? [];
                 try {
-                    const extras = await kee.KeePassRPC.getEntryExtras(e.uuid, e.database.fileName);
+                    const extras = await ferry.rpc.getEntryExtras(e.uuid, e.database.fileName);
                     if (extras) names = (extras.fields ?? []).map(f => f.name).filter(n => !!n);
                 } catch (err) {
                     // alter Stand bleibt
@@ -157,13 +157,13 @@ export class KFCommands {
         if (this.tabUrlLookups.has(tabId) || !KFCommands.databaseOpen()) return;
         this.tabUrlLookups.add(tabId);
         try {
-            const found: Entry[] = (await kee.findLogins(url, null, null, null, null, null)) ?? [];
+            const found: Entry[] = (await ferry.findLogins(url, null, null, null, null, null)) ?? [];
             const before = this.tabUrlEntries.get(tabId);
             this.tabUrlEntries.set(tabId, { url, at: Date.now(), entries: found });
             const ids = (list: Entry[]) => list.map(e => e.uuid).join(",");
             if (!before || before.url !== url || ids(before.entries) !== ids(found)) this.setupContextMenuItems();
         } catch (e) {
-            KeeLog.warn("Context menu lookup failed: " + e);
+            FerryLog.warn("Context menu lookup failed: " + e);
         } finally {
             this.tabUrlLookups.delete(tabId);
         }
@@ -183,8 +183,8 @@ export class KFCommands {
     }
 
     private addEntryMenus() {
-        const state = kee.tabStates.get(kee.foregroundTabId);
-        if (kee.foregroundTabId < 0 || !state?.frames) return;
+        const state = ferry.tabStates.get(ferry.foregroundTabId);
+        if (ferry.foregroundTabId < 0 || !state?.frames) return;
         // Zuerst Einträge eines erkannten Anmeldeformulars (mit "Anmeldung ausfüllen"), dann übrige Treffer der Adresse
         const seen = new Set<string>();
         const entries: { entry: Entry; frameId: number; index: number }[] = [];
@@ -198,10 +198,10 @@ export class KFCommands {
         state.frames.forEach((frame, frameId) => collect(frame.entries, frameId, true));
         state.frames.forEach((frame, frameId) => collect(frame.urlEntries, frameId, false));
         if (entries.length === 0 && state.url) {
-            const cached = this.tabUrlEntries.get(kee.foregroundTabId);
+            const cached = this.tabUrlEntries.get(ferry.foregroundTabId);
             if (cached?.url === state.url) collect(cached.entries, 0, false);
             if (!cached || cached.url !== state.url || Date.now() - cached.at > EXTRAS_REFRESH_MS) {
-                this.lookupTabEntries(kee.foregroundTabId, state.url);
+                this.lookupTabEntries(ferry.foregroundTabId, state.url);
             }
         }
         const customNames = entries.map(
@@ -251,7 +251,7 @@ export class KFCommands {
             commandManager.contextMenuUpdatePending = true;
             return;
         }
-        const store = kee.store;
+        const store = ferry.store;
         commandManager.contextMenuUpdateLock = true;
         try {
             await chrome.contextMenus.removeAll();

@@ -77,13 +77,13 @@ body {
 #closeButton:hover { background: var(--hover); color: var(--text); }
 #closeButton:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-#Kee-MatchedLoginsList {
+#Ferry-MatchedLoginsList {
     flex-grow: 1000;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-#Kee-MatchedLoginsList ul {
+#Ferry-MatchedLoginsList ul {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -92,13 +92,13 @@ body {
     gap: 2px;
 }
 
-#Kee-MatchedLoginsList li.ferry-login {
+#Ferry-MatchedLoginsList li.ferry-login {
     border-radius: 10px;
     cursor: pointer;
     outline: none;
 }
-#Kee-MatchedLoginsList li.ferry-login:hover { background: var(--hover); }
-#Kee-MatchedLoginsList li.ferry-login:focus { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
+#Ferry-MatchedLoginsList li.ferry-login:hover { background: var(--hover); }
+#Ferry-MatchedLoginsList li.ferry-login:focus { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
 
 .ferry-login-row {
     display: flex;
@@ -142,7 +142,7 @@ li.ferry-login:hover .ferry-login-quick,
 li.ferry-login:focus .ferry-login-quick,
 li.ferry-login:focus-within .ferry-login-quick { opacity: 1; }
 
-#Kee-MatchedLoginsList { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+#Ferry-MatchedLoginsList { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 
 .ferry-login-more {
     flex: none;

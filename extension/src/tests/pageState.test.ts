@@ -4,21 +4,21 @@ import { join } from "path";
 import { pageMutationOf, pageStateOf } from "../background/pageState";
 import { Mutation } from "../store/Mutation";
 import * as types from "../store/mutation-types";
-import { defaults, KeeState } from "../store/KeeState";
+import { defaults, FerryState } from "../store/FerryState";
 
 // Voller Zustand des Hintergrunds mit allem, was Seiten nicht bekommen sollen
-function fullState(): KeeState {
+function fullState(): FerryState {
     return {
         ...defaults,
         connected: true,
-        connectedWebsocket: false,
+        connectedNative: false,
         ActiveKeePassDatabaseIndex: 0,
         KeePassDatabases: [
             {
                 name: "Privat",
                 fileName: "C:\\KeePass\\privat.kdbx",
                 active: true,
-                sessionFeatures: ["KPRPC_FIELD_DEFAULT_NAME_AND_ID_EMPTY"],
+                sessionFeatures: ["KEEPASSFERRY_FIELD_DEFAULT_NAME_AND_ID_EMPTY"],
                 root: { title: "Wurzel", entries: [{ title: "Bank", usernameValue: "max" }] }
             } as any
         ],
@@ -30,7 +30,7 @@ function fullState(): KeeState {
         searchResults: [{ title: "Bank", fullDetails: { fields: [{ value: "aus-suche" }] } }] as any,
         notifications: [{ name: "hinweis" }] as any,
         entryUpdateStartedAtTimestamp: 1234
-    } as KeeState;
+    } as FerryState;
 }
 
 describe("pageStateOf", () => {
@@ -43,7 +43,7 @@ describe("pageStateOf", () => {
 
     // Wie im Betrieb: der Store verändert das defaults-Objekt selbst (NonReactiveStore: _state = defaults)
     it("übernimmt nichts aus dem lebenden Zustandsobjekt", () => {
-        const live = defaults as KeeState;
+        const live = defaults as FerryState;
         const saved = { saveState: live.saveState, generatedPassword: live.generatedPassword, searchResults: live.searchResults, notifications: live.notifications };
         try {
             Object.assign(live, fullState());
@@ -67,7 +67,7 @@ describe("pageStateOf", () => {
                 name: "Privat",
                 fileName: "C:\\KeePass\\privat.kdbx",
                 active: true,
-                sessionFeatures: ["KPRPC_FIELD_DEFAULT_NAME_AND_ID_EMPTY"]
+                sessionFeatures: ["KEEPASSFERRY_FIELD_DEFAULT_NAME_AND_ID_EMPTY"]
             }
         ]);
     });
@@ -77,7 +77,7 @@ describe("pageMutationOf", () => {
     it("verteilt Verbindung, aktive Datenbank und Bearbeitungszeitpunkt unverändert", () => {
         for (const type of [
             types.updateConnected,
-            types.updateConnectedWebsocket,
+            types.updateConnectedNative,
             types.updateActiveKeePassDatabaseIndex,
             types.updateEntryUpdateStartedAtTimestamp
         ]) {
@@ -89,7 +89,7 @@ describe("pageMutationOf", () => {
     it("kürzt Datenbanken auf Kennung und Fähigkeiten", () => {
         const m = pageMutationOf(new Mutation(types.updateKeePassDatabases, fullState().KeePassDatabases));
         expect(JSON.stringify(m.payload)).not.toContain("Bank");
-        expect(m.payload[0].sessionFeatures).toEqual(["KPRPC_FIELD_DEFAULT_NAME_AND_ID_EMPTY"]);
+        expect(m.payload[0].sessionFeatures).toEqual(["KEEPASSFERRY_FIELD_DEFAULT_NAME_AND_ID_EMPTY"]);
     });
 
     it("verteilt Speichern-Zustand, erzeugte Passwörter, Suchergebnisse und Benachrichtigungen nicht an Seiten", () => {
@@ -115,7 +115,7 @@ describe("pageMutationOf", () => {
 // Wächter: Seiten-Code darf nur Zustand lesen, den pageStateOf mitschickt
 describe("Seiten-Skripte", () => {
     it("lesen nur Felder, die an Seiten verteilt werden", () => {
-        const allowed = new Set(["connected", "connectedWebsocket", "ActiveKeePassDatabaseIndex", "KeePassDatabases", "entryUpdateStartedAtTimestamp"]);
+        const allowed = new Set(["connected", "connectedNative", "ActiveKeePassDatabaseIndex", "KeePassDatabases", "entryUpdateStartedAtTimestamp"]);
         const dir = join(__dirname, "../page");
         const used = new Set<string>();
         for (const file of readdirSync(dir).filter(f => f.endsWith(".ts"))) {

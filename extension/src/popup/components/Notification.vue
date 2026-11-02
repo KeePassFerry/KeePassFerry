@@ -13,7 +13,8 @@
                 </v-btn>
             </div>
         </div>
-        <button type="button" class="ferry-ib" :aria-label="$i18n('close')" @click="closeNotification(notification.id)">
+        <!-- Plugin-Update ohne ×: der Hinweis bleibt, bis das Plugin aktuell ist -->
+        <button v-if="closable" type="button" class="ferry-ib" :aria-label="$i18n('close')" @click="closeNotification(notification.id)">
             <tabler-x class="ferry-ico" />
             <v-tooltip location="bottom" activator="parent">{{ $i18n("close") }}</v-tooltip>
         </button>
@@ -44,7 +45,8 @@ import { configManager } from "../../common/ConfigManager";
 import { AddonMessage } from "../../common/AddonMessage";
 import { Port } from "../../common/port";
 import { tooltipDelay } from "../../common/Timings";
-//import useStore from "../../store";
+import useStore from "../../store";
+import { PLUGIN_UPDATE_NOTICE } from "../../common/FeatureFlags";
 
 export default {
     props: ["notification"],
@@ -55,17 +57,15 @@ export default {
     data: () => ({
         tooltipDelay
     }),
+    computed: {
+        closable: function (): boolean {
+            return this.notification?.name !== PLUGIN_UPDATE_NOTICE;
+        }
+    },
     methods: {
         dispatchActionResponse(id: string, action: ButtonAction, data: { [id: string]: string }) {
             const pm = Port.postMessage;
             switch (action) {
-                case "enableHighSecurityKPRPCConnection":
-                    configManager.current.connSLClient = 3;
-                    configManager.save();
-                    break;
-                case "loadUrlUpgradeKee":
-                    pm({ loadUrlUpgradeKee: true });
-                    break;
                 case "startPluginUpdate":
                     pm({ startPluginUpdate: true });
                     break;
@@ -87,6 +87,9 @@ export default {
         closeNotification(id: string) {
             const pm = Port.postMessage;
             pm({ removeNotification: id } as AddonMessage);
+            // Sofort ausblenden, nicht erst, wenn die Änderung vom Hintergrund zurückkommt
+            const store = useStore();
+            store.updateNotifications((store.notifications ?? []).filter(n => n.id !== id), false);
         }
     }
 };

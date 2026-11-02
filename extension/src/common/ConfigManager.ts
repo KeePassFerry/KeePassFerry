@@ -7,11 +7,10 @@ import {
     type SiteConfigNodeType,
     type SiteConfigTarget
 } from "./config";
-import { ConfigMigrations } from "./ConfigMigrations";
 import { defaultSiteConfig } from "./DefaultSiteConfig";
 import { utils } from "./utils";
 import { Field } from "./model/Field";
-import { KeeLog } from "./Logger";
+import { FerryLog } from "./Logger";
 
 type SiteConfigNodeAndIndex = {
     node: SiteConfigNode;
@@ -28,6 +27,23 @@ type SiteConfigNodeAndIndex = {
 // increment when changes are introduced that require data migration
 export const LATEST_VERSION = 8;
 
+// Speicherschlüssel der Einstellungen (in Seiten aufgeteilt); bis 1.0.14 hießen sie "keeConfigPage…"
+export const CONFIG_PREFIX = "ferryConfigPage";
+const LEGACY_CONFIG_PREFIX = "keeConfigPage";
+const OBSOLETE_KEYS = ["KPRPCUsername", "KPRPCStoredKeys", "connSLClient", "connSLServerMin"];
+const MRU_PRIMARY = "{<{{<<ferry-primary>>}}>}";
+const LEGACY_MRU_PRIMARY = "{<{{<<kee-primary>>}}>}";
+
+function readPages(config: { [key: string]: any }, prefix: string) {
+    const pageCount = config[prefix + "Count"];
+    let configString = "";
+    for (let i = 0; i < (pageCount || 0); i++) {
+        const nextPage = config[prefix + i];
+        if (nextPage) configString += nextPage;
+    }
+    return configString;
+}
+
 export const defaultConfig = new Config();
 defaultConfig.autoFillDialogs = false;
 defaultConfig.autoFillForms = true;
@@ -35,16 +51,11 @@ defaultConfig.autoFillFormsWithMultipleMatches = false;
 defaultConfig.autoSubmitForms = false;
 defaultConfig.autoSubmitDialogs = false;
 defaultConfig.autoSubmitMatchedForms = false;
-defaultConfig.connSLClient = 2;
-defaultConfig.connSLServerMin = 2;
 defaultConfig.keePassDBToOpen = "";
 defaultConfig.keePassMRUDB = "";
-defaultConfig.KeePassRPCWebSocketPort = 12546;
-defaultConfig.KPRPCUsername = "";
-defaultConfig.KPRPCStoredKeys = {};
 defaultConfig.lastConnectedToKeePass = "";
 defaultConfig.listAllOpenDBs = true;
-defaultConfig.logLevel = KeeLog.defaultLevel;
+defaultConfig.logLevel = FerryLog.defaultLevel;
 defaultConfig.logMethodConsole = false;
 defaultConfig.logMethodFile = false;
 defaultConfig.logSensitiveData = false;
@@ -70,9 +81,6 @@ defaultConfig.notificationCountSavePassword = 0;
 defaultConfig.currentSearchTermTimeout = 30;
 defaultConfig.notifyPasswordAvailableForPaste = true;
 defaultConfig.animateWhenOfferingSave = true;
-defaultConfig.keeVaultLaunchMessageDismissed = false;
-defaultConfig.keeVaultLaunchStart = 8640000000000000;
-defaultConfig.keeVaultLaunchEnd = 8640000000000000;
 defaultConfig.manualSubmitOverrideProhibited = false;
 defaultConfig.theme = null;
 defaultConfig.hideConfirmationAfterSave = false;
@@ -98,7 +106,7 @@ export class ConfigManager {
     }
 
     // Some processes may want to take action when settings are changed (e.g. the background
-    // process to notify the KPRPC server). Using this rather than chrome.storage.onChanged.addListener
+    // process to notify the plugin). Using this rather than chrome.storage.onChanged.addListener
     // ensures that our configManager data is consistent with the underlying storage
     public addChangeListener(listener) {
         this._listeners.push(listener);
@@ -138,55 +146,45 @@ export class ConfigManager {
         const pages = this.splitStringToPages(configString);
         const configValues: any = {};
 
-        configValues.keeConfigPageCount = pages.length;
+        configValues[CONFIG_PREFIX + "Count"] = pages.length;
 
         for (let i = 0; i < pages.length; i++) {
-            configValues["keeConfigPage" + i] = pages[i];
+            configValues[CONFIG_PREFIX + i] = pages[i];
         }
         await chrome.storage.local.set(configValues);
     }
 
     public async load() {
-        // We completely replace current config with what we load because we
-        // don't know that applying onto the defaults will result in a safe
-        // migration from any old version that we load. It would probably be
-        // fine but might require version comparisons... in which case we might
-        // as well just increment the version number and run a migration once
-        // rather than incur increased ongoing load costs.
+        // Gespeicherte Einstellungen ersetzen die Vorgaben vollständig; fehlende Werte ergänzt danach fixInvalidConfigData
         const config = await chrome.storage.local.get();
-        const pageCount = config["keeConfigPageCount"];
-
-        if (pageCount) {
-            let configString = "";
-            for (let i = 0; i < pageCount; i++) {
-                const nextPage = config["keeConfigPage" + i];
-                if (nextPage) configString += nextPage;
-            }
-            if (configString) this.current = JSON.parse(configString);
-        } else {
-            const oldPageCount = config["keefoxConfigPageCount"];
-
-            if (oldPageCount) {
-                let configString = "";
-                for (let i = 0; i < oldPageCount; i++) {
-                    const nextPage = config["keefoxConfigPage" + i];
-                    if (nextPage) configString += nextPage;
-                }
-                if (configString) this.current = JSON.parse(configString);
-                //TODO:5: Delete the old keefox prefixed data to save space
-            }
-        }
+        let configString = readPages(config, CONFIG_PREFIX);
+        // Einmalig: Einstellungen unter den alten Schlüsseln übernehmen und diese danach entfernen
+        const legacy = !configString && !!readPages(config, LEGACY_CONFIG_PREFIX);
+        if (legacy) configString = readPages(config, LEGACY_CONFIG_PREFIX);
+        if (configString) this.current = JSON.parse(configString);
         this.fixInvalidConfigData();
-        this.migrateToLatestVersion();
+        if (legacy) {
+            await this.save();
+            await chrome.storage.local.remove(Object.keys(config).filter(k => k.startsWith(LEGACY_CONFIG_PREFIX)));
+        }
     }
 
     // This is typically invalid due to the previous execution of alpha and beta code
     // on the user's system but whatever the reason, the items here are especially hard
-    // to fix through the UI and critical to Kee functionality so we take no chances
+    // to fix through the UI and critical to KeePassFerry functionality so we take no chances
     private fixInvalidConfigData() {
         let saveNeeded = false;
-        if (this.current.KPRPCStoredKeys == null) {
-            this.current.KPRPCStoredKeys = {};
+        // Reste aus Kee: entfernte Einstellungen löschen, Merker der zuletzt gewählten Gruppe umbenennen
+        for (const key of OBSOLETE_KEYS) {
+            if (key in (this.current as any)) {
+                delete (this.current as any)[key];
+                saveNeeded = true;
+            }
+        }
+        const mru = this.current.mruGroup as { [key: string]: string } | undefined;
+        if (mru && LEGACY_MRU_PRIMARY in mru) {
+            if (!(MRU_PRIMARY in mru)) mru[MRU_PRIMARY] = mru[LEGACY_MRU_PRIMARY];
+            delete mru[LEGACY_MRU_PRIMARY];
             saveNeeded = true;
         }
         // Neue KeePassFerry-Einstellungen fehlen in gespeicherten Konfigurationen älterer Versionen
@@ -208,57 +206,11 @@ export class ConfigManager {
         if (saveNeeded) this.save();
     }
 
-    private migrateToLatestVersion() {
-        if (this.current.version >= LATEST_VERSION) return;
-        const migrations = new ConfigMigrations();
-        /* eslint-disable no-fallthrough */
-        switch (this.current.version) {
-            case 1:
-                migrations.migrateToVersion2(this.current);
-            case 2:
-                migrations.migrateToVersion3(this.current);
-            case 3:
-                migrations.migrateToVersion4(this.current);
-            case 4:
-                migrations.migrateToVersion5(this.current);
-            case 5:
-                migrations.migrateToVersion6(this.current);
-            case 6:
-                migrations.migrateToVersion7(this.current);
-            case 7:
-                migrations.migrateToVersion8(this.current);
-        }
-        /* eslint-enable no-fallthrough */
-        this.save();
-    }
-
-    public migrateFromRemoteToLatestVersion() {
-        if (this.current.version >= LATEST_VERSION) return;
-        const migrations = new ConfigMigrations();
-        /* eslint-disable no-fallthrough */
-        switch (this.current.version) {
-            case 5:
-                migrations.migrateToVersion6(this.current);
-            case 6:
-                migrations.migrateToVersion7(this.current);
-        }
-        /* eslint-enable no-fallthrough */
-        this.save();
-    }
-
     private reload(onLoaded?) {
         chrome.storage.local.get().then(config => {
-            const pageCount = config["keeConfigPageCount"];
-
-            if (pageCount) {
-                let configString = "";
-                for (let i = 0; i < pageCount; i++) {
-                    const nextPage = config["keeConfigPage" + i];
-                    if (nextPage) configString += nextPage;
-                }
-                if (configString) {
-                    this.current = Object.assign(this.current, JSON.parse(configString));
-                }
+            const configString = readPages(config, CONFIG_PREFIX);
+            if (configString) {
+                this.current = Object.assign(this.current, JSON.parse(configString));
             }
             if (onLoaded) onLoaded();
         });
@@ -602,7 +554,8 @@ export class ConfigManager {
                 .filter(Boolean);
         }
 
-        const ic = conf.listMatchingCaseSensitive !== true;
+        // Groß-/Kleinschreibung immer ignorieren (frühere Einstellung dafür entfernt)
+        const ic = true;
         const fieldIds = otherFields
             .map(field => (ic ? field.locators[0]?.id.toLowerCase() : field.locators[0]?.id))
             .filter(Boolean);
@@ -652,7 +605,7 @@ export class ConfigManager {
         try {
             url = new URL(urlString);
         } catch (e) {
-            KeeLog.error(
+            FerryLog.error(
                 "Invalid URL supplied to togglePreferredEntryUuid. Preferred entry will not be altered."
             );
             return;

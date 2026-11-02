@@ -1,7 +1,7 @@
 import { FormUtils } from "./formsUtils";
 import { MatchResult } from "./MatchResult";
 import { FilledField } from "./FilledField";
-import { KeeLogger } from "../common/Logger";
+import { FerryLogger } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import type { AddonMessage } from "../common/AddonMessage";
 import { Action } from "../common/Action";
@@ -20,14 +20,14 @@ interface SubmitHandlerAttachment {
 }
 
 export class FormSaving {
-    private Logger: KeeLogger;
+    private Logger: FerryLogger;
     private formUtils: FormUtils;
     private SubmitHandlerAttachments: SubmitHandlerAttachment[] = [];
     private matchResult: MatchResult; //TODO:5: May be overkill to have all this data available for saving
     // Letztes ausgewertetes Absenden: Klick auf den Absende-Knopf und das folgende "submit" sind derselbe Versuch
     private lastSubmit: { form: HTMLFormElement; at: number } = null;
 
-    constructor(private myPort: chrome.runtime.Port, logger: KeeLogger, formUtils: FormUtils) {
+    constructor(private myPort: chrome.runtime.Port, logger: FerryLogger, formUtils: FormUtils) {
         this.Logger = logger;
         this.formUtils = formUtils;
     }

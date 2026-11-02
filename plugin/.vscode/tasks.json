@@ -32,7 +32,7 @@
             "type": "shell",
             "command": "msbuild",
             "args": [
-                "KeePassRPC",
+                "KeePassFerry",
                 "/p:Configuration=ReleasePLGX",
                 "/property:GenerateFullPaths=true",
                 "/t:build",

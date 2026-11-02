@@ -9,6 +9,31 @@
                 <span class="ferry-news-title">{{ $i18n("ferry_news_heading") }}</span>
             </div>
             <div class="ferry-news-body">
+                <!-- Tipps zuerst: führen den Nutzer zu dem, was bei ihm noch fehlt; darunter die Neuerungen je Version -->
+                <p class="ferry-news-section">{{ $i18n("ferry_tips_heading") }}</p>
+                <div v-for="tip of visibleTips" :key="tip.id" class="ferry-news-item">
+                    <span class="ferry-news-icon" :class="tip.tone">
+                        <component :is="iconComponent(tip.icon)" class="ferry-ico" />
+                    </span>
+                    <span class="ferry-news-text">
+                        <span class="ferry-news-item-title">{{ $i18n("ferry_tip_" + tip.id + "_title") }}</span>
+                        <span class="ferry-news-item-hint">{{ tipText(tip) }}</span>
+                        <span class="ferry-news-actions">
+                            <v-btn
+                                v-if="tip.action" size="small" rounded="lg" :variant="tip.primary ? 'flat' : 'outlined'"
+                                :color="tip.primary ? 'primary' : undefined" @click="tip.run">
+                                {{ $i18n(tip.action) }}
+                            </v-btn>
+                            <v-btn size="small" rounded="lg" variant="text" @click="dismissTip(tip.id)">
+                                {{ $i18n("ferry_tip_dismiss") }}
+                            </v-btn>
+                        </span>
+                    </span>
+                </div>
+                <p v-if="tipsLoaded && !visibleTips.length" class="ferry-news-empty">
+                    {{ connected ? $i18n("ferry_tips_none") : $i18n("ferry_tips_not_connected") }}
+                </p>
+
                 <template v-for="(release, index) of releases" :key="release.version">
                     <!-- Neueste Version (bzw. die installierte) offen, frühere zugeklappt -->
                     <button
@@ -31,33 +56,7 @@
                         </div>
                     </template>
 
-                    <!-- Tipps direkt unter den Neuerungen der aktuellen Version -->
-                    <template v-if="index === 0">
-                        <p class="ferry-news-section">{{ $i18n("ferry_tips_heading") }}</p>
-                        <div v-for="tip of visibleTips" :key="tip.id" class="ferry-news-item">
-                            <span class="ferry-news-icon" :class="tip.tone">
-                                <component :is="iconComponent(tip.icon)" class="ferry-ico" />
-                            </span>
-                            <span class="ferry-news-text">
-                                <span class="ferry-news-item-title">{{ $i18n("ferry_tip_" + tip.id + "_title") }}</span>
-                                <span class="ferry-news-item-hint">{{ $i18n("ferry_tip_" + tip.id + "_text") }}</span>
-                                <span class="ferry-news-actions">
-                                    <v-btn
-                                        v-if="tip.action" size="small" rounded="lg" :variant="tip.primary ? 'flat' : 'outlined'"
-                                        :color="tip.primary ? 'primary' : undefined" @click="tip.run">
-                                        {{ $i18n(tip.action) }}
-                                    </v-btn>
-                                    <v-btn size="small" rounded="lg" variant="text" @click="dismissTip(tip.id)">
-                                        {{ $i18n("ferry_tip_dismiss") }}
-                                    </v-btn>
-                                </span>
-                            </span>
-                        </div>
-                        <p v-if="tipsLoaded && !visibleTips.length" class="ferry-news-empty">
-                            {{ connected ? $i18n("ferry_tips_none") : $i18n("ferry_tips_not_connected") }}
-                        </p>
-                        <p v-if="releases.length > 1" class="ferry-news-section">{{ $i18n("ferry_news_earlier") }}</p>
-                    </template>
+                    <p v-if="index === 0 && releases.length > 1" class="ferry-news-section">{{ $i18n("ferry_news_earlier") }}</p>
                 </template>
                 <a class="ferry-news-link" :href="changelogUrl" target="_blank" rel="noopener">
                     {{ $i18n("ferry_news_full_changelog") }}
@@ -70,7 +69,7 @@
 
 <script lang="ts">
 import { WHATS_NEW, currentVersion, markNewsSeen } from "../../common/whatsNew";
-import { configManager } from "../../common/ConfigManager";
+import { Tip, loadTips, loadDismissedTips, saveDismissedTips, tipText } from "../tips";
 import IconShieldCheck from "~icons/tabler/shield-check";
 import IconWand from "~icons/tabler/wand";
 import IconKey from "~icons/tabler/key";
@@ -83,8 +82,11 @@ import IconShieldLock from "~icons/tabler/shield-lock";
 import IconFingerprint from "~icons/tabler/fingerprint";
 import IconShieldSearch from "~icons/tabler/shield-search";
 import IconBrowser from "~icons/tabler/browser";
-
-const DISMISSED_TIPS_KEY = "ferryDismissedTips";
+import IconClock from "~icons/tabler/clock-exclamation";
+import IconPin from "~icons/tabler/pin";
+import IconKeyboard from "~icons/tabler/keyboard";
+import IconBug from "~icons/tabler/bug";
+import IconDatabase from "~icons/tabler/database";
 
 // Symbole fest eingebunden (dynamische Namen löst das Icon-Plugin nicht auf)
 const ICONS: Record<string, unknown> = {
@@ -99,20 +101,17 @@ const ICONS: Record<string, unknown> = {
     "shield-lock": IconShieldLock,
     fingerprint: IconFingerprint,
     "shield-search": IconShieldSearch,
-    browser: IconBrowser
+    browser: IconBrowser,
+    clock: IconClock,
+    pin: IconPin,
+    keyboard: IconKeyboard,
+    bug: IconBug,
+    database: IconDatabase
 };
 
-interface Tip {
-    id: string;
-    icon: string;
-    tone: string;
-    action?: string;
-    primary?: boolean;
-    run?: () => void;
-}
-
 export default {
-    emits: ["close"],
+    // tips-changed: ein Tipp wurde ausgeblendet oder erledigt (Fußleiste prüft dann, ob ✨ weiter pulsiert)
+    emits: ["close", "tips-changed"],
     data: () => ({
         open: [] as string[],
         tips: [] as Tip[],
@@ -138,14 +137,13 @@ export default {
     },
     mounted: async function () {
         markNewsSeen();
-        try {
-            this.dismissed = (await chrome.storage.local.get(DISMISSED_TIPS_KEY))?.[DISMISSED_TIPS_KEY] ?? [];
-        } catch (e) {
-            this.dismissed = [];
-        }
+        this.dismissed = await loadDismissedTips();
         await this.loadTips();
     },
     methods: {
+        tipText(tip: Tip) {
+            return tipText(tip);
+        },
         iconComponent(name: string) {
             return ICONS[name] ?? IconSparkles;
         },
@@ -154,54 +152,16 @@ export default {
         },
         async dismissTip(id: string) {
             if (!this.dismissed.includes(id)) this.dismissed = [...this.dismissed, id];
-            await chrome.storage.local.set({ [DISMISSED_TIPS_KEY]: this.dismissed }).catch(() => undefined);
+            await saveDismissedTips(this.dismissed);
+            this.$emit("tips-changed");
         },
-        // Tipps nur für das, was bei diesem Nutzer noch fehlt (Merkmale vom Plugin, Browser-Einstellung)
         async loadTips() {
-            const tips: Tip[] = [];
-            let status: any = null;
-            let info: { winHello: boolean; anyOtp: boolean; hibpCheck: boolean } = null;
-            try {
-                status = await chrome.runtime.sendMessage({ keepassferry: "connectionStatus" });
-                if (status?.hibpCheck) info = await chrome.runtime.sendMessage({ keepassferry: "getFerryTips" });
-            } catch (e) {
-                // Hintergrund startet gerade neu
-            }
-            this.connected = !!status?.connected;
-            let browserSaving = false;
-            try {
-                browserSaving = !!((await chrome.privacy.services.passwordSavingEnabled.get({})) as any)?.value;
-            } catch (e) {
-                browserSaving = false;
-            }
-            if (info && !info.hibpCheck) {
-                // Einschalten und gleich zum Schalter in den Einstellungen (dort Erklärung und Fortschritt)
-                tips.push({ id: "hibp", icon: "shield-search", tone: "warn", action: "ferry_tip_enable", primary: true, run: async () => {
-                    await chrome.runtime.sendMessage({ keepassferry: "setHibpCheck", enabled: true }).catch(() => undefined);
-                    const page = chrome.runtime.getManifest().options_ui?.page ?? "dist/settings/index.html";
-                    chrome.tabs.create({ url: chrome.runtime.getURL(page) + "#hibp" });
-                    window.close();
-                } });
-            }
-            if (info && !info.winHello) {
-                tips.push({ id: "winhello", icon: "fingerprint", tone: "plain", action: "ferry_tip_guide", run: () => {
-                    chrome.tabs.create({ url: "https://github.com/sirAndros/KeePassWinHello" });
-                    window.close();
-                } });
-            }
-            if (info && !info.anyOtp) tips.push({ id: "otp", icon: "shield-lock", tone: "plain" });
-            if (browserSaving) {
-                tips.push({ id: "browsersaving", icon: "browser", tone: "plain", action: "ferry_tip_disable", primary: true, run: async () => {
-                    configManager.setASAP({ ferryDisableBrowserPasswordSaving: true } as any);
-                    try {
-                        await chrome.privacy.services.passwordSavingEnabled.set({ value: false });
-                    } catch (e) {
-                        // Richtlinie des Administrators o. Ä.
-                    }
-                    await this.loadTips();
-                } });
-            }
+            const { tips, connected } = await loadTips(async () => {
+                await this.loadTips();
+                this.$emit("tips-changed");
+            });
             this.tips = tips;
+            this.connected = connected;
             this.tipsLoaded = true;
         }
     }

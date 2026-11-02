@@ -2,8 +2,59 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.15 – 2026-11-02
 
+- **Update the extension and the KeePass plugin together:** the connection between them now uses KeePassFerry's own
+  protocol names, so version 1.0.15 of the extension only works with version 1.0.15 of the plugin and vice versa. The
+  extension asks for the plugin update; until then it cannot connect.
+- KeePass plugin: KeePassFerry now stores its settings per entry and per database in its own fields
+  (`KeePassFerry.Entry`, `KeePassFerry.Config`). When a database is opened for the first time with this version,
+  existing settings from Kee/KeePassRPC (`KPRPC JSON`, `KeePassRPC.Config`) are copied over once, so nothing is lost.
+  After that KeePassFerry no longer reads Kee's fields and never changes them. The result (database settings, number
+  of entries taken over) is written once to the diagnostic log (Documents\KeePassFerry\diagnose.log).
+- KeePass plugin, "KeePassFerry" tab in the entry dialog: only what is needed. "General" keeps hide / never fill in /
+  never submit, "URLs" stays, "Form fields" only appears when the entry has more than username and password, the
+  match accuracy per entry (the database default applies) and the realm (only shown when set) are gone.
+- KeePass plugin: the Public Suffix List (used to tell e.g. `login.amazon.co.uk` and `amazon.co.uk` apart from
+  `co.uk`) is now built into the plugin from the same, current file as the extension (as of 2026-10-31). Before, the
+  bundled `DomainPublicSuffix.dll` downloaded it from publicsuffix.org at KeePass start; that download and the DLL are
+  gone. IP addresses no longer get a "domain" (before, 192.168.0.1 counted as domain "0.1", so a router entry could be
+  offered on other IP addresses).
+- Passkey dialog: now opens as a modal dialog in the browser's top layer, so it appears above websites that show their
+  own passkey prompt as a modal dialog (e.g. Sony) and can be clicked; before, it stayed behind it.
+- Fixed: creating a passkey failed on sites that use the relying party ID of another domain via Related Origin
+  Requests (e.g. GMX: RP ID auth.gmx.net on passkey-admin.gmx.net). KeePassFerry rejected the request with a
+  SecurityError before its dialog appeared. It now checks https://<RP ID>/.well-known/webauthn as the WebAuthn
+  standard requires (without cookies or referrer, redirects only to HTTPS, status 200 with application/json, at most
+  5 domain names) and accepts the origins listed there.
+- Leaked passwords: a red warning icon with the number of affected entries in the popup's bottom bar opens the list of
+  all leaked passwords at any time (the "newly found" card still appears only once). The list shows one compact line
+  per entry with the number of breaches as a small badge; clicking a line opens the edit window to enter the new
+  password, a small button opens the website's change-password page.
+- Confirmation after saving an entry: only "Close", no "Open in KeePass" button any more.
+- "News and tips": the tips now come first (they guide you to what is still missing), the news per version below.
+  The button in the bottom bar pulses gently and shows a dot while there are tips you have not hidden yet, otherwise
+  it stays quiet (no animation when the system asks for reduced motion). The keyboard shortcut tip now shows the
+  shortcut (the text had an empty gap: "Press  to fill …").
+- Public Suffix List updated to the current version from publicsuffix.org (2026-10-31, about 1,900 new entries); it
+  decides which addresses belong to the same website. It is now a separate data file with an update script.
+- Code cleanup: all names inherited from Kee/KeePassRPC replaced (plugin folders, files, classes, protocol names,
+  stored keys of the extension's settings, which are moved once), the unused WebSocket connection and its settings,
+  old security level settings and unused Kee/KeeFox migrations removed. Existing settings are kept.
+- "News and tips" no longer freezes the popup after a tip was hidden: the list of hidden tips was stored in a form
+  that could not be read back (this also kept the button from pulsing). Already stored values are read correctly.
+- No more error entries after reloading or updating the extension: tabs that extensions may not access (e.g. edge://
+  pages, add-on stores) are skipped quietly, and the passkey bridge stays out of frames without a real origin
+  (sandboxed iframes, about:blank), where it caused "Invalid target origin 'null'".
+- Edit window opened from the list of leaked passwords: the back arrow and "Cancel" return to the list. The list keeps
+  its scroll position while the popup is open (after editing and when closing and reopening it).
+- Edit window: entries without a web address no longer leave a spinning button next to "Save" that pushed the
+  buttons out of the popup (happened with "Save new entries in the last used group" turned on).
+- Field icons only appear at fields that are really visible: no stray icon for hidden fields any more (e.g. Sony's
+  password field for the next step, fields only for screen readers, collapsed or transparent areas). The same check
+  as for filling is used.
+- Popup notice "The KeePassFerry plugin is older than this extension" no longer shows a close button (it could not
+  really be closed); it stays until the plugin is updated. Other notices disappear immediately when closed.
 - Password generator: on websites with known password rules (e.g. 5–8 characters, only certain special characters)
   the profile "Suitable for <site>" is preselected and generates a password the website accepts; the rules are shown
   as small chips. Rules from Apple's Password Manager Resources (MIT licence, bundled, no network access).
@@ -14,8 +65,10 @@ English · [Deutsch](#deutsch)
   and everything once more after turning the check back on; only the first 5 characters of a checksum (SHA-1) are
   sent, never the password. The result is written to the same field and format as the KeePass plugin "HIBP Offline
   Check" (both understand each other). Affected entries show a red warning with a "Change password" button; the
-  settings show progress, the time of the last check and connection problems. No Windows notifications. With the
-  check turned off, KeePassFerry shows no warnings. Requires the plugin of this version.
+  settings show progress, the time of the last check and connection problems. No Windows notifications; instead
+  the popup shows a card when passwords were newly found in breaches ("Show" lists them with "Change password",
+  "Got it" hides the card until the next new finding). With the check turned off, KeePassFerry shows no warnings.
+  Requires the plugin of this version.
 - News and tips in the popup (✨ in the footer): what's new in this version, earlier versions to expand and tips for
   what is still missing (e.g. Windows Hello, breach check). After an update a notice appears once.
 - Faster popup on sites with many related domains (e.g. Amazon's country sites): the plugin no longer re-reads each
@@ -26,11 +79,27 @@ English · [Deutsch](#deutsch)
   new key each time, so the popup no longer offers an outdated key). A key found on the current page survives a
   restart of the extension's background.
 - Settings: the sections are in the same order as in the navigation.
+- Saving an entry: the confirmation now appears right away on the page ("Saved in KeePass")
+  instead of only the next time the popup is opened.
+- Password generator: shows where the backup of a generated password is stored; passwords generated by the
+  website's rules are backed up too. The backup can be turned off under "Saving entries" (moved from the KeePass
+  options dialog).
+- New tips under ✨: pin KeePassFerry to the toolbar, fill in with the keyboard shortcut, passkeys, turn off the
+  diagnostic log.
+- Settings cleaned up: removed "A specific website" (per-site settings; existing rules keep working), "Use this
+  database when opening KeePass", "Remember the last used KeePass database", "Log level" and "Ignore case" (now always
+  ignored). Options that depend on another one are indented below it. Settings changed elsewhere (e.g. in the popup)
+  are shown correctly when you return, and options stored in KeePass no longer appear as "off" while KeePass is
+  still connecting.
+- Fixed: after editing an entry from the popup search, the expanded entry still showed the old username.
 - Removed the option "Unlock a locked database immediately" (issue #11): it asked for Windows Hello as soon as a
   page contained a login form, also on sites where you are already signed in (hidden login forms). A locked database
   is unlocked by clicking the lock icon in the field or the toolbar icon, as before.
-- The group for backups of generated passwords is now created as "Generated passwords" (before: "KeePassFerry –
-  generated passwords"; issue #12). Existing groups keep their name; they can be renamed freely in KeePass.
+- Backups of generated passwords (issue #12) now go to KeePassFerry's own group "Generated passwords" at the top
+  level; Kee's groups ("Kee", "Kee Generated Password Backups") are no longer used or renamed, so switching back to Kee
+  finds them unchanged. Titles name the website and time ("example.com – 02/11/2026 15:40"), and the address is also
+  stored when the password was generated in the popup (before: "unknown URL"). Existing backups stay where they are.
+  Requires the plugin of this version.
 - Entries with an expiry date in KeePass ("Expires", issue #10): new setting "Expired entries" (Finding entries).
   "Remind me to change the password" (default) keeps filling them in and shows a notice on the page right after
   filling in and in the popup, before the date (advance warning adjustable, default 7 days) and after it, with a link
@@ -282,8 +351,67 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.15 – 2026-11-02
 
+- **Erweiterung und KeePass-Plugin zusammen aktualisieren:** Die Verbindung zwischen beiden nutzt jetzt eigene
+  Protokollnamen von KeePassFerry; Version 1.0.15 der Erweiterung funktioniert daher nur mit Version 1.0.15 des
+  Plugins und umgekehrt. Die Erweiterung bittet um das Plugin-Update; bis dahin kann sie sich nicht verbinden.
+- KeePass-Plugin: KeePassFerry speichert seine Einstellungen je Eintrag und je Datenbank jetzt in eigenen Feldern
+  (`KeePassFerry.Entry`, `KeePassFerry.Config`). Beim ersten Öffnen einer Datenbank mit dieser Version werden
+  vorhandene Einstellungen von Kee/KeePassRPC (`KPRPC JSON`, `KeePassRPC.Config`) einmalig übernommen, es geht also
+  nichts verloren. Danach liest KeePassFerry die Felder von Kee nicht mehr und verändert sie nie. Das Ergebnis
+  (Datenbank-Einstellungen, Zahl der übernommenen Einträge) steht einmalig im Diagnoseprotokoll
+  (Dokumente\KeePassFerry\diagnose.log).
+- KeePass-Plugin, Reiter „KeePassFerry“ im Eintragsdialog: nur noch das Nötige. „Allgemein“ behält Ausblenden / nie
+  ausfüllen / nie absenden, „URLs“ bleibt, „Formularfelder“ erscheint nur, wenn der Eintrag mehr als Benutzername und
+  Passwort hat; die Genauigkeit der Adresse je Eintrag (es gilt der Standard der Datenbank) und der Realm (nur noch
+  angezeigt, wenn gesetzt) entfallen.
+- KeePass-Plugin: Die Public Suffix List (sie unterscheidet z. B. `login.amazon.co.uk` und `amazon.co.uk` von
+  `co.uk`) ist jetzt fest im Plugin enthalten, aus derselben aktuellen Datei wie in der Erweiterung (Stand 31.10.2026).
+  Bisher lud die mitgelieferte `DomainPublicSuffix.dll` sie beim Start von KeePass von publicsuffix.org; dieser Download
+  und die DLL entfallen. IP-Adressen bekommen keine „Domain“ mehr (bisher galt 192.168.0.1 als Domain „0.1“, ein
+  Router-Eintrag konnte so auf anderen IP-Adressen angeboten werden).
+- Passkey-Dialog: öffnet sich jetzt als modaler Dialog in der obersten Ebene des Browsers und liegt damit auch über
+  Websites, die ihre eigene Passkey-Abfrage als modalen Dialog zeigen (z. B. Sony), und ist bedienbar; vorher lag er
+  dahinter.
+- Behoben: Passkeys ließen sich auf Websites nicht anlegen, die über „Related Origin Requests“ die RP-ID einer
+  anderen Domain nutzen (z. B. GMX: RP-ID auth.gmx.net auf passkey-admin.gmx.net). KeePassFerry lehnte die Anfrage
+  mit einem SecurityError ab, bevor der Dialog erschien. Jetzt wird https://<RP-ID>/.well-known/webauthn so geprüft,
+  wie es der WebAuthn-Standard vorgibt (ohne Cookies und Referrer, Umleitungen nur auf HTTPS, Status 200 mit
+  application/json, höchstens 5 Domain-Namen), und die dort genannten Herkünfte werden akzeptiert.
+- Geleakte Passwörter: Ein rotes Warnsymbol mit der Anzahl betroffener Einträge in der unteren Leiste des Popups öffnet
+  jederzeit die Liste aller geleakten Passwörter (die Karte „neu gefunden“ erscheint weiterhin nur einmal). Die Liste
+  zeigt je Eintrag eine kompakte Zeile mit der Zahl der Funde als kleiner Plakette; ein Klick auf die Zeile öffnet das
+  Bearbeiten-Fenster zum Eintragen des neuen Passworts, ein kleiner Knopf die Änderungsseite der Website.
+- Bestätigung nach dem Speichern eines Eintrags: nur noch „Schließen“, ohne Knopf „In KeePass öffnen“.
+- „Neuigkeiten und Tipps“: Die Tipps stehen jetzt oben (sie führen zu dem, was noch fehlt), darunter die Neuerungen je
+  Version. Der Knopf in der unteren Leiste pulsiert sanft und zeigt einen Punkt, solange es Tipps gibt, die du noch
+  nicht ausgeblendet hast, sonst bleibt er ruhig (ohne Animation, wenn das System reduzierte Bewegung verlangt). Der
+  Tipp zum Tastenkürzel nennt jetzt das Kürzel (der Text hatte eine leere Stelle: „Mit  trägst du …“).
+- Public Suffix List auf den aktuellen Stand von publicsuffix.org gebracht (31.10.2026, rund 1.900 neue Einträge); sie
+  entscheidet, welche Adressen zur selben Website gehören. Sie liegt jetzt als eigene Datendatei mit
+  Aktualisierungsskript vor.
+- Aufräumen im Code: alle von Kee/KeePassRPC übernommenen Namen ersetzt (Plugin-Ordner, Dateien, Klassen,
+  Protokollnamen, Speicherschlüssel der Erweiterungs-Einstellungen, die einmalig umgezogen werden), die ungenutzte
+  WebSocket-Verbindung samt Einstellungen, alte Sicherheitsstufen-Einstellungen und ungenutzte Migrationen aus
+  Kee/KeeFox entfernt. Bestehende Einstellungen bleiben erhalten.
+- „Neuigkeiten und Tipps“ hängt das Popup nicht mehr auf, nachdem ein Tipp ausgeblendet wurde: Die Liste der
+  ausgeblendeten Tipps wurde in einer Form gespeichert, die sich nicht wieder lesen ließ (deshalb pulsierte auch der
+  Knopf nicht). Schon gespeicherte Werte werden richtig gelesen.
+- Keine Fehlereinträge mehr nach dem Neuladen oder Aktualisieren der Erweiterung: Tabs, auf die Erweiterungen nicht
+  zugreifen dürfen (z. B. edge://-Seiten, Add-on-Stores), werden still übersprungen, und die Passkey-Brücke bleibt aus
+  Frames ohne echten Ursprung heraus (Sandbox-iframes, about:blank), wo sie „Invalid target origin 'null'“ auslöste.
+- Bearbeiten-Fenster aus der Liste der geleakten Passwörter: Pfeil zurück und „Abbrechen“ führen wieder zur Liste. Die
+  Liste behält ihre Scroll-Position, solange das Popup offen ist (nach dem Bearbeiten und beim Schließen und
+  erneuten Öffnen).
+- Bearbeiten-Fenster: Bei Einträgen ohne Webadresse bleibt neben „Speichern“ kein drehender Knopf mehr stehen, der die
+  Knöpfe aus dem Popup schob (trat mit „Neue Einträge in der zuletzt verwendeten Gruppe speichern“ auf).
+- Feldsymbole erscheinen nur noch an wirklich sichtbaren Feldern: kein verirrtes Symbol mehr bei versteckten Feldern
+  (z. B. Sonys Passwortfeld für den nächsten Schritt, Felder nur für Screenreader, zugeklappte oder durchsichtige
+  Bereiche). Es gilt dieselbe Prüfung wie beim Ausfüllen.
+- Hinweis im Popup „Das KeePassFerry-Plugin in KeePass ist älter als diese Erweiterung“ ohne Schließen-Knopf (er
+  ließ sich ohnehin nicht wirklich schließen); er bleibt, bis das Plugin aktualisiert ist. Andere Hinweise verschwinden
+  beim Schließen sofort.
 - Passwort-Generator: Auf Websites mit bekannten Passwortregeln (z. B. 5–8 Zeichen, nur bestimmte Sonderzeichen) ist
   das Profil „Passend für <Website>“ vorausgewählt und erzeugt ein Passwort, das die Website annimmt; die Regeln stehen
   als kleine Chips darunter. Regeln aus Apples „Password Manager Resources“ (MIT-Lizenz, mitgeliefert, kein Netzzugriff).
@@ -294,8 +422,10 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
   nach dem Wiedereinschalten alles noch einmal; gesendet werden nur die ersten 5 Zeichen einer Prüfsumme (SHA-1), nie
   das Passwort. Ergebnis im selben Feld und Format wie beim KeePass-Plugin „HIBP Offline Check“ (beide verstehen sich).
   Betroffene Einträge zeigen eine rote Warnung mit dem Knopf „Passwort ändern“; die Einstellungen zeigen Fortschritt,
-  Zeitpunkt der letzten Prüfung und Verbindungsprobleme. Keine Meldungen in Windows. Bei ausgeschalteter Prüfung zeigt
-  KeePassFerry keine Warnungen. Erfordert das Plugin dieser Version.
+  Zeitpunkt der letzten Prüfung und Verbindungsprobleme. Keine Meldungen in Windows; stattdessen zeigt das Popup eine
+  Karte, wenn Passwörter neu in Datenlecks gefunden wurden („Anzeigen“ listet sie mit „Passwort ändern“, „Verstanden“
+  blendet die Karte bis zum nächsten neuen Fund aus). Bei ausgeschalteter Prüfung zeigt KeePassFerry keine Warnungen.
+  Erfordert das Plugin dieser Version.
 - Neuigkeiten und Tipps im Popup (✨ in der Fußleiste): Neuerungen der Version, frühere Versionen zum Aufklappen und
   Tipps für das, was noch fehlt (z. B. Windows Hello, Prüfung auf Datenlecks). Nach einem Update einmal ein Hinweis.
 - Schnelleres Popup auf Websites mit vielen zugehörigen Domains (z. B. Amazons Länderseiten): Das Plugin liest die
@@ -307,12 +437,29 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
   oder Verlassen der Seite verworfen (viele Websites erzeugen dann einen neuen, das Popup bietet so keinen veralteten
   mehr an). Ein Fund auf der aktuellen Seite übersteht einen Neustart des Hintergrunds der Erweiterung.
 - Einstellungen: Die Abschnitte stehen in derselben Reihenfolge wie in der Navigation.
+- Eintrag speichern: Die Bestätigung erscheint jetzt sofort auf der Seite („In KeePass gespeichert“)
+  statt erst beim nächsten Öffnen des Popups.
+- Passwort-Generator: zeigt, wo die Sicherung des erzeugten Passworts liegt; auch nach den Regeln der Website erzeugte
+  Passwörter werden gesichert. Die Sicherung lässt sich unter „Eintrag speichern“ abschalten (bisher im
+  KeePass-Optionsfenster).
+- Neue Tipps unter ✨: KeePassFerry an die Symbolleiste anheften, Ausfüllen per Tastenkürzel, Passkeys,
+  Diagnoseprotokoll ausschalten.
+- Einstellungen aufgeräumt: entfernt „Eine bestimmte Website“ (Einstellungen je Website; vorhandene Regeln gelten
+  weiter), „Diese Datenbank beim Öffnen von KeePass verwenden“, „Zuletzt verwendete KeePass-Datenbank merken“,
+  „Ausführlichkeit des Protokolls“ und „Groß-/Kleinschreibung ignorieren“ (jetzt immer). Optionen, die von einer
+  anderen abhängen, stehen eingerückt darunter. Woanders (z. B. im Popup) geänderte Einstellungen werden beim
+  Zurückkehren richtig angezeigt, und in KeePass gespeicherte Optionen erscheinen nicht mehr als „aus“, solange die
+  Verbindung noch aufgebaut wird.
+- Behoben: Nach dem Bearbeiten eines Eintrags aus der Popup-Suche zeigte der aufgeklappte Eintrag noch den alten
+  Benutzernamen.
 - Option „Bei gesperrter Datenbank sofort entsperren“ entfernt (Issue #11): Sie fragte nach Windows Hello, sobald eine
   Seite ein Anmeldeformular enthielt, auch auf Websites, bei denen man längst angemeldet ist (versteckte Formulare).
   Entsperrt wird wie bisher per Klick auf das Schloss-Symbol im Feld oder auf das Erweiterungssymbol.
-- Die Gruppe für Sicherungen generierter Passwörter heißt bei neuen Datenbanken „Generierte Passwörter“ (bisher
-  „KeePassFerry – generierte Passwörter“; Issue #12). Bestehende Gruppen behalten ihren Namen und lassen sich in
-  KeePass beliebig umbenennen.
+- Sicherungen generierter Passwörter (Issue #12) landen in einer eigenen Gruppe von KeePassFerry, „Generierte
+  Passwörter“ auf oberster Ebene; die Gruppen von Kee („Kee“, „Kee Generated Password Backups“) werden nicht mehr
+  benutzt oder umbenannt, ein Wechsel zurück zu Kee findet sie unverändert vor. Titel nennen Website und Zeitpunkt
+  („example.com – 02.11.2026 15:40“), und die Adresse wird auch gespeichert, wenn das Passwort im Popup erzeugt wurde
+  (bisher „unknown URL“). Bestehende Sicherungen bleiben, wo sie sind. Erfordert das Plugin dieser Version.
 - Einträge mit Ablaufdatum in KeePass („Gültig bis“, Issue #10): neue Einstellung „Abgelaufene Einträge“ (Einträge
   finden). „An Passwortwechsel erinnern“ (Standard) füllt weiter aus und zeigt direkt nach dem Ausfüllen auf der Seite
   und im Popup einen Hinweis, vor dem Datum (Vorwarnung einstellbar, Standard 7 Tage) und danach, mit Link zur

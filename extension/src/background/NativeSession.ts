@@ -1,5 +1,5 @@
-import type { ResultWrapper } from "./kprpcClient";
-import { KeeLog } from "../common/Logger";
+import type { ResultWrapper } from "./pluginClient";
+import { FerryLog } from "../common/Logger";
 import { FerryChannelClient, BrowserFerryChannelStore } from "./FerryChannel";
 
 /*
@@ -92,12 +92,12 @@ export class NativeSessionManager {
             return;
         }
 
-        KeeLog.debug("Connecting to native messaging host");
+        FerryLog.debug("Connecting to native messaging host");
         try {
             this.port = chrome.runtime.connectNative(NATIVE_HOST_NAME);
         } catch (ex) {
             this.lastHostError = String(ex);
-            KeeLog.warn("Native messaging host could not be started: " + ex);
+            FerryLog.warn("Native messaging host could not be started: " + ex);
             this.port = null;
             this.scheduleReconnect();
             return;
@@ -110,7 +110,7 @@ export class NativeSessionManager {
             const error = chrome.runtime.lastError?.message;
             if (this.port !== port) return;
             this.lastHostError = error ?? null;
-            KeeLog.warn("Native messaging host disconnected" + (error ? ": " + error : ""));
+            FerryLog.warn("Native messaging host disconnected" + (error ? ": " + error : ""));
             this.port = null;
             this.setKeePassDisconnected();
             this.scheduleReconnect();
@@ -145,7 +145,7 @@ export class NativeSessionManager {
                 this.receiveChunk(msg);
                 break;
             default:
-                KeeLog.warn("Unknown native host status: " + hostStatus);
+                FerryLog.warn("Unknown native host status: " + hostStatus);
         }
     }
 
@@ -156,7 +156,7 @@ export class NativeSessionManager {
                 try {
                     this.port?.postMessage(frame);
                 } catch (ex) {
-                    KeeLog.warn("Failed to send a native message: " + ex);
+                    FerryLog.warn("Failed to send a native message: " + ex);
                 }
             },
             onPairingCode: code => {
@@ -166,7 +166,7 @@ export class NativeSessionManager {
             onReady: features => {
                 if (this.channel !== channel) return;
                 this.pendingPairingCode = null;
-                KeeLog.info("Secure channel to KeePass established");
+                FerryLog.info("Secure channel to KeePass established");
                 this.keePassConnected = true;
                 this._features = features;
                 this.cb.onOpen(features);
@@ -176,14 +176,14 @@ export class NativeSessionManager {
                 this.cb.onMessage({ protocol: "jsonrpc", jsonrpc: text, encryptionNotRequired: true });
             },
             onDenied: () => {
-                KeeLog.warn("KeePass declined the pairing");
+                FerryLog.warn("KeePass declined the pairing");
                 // Nicht sofort erneut fragen
                 this.connectionProhibitedUntil = new Date(Date.now() + 60000);
                 this.cb.onProblem("denied");
                 this.closeSession();
             },
             onSecurityError: reason => {
-                KeeLog.error("Secure channel error: " + reason);
+                FerryLog.error("Secure channel error: " + reason);
                 if (reason.includes("SERVER_KEY_CHANGED") || reason.includes("SERVER_UNKNOWN")) {
                     // Möglicher Angriff oder neu eingerichtetes KeePass: nicht automatisch weiterverbinden
                     this.connectionProhibitedUntil = new Date(Date.now() + 24 * 3600 * 1000);
@@ -201,7 +201,7 @@ export class NativeSessionManager {
         });
         this.channel = channel;
         channel.start("KeePassFerry (" + browserName() + ")", this.cb.clientFeatures()).catch(e => {
-            KeeLog.error("Could not start secure channel: " + e);
+            FerryLog.error("Could not start secure channel: " + e);
             this.closeSession();
         });
     }
@@ -230,7 +230,7 @@ export class NativeSessionManager {
         try {
             obj = JSON.parse(new TextDecoder("utf-8").decode(bytes));
         } catch (ex) {
-            KeeLog.error("Could not parse chunked message from native host: " + ex);
+            FerryLog.error("Could not parse chunked message from native host: " + ex);
             return;
         }
         this.channel?.handle(obj);
@@ -244,7 +244,7 @@ export class NativeSessionManager {
         if (!this.keePassConnected) return;
         this.keePassConnected = false;
         this.callbacks = {};
-        KeeLog.debug("Native connection to KeePass closed");
+        FerryLog.debug("Native connection to KeePass closed");
         this.cb.onClose();
     }
 
@@ -253,17 +253,17 @@ export class NativeSessionManager {
         try {
             this.port?.postMessage({ keepassferryHost: "allowForeground" });
         } catch (ex) {
-            KeeLog.debug("allowForeground failed: " + ex);
+            FerryLog.debug("allowForeground failed: " + ex);
         }
     }
 
     // JSON-RPC-Text über den verschlüsselten Kanal senden
     sendMessage(data: string) {
         if (!this.port || !this.channel?.isReady) {
-            KeeLog.warn("Secure channel not ready; message dropped");
+            FerryLog.warn("Secure channel not ready; message dropped");
             return;
         }
-        this.channel.send(data).catch(ex => KeeLog.error("Failed to send over secure channel: " + ex));
+        this.channel.send(data).catch(ex => FerryLog.error("Failed to send over secure channel: " + ex));
     }
 
     // Zustand für die Einstellungsseite

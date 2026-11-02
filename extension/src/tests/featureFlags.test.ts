@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RECOMMENDED_PLUGIN_VERSION, pluginIsOutdated, pluginUpdateAvailable, pluginVersionAtLeast } from "../common/FeatureFlags";
 
-const f = (v: string) => (v ? ["KPRPC_FEATURE_VERSION_1_6", "KEEPASSFERRY_VERSION_" + v] : ["KPRPC_FEATURE_VERSION_1_6"]);
+const f = (v: string) => (v ? ["KEEPASSFERRY_BASE", "KEEPASSFERRY_VERSION_" + v] : ["KEEPASSFERRY_BASE"]);
 
 describe("pluginVersionAtLeast", () => {
     it("vergleicht Versionsnummern numerisch", () => {

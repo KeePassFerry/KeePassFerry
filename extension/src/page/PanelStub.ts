@@ -9,7 +9,7 @@ export class PanelStubOptions {
     legacy: boolean;
 
     public static MatchedLogins: PanelStubOptions = {
-        id: "KeeAddonPanelMatchedLogins",
+        id: "FerryPanelMatchedLogins",
         height: 300,
         width: 400,
         name: "matchedLoginsLegacy",
@@ -18,7 +18,7 @@ export class PanelStubOptions {
     };
 
     public static GeneratePasswordLegacy: PanelStubOptions = {
-        id: "KeeAddonPanelGeneratePassword",
+        id: "FerryPanelGeneratePassword",
         height: 300,
         width: 400,
         name: "generatePasswordLegacy",
@@ -27,7 +27,7 @@ export class PanelStubOptions {
     };
 
     public static GeneratePassword: PanelStubOptions = {
-        id: "KeeAddonPanelGeneratePassword",
+        id: "FerryPanelGeneratePassword",
         height: 500,
         width: 450,
         name: "generatePassword",
@@ -189,8 +189,8 @@ export class PanelStub {
             }
         }
 
-        // Move as far left as possible while keeping the Kee icon above the container and not
-        // going beyond the left edge of the target. We assume the Kee icon is always visible because
+        // Move as far left as possible while keeping the KeePassFerry icon above the container and not
+        // going beyond the left edge of the target. We assume the KeePassFerry icon is always visible because
         // the user has had to interact with the button initially. That assumption won't always hold
         // - e.g. in very narrow screens with keyboard activation or some later window or DOM adjustments but this should
         // be an edge case that users can work around until we have more time to extend support to those scenarios.

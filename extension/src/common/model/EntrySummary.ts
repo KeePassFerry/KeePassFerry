@@ -1,7 +1,7 @@
 import { Entry } from "./Entry";
 import { Icon } from "./Icon";
 import { utils } from "../utils";
-import { EntrySummaryDto } from "./KPRPCDTOs";
+import { EntrySummaryDto } from "./PluginDTOs";
 
 export class EntrySummary {
     icon: Icon;
@@ -73,7 +73,7 @@ export class EntrySummary {
         });
     }
 
-    public static fromKPRPCEntrySummaryDTO(
+    public static fromPluginEntrySummaryDTO(
         entrySummaryDto: EntrySummaryDto,
         path: string,
         dbFileName: string

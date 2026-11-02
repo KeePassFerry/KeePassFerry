@@ -1,5 +1,5 @@
-import { SessionType } from "./SessionType";
-import { DatabaseDto } from "./KPRPCDTOs";
+import { SessionType } from "../SessionType";
+import { DatabaseDto } from "./PluginDTOs";
 import { Icon } from "./Icon";
 import { Group } from "./Group";
 
@@ -22,7 +22,7 @@ export class Database {
         this.sessionFeatures = db.sessionFeatures || [""];
     }
 
-    public static fromKPRPCDatabaseDTO(
+    public static fromPluginDatabaseDTO(
         dto: DatabaseDto,
         sessionType: SessionType,
         sessionFeatures: string[]
@@ -31,7 +31,7 @@ export class Database {
             name: dto.name,
             fileName: dto.fileName,
             icon: { version: 1, iconImageData: dto.iconImageData },
-            root: Group.fromKPRPCGroupDTO(dto.root, dto.fileName),
+            root: Group.fromPluginGroupDTO(dto.root, dto.fileName),
             active: dto.active,
             sessionType,
             sessionFeatures

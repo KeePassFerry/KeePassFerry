@@ -10,6 +10,9 @@ Bedingte Anfragen (mediation: "conditional", Passkey-Vorschläge im Benutzerfeld
 (() => {
     const w = window as any;
     if (w.__keepassferryWebAuthn || !navigator.credentials || !w.PublicKeyCredential) return;
+    // Undurchsichtiger Ursprung (Sandbox-iframe, about:blank, data:): dort gibt es keine Passkeys, und postMessage mit
+    // dem Ziel 'null' wirft "Invalid target origin" – Seite bleibt beim Browser
+    if (window.location.origin === "null") return;
     w.__keepassferryWebAuthn = true;
 
     const CHANNEL = "keepassferry-webauthn";

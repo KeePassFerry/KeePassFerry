@@ -5,14 +5,14 @@ bald abläuft oder abgelaufen ist, zeigt die Seite einen Hinweis mit "Passwort �
 - Nur beim Ausfüllen, kein Durchsuchen der Datenbank: also nie mehrere Hinweise auf einmal
 - Je Eintrag höchstens einmal in 30 Minuten; "Später" blendet ihn bis zum nächsten Tag aus
 */
-import { kee } from "./KF";
+import { ferry } from "./KF";
 import { configManager } from "../common/ConfigManager";
 import { Action } from "../common/Action";
 import type { AddonMessage } from "../common/AddonMessage";
 import { expiryState, expirySoonTitle, formatExpiryDate } from "../common/expiry";
 import { changePasswordUrl } from "./changePassword";
 import { findEntryForEdit } from "./selectionSave";
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 
 const REPEAT_MS = 30 * 60 * 1000;
 const SNOOZE_KEY = "ferryExpirySnooze";
@@ -47,13 +47,13 @@ export async function checkExpiryAfterFill(tabId: number, uuid: string, dbFileNa
     try {
         entry = await findEntryForEdit(uuid, dbFileName);
     } catch (e) {
-        KeeLog.debug("Expiry check: entry not found: " + e);
+        FerryLog.debug("Expiry check: entry not found: " + e);
     }
     const state = expiryState(entry?.expiryTime, configManager.current.ferryExpiryWarnDays ?? 7);
     if (!state) return;
     const date = formatExpiryDate(state.date);
     const title = state.kind === "expired" ? $STR("ferry_expiry_expired") : expirySoonTitle(state.daysLeft);
-    const hide = state.kind === "soon" && (await kee.KeePassRPC.getHideExpired().catch(() => false));
+    const hide = state.kind === "soon" && (await ferry.rpc.getHideExpired().catch(() => false));
     const text = $STRF(
         state.kind === "expired" ? "ferry_expiry_since" : hide ? "ferry_expiry_until_hidden" : "ferry_expiry_until",
         [entry.title, date]
@@ -61,7 +61,7 @@ export async function checkExpiryAfterFill(tabId: number, uuid: string, dbFileNa
     lastShown.set(key, Date.now());
     shownInTab.set(tabId, { key, url: entry.URLs?.[0] ?? "" });
     try {
-        kee.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({
+        ferry.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({
             action: Action.ShowExpiryNotice,
             expiryNotice: { expired: state.kind === "expired", title, text }
         } as AddonMessage);
@@ -90,7 +90,7 @@ export async function snoozeExpiryNotice(tabId: number) {
         all[shown.key] = now;
         await chrome.storage.local.set({ [SNOOZE_KEY]: all });
     } catch (e) {
-        KeeLog.debug("Expiry snooze failed: " + e);
+        FerryLog.debug("Expiry snooze failed: " + e);
     }
 }
 

@@ -1,9 +1,9 @@
 import { Action } from "./Action";
 import { FrameState } from "./FrameState";
-import { KeeNotification } from "./KeeNotification";
+import { FerryNotification } from "./FerryNotification";
 import { PasswordProfile } from "./model/PasswordProfile";
 import type { SubmittedData } from "./SubmittedData";
-import type { KeeState } from "../store/KeeState";
+import type { FerryState } from "../store/FerryState";
 import { Entry } from "./model/Entry";
 import { Mutation } from "../store/Mutation";
 
@@ -20,10 +20,9 @@ export interface AddonMessage {
     isForegroundTab?: boolean;
     tabId?: number;
     frameId?: number;
-    loadUrlUpgradeKee?: boolean;
     // Hinweis "Plugin veraltet": Update über das Plugin starten (Setup laden und ausführen)
     startPluginUpdate?: boolean;
-    addNotification?: KeeNotification;
+    addNotification?: FerryNotification;
     removeNotification?: string;
     // visible: mindestens ein Anmeldefeld ist zu sehen (nur für das Diagnoseprotokoll)
     findMatches?: { uri?: string; uuid?: string; DBfilename?: string; visible?: boolean };
@@ -37,8 +36,8 @@ export interface AddonMessage {
     submittedData?: SubmittedData;
     loginEditor?: { uuid: string; DBfilename: string };
     loginsFound?: boolean;
-    initialState?: KeeState;
-    resetState?: KeeState;
+    initialState?: FerryState;
+    resetState?: FerryState;
     mutation?: Mutation;
     url?: string;
     copyToClipboard?: string;
@@ -58,6 +57,8 @@ export interface AddonMessage {
     saveNoticeUpdateFor?: string;
     // ShowExpiryNotice: abgelaufen oder bald ablaufend, fertige Überschrift und Zeile darunter
     expiryNotice?: { expired: boolean; title: string; text: string };
+    // ShowSavedNotice: Titel des gespeicherten Eintrags
+    savedEntryTitle?: string;
     // FilledLoginSubmitted: Benutzername der abgeschickten Anmeldung (fehlt bei reinen Passwortseiten)
     submittedUsername?: string;
     unlocked?: boolean;

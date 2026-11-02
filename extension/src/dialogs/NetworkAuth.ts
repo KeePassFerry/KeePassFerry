@@ -1,4 +1,4 @@
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import { Entry } from "../common/model/Entry";
 import {setup as i18nSetup } from "../common/i18n";
@@ -31,7 +31,7 @@ class NetworkAuth {
 
     public createNearNode(node: HTMLElement, entries: Entry[]) {
         const container = document.createElement("div");
-        container.id = "Kee-MatchedLoginsList";
+        container.id = "Ferry-MatchedLoginsList";
         const list = document.createElement("ul");
         this.setLogins(entries, list);
         container.appendChild(list);
@@ -40,7 +40,7 @@ class NetworkAuth {
     }
 
     private setLogins(entries: Entry[], container) {
-        KeeLog.debug("setting " + entries.length + " matched entries");
+        FerryLog.debug("setting " + entries.length + " matched entries");
 
         // add every matched entry to the container(s)
         for (let i = 0; i < entries.length; i++) {
@@ -95,13 +95,13 @@ class NetworkAuth {
                 function (event) {
                     event.stopPropagation();
                     if (event.button == 0 || event.button == 1) {
-                        this.dispatchEvent(new Event("keeCommand"));
+                        this.dispatchEvent(new Event("ferryCommand"));
                     }
                 },
                 false
             );
             loginItem.addEventListener(
-                "keeCommand",
+                "ferryCommand",
                 function (this: HTMLElement) {
                     networkAuth.supplyNetworkAuth(parseInt(this.dataset.entryIndex));
                 },
@@ -119,7 +119,7 @@ class NetworkAuth {
             case 13: // enter
                 event.preventDefault();
                 event.stopPropagation();
-                target.dispatchEvent(new Event("keeCommand"));
+                target.dispatchEvent(new Event("ferryCommand"));
                 break;
             case 40: // down
                 event.preventDefault();
@@ -148,7 +148,7 @@ let networkAuth: NetworkAuth;
 
 async function setupNetworkAuthDialog() {
     await configManager.load();
-    KeeLog.attachConfig(configManager.current);
+    FerryLog.attachConfig(configManager.current);
     const theme = configManager.current.theme;
     if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
     networkAuth = new NetworkAuth();

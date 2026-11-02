@@ -107,7 +107,7 @@
             <v-btn v-if="!loading && !editingExisting && skipWhere" color="primary" variant="flat" @click="saveEntry">
                 {{ $i18n("save") }}
             </v-btn>
-            <v-btn v-if="loading" loading color="primary" variant="flat"> ......... </v-btn>
+            <v-btn v-if="loading && !editingExisting" loading color="primary" variant="flat"> ......... </v-btn>
             <v-btn
                 v-if="editingExisting"
                 :disabled="!hasChanges || (showURLMismatchWarning && !differentSiteConfirmation)"
@@ -127,7 +127,7 @@ import FieldEditor from "./FieldEditor.vue";
 import EntryAddition from "./EntryAddition.vue";
 import { Field } from "../../common/model/Field";
 import { AddonMessage } from "../../common/AddonMessage";
-import { KeeURL } from "../../common/KeeURL";
+import { FerryURL } from "../../common/FerryURL";
 import { TemporaryIDString, GroupSummary } from "../../common/model/GroupSummary";
 import { configManager } from "../../common/ConfigManager";
 import { DatabaseSummary } from "../../common/model/DatabaseSummary";
@@ -136,7 +136,7 @@ import { Group } from "../../common/model/Group";
 import { SearcherAll } from "../../common/SearcherAll";
 import useStore from "../../store";
 import { mapState } from "pinia";
-import { KeeLog } from "~/common/Logger";
+import { FerryLog } from "~/common/Logger";
 import GroupSelectorTree from "./GroupSelectorTree.vue";
 import { EXPIRY_PRESETS, ExpiryChoice, addPreset, defaultExpiryChoice, formatExpiryDate, newExpiryTime } from "../../common/expiry";
 import { GroupListItem } from "./TreeItem.vue";
@@ -247,7 +247,7 @@ export default {
         entryDomain: function () {
             const urlStr = (this.saveState as SaveState).newEntry.URLs[0];
             if (!urlStr || urlStr.length < 4) return "<unknown>";
-            const kurl = KeeURL.fromString(urlStr);
+            const kurl = FerryURL.fromString(urlStr);
             if (!kurl) {
                 return "<error>";
             }
@@ -284,29 +284,36 @@ export default {
                 }
             })
             .catch(() => undefined);
-        this.preferToSkipWhere = configManager.current.rememberMRUGroup;
-        const dbs = this.KeePassDatabases as Database[];
-        const { preferredGroupUuid, preferredDb, primaryFound } = this.getPreferredGroup(
-            configManager.current.mruGroup,
-            dbs
-        );
-        this.preferredGroupUuid = preferredGroupUuid;
-        // Neuer Eintrag aus dem Kontextmenü: zuletzt benutzte Gruppe wie beim normalen Speichern, sonst Wurzel der aktiven DB
-        if (this.createOnSave) {
-            const activeDb = dbs[this.ActiveKeePassDatabaseIndex] ?? dbs[0];
-            this.setTargetGroup(preferredGroupUuid) || this.setTargetGroup(activeDb?.root?.uuid);
-        }
-        if (this.preferToSkipWhere) {
-            this.preferredDb = preferredDb;
-            this.primaryFound = primaryFound;
-
-            this.domainMatchesExistingEntry = this.anyEntryMatchesNewDomain();
-
-            if (this.preferredGroupUuid && this.preferredDb && !this.domainMatchesExistingEntry) {
-                this.skipWhere = true;
+        // Was auch immer beim Vorbereiten schiefgeht: das Fenster bleibt bedienbar (sonst steht der Ladeknopf neben
+        // "Speichern" und schiebt die Aktionsleiste aus dem Popup)
+        try {
+            this.preferToSkipWhere = configManager.current.rememberMRUGroup;
+            const dbs = this.KeePassDatabases as Database[];
+            const { preferredGroupUuid, preferredDb, primaryFound } = this.getPreferredGroup(
+                configManager.current.mruGroup,
+                dbs
+            );
+            this.preferredGroupUuid = preferredGroupUuid;
+            // Neuer Eintrag aus dem Kontextmenü: zuletzt benutzte Gruppe wie beim normalen Speichern, sonst Wurzel der aktiven DB
+            if (this.createOnSave) {
+                const activeDb = dbs[this.ActiveKeePassDatabaseIndex] ?? dbs[0];
+                this.setTargetGroup(preferredGroupUuid) || this.setTargetGroup(activeDb?.root?.uuid);
             }
+            if (this.preferToSkipWhere) {
+                this.preferredDb = preferredDb;
+                this.primaryFound = primaryFound;
+
+                this.domainMatchesExistingEntry = this.anyEntryMatchesNewDomain();
+
+                if (this.preferredGroupUuid && this.preferredDb && !this.domainMatchesExistingEntry) {
+                    this.skipWhere = true;
+                }
+            }
+        } catch (e) {
+            FerryLog.warn("Preparing the edit window failed: " + e);
+        } finally {
+            this.loading = false;
         }
-        this.loading = false;
     },
     methods: {
         cancel: function () {
@@ -470,14 +477,14 @@ export default {
 
             let primaryFound = false;
             const UUIDs = [];
-            const primaryUuid = mruGroup["{<{{<<kee-primary>>}}>}"];
+            const primaryUuid = mruGroup["{<{{<<ferry-primary>>}}>}"];
             if (primaryUuid) {
                 primaryFound = true;
                 UUIDs.push(primaryUuid);
             }
 
             // We normally expect the value in the primary key to be correct but it may not
-            // be if the user has just upgraded from Kee 3.4 or lower, or if they have a
+            // be if the user has a
             // particuarlly complex set of databases with different filenames and/or duplicate
             // UUIDs or if they constantly switch back and forth between multiple databases so
             // we may as well try the one specific to the currently open database, although
@@ -509,9 +516,11 @@ export default {
             };
         },
         anyEntryMatchesNewDomain: function () {
-            const urlStr = JSON.parse(JSON.stringify((this.saveState as SaveState).newEntry.URLs[0]));
+            // Einträge ohne Adresse: JSON.parse(JSON.stringify(undefined)) warf und brach das Öffnen ab (Ladeknopf blieb stehen)
+            const first = (this.saveState as SaveState).newEntry.URLs?.[0];
+            const urlStr: string = typeof first === "string" ? first : null;
             if (!urlStr || urlStr.length < 4) return false;
-            const kurl = KeeURL.fromString(urlStr);
+            const kurl = FerryURL.fromString(urlStr);
             if (!kurl) {
                 return false;
             }

@@ -1,8 +1,8 @@
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import { Entry } from "../common/model/Entry";
 import punycode from "punycode/";
-import { kee } from "./KF";
+import { ferry } from "./KF";
 
 export class NetworkAuth {
     constructor() { }
@@ -14,7 +14,7 @@ export class NetworkAuth {
         this.provideCredentialsAsync(requestDetails)
             .then(result => callback(result))
             .catch(reason => {
-                KeeLog.error("AsyncBlockingCallback promise failed", reason);
+                FerryLog.error("AsyncBlockingCallback promise failed", reason);
                 callback({ cancel: false });
             });
     }
@@ -22,19 +22,19 @@ export class NetworkAuth {
     public async provideCredentialsAsync(
         requestDetails: any
     ): Promise<chrome.webRequest.BlockingResponse> {
-        KeeLog.debug("Considering handling request ID: " + requestDetails.requestId);
+        FerryLog.debug("Considering handling request ID: " + requestDetails.requestId);
 
         // Anmeldefenster können auch eingebettete Fremdinhalte auslösen: nur auf ausdrücklichen Wunsch bedienen
         if (!configManager.current.ferryNetworkAuth) return { cancel: false };
-        if (!kee.store.state.connected || kee.store.state.ActiveKeePassDatabaseIndex < 0) {
+        if (!ferry.store.state.connected || ferry.store.state.ActiveKeePassDatabaseIndex < 0) {
             return { cancel: false };
         }
 
-        KeeLog.info("Finding credentials for request ID: " + requestDetails.requestId);
+        FerryLog.info("Finding credentials for request ID: " + requestDetails.requestId);
         const url = new URL(requestDetails.url);
         url.hostname = punycode.toUnicode(url.hostname);
 
-        const result = await kee.findLogins(
+        const result = await ferry.findLogins(
             url.href,
             requestDetails.realm,
             null,
@@ -82,7 +82,7 @@ export class NetworkAuth {
                 switch (request.action) {
                     case "NetworkAuth_ok": {
                         const entry = matchedEntries[request.selectedEntryIndex];
-                        KeeLog.debug("Filling request ID: " + requestDetails.requestId);
+                        FerryLog.debug("Filling request ID: " + requestDetails.requestId);
                         resolve({
                             authCredentials: {
                                 username: Entry.getUsernameField(entry).value,
@@ -113,7 +113,7 @@ export class NetworkAuth {
 
             function declineHandling(closingWindowId: number) {
                 if (closingWindowId !== wind?.id) return;
-                KeeLog.debug("Cancelling request ID: " + requestDetails.requestId);
+                FerryLog.debug("Cancelling request ID: " + requestDetails.requestId);
                 resolve({ cancel: false });
                 chrome.runtime.onMessage.removeListener(handleMessage);
                 chrome.windows.onRemoved.removeListener(declineHandling);

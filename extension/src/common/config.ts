@@ -51,13 +51,8 @@ export class Config {
     autoSubmitForms: boolean;
     autoSubmitDialogs: boolean;
     autoSubmitMatchedForms: boolean;
-    connSLClient: number;
-    connSLServerMin: number;
     keePassDBToOpen: string;
     keePassMRUDB: string;
-    KeePassRPCWebSocketPort: number;
-    KPRPCUsername: string;
-    KPRPCStoredKeys: { [key: string]: string };
     lastConnectedToKeePass: string;
     listAllOpenDBs: boolean;
     logLevel: number;
@@ -88,9 +83,6 @@ export class Config {
     currentSearchTermTimeout: number;
     notifyPasswordAvailableForPaste: boolean;
     animateWhenOfferingSave: boolean;
-    keeVaultLaunchMessageDismissed: boolean;
-    keeVaultLaunchStart: number;
-    keeVaultLaunchEnd: number;
     manualSubmitOverrideProhibited: boolean;
     theme: string;
     hideConfirmationAfterSave: boolean;

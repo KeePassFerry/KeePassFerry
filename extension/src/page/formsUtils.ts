@@ -1,6 +1,6 @@
 import { isOtpField } from "./OtpFields";
 import { isUsernameField } from "./loginFields";
-import { KeeLogger } from "../common/Logger";
+import { FerryLogger } from "../common/Logger";
 import { MatchedField } from "./MatchedField";
 import { Field } from "../common/model/Field";
 import { findInputsInOpenShadowRoots } from "./shadowDom";
@@ -12,9 +12,9 @@ import { findInputsInOpenShadowRoots } from "./shadowDom";
 export class FormUtils {
     findLoginOps = [];
     matchResults = [];
-    Logger: KeeLogger;
+    Logger: FerryLogger;
 
-    constructor(logger: KeeLogger) {
+    constructor(logger: FerryLogger) {
         this.Logger = logger;
     }
 
@@ -128,8 +128,8 @@ export class FormUtils {
             };
             let fieldValue = elements[i].value;
             if (domType == "checkbox") {
-                if (elements[i].checked) fieldValue = "KEEFOX_CHECKED_FLAG_TRUE";
-                else fieldValue = "KEEFOX_CHECKED_FLAG_FALSE";
+                if (elements[i].checked) fieldValue = "KEEPASSFERRY_CHECKED_TRUE";
+                else fieldValue = "KEEPASSFERRY_CHECKED_FALSE";
             }
             const field = Field.fromDOM(elements[i], domType, fieldValue);
             allFields[allFields.length - 1].element.field = field;
@@ -139,8 +139,8 @@ export class FormUtils {
                 firstPasswordIndex = allFields.length - 1;
             }
 
-            if (elements[i].keeInitialDetectedValue == null) {
-                elements[i].keeInitialDetectedValue = fieldValue;
+            if (elements[i].ferryInitialDetectedValue == null) {
+                elements[i].ferryInitialDetectedValue = fieldValue;
             }
         }
 

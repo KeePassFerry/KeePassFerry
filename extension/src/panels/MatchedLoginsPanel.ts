@@ -1,5 +1,5 @@
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { Action } from "../common/Action";
 import { AddonMessage } from "../common/AddonMessage";
 import { Entry } from "../common/model/Entry";
@@ -17,7 +17,7 @@ export class MatchedLoginsPanel {
 
     public createNearNode(node: HTMLElement, entries: Entry[]) {
         const container = document.createElement("div");
-        container.id = "Kee-MatchedLoginsList";
+        container.id = "Ferry-MatchedLoginsList";
         const list = document.createElement("ul");
         this.setLogins(entries, list);
         container.appendChild(list);
@@ -27,7 +27,7 @@ export class MatchedLoginsPanel {
     }
 
     private setLogins(entries: Entry[], container) {
-        KeeLog.debug("setting " + entries.length + " matched entries");
+        FerryLog.debug("setting " + entries.length + " matched entries");
 
         // add every matched entry to the container(s)
         for (let i = 0; i < entries.length; i++) {
@@ -113,7 +113,7 @@ export class MatchedLoginsPanel {
                 function (event) {
                     event.stopPropagation();
                     if (event.button == 0 || event.button == 1) {
-                        this.dispatchEvent(new Event("keeCommand"));
+                        this.dispatchEvent(new Event("ferryCommand"));
                     }
                 },
                 false
@@ -128,7 +128,7 @@ export class MatchedLoginsPanel {
                 false
             );
             loginItem.addEventListener(
-                "keeCommand",
+                "ferryCommand",
                 event => {
                     this.myPort.postMessage({
                         action: Action.ManualFill,
@@ -149,7 +149,7 @@ export class MatchedLoginsPanel {
             case 13: // enter
                 event.preventDefault();
                 event.stopPropagation();
-                target.dispatchEvent(new Event("keeCommand"));
+                target.dispatchEvent(new Event("ferryCommand"));
                 break;
             case 40: // down
                 event.preventDefault();
@@ -212,7 +212,7 @@ export class MatchedLoginsPanel {
 
         const editButton = document.createElement("button");
         editButton.textContent = $STR("Logins_Context_Edit_Login_label");
-        //"chrome://kee/skin/pencil.png"
+        //"pencil.png"
         editButton.addEventListener(
             "click",
             event => {
@@ -247,7 +247,7 @@ export class MatchedLoginsPanel {
                         const button = document.createElement("button");
                         button.textContent =
                             $STR("copy") + " " + o.name + " (" + o.locators[0].id + ")";
-                        //"chrome://kee/skin/copy.png",
+                        //"copy.png",
                         button.addEventListener(
                             "click",
                             async event => {
@@ -275,7 +275,7 @@ export class MatchedLoginsPanel {
                         const button = document.createElement("button");
                         button.textContent =
                             $STR("copy") + " " + p.name + " (" + p.locators[0].id + ")";
-                        //"chrome://kee/skin/copy.png",
+                        //"copy.png",
                         button.addEventListener(
                             "click",
                             async event => {

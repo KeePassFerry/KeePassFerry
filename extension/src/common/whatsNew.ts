@@ -1,11 +1,11 @@
 /*
 whatsNew.ts: Neuerungen je Version für die Ansicht "Neuigkeiten und Tipps" im Popup (neueste Version aufgeklappt,
 frühere zugeklappt) und den einmaligen Hinweis nach einem Update.
-Pro Release 2–4 Punkte in Alltagssprache (Texte in _locales, Schlüssel ferry_news_<version>_<n>_title/_text);
+Pro Release 2–5 Punkte in Alltagssprache (Texte in _locales, Schlüssel ferry_news_<version>_<n>_title/_text);
 die vollständige Liste steht im CHANGELOG. Ohne Eintrag für die installierte Version erscheint kein Hinweis.
 */
 
-export type NewsIcon = "shield-check" | "wand" | "key" | "sparkles" | "trash" | "lock" | "text-plus" | "refresh" | "shield-lock" | "fingerprint";
+export type NewsIcon = "shield-check" | "wand" | "key" | "sparkles" | "trash" | "lock" | "text-plus" | "refresh" | "shield-lock" | "fingerprint" | "clock" | "database";
 
 export interface NewsItem {
     icon: NewsIcon;
@@ -19,7 +19,9 @@ export const WHATS_NEW: { version: string; items: NewsItem[] }[] = [
         version: "1.0.15",
         items: [
             { icon: "shield-check", key: "ferry_news_1_0_15_1" },
+            { icon: "clock", key: "ferry_news_1_0_15_4" },
             { icon: "wand", key: "ferry_news_1_0_15_2" },
+            { icon: "database", key: "ferry_news_1_0_15_5" },
             { icon: "key", key: "ferry_news_1_0_15_3" }
         ]
     },

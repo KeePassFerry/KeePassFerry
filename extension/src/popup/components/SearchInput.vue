@@ -26,7 +26,7 @@ import { configManager } from "../../common/ConfigManager";
 import { Port } from "../../common/port";
 import { SearcherAll } from "../../common/SearcherAll";
 import useStore from "../../store";
-import { KeeLog } from "../../common/Logger";
+import { FerryLog } from "../../common/Logger";
 import { EntrySummary } from "../../common/model/EntrySummary";
 import { mapState } from "pinia";
 import { Database } from "../../common/model/Database";
@@ -67,7 +67,7 @@ export default {
             );
         },
         onSearchComplete(entrySummaries: EntrySummary[]) {
-            KeeLog.debug("onSearchComplete");
+            FerryLog.debug("onSearchComplete");
             entrySummaries = entrySummaries
                 .sort(function (a, b) {
                     if (a.relevanceScore > b.relevanceScore) return -1;

@@ -3,8 +3,8 @@ import { createVuetify } from "vuetify";
 import App from "./App.vue";
 import OtpSetup from "./OtpSetup.vue";
 import SelectionSave from "./SelectionSave.vue";
-import useStore, { KeeStore } from "../store";
-import { KeeLog } from "../common/Logger";
+import useStore, { FerryStore } from "../store";
+import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import { AddonMessage } from "../common/AddonMessage";
 import { Port } from "../common/port";
@@ -19,7 +19,7 @@ import { IPCPiniaPlugin } from "../common/IPCPiniaPlugin";
 
 const piniaInstance = createPinia();
 let vueApp: VueApp<Element>;
-let store: KeeStore;
+let store: FerryStore;
 
 // Diagnose: Zeiten seit dem Öffnen des Popups (performance.now() zählt ab dem Laden der Seite)
 const timing: Record<string, number> = { skript: Math.round(performance.now()) };
@@ -27,12 +27,12 @@ const timing: Record<string, number> = { skript: Math.round(performance.now()) }
 async function start() {
     await configManager.load();
     timing.einstellungen = Math.round(performance.now());
-    KeeLog.debug("popup starting");
-    KeeLog.attachConfig(configManager.current);
+    FerryLog.debug("popup starting");
+    FerryLog.attachConfig(configManager.current);
     Port.startup("browserPopup");
 
     Port.raw.onMessage.addListener(function (m: AddonMessage) {
-        KeeLog.debug("In browser popup script, received message from background script.");
+        FerryLog.debug("In browser popup script, received message from background script.");
 
         if (m.initialState) {
         timing.daten = Math.round(performance.now());
@@ -90,7 +90,7 @@ async function start() {
                 window.scrollTo(0, 0);
             }, 50);
         } catch (e) {
-            KeeLog.error("Failed to create user interface.", e);
+            FerryLog.error("Failed to create user interface.", e);
         }
         }
         if (m.mutation) {
@@ -105,7 +105,7 @@ async function start() {
         }
     });
 
-    KeeLog.info("popup ready");
+    FerryLog.info("popup ready");
 }
 
 (async () => {

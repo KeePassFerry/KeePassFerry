@@ -1,5 +1,5 @@
 import { getAllFrameURLs } from "./getAllFrameURLs";
-import { KeeURL } from "../common/KeeURL";
+import { FerryURL } from "../common/FerryURL";
 
 export async function reconcileURLs(oldUrls: string[], submittedUrl?: string) {
     const currentTab = !submittedUrl
@@ -14,7 +14,7 @@ export async function reconcileURLs(oldUrls: string[], submittedUrl?: string) {
         return { urls: oldUrls, showWarning: false };
     }
 
-    const compareURLDomainOrIPAddress = KeeURL.fromString(compareUrl)?.domainOrIPAddress;
+    const compareURLDomainOrIPAddress = FerryURL.fromString(compareUrl)?.domainOrIPAddress;
 
     if (!compareURLDomainOrIPAddress) {
         return { urls: oldUrls, showWarning: false };
@@ -23,7 +23,7 @@ export async function reconcileURLs(oldUrls: string[], submittedUrl?: string) {
     // A Domain match, regardless of the existing entry's configuration
     if (
         oldUrls.some(
-            url => KeeURL.fromString(url)?.domainOrIPAddress === compareURLDomainOrIPAddress
+            url => FerryURL.fromString(url)?.domainOrIPAddress === compareURLDomainOrIPAddress
         )
     ) {
         return {
@@ -38,8 +38,8 @@ export async function reconcileURLs(oldUrls: string[], submittedUrl?: string) {
             oldUrls.some(url =>
                 allFrameUrls.some(
                     fu =>
-                        KeeURL.fromString(fu)?.domainOrIPAddress ===
-                        KeeURL.fromString(url)?.domainOrIPAddress
+                        FerryURL.fromString(fu)?.domainOrIPAddress ===
+                        FerryURL.fromString(url)?.domainOrIPAddress
                 )
             )
         ) {

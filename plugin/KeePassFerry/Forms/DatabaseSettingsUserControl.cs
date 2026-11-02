@@ -1,0 +1,237 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+using KeePassLib;
+using KeePassFerry.Models.Shared;
+
+namespace KeePassFerry.Forms
+{
+    public partial class DatabaseSettingsUserControl : UserControl
+    {
+        private PwDatabase database;
+        private DatabaseConfig config;
+        private string configOnOpen;
+
+        // Angezeigte Genauigkeit in der Ausnahmenliste (übersetzt); Anzeige und Auswertung verwenden dieselben Texte
+        private static readonly string TDomain = FerryText.L("Domain");
+        private static readonly string THostname = FerryText.L("Hostname");
+        private static readonly string TExact = FerryText.L("Exact");
+
+        public DatabaseSettingsUserControl(PwDatabase db)
+        {
+            database = db;
+            config = db.GetFerryConfig();
+            configOnOpen = Jayrock.Json.Conversion.JsonConvert.ExportToString(config);
+            InitializeComponent();
+            FerryText.Localize(this);
+            // Erklärung statt Link (früher Kee-Forum)
+            linkLabel1.LinkArea = new LinkArea(0, 0);
+            label8.Text = FerryText.T("Platzhalter können Informationen aus deiner Datenbank an Websites weitergeben, etwa an eine manipulierte Seite. Schalte das nur ein, wenn du Platzhalter in Formularfeldern wirklich brauchst.",
+                "Placeholders can pass information from your database to websites, for example to a manipulated page. Only enable this if you really need placeholders in form fields.");
+            PresentDefaultMatchAccuracy();
+            PresentDomains();
+            PresentDefaultPlaceholderHandling();
+        }
+        
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            // Übersetzte Texte sind länger als die englischen Designer-Texte
+            FerryLayout.WidenColumn(listView1, buttonURLAdd, buttonURLEdit, buttonURLDelete);
+            FerryLayout.Row(radioButton7.Height, radioButton8, radioButton7);
+            // Erst die Erklärung, darunter der Warnhinweis
+            linkLabel1.Top = label8.Top;
+            label8.Top = linkLabel1.Bottom + linkLabel1.Font.Height;
+            if (ParentForm != null)
+            {
+                ParentForm.FormClosing +=
+                  delegate
+                  {
+                      if (ParentForm.DialogResult == DialogResult.OK)
+                      {
+                          config.DefaultMatchAccuracy = DetermineDefaultMatchAccuracy();
+                          config.MatchedURLAccuracyOverrides = DetermineMatchedURLAccuracyOverrides();
+                          config.DefaultPlaceholderHandling = DetermineDefaultPlaceholderHandling();
+                          // Nur speichern, wenn sich etwas geändert hat (sonst bekäme jede neue Datenbank Standardwerte)
+                          if (Jayrock.Json.Conversion.JsonConvert.ExportToString(config) != configOnOpen)
+                              database.SetFerryConfig(config);
+                      }
+                  };
+            }
+        }
+
+        private void PresentDefaultMatchAccuracy()
+        {
+            switch (config.DefaultMatchAccuracy)
+            {
+                case MatchAccuracyMethod.Exact: radioButton6.Checked = true; break;
+                case MatchAccuracyMethod.Hostname: radioButton5.Checked = true; break;
+                case MatchAccuracyMethod.Domain: radioButton4.Checked = true; break;
+            }
+        }
+
+        private MatchAccuracyMethod DetermineDefaultMatchAccuracy()
+        {
+            if (radioButton6.Checked) return MatchAccuracyMethod.Exact;
+            if (radioButton5.Checked) return MatchAccuracyMethod.Hostname;
+            return MatchAccuracyMethod.Domain;
+        }
+
+        private void PresentDefaultPlaceholderHandling()
+        {
+            if (config.DefaultPlaceholderHandling == PlaceholderHandling.Enabled) radioButton8.Checked = true;
+            else radioButton7.Checked = true;
+        }
+
+        private PlaceholderHandling DetermineDefaultPlaceholderHandling()
+        {
+            if (radioButton8.Checked) return PlaceholderHandling.Enabled;
+            return PlaceholderHandling.Disabled;
+        }
+
+        private Dictionary<string, MatchAccuracyMethod> DetermineMatchedURLAccuracyOverrides()
+        {
+            Dictionary<string, MatchAccuracyMethod> matchedURLAccuracyOverrides = 
+                new Dictionary<string, MatchAccuracyMethod>();
+
+            for (int i = 0; i < listView1.Items.Count; ++i)
+            {
+                matchedURLAccuracyOverrides.Add(
+                    listView1.Items[i].Text, 
+                    MatchAccuracyMethodFromText(listView1.Items[i].SubItems[1].Text));
+            }
+            return matchedURLAccuracyOverrides;
+        }
+
+        private void buttonURLAdd_Click(object sender, EventArgs e)
+        {
+            List<string> all = new List<string>();
+            for (int i = 0; i < listView1.Items.Count; ++i)
+                all.Add(listView1.Items[i].Text);
+
+            using (var mamoForm = new FerryMAMOverrideForm(null, null, all))
+            {
+                if (mamoForm.ShowDialog() == DialogResult.OK)
+                {
+                    AddURLListItem(mamoForm.Domain, mamoForm.MAM);
+                }
+            }
+        }
+
+        private void buttonURLEdit_Click(object sender, EventArgs e)
+        {
+            ListView.SelectedListViewItemCollection lvsicSel = listView1.SelectedItems;
+
+            List<string> all = new List<string>();
+            for (int i = 0; i < listView1.Items.Count; ++i)
+                all.Add(listView1.Items[i].Text);
+
+            for (int i = 0; i < lvsicSel.Count; ++i)
+            {
+                List<string> others = all.GetRange(0, all.Count);
+                others.Remove(lvsicSel[i].Text);
+
+                // find the current data
+                using (var mamoForm = MAMOFormForEditing(lvsicSel, i, others))
+                {
+                    if (mamoForm.ShowDialog() == DialogResult.OK)
+                    {
+                        RemoveURLListItem(lvsicSel[i]);
+                        AddURLListItem(mamoForm.Domain, mamoForm.MAM);
+                    }
+                }
+            }
+        }
+
+        private static FerryMAMOverrideForm MAMOFormForEditing(ListView.SelectedListViewItemCollection lvsicSel, int i, List<string> others)
+        {
+            return new FerryMAMOverrideForm(lvsicSel[i].Text, MatchAccuracyMethodFromText(lvsicSel[i].SubItems[1].Text), others);
+        }
+
+        private static MatchAccuracyMethod MatchAccuracyMethodFromText(string text)
+        {
+            if (text == TDomain) return MatchAccuracyMethod.Domain;
+            if (text == THostname) return MatchAccuracyMethod.Hostname;
+            if (text == TExact) return MatchAccuracyMethod.Exact;
+            throw new Exception("Invalid data for existing entry.");
+        }
+
+        private void buttonURLDelete_Click(object sender, EventArgs e)
+        {
+            ListView.SelectedListViewItemCollection lvsicSel = listView1.SelectedItems;
+            for (int i = 0; i < lvsicSel.Count; ++i)
+            {
+                RemoveURLListItem(lvsicSel[i]);
+            }
+        }
+
+        private void PresentDomains()
+        {
+            if (config.MatchedURLAccuracyOverrides == null || config.MatchedURLAccuracyOverrides.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var ovrride in config.MatchedURLAccuracyOverrides)
+            {
+                AddURLListItem(ovrride.Key, ovrride.Value);
+            }
+        }
+
+        private void AddURLListItem(string domain, MatchAccuracyMethod mam)
+        {
+            switch (mam)
+            {
+                case MatchAccuracyMethod.Domain:
+                    listView1.Items.Add(new ListViewItem(new[] { domain, TDomain }));
+                    break;
+                case MatchAccuracyMethod.Hostname:
+                    listView1.Items.Add(new ListViewItem(new[] { domain, THostname }));
+                    break;
+                case MatchAccuracyMethod.Exact:
+                    listView1.Items.Add(new ListViewItem(new[] { domain, TExact }));
+                    break;
+            }
+        }
+
+        private void RemoveURLListItem(ListViewItem lvi)
+        {
+            listView1.Items.Remove(lvi);
+            if (listView1.Items.Count == 0)
+            {
+                buttonURLEdit.Enabled = false;
+                buttonURLDelete.Enabled = false;
+            }
+        }
+
+        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
+                buttonURLEdit.Enabled = true;
+                buttonURLDelete.Enabled = true;
+            }
+            else
+            {
+                buttonURLEdit.Enabled = false;
+                buttonURLDelete.Enabled = false;
+            }
+        }
+
+        private void listView1_DoubleClick(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
+                buttonURLEdit_Click(sender, e);
+            }
+        }
+
+        private void listView1_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete)
+            {
+                buttonURLDelete_Click(sender, e);
+            }
+        }
+    }
+}

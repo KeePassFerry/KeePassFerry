@@ -1,7 +1,7 @@
 import { MatchedLoginsPanel } from "./MatchedLoginsPanel";
 import { FrameState } from "../common/FrameState";
 import { Action } from "../common/Action";
-import { KeeLog } from "../common/Logger";
+import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import { AddonMessage } from "../common/AddonMessage";
 import { Port } from "../common/port";
@@ -24,8 +24,8 @@ let store: NonReactiveStore;
 
 async function start() {
     await configManager.load();
-    KeeLog.debug("iframe page starting");
-    KeeLog.attachConfig(configManager.current);
+    FerryLog.debug("iframe page starting");
+    FerryLog.attachConfig(configManager.current);
     Port.startup("iframe_" + parentFrameId);
 
     let cancelAutoClose: () => void;
@@ -38,12 +38,12 @@ async function start() {
         case "matchedLoginsLegacy":
             matchedLoginsPanel = new MatchedLoginsPanel(Port.raw, closePanel, parentFrameId);
             store = new NonReactiveStore((mutationPayload: Mutation, _excludedPort) => {
-                KeeLog.debug("New legacy panel mutation being distributed.");
+                FerryLog.debug("New legacy panel mutation being distributed.");
                 Port.postMessage({ mutation: mutationPayload } as AddonMessage);
             });
             document.getElementById("headerText").textContent = $STR("matched_logins_label");
             Port.raw.onMessage.addListener(function (m: AddonMessage) {
-                KeeLog.debug("In iframe script, received message from background script");
+                FerryLog.debug("In iframe script, received message from background script");
 
                 if (m.initialState) {
                     store.resetTo(m.initialState);
@@ -65,7 +65,7 @@ async function start() {
                 // these operations blur focus from the text box, thereby hiding any
                 // autocomplete popup the browser has displayed)
                 window.focus();
-                (document.getElementById("Kee-MatchedLoginsList").firstChild
+                (document.getElementById("Ferry-MatchedLoginsList").firstChild
                     .firstChild as any).focus();
 
                 if (cancelAutoClose) mainPanel.addEventListener("click", cancelAutoClose);
@@ -123,7 +123,7 @@ async function start() {
                 .addEventListener("click", cancelAutoClose);
         }
     }
-    KeeLog.info("iframe page ready");
+    FerryLog.info("iframe page ready");
 }
 
 let matchedLoginsPanel: MatchedLoginsPanel;

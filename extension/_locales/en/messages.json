@@ -5,11 +5,11 @@
   },
   "black_list": {
     "message": "Exclude List",
-    "description": "List of items that cause behaviour to be disabled if they match. For example, the list of names of form fields that prevent Kee from searching for logins for the form containing that field."
+    "description": "List of items that cause behaviour to be disabled if they match. For example, the list of names of form fields that prevent KeePassFerry from searching for logins for the form containing that field."
   },
   "conn_unknown_error": {
     "message": "An unexpected error occurred when trying to connect to your password manager.",
-    "description": "Something went wrong with the KeePassRPC link but we have no idea what."
+    "description": "Something went wrong with the plugin link but we have no idea what."
   },
   "form_id": {
     "message": "Form ID",
@@ -21,7 +21,7 @@
   },
   "matched_logins_label": {
     "message": "Matching logins",
-    "description": "Header for panels/sections that contain the logins which Kee matched for this page/form"
+    "description": "Header for panels/sections that contain the logins which KeePassFerry matched for this page/form"
   },
   "pref_Advanced_heading": {
     "message": "Advanced",
@@ -29,7 +29,7 @@
   },
   "pref_DoNothing_desc": {
     "message": "Do nothing",
-    "description": "Label for configuring Kee to take no action. Specific context may vary but will relate to auto filling and/or submitting"
+    "description": "Label for configuring KeePassFerry to take no action. Specific context may vary but will relate to auto filling and/or submitting"
   },
   "pref_FillAndSubmitForm_desc": {
     "message": "Fill in and submit the form",
@@ -41,15 +41,15 @@
   },
   "pref_FillingEntries_heading": {
     "message": "Filling entries",
-    "description": "Heading for section of options panel which contains settings relating to how Kee behaves when filling entries into forms"
+    "description": "Heading for section of options panel which contains settings relating to how KeePassFerry behaves when filling entries into forms"
   },
   "pref_FindingEntries_heading": {
     "message": "Finding entries",
-    "description": "Heading for section of options panel which contains settings relating to how Kee behaves when finding entries for a website"
+    "description": "Heading for section of options panel which contains settings relating to how KeePassFerry behaves when finding entries for a website"
   },
   "pref_SavingEntries_heading": {
     "message": "Saving entries",
-    "description": "Heading for section of options panel which contains settings relating to how Kee behaves when saving new entries"
+    "description": "Heading for section of options panel which contains settings relating to how KeePassFerry behaves when saving new entries"
   },
   "pref_autoFillFormsWithMultipleMatches_label": {
     "message": "Also do this when several matching entries are found",
@@ -59,51 +59,23 @@
     "message": "Automatically fill fields that already contain text",
     "description": "This checkbox option allows the user to say whether they want fields to be auto-filled if they already have a value. It doesn't affect manual fill requests."
   },
-  "pref_keePassDBToOpen_label": {
-    "message": "When opening or logging in to KeePass, use this database file",
-    "description": ""
-  },
-  "pref_logLevel_desc": {
-    "message": "Choose how verbose you want the log to be. Each higher log level produces more output.",
-    "description": ""
-  },
-  "pref_logLevelDebugging_label": {
-    "message": "Debugging",
-    "description": "Logging level for the most verbose information about Kee's operation"
-  },
-  "pref_logLevelInformation_label": {
-    "message": "Information",
-    "description": "Logging level for important information about Kee's operation"
-  },
-  "pref_logLevelWarnings_label": {
-    "message": "Warnings",
-    "description": "Logging level for potential problems"
-  },
-  "pref_logLevelErrors_label": {
-    "message": "Errors",
-    "description": "Logging level for problems"
-  },
   "pref_notifyBarRequestPasswordSave_label": {
     "message": "Offer to save passwords",
     "description": ""
   },
-  "pref_rememberMRUDB_label": {
-    "message": "Remember the most recently used KeePass database",
-    "description": ""
-  },
   "pref_preferToSkipWhere_label": {
     "message": "Automatically save new entries to the group you most recently saved to",
-    "description": "Whether Kee will save new entries to the group most recently chosen by the user without presenting them with the usual Where group chooser interface"
+    "description": "Whether KeePassFerry will save new entries to the group most recently chosen by the user without presenting them with the usual Where group chooser interface"
   },
   "pref_saveFavicons_label": {
     "message": "Save website logo/icon (favicon)",
-    "description": "Whether or not Kee will save the website's icon when a new entry is saved"
+    "description": "Whether or not KeePassFerry will save the website's icon when a new entry is saved"
   },
   "pref_searchAllOpenDBs_label": {
     "message": "Search all open KeePass databases",
     "description": ""
   },
-  "pref_when_kee_chooses_standard_form_desc": {
+  "pref_standard_form_choice_desc": {
     "message": "When KeePassFerry chooses a matching login for a standard form, KeePassFerry should",
     "description": "Context/label for user when changing setting relating to auto-fill/submit behaviour. A list of potential actions will be displayed immediately after this string and the user can select their preferred behaviour from that list."
   },
@@ -117,15 +89,15 @@
   },
   "site_options_list_explain_desc": {
     "message": "If a form matches against one of the include lists below KeePassFerry will always try to fill it. If a form matches one of the exclude lists below KeePassFerry will never try to fill it. If it matches both lists KeePassFerry will not try to fill it.",
-    "description": "Explains how Kee chooses which forms to fill in"
+    "description": "Explains how KeePassFerry chooses which forms to fill in"
   },
   "pref_Finding_forms_heading": {
     "message": "Finding forms",
-    "description": "Settings heading for how Kee finds forms it is (or isn't) interested in filling in with entries from the password manager"
+    "description": "Settings heading for how KeePassFerry finds forms it is (or isn't) interested in filling in with entries from the password manager"
   },
   "site_options_valid_form_intro_desc": {
     "message": "KeePassFerry fills matching KeePass entries into every form that has a password field. You can adjust this behaviour below.",
-    "description": "Explains how Kee chooses which forms to fill in"
+    "description": "Explains how KeePassFerry chooses which forms to fill in"
   },
   "text_field_id": {
     "message": "Text field ID",
@@ -137,7 +109,7 @@
   },
   "white_list": {
     "message": "Include List",
-    "description": "List of items that cause behaviour to be enabled if they match. For example, the list of names of form fields that force Kee to search for logins for the form containing that field."
+    "description": "List of items that cause behaviour to be enabled if they match. For example, the list of names of form fields that force KeePassFerry to search for logins for the form containing that field."
   },
   "cancel": {
     "message": "Cancel",
@@ -199,14 +171,6 @@
     "message": "Create new entry",
     "description": "Create new entry"
   },
-  "all_websites": {
-    "message": "All websites",
-    "description": ""
-  },
-  "a_specific_website": {
-    "message": "A specific website",
-    "description": ""
-  },
   "website": {
     "message": "Website",
     "description": ""
@@ -217,7 +181,7 @@
   },
   "loggedIn_tip": {
     "message": "You are logged in to your '$1' password database",
-    "description": "Tells the user they are logged into a Kee Vault or KeePass database (and gives its name, if any)"
+    "description": "Tells the user they are logged into a KeePassFerry Vault or KeePass database (and gives its name, if any)"
   },
   "loggedInMultiple_tip": {
     "message": "You are logged in to $1 password databases. '$2' is active.",
@@ -279,22 +243,6 @@
     "message": "Delete",
     "description": "Action button for user to delete an item within a collection. E.g. delete an entry within the list of site-specific settings overrides"
   },
-  "site_specific_settings_checkbox_explanation": {
-    "message": "Settings from \"All Websites\" will apply to each section below unless you enable the setting using the checkbox next to it.",
-    "description": "Explains to the user how the site-specific settings can be enabled and what happens in the default situation"
-  },
-  "site_properties": {
-    "message": "Site properties",
-    "description": "Site properties"
-  },
-  "enter_valid_regex": {
-    "message": "Enter a valid Regex or select a different type",
-    "description": "Validation error message displayed to user when they have configured the properties of a site specific configuration to be a regular expression (Regex) but supplied a website value that is not a valid regex"
-  },
-  "site_properties_weight_warning": {
-    "message": "You'll need to carefully check the weights of other configurations if you choose to make use of this advanced feature.",
-    "description": "Warning to users that the match weighting feature of site-specific config is an advanced feature"
-  },
   "target": {
     "message": "Target",
     "description": "For differentiating which part of a URL will be matched - e.g domain, hostname or complete page address"
@@ -307,17 +255,9 @@
     "message": "Weight",
     "description": "A number that can be compared to others in order to decide which associated configuration takes precendence."
   },
-  "yes": {
-    "message": "Yes",
-    "description": "Yes"
-  },
   "no": {
     "message": "No",
     "description": "No"
-  },
-  "site_specific_settings_inherit": {
-    "message": "Use the same setting as all websites",
-    "description": "Option for user to say that they want to use whatever the setting is for the top-level settings for all websites, rather than overriding it with a setting for this specific site."
   },
   "password": {
     "message": "Password",
@@ -345,7 +285,7 @@
   },
   "welcome_to_kee": {
     "message": "Welcome to KeePassFerry",
-    "description": "Header for release notes page. May have a version suffix added to it. E.g. Welcome to Kee 2.0"
+    "description": "Header for release notes page. May have a version suffix added to it. E.g. Welcome to KeePassFerry 2.0"
   },
   "continue": {
     "message": "continue",
@@ -353,15 +293,15 @@
   },
   "notification_raised_title": {
     "message": "KeePassFerry has a notification to show you",
-    "description": "Title of a transient native notification displayed on the user's screen to alert them to a notification in the Kee browser action popup."
+    "description": "Title of a transient native notification displayed on the user's screen to alert them to a notification in the KeePassFerry browser action popup."
   },
   "notification_yellow_background": {
     "message": "The KeePassFerry button has a yellow background when a new notification appears.",
-    "description": "Part of the message within a transient native notification displayed on the user's screen to alert them to a notification in the Kee browser action popup."
+    "description": "Part of the message within a transient native notification displayed on the user's screen to alert them to a notification in the KeePassFerry browser action popup."
   },
   "loading": {
     "message": "Loading...",
-    "description": "Holding message to be displayed when Kee has to display something to the user to indicate that the requested information or interface element will be displayed shortly."
+    "description": "Holding message to be displayed when KeePassFerry has to display something to the user to indicate that the requested information or interface element will be displayed shortly."
   },
   "pref_currentSearchTermTimeout_label": {
     "message": "Clear search results after (seconds)",
@@ -369,19 +309,19 @@
   },
   "pref_automatic": {
     "message": "Automatic",
-    "description": "Group of settings that relate to the actions that Kee can take automatically when filling entries"
+    "description": "Group of settings that relate to the actions that KeePassFerry can take automatically when filling entries"
   },
   "pref_manual": {
     "message": "Manual",
-    "description": "Group of settings that relate to the actions that Kee takes when the user explicitly asks Kee to fill an entry"
+    "description": "Group of settings that relate to the actions that KeePassFerry takes when the user explicitly asks KeePassFerry to fill an entry"
   },
   "pref_fill_override_hint": {
     "message": "You can override this behaviour for individual entries in KeePass.",
-    "description": "Statement to inform the user that they are able to override the associated (automatic) behaviour on a per-entry basis via Kee Vault or KeePass."
+    "description": "Statement to inform the user that they are able to override the associated (automatic) behaviour on a per-entry basis via KeePassFerry Vault or KeePass."
   },
   "pref_fill_override_option": {
     "message": "Editing the Auto-submit behaviour of an entry also overrides this behaviour",
-    "description": "Checkbox option to allow the user to override the associated (manual) behaviour on a per-entry basis via Kee Vault or KeePass."
+    "description": "Checkbox option to allow the user to override the associated (manual) behaviour on a per-entry basis via KeePassFerry Vault or KeePass."
   },
   "next": {
     "message": "Next",
@@ -421,7 +361,7 @@
   },
   "password_profile": {
     "message": "Password profile",
-    "description": "Name of the profiles used by KeePass and Kee Vault to construct new random passwords."
+    "description": "Name of the profiles used by KeePass and KeePassFerry Vault to construct new random passwords."
   },
   "url_mismatch_1": {
     "message": "This entry is for a different site.",
@@ -441,7 +381,7 @@
   },
   "open_full_editor": {
     "message": "Open in KeePass editor",
-    "description": "Button action to open the full entry editor in KeePass or Kee Vault. Be sure to imply that the need to click the button is 'unusual', as I have done with the word 'advanced'"
+    "description": "Button action to open the full entry editor in KeePass or KeePassFerry Vault. Be sure to imply that the need to click the button is 'unusual', as I have done with the word 'advanced'"
   },
   "where": {
     "message": "Where?",
@@ -483,14 +423,6 @@
     "message": "Always save new entries here",
     "description": "Description of checkbox that when enabled will change a setting such that the user is not prompted where to save future entries they create."
   },
-  "ignore_case": {
-    "message": "Ignore case",
-    "description": "Enabling this setting will cause a case-insensitive comparison to be made (e.g. when looking for matching names and IDs of forms to fill in)"
-  },
-  "ignore_case_explanation_finding_forms": {
-    "message": "For example, 'search' in any of the include or exclude lists will match with 'search', 'Search' and 'SEARCH'. Unless you have very unusual and complex requirements, it is best to leave this option enabled.",
-    "description": "Describes the ignore case setting when used for configuring the include and exclude lists for finding forms."
-  },
   "theme": {
     "message": "Theme",
     "description": "The visual theme applied to the extension's user interface. As per convention, the values refer to the predominant shade - i.e. the background colour"
@@ -515,10 +447,6 @@
     "message": "Appearance",
     "description": "Heading for settings/options that relate to the visual appearance of the extension"
   },
-  "pref_hidden_options_present_explanation": {
-    "message": "KeePassFerry is automatically managing additional options for this site so you can't delete it.",
-    "description": "Notification and explanation to user that one or more hidden settings are present for the configuration of a specific site"
-  },
   "preferred_matching_entry": {
     "message": "Preferred matching entry",
     "description": "Label for toggle between preferred status for the specific matched entry the toggle is displayed upon."
@@ -526,10 +454,6 @@
   "show_confirmation_after_save": {
     "message": "Show confirmation after entry is saved",
     "description": "Label for option to display a confirmation message in the main popup after user has created or updated an entry."
-  },
-  "you_recently_saved": {
-    "message": "You recently saved an entry",
-    "description": "A confirmation message after user has created or updated an entry."
   },
   "saveNotice_title": {
     "message": "Save login in KeePass?",
@@ -1308,7 +1232,23 @@
     "description": "KeePassFerry"
   },
   "ferry_news_1_0_15_1_text": {
-    "message": "KeePassFerry warns when a password appears in known data breaches, with a direct way to change it.",
+    "message": "If you like, KeePass checks your passwords at \"Have I Been Pwned\" in the background. New findings appear as a card in the popup, and affected entries offer a direct way to change the password.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_4_title": {
+    "message": "Expiry dates from KeePass",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_4_text": {
+    "message": "Entries with an expiry date remind you to change the password before and after it, or are hidden once expired. When saving, you can pick a new expiry period right away.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_5_title": {
+    "message": "Generated passwords backed up",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_15_5_text": {
+    "message": "Every generated password is also stored in KeePass, group \"Generated passwords\", with website and time. You can turn this off under \"Saving entries\".",
     "description": "KeePassFerry"
   },
   "ferry_news_1_0_15_2_title": {
@@ -1341,6 +1281,53 @@
   },
   "ferry_tip_guide": {
     "message": "Guide",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_pin_title": {
+    "message": "Pin KeePassFerry",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_pin_text": {
+    "message": "The icon is hidden in the extensions menu. Click the puzzle piece at the top right, then the pin next to KeePassFerry, to keep it visible.",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_shortcut_title": {
+    "message": "Fill in with a shortcut",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_shortcut_text": {
+    "message": "Press $SHORTCUT$ to fill the website's username and password into the login form without opening the popup.",
+    "placeholders": {
+      "shortcut": { "content": "$1" }
+    },
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_shortcutset_title": {
+    "message": "Shortcut for filling in",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_shortcutset_text": {
+    "message": "Set a keyboard shortcut to fill in logins without opening the popup.",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_shortcutset_action": {
+    "message": "Set up",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_passkey_title": {
+    "message": "Passkeys in KeePass",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_passkey_text": {
+    "message": "If a website offers passkeys, set one up: KeePassFerry stores it in KeePass, and you then sign in without a password.",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_diag_title": {
+    "message": "Diagnostic log is turned on",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_diag_text": {
+    "message": "It is only meant for troubleshooting. Turn it off when you no longer need it.",
     "description": "KeePassFerry"
   },
   "ferry_tip_hibp_title": {
@@ -1541,6 +1528,58 @@
   },
   "ferry_hibp_offline": {
     "message": "No connection to \"Have I Been Pwned\" ($1), retrying automatically",
+    "description": "KeePassFerry"
+  },
+  "ferry_leaks_new": {
+    "message": "$1 passwords found in data breaches",
+    "description": "KeePassFerry"
+  },
+  "ferry_leaks_new_one": {
+    "message": "1 password found in data breaches",
+    "description": "KeePassFerry"
+  },
+  "ferry_leaks_ok": {
+    "message": "Got it",
+    "description": "KeePassFerry"
+  },
+  "ferry_leaks_show": {
+    "message": "Show",
+    "description": "KeePassFerry"
+  },
+  "ferry_leaks_heading": {
+    "message": "Found in data breaches",
+    "description": "KeePassFerry"
+  },
+  "ferry_leaks_show_all": {
+    "message": "Show all affected entries",
+    "description": "KeePassFerry"
+  },
+  "ferry_leaks_none": {
+    "message": "No affected entries.",
+    "description": "KeePassFerry"
+  },
+  "ferry_generator_backup_hint": {
+    "message": "Also saved in KeePass as a backup, group \"$1\".",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_passwordBackup": {
+    "message": "Back up generated passwords in KeePass",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_passwordBackup_hint": {
+    "message": "Every password generated in the browser is also stored in the group \"$1\", in case saving on the website goes wrong.",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_passwordBackup_unavailable": {
+    "message": "Requires the KeePass plugin 1.0.15 or later and an unlocked database.",
+    "description": "KeePassFerry"
+  },
+  "ferry_backup_group_default": {
+    "message": "Generated passwords",
+    "description": "KeePassFerry"
+  },
+  "ferry_saved_title": {
+    "message": "Saved in KeePass",
     "description": "KeePassFerry"
   },
   "ferry_setting_hibp": {
@@ -1763,14 +1802,6 @@
     "message": "$1 – Notes",
     "description": "KeePassFerry"
   },
-  "website_options_search_placeholder": {
-    "message": "Search or enter a website (e.g. example.com)",
-    "description": "KeePassFerry"
-  },
-  "website_options_search_tooltip": {
-    "message": "From two characters, existing website settings are searched; \"Add\" creates a new one.",
-    "description": "KeePassFerry"
-  },
   "ferry_related_domain": {
     "message": "Related domain: $1",
     "description": "KeePassFerry"
@@ -1834,5 +1865,13 @@
     "ferry_new_entry_group": {
         "message": "Group",
         "description": "KeePassFerry"
-    }
+    },
+    "ferry_leaks_footer": {
+        "message": "Show leaked passwords ($1)",
+        "description": "KeePassFerry"
+    },
+  "ferry_leaks_intro": {
+    "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
+    "description": "KeePassFerry"
+  }
 }

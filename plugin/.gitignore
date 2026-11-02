@@ -5,11 +5,9 @@
 /Jayrock/bin
 /Jayrock/src/Jayrock.Json/obj
 /Jayrock/src/Jayrock/obj
-/KeePassRPC/bin
-/KeePassRPC/obj
+/KeePassFerry/bin
+/KeePassFerry/obj
 *.opensdf
-/KeePassRPCTest/obj
-/KeePassRPCTest/bin
 /TestResults
 /UpgradeLog.XML
 *.sdf

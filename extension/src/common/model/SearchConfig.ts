@@ -1,11 +1,11 @@
 export class SearchConfig {
-    // Kee will check the supplied version number and behave consistently
-    // for each version, regardless of the current Kee addon version.
+    // KeePassFerry will check the supplied version number and behave consistently
+    // for each version, regardless of the current KeePassFerry addon version.
     // If you supply a config object, you must at least include this property
     version: number;
 
     // Whether to search all logged in databases or just the active one
-    // (generally will want to respect the Kee option with this name)
+    // (generally will want to respect the KeePassFerry option with this name)
     searchAllDatabases: boolean;
 
     // Disable searching in some parts of the entries if required

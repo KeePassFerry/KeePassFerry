@@ -1,4 +1,4 @@
-import type { KeeState } from "../store/KeeState";
+import type { FerryState } from "../store/FerryState";
 import { SaveState } from "../common/SaveState";
 import { Database } from "../common/model/Database";
 import { Mutation } from "../store/Mutation";
@@ -20,16 +20,16 @@ export function pageDatabasesOf(databases: Database[]): Database[] {
 
 // Jedes Feld frisch aufgebaut: der Store nutzt "defaults" selbst als lebenden Zustand, eine Kopie davon enthielte
 // den aktuellen Speichern-Zustand, das erzeugte Passwort und die Suchergebnisse
-export function pageStateOf(state: KeeState): KeeState {
+export function pageStateOf(state: FerryState): FerryState {
     return {
         latestConnectionError: "",
-        lastKeePassRPCRefresh: 0,
+        lastRpcRefresh: 0,
         ActiveKeePassDatabaseIndex: state.ActiveKeePassDatabaseIndex,
         KeePassDatabases: pageDatabasesOf(state.KeePassDatabases),
         PasswordProfiles: [],
         notifications: [],
         connected: state.connected,
-        connectedWebsocket: state.connectedWebsocket,
+        connectedNative: state.connectedNative,
         currentSearchTerm: null,
         loginsFound: false,
         searchResults: null,
@@ -44,7 +44,7 @@ export function pageStateOf(state: KeeState): KeeState {
 export function pageMutationOf(mutation: Mutation): Mutation {
     switch (mutation.type) {
         case types.updateConnected:
-        case types.updateConnectedWebsocket:
+        case types.updateConnectedNative:
         case types.updateActiveKeePassDatabaseIndex:
         case types.updateEntryUpdateStartedAtTimestamp:
             return mutation;

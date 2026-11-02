@@ -38,5 +38,7 @@ export const enum Action {
     ShowExpiryNotice = "showExpiryNotice",
     // Seite: aus diesem Hinweis "Passwort ändern" bzw. "Später"
     OpenChangePassword = "openChangePassword",
-    DismissExpiryNotice = "dismissExpiryNotice"
+    DismissExpiryNotice = "dismissExpiryNotice",
+    // Hintergrund: Eintrag gespeichert (kurze Bestätigung auf der Seite)
+    ShowSavedNotice = "showSavedNotice"
 }

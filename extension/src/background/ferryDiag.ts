@@ -1,5 +1,5 @@
 import { configManager } from "../common/ConfigManager";
-import { kee } from "./KF";
+import { ferry } from "./KF";
 
 /*
 ferryDiag.ts: Diagnoseprotokoll für die Entwicklung (Einstellung "Diagnoseprotokoll", standardmäßig aus).
@@ -32,7 +32,7 @@ async function flush() {
     if (queue.length === 0) return;
     const lines = queue.splice(0, queue.length);
     try {
-        await kee?.KeePassRPC?.ferryDiagLog(lines);
+        await ferry?.rpc?.ferryDiagLog(lines);
     } catch (e) {
         // ohne Verbindung gehen die Meldungen verloren (nur Diagnose)
     }

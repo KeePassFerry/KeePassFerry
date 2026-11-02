@@ -58,7 +58,7 @@ import { GroupSummary, TemporaryIDString } from "../../common/model/GroupSummary
 import { configManager } from "../../common/ConfigManager";
 import useStore from "../../store";
 import { mapState } from "pinia";
-import { KeeLog } from "~/common/Logger";
+import { FerryLog } from "~/common/Logger";
 import GroupSelectorTree from "./GroupSelectorTree.vue";
 import { GroupListItem } from "./TreeItem.vue";
 
@@ -212,7 +212,7 @@ export default {
             this.lastSelectedGroupUuid = uuid;
         },
         handleSelect(item: GroupListItem) {
-            KeeLog.debug("Setting selected group to " + item.id);
+            FerryLog.debug("Setting selected group to " + item.id);
             selectedItem.selected = false;
             item.selected = true;
             selectedItem = item;

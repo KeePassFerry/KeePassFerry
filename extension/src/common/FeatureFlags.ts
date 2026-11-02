@@ -19,6 +19,10 @@ export const FIELD_PROTECTION_FEATURE = "KEEPASSFERRY_FIELD_PROTECTION";
 export const ENTRY_RECYCLE_FEATURE = "KEEPASSFERRY_ENTRY_RECYCLE";
 // Passwortprüfung bei Have I Been Pwned und Tipps (GetHibpCheck/SetHibpCheck/GetFerryTips)
 export const HIBP_CHECK_FEATURE = "KEEPASSFERRY_HIBP_CHECK";
+// Liste geleakter Einträge für den Hinweis im Popup (GetHibpLeaks)
+export const HIBP_LEAKS_FEATURE = "KEEPASSFERRY_HIBP_LEAKS";
+// Hinweis im Generator, in welcher Gruppe KeePass das erzeugte Passwort sichert (GetPasswordBackupInfo)
+export const PASSWORD_BACKUP_INFO_FEATURE = "KEEPASSFERRY_PASSWORD_BACKUP_INFO";
 // Ablaufdatum der Einträge (expiryTime) und neues Ablaufdatum beim Speichern (newExpiryTime)
 export const EXPIRY_FEATURE = "KEEPASSFERRY_EXPIRY";
 
@@ -42,7 +46,10 @@ export function pluginIsOutdated(features: string[]): boolean {
 // Plugin-Version mit den neuesten Funktionen für diese Erweiterung. Nur erhöhen, wenn sich das Plugin im Release
 // geändert hat (nicht bei Releases, die nur die Erweiterung betreffen): ältere Plugins bekommen dann den Hinweis
 // "Neue Version für KeePass verfügbar" mit "Jetzt aktualisieren". Ohne Abfrage im Netz.
-export const RECOMMENDED_PLUGIN_VERSION = "1.0.14";
+export const RECOMMENDED_PLUGIN_VERSION = "1.0.15";
+
+// Name des Hinweises "Plugin älter als die Erweiterung" im Popup
+export const PLUGIN_UPDATE_NOTICE = "keepassferry-plugin-update";
 
 // true, wenn das Plugin älter als RECOMMENDED_PLUGIN_VERSION ist (oder seine Version nicht meldet)
 export function pluginUpdateAvailable(features: string[]): boolean {
@@ -51,30 +58,12 @@ export function pluginUpdateAvailable(features: string[]): boolean {
 
 export class FeatureFlags {
     public static readonly offered: string[] = [
-        // Full feature set as of KeeFox 1.6
-        "KPRPC_FEATURE_VERSION_1_6",
-
-        // Trivial example showing how we've added a new client feature
-        "KPRPC_FEATURE_WARN_USER_WHEN_FEATURE_MISSING",
-
-        // This version can communicate with a browser-hosted server
-        "KPRPC_FEATURE_BROWSER_HOSTED",
-
-        // Sync settings across multiple browsers and devices
-        "BROWSER_SETTINGS_SYNC"
-
-        // in the rare event that we want to check for the absense of a feature
-        // we would add a feature flag along the lines of "KPRPC_FEATURE_REMOVED_INCOMPATIBLE_THING_X"
+        // Grundumfang des Protokolls
+        "KEEPASSFERRY_BASE"
     ];
 
     public static readonly required: string[] = [
-        // Full feature set as of KeeFox 1.6
-        "KPRPC_FEATURE_VERSION_1_6",
-
-        // Allow clients without the name KeeFox to connect
-        "KPRPC_GENERAL_CLIENTS",
-
-        // Require the security fix released on 29th July 2020
-        "KPRPC_SECURITY_FIX_20200729"
+        // Grundumfang des Protokolls
+        "KEEPASSFERRY_BASE"
     ];
 }

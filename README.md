@@ -75,7 +75,7 @@ KeePassFerry does not need Kee or KeePassRPC and can be installed alongside them
 | Part | Folder | Command |
 |---|---|---|
 | Extension | `extension/` | `npm ci` then `npm run build-chrome:prod` (output in `extension/extension/`) |
-| Plugin | `plugin/` | `msbuild plugin/KeePassRPC/KeePassRPC.csproj -p:Configuration=Release -p:TargetFrameworkVersion=v4.8` (expects `KeePass.exe` in `%USERPROFILE%\KeePassDEV`) |
+| Plugin | `plugin/` | `msbuild plugin/KeePassFerry/KeePassFerry.csproj -p:Configuration=Release -p:TargetFrameworkVersion=v4.8` (expects `KeePass.exe` in `%USERPROFILE%\KeePassDEV`) |
 | Host | `host/` | `dotnet build host/KeePassFerryHost -c Release` |
 
 Releases are built by GitHub Actions when a tag `v*` is pushed (see `.github/workflows/release.yml`).

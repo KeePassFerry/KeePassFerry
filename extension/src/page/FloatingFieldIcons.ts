@@ -8,7 +8,12 @@ verdeckte oder unsichtbare Felder bekommen kein Symbol.
 - senkrecht: Mitte des sichtbaren Feldrahmens (auch über Shadow DOM hinweg), sonst Mitte des Felds
 */
 
+import { isVisible } from "./visibility";
+
 const HOST_TAG = "keepassferry-field-icons";
+// Kleiner sind nur versteckte Felder (z. B. 1×1 px "nur für Screenreader"); Einzelziffern-Kästchen sind größer
+const MIN_FIELD_WIDTH = 16;
+const MIN_FIELD_HEIGHT = 12;
 const BASE_OFFSET = 4;
 const EDGE_REVEAL_OFFSET = 30;
 
@@ -127,8 +132,12 @@ function visualCenterY(element: HTMLElement, rect: DOMRect): number {
 // Sichtbar und nicht von etwas anderem verdeckt (z. B. Dialog über dem Formular)
 function isShown(element: HTMLElement, rect: DOMRect): boolean {
     if (rect.bottom <= 0 || rect.top >= window.innerHeight || rect.right <= 0 || rect.left >= window.innerWidth) return false;
+    if (rect.width < MIN_FIELD_WIDTH || rect.height < MIN_FIELD_HEIGHT) return false;
     const style = window.getComputedStyle(element);
     if (style.visibility === "hidden" || style.display === "none") return false;
+    // Dieselbe Prüfung wie beim Ausfüllen (zugeklappt, weggeschnitten, nur für Screenreader); durchsichtige Felder
+    // (opacity 0) prüft der Sonderfall unten
+    if (Number(style.opacity) !== 0 && !isVisible(element)) return false;
     const x = Math.min(rect.right - 2, Math.max(rect.left + 2, rect.left + rect.width / 3));
     const hit = rootFor(element).elementFromPoint(x, rect.top + rect.height / 2);
     if (!hit) return false;

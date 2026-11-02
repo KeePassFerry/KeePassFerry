@@ -8,15 +8,15 @@ import type { PersistentDataItem } from "./PersistentDataItem";
 import { BROWSER_UPDATE_PLUGIN_VERSION, pluginVersionAtLeast } from "../common/FeatureFlags";
 import { onFieldsAvailable } from "./pageFields";
 import { checkExpiryAfterFill, openChangePasswordFromNotice, snoozeExpiryNotice } from "./expiryNotice";
-import { KeeURL } from "../common/KeeURL";
+import { FerryURL } from "../common/FerryURL";
 import type { AddonMessage } from "../common/AddonMessage";
-import { KeeLog } from "../common/Logger";
-import { KeeNotification } from "../common/KeeNotification";
+import { FerryLog } from "../common/Logger";
+import { FerryNotification } from "../common/FerryNotification";
 import { Action } from "../common/Action";
 import { configManager } from "../common/ConfigManager";
 import { Entry } from "../common/model/Entry";
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
-import { kee } from "./KF";
+import { ferry } from "./KF";
 import { pageStateOf } from "./pageState";
 import { commandManager } from "./commands";
 
@@ -25,26 +25,26 @@ import { commandManager } from "./commands";
 
 export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg: AddonMessage) {
     if (msg.mutation) {
-        kee.store.onRemoteMessage(this, msg.mutation);
+        ferry.store.onRemoteMessage(this, msg.mutation);
     }
 
-    if (KeeLog && KeeLog.debug) {
-        KeeLog.debug("In background script, received message from browser popup script.");
+    if (FerryLog && FerryLog.debug) {
+        FerryLog.debug("In background script, received message from browser popup script.");
     }
 
     if (msg.removeNotification) {
-        kee.removeUserNotifications((n: KeeNotification) => n.id != msg.removeNotification);
+        ferry.removeUserNotifications((n: FerryNotification) => n.id != msg.removeNotification);
     }
     if (msg.startPluginUpdate) {
         // Plugins vor 1.0.8 führen das ganze Update auf dem Kanal zum Browser aus und können ihn dabei blockieren:
         // für sie gleich die Release-Seite mit dem Setup öffnen
-        if (!pluginVersionAtLeast(kee.KeePassRPC.kprpcClient.nativeSessionManager.features(), BROWSER_UPDATE_PLUGIN_VERSION)) {
+        if (!pluginVersionAtLeast(ferry.rpc.pluginClient.nativeSessionManager.features(), BROWSER_UPDATE_PLUGIN_VERSION)) {
             diag("hintergrund", "plugin-update", { ergebnis: "release-seite (altes plugin)" });
             chrome.tabs.create({ url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest" });
             return;
         }
         // Plugins vor 1.0.4 kennen StartPluginUpdate nicht (Ergebnis null): dann die Download-Seite öffnen
-        const result = await kee.KeePassRPC.startPluginUpdate();
+        const result = await ferry.rpc.startPluginUpdate();
         diag("hintergrund", "plugin-update", { ergebnis: result });
         if (result === "signature_invalid" || result === "checksum_mismatch") {
             // Release nicht korrekt signiert: nicht zum Download schicken, sondern warnen
@@ -60,37 +60,35 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
             chrome.tabs.create({ url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest" });
         }
     }
-    if (msg.loadUrlUpgradeKee) {
-        chrome.tabs.create({
-            url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest"
-        });
-    }
     if (msg.action == Action.GetPasswordProfiles) {
-        const passwordProfiles = await kee.getPasswordProfiles();
-        kee.store.updatePasswordProfiles(passwordProfiles);
+        const passwordProfiles = await ferry.getPasswordProfiles();
+        ferry.store.updatePasswordProfiles(passwordProfiles);
     }
     if (msg.action === Action.GeneratePassword) {
-        const generatedPassword = await kee.generatePassword(
+        // Ohne Bearbeiten-Fenster (Generator im Popup) die Seite des aktiven Tabs: die Sicherung des Passworts in
+        // "Generierte Passwörter" soll zeigen, für welche Website es erzeugt wurde (Issue #12)
+        const tabUrl = msg.url ? null : await chrome.tabs.get(ferry.foregroundTabId).then(t => t?.url, () => null);
+        const generatedPassword = await ferry.generatePassword(
             msg.passwordProfile,
-            msg.url ?? "unknown URL"
+            msg.url || (tabUrl && /^https?:/.test(tabUrl) ? tabUrl : null) || "unknown URL"
         );
         if (generatedPassword) {
-            kee.store.updateGeneratedPassword(generatedPassword);
+            ferry.store.updateGeneratedPassword(generatedPassword);
         } else {
-            KeeLog.warn(
-                "Kee received an empty/missing password. Check the configuration of your password manager."
+            FerryLog.warn(
+                "KeePassFerry received an empty/missing password. Check the configuration of your password manager."
             );
         }
     }
     if (msg.action === Action.CreateEntry || msg.action === Action.UpdateEntry) {
-        if (kee.store.state.connected) {
-            const sourceEntry = kee.store.state.saveState.newEntry;
+        if (ferry.store.state.connected) {
+            const sourceEntry = ferry.store.state.saveState.newEntry;
             const existingOrTemporaryUuid = sourceEntry.uuid;
             const dbFileName = sourceEntry.database.fileName;
             const parentGroupUuid: string = sourceEntry.parentGroup.uuid;
 
             // shallow clone so we don't impact the values we have to wipe out below
-            // KPRPC has particular expectations about some Entry properties.
+            // The plugin has particular expectations about some Entry properties.
             // parent group UUID, DB and UUID should all be undefined or null as set below.
             const entry = new Entry(
                 Object.assign(Object.assign({} as Entry, sourceEntry) as Entry, {
@@ -104,59 +102,70 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
                     icon: configManager.current.saveFavicons
                         ? {
                               version: 1,
-                              iconImageData: kee.store.state.saveState.favicon
+                              iconImageData: ferry.store.state.saveState.favicon
                           }
                         : null
                 })
             );
 
-            // Might be changed by the user before KPRPC says all worked OK
-            const tabId = kee.foregroundTabId;
+            // Might be changed by the user before the plugin says all worked OK
+            const tabId = ferry.foregroundTabId;
+            // Nach erfolgreichem Speichern (vor dem Neuladen der Einträge): Bestätigung auf der Seite
             const clearSubmittedData = () => {
-                if (kee.persistentTabStates.get(tabId)?.items?.length > 0) {
-                    kee.persistentTabStates.get(
+                if (!configManager.current.hideConfirmationAfterSave) {
+                    try {
+                        ferry.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({
+                            action: Action.ShowSavedNotice,
+                            savedEntryTitle: entry.title
+                        } as AddonMessage);
+                    } catch (e) {
+                        // Seite lädt gerade neu
+                    }
+                }
+                if (ferry.persistentTabStates.get(tabId)?.items?.length > 0) {
+                    ferry.persistentTabStates.get(
                         tabId
-                    ).items = kee.persistentTabStates
+                    ).items = ferry.persistentTabStates
                         .get(tabId)
                         .items.filter(item => item.itemType !== "submittedData");
                 }
             };
 
             if (msg.action === Action.UpdateEntry) {
-                kee.store.updateEntryUpdateStartedAtTimestamp(Date.now());
-                kee.updateLogin(
+                ferry.store.updateEntryUpdateStartedAtTimestamp(Date.now());
+                ferry.updateLogin(
                     entry,
                     existingOrTemporaryUuid,
                     dbFileName,
                     clearSubmittedData
                 );
             } else {
-                kee.addLogin(entry, parentGroupUuid, dbFileName, clearSubmittedData);
+                ferry.addLogin(entry, parentGroupUuid, dbFileName, clearSubmittedData);
                 // Gruppe nur beim Neuanlegen als Vorauswahl merken, nicht beim Bearbeiten eines vorhandenen Eintrags
                 if (!configManager.current.mruGroup) configManager.current.mruGroup = {};
                 configManager.current.mruGroup[dbFileName] = parentGroupUuid;
-                configManager.current.mruGroup["{<{{<<kee-primary>>}}>}"] = parentGroupUuid;
+                configManager.current.mruGroup["{<{{<<ferry-primary>>}}>}"] = parentGroupUuid;
                 configManager.save();
             }
         }
     }
 
     if (msg.action == Action.ManualFill && msg.selectedEntryIndex != null) {
-        kee.tabStates
-            .get(kee.foregroundTabId)
+        ferry.tabStates
+            .get(ferry.foregroundTabId)
             .framePorts.get(msg.frameId || 0)
             .postMessage(msg);
-        kee.tabStates
-            .get(kee.foregroundTabId)
+        ferry.tabStates
+            .get(ferry.foregroundTabId)
             .framePorts.get(0)
             .postMessage({ action: Action.CloseAllPanels });
     }
 
     if (msg.action === Action.OpenKeePass) {
-        kee.openKeePass();
+        ferry.openKeePass();
     }
     if (msg.findMatches) {
-        const result = await kee.findLogins(
+        const result = await ferry.findLogins(
             null,
             null,
             msg.findMatches.uuid,
@@ -164,15 +173,15 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
             null,
             null
         );
-        kee.browserPopupPort.postMessage({
+        ferry.browserPopupPort.postMessage({
             findMatchesResult: result
         } as AddonMessage);
     }
     if (msg.loginEditor) {
-        kee.launchLoginEditor(msg.loginEditor.uuid, msg.loginEditor.DBfilename);
+        ferry.launchLoginEditor(msg.loginEditor.uuid, msg.loginEditor.DBfilename);
     }
     if (msg.action === Action.DetectForms) {
-        kee.tabStates.get(kee.foregroundTabId).framePorts.forEach(port => {
+        ferry.tabStates.get(ferry.foregroundTabId).framePorts.forEach(port => {
             port.postMessage({
                 action: Action.DetectForms
             });
@@ -183,7 +192,7 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
 // Neue Anmeldung desselben Benutzers auf derselben Website: eine frühere abweichende Eingabe im Tab (z. B. vertipptes
 // Passwort) nicht mehr zum Speichern bzw. Aktualisieren anbieten und einen schon gezeigten Hinweis schließen
 function dropSupersededSubmission(tabId: number, url: string, username: string) {
-    const item = kee.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
+    const item = ferry.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
     if (!item?.submittedData) return;
     const previous = { url: item.submittedData.url, username: submittedCredentials(item.submittedData.fields ?? []).username };
     if (supersedesSubmission(previous, { url, username })) removeSubmission(tabId, item);
@@ -192,35 +201,36 @@ function dropSupersededSubmission(tabId: number, url: string, username: string) 
 // "Passwort aktualisieren" kam nicht, weil das Anmeldeformular stehen blieb: Anmeldung fehlgeschlagen, das eingegebene
 // Passwort nicht mehr anbieten (auch nicht später auf einer anderen Seite)
 function dropFailedPasswordUpdate(tabId: number) {
-    const item = kee.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
+    const item = ferry.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
     if (item?.submittedData?.updateTarget) removeSubmission(tabId, item);
 }
 
+
 function removeSubmission(tabId: number, item: PersistentDataItem) {
-    const state = kee.persistentTabStates.get(tabId);
+    const state = ferry.persistentTabStates.get(tabId);
     state.items = state.items.filter(i => i !== item);
-    kee.configureBrowserActionIcon();
+    ferry.configureBrowserActionIcon();
     try {
-        kee.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({ action: Action.WithdrawSaveNotice } as AddonMessage);
+        ferry.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({ action: Action.WithdrawSaveNotice } as AddonMessage);
     } catch (e) {
         // Seite lädt gerade neu
     }
 }
 
 export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMessage) {
-    if (KeeLog && KeeLog.debug) {
-        KeeLog.debug("In background script, received message from page script.");
+    if (FerryLog && FerryLog.debug) {
+        FerryLog.debug("In background script, received message from page script.");
     }
 
     if (msg.mutation) {
-        kee.store.onRemoteMessage(this, msg.mutation);
+        ferry.store.onRemoteMessage(this, msg.mutation);
     }
 
     if (msg.findMatches) {
         // Gesperrt: die Seite zeigt das Gesperrt-Symbol, erst ein Klick darauf (oder aufs Erweiterungssymbol)
         // entsperrt. Kein Entsperren beim bloßen Öffnen einer Seite (Option dafür in 1.0.15 entfernt, Issue #11)
-        kee.tabStates.get(this.sender.tab.id).frames.get(this.sender.frameId).entries = [];
-        const result = await kee.findLogins(
+        ferry.tabStates.get(this.sender.tab.id).frames.get(this.sender.frameId).entries = [];
+        const result = await ferry.findLogins(
             msg.findMatches.uri,
             null,
             null,
@@ -228,18 +238,18 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             null,
             null
         );
-        const frameState = kee.tabStates.get(this.sender.tab.id)?.frames.get(this.sender.frameId);
+        const frameState = ferry.tabStates.get(this.sender.tab.id)?.frames.get(this.sender.frameId);
         if (frameState) frameState.urlEntries = result ?? [];
-        if (this.sender.tab.id === kee.foregroundTabId) commandManager.scheduleContextMenuUpdate();
+        if (this.sender.tab.id === ferry.foregroundTabId) commandManager.scheduleContextMenuUpdate();
         // Mehrseitige Anmeldung: den eben im Tab gewählten Eintrag auf Folgeseiten derselben Domain bevorzugen
         let preferredUuid: string = undefined;
-        const last = kee.persistentTabStates.get(this.sender.tab.id)?.lastFilledEntry;
-        const domain = KeeURL.fromString(this.sender.url ?? msg.findMatches.uri ?? "")?.domainOrIPAddress;
+        const last = ferry.persistentTabStates.get(this.sender.tab.id)?.lastFilledEntry;
+        const domain = FerryURL.fromString(this.sender.url ?? msg.findMatches.uri ?? "")?.domainOrIPAddress;
         if (last && sameSite(last.domain, domain) && last.at > Date.now() - 10 * 60 * 1000 && result?.some(e => e.uuid === last.uuid)) {
             preferredUuid = last.uuid;
         }
         this.postMessage({
-            isForegroundTab: this.sender.tab.id === kee.foregroundTabId,
+            isForegroundTab: this.sender.tab.id === ferry.foregroundTabId,
             findMatchesResult: result,
             preferredUuid
         } as AddonMessage);
@@ -252,10 +262,10 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         //TODO:f: putting in main store will probably help with other new features too.
     }
     if (msg.removeNotification) {
-        kee.removeUserNotifications((n: KeeNotification) => n.id != msg.removeNotification);
+        ferry.removeUserNotifications((n: FerryNotification) => n.id != msg.removeNotification);
         try {
-            kee.browserPopupPort.postMessage({
-                isForegroundTab: this.sender.tab.id === kee.foregroundTabId
+            ferry.browserPopupPort.postMessage({
+                isForegroundTab: this.sender.tab.id === ferry.foregroundTabId
             } as AddonMessage);
         } catch (e) {
             /* whatever */
@@ -263,13 +273,13 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
     }
     if (msg.entries) {
         //TODO:f: When/how is this msg sent? it might be somewhere we can trigger the browser action button update to display the number of matched items.
-        kee.tabStates.get(this.sender.tab.id).frames.get(this.sender.frameId).entries =
+        ferry.tabStates.get(this.sender.tab.id).frames.get(this.sender.frameId).entries =
             msg.entries;
-        if (this.sender.tab.id === kee.foregroundTabId) commandManager.scheduleContextMenuUpdate();
+        if (this.sender.tab.id === ferry.foregroundTabId) commandManager.scheduleContextMenuUpdate();
     }
     if (msg.requestUnlock) {
         // Klick auf ein gesperrtes Feldsymbol: bewusste Aktion, ohne Bremsen entsperren
-        const result = await kee.requestBackgroundUnlock(this.sender.tab.id, this.sender.url ?? "", true);
+        const result = await ferry.requestBackgroundUnlock(this.sender.tab.id, this.sender.url ?? "", true);
         diag("hintergrund", "feldsymbol geklickt (gesperrt)", { ergebnis: result });
     }
     if (msg.ferryDiag) {
@@ -293,7 +303,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
     // Schon in KeePass vorhandene Zugangsdaten (auch nur der Benutzername im ersten Schritt
     // mehrstufiger Anmeldungen) lösen keinen Speichern-Hinweis aus; derselbe Benutzer mit anderem Passwort
     // bietet an, den vorhandenen Eintrag zu aktualisieren
-    const submittedMatch = msg.submittedData ? await kee.classifySubmittedData(msg.submittedData, this.sender.tab.id) : null;
+    const submittedMatch = msg.submittedData ? await ferry.classifySubmittedData(msg.submittedData, this.sender.tab.id) : null;
     if (msg.submittedData) {
         diag("hintergrund", "formular abgeschickt", {
             felder: (msg.submittedData.fields ?? []).map((f: any) => ({ typ: f.type, name: f.name, gefuellt: !!f.value })),
@@ -301,16 +311,16 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         });
     }
     if (msg.submittedData && submittedMatch.kind === "known") {
-        KeeLog.debug("Submitted data matches an existing entry; no save offer");
+        FerryLog.debug("Submitted data matches an existing entry; no save offer");
         // Auch ein bekannter Benutzername allein (erster Schritt einer mehrstufigen Anmeldung) erledigt ein Angebot
         dropSupersededSubmission(this.sender.tab.id, msg.submittedData.url, submittedUser);
     } else if (msg.submittedData && !submittedHasPassword) {
-        KeeLog.debug("Submitted form has no password; no save offer");
+        FerryLog.debug("Submitted form has no password; no save offer");
     } else if (msg.submittedData) {
         const target = submittedMatch.kind === "passwordChanged" ? submittedMatch.entry : null;
         // Bezeichnung im Hinweis nie leer (sonst zeigt die Seite "speichern?" statt "aktualisieren?")
         const label = target
-            ? target.username || target.title || KeeURL.fromString(msg.submittedData.url ?? "")?.domainOrIPAddress || "?"
+            ? target.username || target.title || FerryURL.fromString(msg.submittedData.url ?? "")?.domainOrIPAddress || "?"
             : null;
         const persistentItem = {
             itemType: "submittedData" as const,
@@ -320,25 +330,25 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             creationDate: new Date()
         };
 
-        if (!kee.persistentTabStates.get(this.sender.tab.id)) {
-            kee.persistentTabStates.set(this.sender.tab.id, {
+        if (!ferry.persistentTabStates.get(this.sender.tab.id)) {
+            ferry.persistentTabStates.set(this.sender.tab.id, {
                 items: []
             });
         }
 
         // Don't allow more than one entry to be tracked for this tab
-        if (kee.persistentTabStates.get(this.sender.tab.id)) {
-            kee.persistentTabStates.get(
+        if (ferry.persistentTabStates.get(this.sender.tab.id)) {
+            ferry.persistentTabStates.get(
                 this.sender.tab.id
-            ).items = kee.persistentTabStates
+            ).items = ferry.persistentTabStates
                 .get(this.sender.tab.id)
                 .items.filter(item => item.itemType !== "submittedData");
         }
 
-        kee.persistentTabStates.get(this.sender.tab.id).items.push(persistentItem);
+        ferry.persistentTabStates.get(this.sender.tab.id).items.push(persistentItem);
 
-        kee.configureBrowserActionIcon();
-        kee.offerSaveNotice(this.sender.tab.id);
+        ferry.configureBrowserActionIcon();
+        ferry.offerSaveNotice(this.sender.tab.id);
     }
     if (msg.action === Action.WebAuthnRequest && msg.webauthn) {
         const w = msg.webauthn;
@@ -355,19 +365,19 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         }
     }
     if (msg.action === Action.QueryUnlocked) {
-        const unlocked = kee.store.state.connected && kee.store.state.KeePassDatabases.length > 0;
+        const unlocked = ferry.store.state.connected && ferry.store.state.KeePassDatabases.length > 0;
         this.postMessage({
             action: Action.UnlockState,
             unlocked,
-            resetState: unlocked ? pageStateOf(kee.store.state) : undefined
+            resetState: unlocked ? pageStateOf(ferry.store.state) : undefined
         } as AddonMessage);
     }
     if (msg.action === Action.EntryFilled && msg.filledEntry?.uuid) {
         const tabId = this.sender.tab.id;
-        const domain = KeeURL.fromString(this.sender.url ?? this.sender.tab.url)?.domainOrIPAddress;
+        const domain = FerryURL.fromString(this.sender.url ?? this.sender.tab.url)?.domainOrIPAddress;
         if (domain) {
-            if (!kee.persistentTabStates.get(tabId)) kee.persistentTabStates.set(tabId, { items: [] });
-            kee.persistentTabStates.get(tabId).lastFilledEntry = {
+            if (!ferry.persistentTabStates.get(tabId)) ferry.persistentTabStates.set(tabId, { items: [] });
+            ferry.persistentTabStates.get(tabId).lastFilledEntry = {
                 uuid: msg.filledEntry.uuid,
                 dbFileName: msg.filledEntry.dbFileName,
                 domain,
@@ -387,11 +397,11 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         // Nur für die eigene URL des Frames, nicht für eine von der Seite behauptete
         const frameUrl = this.sender.url ?? msg.url;
         try {
-            if (kee.store.state.connected && kee.store.state.KeePassDatabases.length === 0) {
+            if (ferry.store.state.connected && ferry.store.state.KeePassDatabases.length === 0) {
                 // Nur nach einem Klick (Symbol am Codefeld) entsperren, nie beim bloßen Erkennen des Felds
                 diag("hintergrund", "otp angefragt, db gesperrt", { klick: !!msg.userInitiated });
                 if (msg.userInitiated) {
-                    kee.requestBackgroundUnlock(this.sender.tab.id, frameUrl, !!msg.userInitiated);
+                    ferry.requestBackgroundUnlock(this.sender.tab.id, frameUrl, !!msg.userInitiated);
                 }
                 return;
             }
@@ -399,10 +409,10 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
                 diag("hintergrund", "otp angefragt, aber einrichtung offen -> nicht ausfüllen");
                 return;
             }
-            const totp = await kee.findTotpCode(this.sender.tab.id, frameUrl);
+            const totp = await ferry.findTotpCode(this.sender.tab.id, frameUrl);
             diag("hintergrund", "otp angefragt", { code: totp ? "gefunden" : "keiner", rest: totp?.remainingSeconds });
             if (totp) {
-                const domain = KeeURL.fromString(frameUrl)?.domainOrIPAddress;
+                const domain = FerryURL.fromString(frameUrl)?.domainOrIPAddress;
                 // Derselbe Code schon von selbst eingetragen (Seite hat neu geladen, z. B. nach "ungültig"): nur das Symbol
                 if (!msg.userInitiated && (await isRepeatedAutoFill(this.sender.tab.id, domain, totp.code))) {
                     diag("hintergrund", "otp schon eingetragen -> nur symbol");
@@ -418,7 +428,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
                 } as AddonMessage);
             }
         } catch (e) {
-            KeeLog.warn("Could not get a one-time code: " + e);
+            FerryLog.warn("Could not get a one-time code: " + e);
         }
     }
     if (msg.action === Action.OtpSetupCandidate && msg.otpSetup) {
@@ -433,12 +443,12 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         dismissOtpSetup(this.sender.tab.id);
     }
     if (msg.action === Action.OpenOtpSetupPopup) {
-        kee.foregroundTabId = this.sender.tab.id;
+        ferry.foregroundTabId = this.sender.tab.id;
         try {
             await chrome.action.setPopup({ popup: "dist/popup/index.html?otp=1" });
             await chrome.action.openPopup();
         } catch (e) {
-            KeeLog.warn("Could not open the popup for the one-time code setup: " + e);
+            FerryLog.warn("Could not open the popup for the one-time code setup: " + e);
         } finally {
             await chrome.action.setPopup({ popup: "dist/popup/index.html" });
         }
@@ -446,12 +456,12 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
     if (msg.action === Action.OpenSavePopup) {
         // Popup einmalig mit ?save=1 öffnen, damit es direkt im Speichern-Dialog startet.
         // Der anfragende Tab ist der Vordergrund-Tab (nach einem Neustart ist der Wert sonst noch leer).
-        kee.foregroundTabId = this.sender.tab.id;
+        ferry.foregroundTabId = this.sender.tab.id;
         try {
             await chrome.action.setPopup({ popup: "dist/popup/index.html?save=1" });
             await chrome.action.openPopup();
         } catch (e) {
-            KeeLog.warn("Could not open the popup for saving: " + e);
+            FerryLog.warn("Could not open the popup for saving: " + e);
         } finally {
             await chrome.action.setPopup({ popup: "dist/popup/index.html" });
         }
@@ -465,25 +475,25 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         dropFailedPasswordUpdate(this.sender.tab.id);
     }
     if (msg.action === Action.DismissSaveNotice) {
-        kee.persistentTabStates
+        ferry.persistentTabStates
             .get(this.sender.tab.id)
             ?.items?.filter(item => item.itemType === "submittedData")
             .forEach(item => (item.noticeDismissed = true));
     }
     if (msg.action === Action.ShowMatchedLoginsPanel) {
-        kee.tabStates.get(this.sender.tab.id).framePorts.get(0).postMessage({
+        ferry.tabStates.get(this.sender.tab.id).framePorts.get(0).postMessage({
             action: Action.ShowMatchedLoginsPanel,
             frameId: this.sender.frameId
         });
     }
     if (msg.action === Action.PageHide) {
         try {
-            kee.tabStates.get(this.sender.frameId).framePorts.forEach((port, key, map) => {
+            ferry.tabStates.get(this.sender.frameId).framePorts.forEach((port, key, map) => {
                 try {
                     port.disconnect();
                 } catch (e) {
-                    if (KeeLog && KeeLog.debug) {
-                        KeeLog.debug(
+                    if (FerryLog && FerryLog.debug) {
+                        FerryLog.debug(
                             "failed to disconnect a frame port on tab " +
                                 key +
                                 ". This is probably not a problem but we may now be reliant on browser " +
@@ -504,69 +514,69 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             // situation already - probably just through standard GC.
         }
         if (this.sender.frameId === 0) {
-            kee.deleteTabState(this.sender.tab.id);
+            ferry.deleteTabState(this.sender.tab.id);
         }
     }
 }
 
 export async function iframeMessageHandler(this: chrome.runtime.Port, msg: AddonMessage) {
     if (msg.mutation) {
-        kee.store.onRemoteMessage(this, msg.mutation);
+        ferry.store.onRemoteMessage(this, msg.mutation);
     }
 
-    if (KeeLog && KeeLog.debug) {
-        KeeLog.debug("In background script, received message from iframe script.");
+    if (FerryLog && FerryLog.debug) {
+        FerryLog.debug("In background script, received message from iframe script.");
     }
 
     const tabId = this.sender.tab.id;
 
     if (msg.action == Action.ManualFill && msg.selectedEntryIndex != null) {
-        kee.tabStates
+        ferry.tabStates
             .get(tabId)
             .framePorts.get(msg.frameId || 0)
             .postMessage(msg);
-        kee.tabStates
+        ferry.tabStates
             .get(tabId)
             .framePorts.get(0)
             .postMessage({ action: Action.CloseAllPanels });
     }
 
     if (msg.action == Action.CloseAllPanels) {
-        kee.tabStates.get(tabId).framePorts.get(0).postMessage(msg);
+        ferry.tabStates.get(tabId).framePorts.get(0).postMessage(msg);
     }
 
     if (msg.action == Action.GetPasswordProfiles) {
-        const passwordProfiles = await kee.getPasswordProfiles();
-        kee.store.updatePasswordProfiles(passwordProfiles);
+        const passwordProfiles = await ferry.getPasswordProfiles();
+        ferry.store.updatePasswordProfiles(passwordProfiles);
     }
 
     if (msg.action == Action.GeneratePassword) {
-        const generatedPassword = await kee.generatePassword(
+        const generatedPassword = await ferry.generatePassword(
             msg.passwordProfile,
-            kee.tabStates.get(tabId).url
+            ferry.tabStates.get(tabId).url
         );
         if (generatedPassword) {
-            kee.store.updateGeneratedPassword(generatedPassword);
+            ferry.store.updateGeneratedPassword(generatedPassword);
             this.postMessage({
                 generatedPassword: generatedPassword
             } as AddonMessage);
         } else {
-            KeeLog.warn(
-                "Kee received an empty/missing password. Check the configuration of your password manager."
+            FerryLog.warn(
+                "KeePassFerry received an empty/missing password. Check the configuration of your password manager."
             );
         }
     }
 
     if (msg.loginEditor) {
-        kee.launchLoginEditor(msg.loginEditor.uuid, msg.loginEditor.DBfilename);
+        ferry.launchLoginEditor(msg.loginEditor.uuid, msg.loginEditor.DBfilename);
     }
 
     // Passwort-Generator: "Einsetzen" in das Feld, in das rechts geklickt wurde
     if (msg.insertGeneratedPassword) {
-        const target = kee.generatorInsertTarget;
-        kee.generatorInsertTarget = null;
+        const target = ferry.generatorInsertTarget;
+        ferry.generatorInsertTarget = null;
         if (target && target.tabId === this.sender.tab?.id) {
-            kee.tabStates.get(target.tabId)?.framePorts.get(target.frameId)?.postMessage({
+            ferry.tabStates.get(target.tabId)?.framePorts.get(target.frameId)?.postMessage({
                 action: Action.FillContextTarget,
                 fillValue: msg.insertGeneratedPassword
             } as AddonMessage);

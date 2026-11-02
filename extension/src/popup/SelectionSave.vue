@@ -221,7 +221,7 @@ export default {
                 if (created) {
                     if (!configManager.current.mruGroup) configManager.current.mruGroup = {};
                     configManager.current.mruGroup[group.dbFileName] = group.uuid;
-                    configManager.current.mruGroup["{<{{<<kee-primary>>}}>}"] = group.uuid;
+                    configManager.current.mruGroup["{<{{<<ferry-primary>>}}>}"] = group.uuid;
                     configManager.save();
                 }
                 return created;

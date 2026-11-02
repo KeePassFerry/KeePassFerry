@@ -1,6 +1,6 @@
-import { kee } from "./KF";
-import { KeeURL } from "../common/KeeURL";
-import { KeeLog } from "../common/Logger";
+import { ferry } from "./KF";
+import { FerryURL } from "../common/FerryURL";
+import { FerryLog } from "../common/Logger";
 import { Entry } from "../common/model/Entry";
 import { sameSite } from "../common/relatedDomains";
 
@@ -44,7 +44,7 @@ async function readSelection(tabId: number, frameId: number, fallback: string): 
         });
         if (typeof r?.result === "string" && r.result.trim()) return r.result;
     } catch (e) {
-        KeeLog.debug("Reading the selection failed: " + e);
+        FerryLog.debug("Reading the selection failed: " + e);
     }
     return fallback ?? "";
 }
@@ -52,29 +52,29 @@ async function readSelection(tabId: number, frameId: number, fallback: string): 
 async function waitForUnlock(): Promise<boolean> {
     const until = Date.now() + UNLOCK_WAIT_MS;
     while (Date.now() < until) {
-        if (!kee.store.state.connected) return false;
-        if (kee.store.state.KeePassDatabases.length > 0) return true;
+        if (!ferry.store.state.connected) return false;
+        if (ferry.store.state.KeePassDatabases.length > 0) return true;
         await new Promise(resolve => self.setTimeout(resolve, 500));
     }
     return false;
 }
 
 export async function startSelectionSave(tab: chrome.tabs.Tab, frameId: number, selectionText: string) {
-    if (tab?.id == null || !kee.store.state.connected || !/^https?:/.test(tab.url ?? "")) return;
+    if (tab?.id == null || !ferry.store.state.connected || !/^https?:/.test(tab.url ?? "")) return;
     const text = (await readSelection(tab.id, frameId, selectionText)).trim();
     if (!text) return;
     pending.set(tab.id, {
         text: text.slice(0, MAX_TEXT_LENGTH),
         url: tab.url,
         pageTitle: tab.title ?? "",
-        domain: KeeURL.fromString(tab.url)?.domainOrIPAddress ?? "",
+        domain: FerryURL.fromString(tab.url)?.domainOrIPAddress ?? "",
         at: Date.now()
     });
-    kee.foregroundTabId = tab.id;
+    ferry.foregroundTabId = tab.id;
 
-    if (kee.store.state.KeePassDatabases.length === 0) {
-        const result = await kee.requestBackgroundUnlock(tab.id, tab.url, true);
-        if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) kee.openKeePass();
+    if (ferry.store.state.KeePassDatabases.length === 0) {
+        const result = await ferry.requestBackgroundUnlock(tab.id, tab.url, true);
+        if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) ferry.openKeePass();
         if (!(await waitForUnlock())) return;
     }
 
@@ -84,7 +84,7 @@ export async function startSelectionSave(tab: chrome.tabs.Tab, frameId: number, 
         await chrome.action.setPopup({ popup: "dist/popup/index.html?selection=1" });
         await chrome.action.openPopup();
     } catch (e) {
-        KeeLog.warn("Could not open the popup for adding the selection: " + e);
+        FerryLog.warn("Could not open the popup for adding the selection: " + e);
     } finally {
         await chrome.action.setPopup({ popup: "dist/popup/index.html" });
     }
@@ -94,9 +94,9 @@ export async function startSelectionSave(tab: chrome.tabs.Tab, frameId: number, 
 export async function getSelectionSaveForPopup(tabId: number) {
     const s = pending.get(tabId);
     if (!s || Date.now() - s.at > MAX_AGE_MS) return null;
-    const last = kee.persistentTabStates.get(tabId)?.lastFilledEntry;
+    const last = ferry.persistentTabStates.get(tabId)?.lastFilledEntry;
     const lastUuid = last && sameSite(last.domain, s.domain) ? last.uuid : null;
-    const found: Entry[] = (await kee.KeePassRPC.findLogins(s.url, null, null, null, null, null)) ?? [];
+    const found: Entry[] = (await ferry.rpc.findLogins(s.url, null, null, null, null, null)) ?? [];
     const ordered = lastUuid ? [...found.filter(e => e.uuid === lastUuid), ...found.filter(e => e.uuid !== lastUuid)] : found;
     const seen = new Set<string>();
     const candidates = [];
@@ -126,7 +126,7 @@ function originOf(url: string): string {
 
 // Vollständiger Eintrag (mit Feldern) für das Bearbeiten-Fenster, auch für Einträge aus der freien Suche
 export async function findEntryForEdit(uuid: string, dbFileName: string): Promise<Entry> {
-    const found: Entry[] = (await kee.KeePassRPC.findLogins(null, null, uuid, dbFileName, null, null)) ?? [];
+    const found: Entry[] = (await ferry.rpc.findLogins(null, null, uuid, dbFileName, null, null)) ?? [];
     return found.find(e => e.uuid === uuid) ?? null;
 }
 
@@ -139,16 +139,16 @@ export async function createSelectionEntry(
     groupUuid: string
 ): Promise<{ uuid: string; dbFileName: string; title: string }> {
     const s = pending.get(tabId);
-    const dbs = kee.store.state.KeePassDatabases;
-    const db = dbs.find(d => d.fileName === dbFileName) ?? dbs[kee.store.state.ActiveKeePassDatabaseIndex] ?? dbs[0];
+    const dbs = ferry.store.state.KeePassDatabases;
+    const db = dbs.find(d => d.fileName === dbFileName) ?? dbs[ferry.store.state.ActiveKeePassDatabaseIndex] ?? dbs[0];
     if (!s || !db) return null;
     const entryTitle = (title ?? "").trim() || s.pageTitle.trim() || s.domain;
-    const created = await kee.KeePassRPC.addLogin(
+    const created = await ferry.rpc.addLogin(
         new Entry({ title: entryTitle, URLs: [originOf(s.url)], fields: [] }),
         groupUuid || null,
         db.fileName
     );
-    if (created) await kee.refreshAfterEntryChange();
+    if (created) await ferry.refreshAfterEntryChange();
     return created ? { uuid: created.uuid, dbFileName: created.database?.fileName ?? db.fileName, title: created.title } : null;
 }
 

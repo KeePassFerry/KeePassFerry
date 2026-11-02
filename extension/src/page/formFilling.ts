@@ -4,10 +4,10 @@ import { FilledField } from "./FilledField";
 import { PanelStub, PanelStubOptions } from "./PanelStub";
 import { FormUtils } from "./formsUtils";
 import { FormSaving } from "./formSaving";
-import { KeeFieldIcon } from "./keeFieldIcon";
+import { FerryFieldIcon } from "./ferryFieldIcon";
 import { MatchResult } from "./MatchResult";
 import type { FindMatchesBehaviour } from "./findMatchesBehaviour";
-import { KeeLogger, KeeLog } from "../common/Logger";
+import { FerryLogger, FerryLog } from "../common/Logger";
 import { Config } from "../common/config";
 import { configManager } from "../common/ConfigManager";
 import { MatchedField } from "./MatchedField";
@@ -48,7 +48,7 @@ class VisibleFieldCache {
 export class FormFilling {
     private findLoginOp: any = {};
     private matchResult: MatchResult = new MatchResult();
-    private keeFieldIcon: KeeFieldIcon;
+    private fieldIcon: FerryFieldIcon;
 
     public matchedLoginsPanelStub: PanelStub;
     private matchedLoginsPanelStubRaf: number;
@@ -68,11 +68,11 @@ export class FormFilling {
         private parentFrameId: number,
         private formUtils: FormUtils,
         private formSaving: FormSaving,
-        private Logger: KeeLogger,
+        private Logger: FerryLogger,
         private config: Config,
         private matchFinder: { (uri: string, visible: boolean): void }
     ) {
-        this.keeFieldIcon = new KeeFieldIcon(
+        this.fieldIcon = new FerryFieldIcon(
             myPort,
             parentFrameId,
             formUtils,
@@ -125,7 +125,7 @@ export class FormFilling {
             this.matchedEntryCount(),
             this.matchedEntryTexts()
         );
-        KeeLog.debug("Creating panel...");
+        FerryLog.debug("Creating panel...");
         this.matchedLoginsPanelStub.createPanel();
         this.matchedLoginsPanelStubRaf = requestAnimationFrame(() =>
             this.updateMatchedLoginsPanelPosition()
@@ -163,13 +163,13 @@ export class FormFilling {
         );
     }
 
-    // Requires KeePassRPC #101
+    // Would need label data from the plugin
     // private calculateLabelMatchScore(matchedField: MatchedField, dataField: Field) {
     //     if (!matchedField.field.name || !dataField.name) return 0;
 
     //     // We only persist a single "label" value, implicitly via the display name
     //     // field. Could change this in future with additional features added to the
-    //     // KeePassRPC libraries.
+    //     // plugin.
     //     if (
     //         matchedField.field.locators[0].labels.some(
     //             matchedFieldLabel =>
@@ -316,7 +316,7 @@ export class FormFilling {
             if (
                 automated &&
                 currentValue &&
-                currentValue !== (domElement as any).keeInitialDetectedValue
+                currentValue !== (domElement as any).ferryInitialDetectedValue
             ) {
                 this.Logger.info(
                     "Not filling field because it's not empty and was edited by user since last load/fill"
@@ -365,9 +365,9 @@ export class FormFilling {
         let currentValue = domElement.value;
         if (domElement instanceof HTMLInputElement && fieldType === "checkbox") {
             if (domElement.checked) {
-                currentValue = "KEEFOX_CHECKED_FLAG_TRUE";
+                currentValue = "KEEPASSFERRY_CHECKED_TRUE";
             } else {
-                currentValue = "KEEFOX_CHECKED_FLAG_FALSE";
+                currentValue = "KEEPASSFERRY_CHECKED_FALSE";
             }
         }
         return currentValue;
@@ -381,7 +381,7 @@ export class FormFilling {
         if (fieldType == "select-one") {
             domElement.value = value;
         } else if (domElement instanceof HTMLInputElement && fieldType == "checkbox") {
-            if (value == "KEEFOX_CHECKED_FLAG_TRUE") domElement.checked = true;
+            if (value == "KEEPASSFERRY_CHECKED_TRUE") domElement.checked = true;
             else domElement.checked = false;
         } else if (domElement instanceof HTMLInputElement && fieldType == "radio") {
             domElement.checked = true;
@@ -390,7 +390,7 @@ export class FormFilling {
         }
 
         //TODO:5: Investigate and document why we're not using data attributes to store this string in the DOM
-        (domElement as any).keeInitialDetectedValue = value;
+        (domElement as any).ferryInitialDetectedValue = value;
 
         domElement.dispatchEvent(
             new UIEvent("input", {
@@ -433,7 +433,7 @@ export class FormFilling {
         // we try to fill every form field. We try to match by id first and then name before just guessing.
         // Generally we'll only fill if the matched field is of the same type as the form field but
         // we are flexible RE text and username fields because that's an artificial difference
-        // for the sake of the Kee password management software. However, usernames will be chosen above
+        // for the sake of the KeePassFerry password management software. However, usernames will be chosen above
         // text fields if all else is equal
         const fieldScoreMatrix = [];
 
@@ -683,7 +683,7 @@ export class FormFilling {
             const start = performance.now();
             const submitTarget = this.findSubmitButton(form, submitTargetNeighbour);
             this.formSaving.addSubmitHandler(submitTarget, form);
-            KeeLog.info(
+            FerryLog.info(
                 "Submit handlers attached asynchronously to form " +
                     formNumber +
                     " in " +
@@ -691,7 +691,7 @@ export class FormFilling {
                     "ms"
             );
         } catch (e) {
-            KeeLog.warn("Exception while adding submit handler. Message: " + e.message);
+            FerryLog.warn("Exception while adding submit handler. Message: " + e.message);
         }
     }
 
@@ -714,8 +714,8 @@ export class FormFilling {
         if (orphanedFields.length > 0) {
             pseudoForm = {
                 elements: orphanedFields,
-                id: "Kee-pseudo-form",
-                name: "Kee-pseudo-form",
+                id: "Ferry-pseudo-form",
+                name: "Ferry-pseudo-form",
                 ownerDocument: doc,
                 getElementsByTagName: function () {
                     return this.elements;
@@ -805,14 +805,14 @@ export class FormFilling {
             // we could skip this when autofilling based on uuid but we would have to check for
             // matches first or else we risk no match and no alternative matching entries on the mainUI
             // and we also now consider the totality of possible matches against a field in order
-            // to limit which fields we shove a Kee icon into.
+            // to limit which fields we shove a KeePassFerry icon into.
             for (let v = 0; v < matchResult.entries[i].length; v++) {
                 const features = this.store.state.KeePassDatabases.find(
                     db => db.fileName === matchResult.entries[i][v].database.fileName
                 ).sessionFeatures;
                 const fieldMatchScoreConfig: FieldMatchScoreConfig = {
                     punishWrongIDAndName:
-                        features.indexOf("KPRPC_FIELD_DEFAULT_NAME_AND_ID_EMPTY") >= 0
+                        features.indexOf("KEEPASSFERRY_FIELD_DEFAULT_NAME_AND_ID_EMPTY") >= 0
                 };
                 const { score, lowFieldMatchRatio } = this.calculateRelevanceScore(
                     matchResult.entries[i][v],
@@ -961,7 +961,7 @@ export class FormFilling {
             });
 
             // Give the user a way to choose an entry interactively
-            this.keeFieldIcon.addKeeIconToFields(
+            this.fieldIcon.addFieldIconToFields(
                 passwordFields,
                 otherFields,
                 orderedEntriesWithPreference
@@ -1104,7 +1104,7 @@ export class FormFilling {
                 //             maximumPageCount = otherField.formFieldPage;
                 //     }
                 //     //TODO:5: #6: multi-page
-                //     // // always assume page 1 (very rare cases will go wrong - see github KeeFox #411 for relevant enhancement request)
+                //     // // always assume page 1 (very rare cases will go wrong)
                 //     // // Possible regression since v1.4: We used to ignore currentPage entirely for the first
                 //     // // page of a submission, now we might try to give preference to page 1 fields (though total
                 //     // // relevance score shouldn't be shifted by enough to affect otherwise well-matched fields)
@@ -1175,7 +1175,7 @@ export class FormFilling {
                     ).sessionFeatures;
                     const scoreConfig: FieldMatchScoreConfig = {
                         punishWrongIDAndName:
-                            features.indexOf("KPRPC_FIELD_DEFAULT_NAME_AND_ID_EMPTY") >= 0
+                            features.indexOf("KEEPASSFERRY_FIELD_DEFAULT_NAME_AND_ID_EMPTY") >= 0
                     };
                     const lastFilledOther = this.fillManyFormFields(
                         otherFields,
@@ -1694,10 +1694,10 @@ export class FormFilling {
         let score = 0;
         let lowFieldMatchRatio = false;
 
-        // Kee 3.4+ no longer considers priority overrides because they were
+        // KeePassFerry does not consider priority overrides because they were
         // complicated and unreliable even when fully understood.
 
-        // Kee 1.5+ no longer considers action URLs in relevance weighting. Since the only
+        // KeePassFerry does not consider action URLs in relevance weighting. Since the only
         // entry entries of interest are already pre-matched by KeePass, this should have been
         // adding negligable accuracy to the form matching.
 
@@ -1889,13 +1889,13 @@ export class FormFilling {
         return [totalRelevanceScore, fieldMatchSuccesses];
     }
 
-    public removeKeeIconFromAllFields() {
-        this.keeFieldIcon.removeKeeIconFromAllFields();
+    public removeFieldIconFromAllFields() {
+        this.fieldIcon.removeFieldIconFromAllFields();
     }
 
     // Datenbank gesperrt: Gesperrt-Symbol an erkannten Anmeldefeldern, Klick entsperrt
-    public lockKeeIcons(onUnlockRequested: () => void) {
-        this.keeFieldIcon.onUnlockRequested = onUnlockRequested;
-        this.keeFieldIcon.lockKeeIcons(findLoginFields());
+    public lockFieldIcons(onUnlockRequested: () => void) {
+        this.fieldIcon.onUnlockRequested = onUnlockRequested;
+        this.fieldIcon.lockFieldIcons(findLoginFields());
     }
 }

@@ -1,4 +1,4 @@
-import { DatabaseSummaryDto } from "./KPRPCDTOs";
+import { DatabaseSummaryDto } from "./PluginDTOs";
 import { Icon } from "./Icon";
 import { GroupSummary } from "./GroupSummary";
 import { Database } from "./Database";
@@ -18,12 +18,12 @@ export class DatabaseSummary {
         this.active = db.active || false;
     }
 
-    public static fromKPRPCDatabaseSummaryDTO(dto: DatabaseSummaryDto) {
+    public static fromPluginDatabaseSummaryDTO(dto: DatabaseSummaryDto) {
         return new DatabaseSummary({
             name: dto.name,
             fileName: dto.fileName,
             icon: { version: 1, iconImageData: dto.iconImageData },
-            root: GroupSummary.fromKPRPCGroupSummaryDTO(dto.root),
+            root: GroupSummary.fromPluginGroupSummaryDTO(dto.root),
             active: dto.active
         });
     }
