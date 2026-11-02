@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hostInDomains, relatedDomains, sameSite } from "../common/relatedDomains";
+import { allRelatedGroups, hostInDomains, relatedDomains, sameSite } from "../common/relatedDomains";
 
 describe("sameSite", () => {
     it("Folgeseite einer mehrstufigen Microsoft-Anmeldung gilt als dieselbe Website", () => {
@@ -50,6 +50,22 @@ describe("Liste zugehöriger Domains", () => {
             for (const d of group) all.add(d);
         }
         for (const d of all) expect(FerryURL.fromString("https://login." + d + "/")?.domainOrIPAddress, d).toBe(d);
+    });
+
+    it("gilt auch für Apples Gruppen und die zusammengeführten Gruppen", () => {
+        const groups = allRelatedGroups();
+        expect(groups.length).toBeGreaterThan(150);
+        for (const g of groups) {
+            expect(g.length).toBeGreaterThan(1);
+            for (const d of g) expect(FerryURL.fromString("https://login." + d + "/")?.domainOrIPAddress, d).toBe(d);
+        }
+    });
+
+    it("übernimmt Apples Gruppen und ergänzt sie um die eigene Liste", () => {
+        expect(relatedDomains("envato.com")).toContain("themeforest.net");
+        // Apple führt Microsoft nur historisch und ohne outlook.com; die eigene Liste ergänzt es
+        expect(relatedDomains("outlook.com")).toContain("onenote.com");
+        expect(relatedDomains("onenote.com")).toContain("outlook.com");
     });
 });
 

@@ -1,0 +1,70 @@
+# Gleicht die mitgelieferten Listen wöchentlich mit ihren Quellen ab und legt bei Änderungen einen Pull Request an:
+# Public Suffix List (publicsuffix.org, Erweiterung und Plugin) und Apples Password Manager Resources (Passwortregeln,
+# Passwort-ändern-Adressen, zusammengehörige Domains). Übernommen wird erst nach Durchsicht des Diffs (Merge).
+# Voraussetzung: Einstellungen → Actions → General → "Allow GitHub Actions to create and approve pull requests".
+name: Listen aktualisieren
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: site-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+
+      - name: Abhängigkeiten
+        working-directory: extension
+        run: npm ci --no-audit --no-fund
+
+      - name: Listen laden
+        id: lists
+        working-directory: extension
+        run: |
+          {
+            echo "summary<<EOF"
+            npx esno scripts/update-public-suffix-list.ts
+            npx esno scripts/update-site-data.ts
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Tests
+        working-directory: extension
+        run: npx vitest run
+
+      - name: Pull Request anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.lists.outputs.summary }}
+        run: |
+          if git diff --quiet -- extension/src/common/siteData; then
+            echo "Keine Änderungen"
+            exit 0
+          fi
+          branch="listen/$(date -u +%Y-%m-%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add extension/src/common/siteData
+          git commit -m "Listen aktualisieren ($(date -u +%Y-%m-%d))"
+          git push --force origin "$branch"
+          if gh pr list --head "$branch" --json number --jq '.[0].number' | grep -q .; then
+            echo "Pull Request für $branch besteht schon"
+            exit 0
+          fi
+          printf '%s\n\n%s\n' "Automatischer Abgleich der mitgelieferten Listen. Diff prüfen, dann mergen; wirksam ab dem nächsten Release (Erweiterung und Plugin)." "$SUMMARY" > body.md
+          gh pr create --head "$branch" --title "Listen aktualisieren ($(date -u +%Y-%m-%d))" --body-file body.md

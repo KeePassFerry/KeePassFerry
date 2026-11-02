@@ -14,7 +14,7 @@ The KeePass plugin in [`plugin/`](plugin/) is based on **KeePassRPC** by Chris T
 It bundles **Jayrock** (JSON-RPC, MIT licence) as in the original.
 
 ## Password Manager Resources (Apple)
-The password rules and change-password addresses in
+The password rules, change-password addresses and groups of domains sharing one login in
 [`extension/src/common/siteData/appleQuirks.json`](extension/src/common/siteData/appleQuirks.json) are taken from
 **Password Manager Resources** (<https://github.com/apple/password-manager-resources>), licensed under the
 **MIT License**:

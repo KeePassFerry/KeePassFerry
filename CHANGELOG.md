@@ -2,6 +2,14 @@
 
 English · [Deutsch](#deutsch)
 
+## Unreleased
+
+- Related domains: Apple's list of websites sharing one login (Password Manager Resources, MIT, about 200 groups,
+  e.g. all Envato sites) is now included next to KeePassFerry's own list; only registrable domains are taken over.
+  Removed from the own list: disneymoviesanywhere.com (now Movies Anywhere, a separate account) and aliyun.com
+  (Alibaba Cloud, separate from the alibaba.com account).
+- Password rules and change-password addresses updated to Apple's current version.
+
 ## 1.0.15 – 2026-11-02
 
 - **Update the extension and the KeePass plugin together:** the connection between them now uses KeePassFerry's own
@@ -350,6 +358,14 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## Unveröffentlicht
+
+- Zugehörige Domains: Apples Liste der Websites mit gemeinsamer Anmeldung (Password Manager Resources, MIT, rund 200
+  Gruppen, z. B. alle Envato-Seiten) ist jetzt neben der eigenen Liste von KeePassFerry enthalten; übernommen werden
+  nur registrierbare Domains. Aus der eigenen Liste entfernt: disneymoviesanywhere.com (heute Movies Anywhere, eigenes
+  Konto) und aliyun.com (Alibaba Cloud, getrennt vom Konto bei alibaba.com).
+- Passwortregeln und Adressen zum Passwort ändern auf Apples aktuellen Stand gebracht.
 
 ## 1.0.15 – 2026-11-02
 

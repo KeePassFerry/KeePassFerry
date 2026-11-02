@@ -4,7 +4,11 @@ läuft über login.live.com). Ein Eintrag für eine Domain der Gruppe wird auch 
 nachrangig und in der Trefferliste als "Zugehörige Domain" gekennzeichnet.
 Bewusst kurz und nur eindeutig zusammengehörige Domains eines Anbieters: sonst würden Zugangsdaten auf einer
 fremden Seite angeboten. Keine Dienste mit Kundeninhalten unter eigener Subdomain (z. B. sharepoint.com).
+Quellen: Apples "Password Manager Resources" (shared-credentials, MIT, siteData/appleQuirks.json, wöchentlich per
+scripts/update-site-data.ts abgeglichen) und die eigene Liste unten für das, was dort fehlt. Gruppen mit gemeinsamen
+Domains werden zusammengeführt.
 */
+import appleQuirks from "./siteData/appleQuirks.json";
 
 // Abgeglichen mit den globalen Gruppen von Bitwarden (nur die Liste als Fakt, kein Code); dort fehlerhafte Einträge
 // wie "net.cn" (öffentliche Endung) oder "amazon.com.be" (registrierbare Domain wäre "com.be") sind bewusst nicht
@@ -55,11 +59,11 @@ const GROUPS: string[][] = [
     ["ui.com", "ubnt.com"],
     ["atlassian.com", "atlassian.net", "bitbucket.org", "trello.com", "jira.com", "statuspage.io"],
     ["x.com", "twitter.com"],
-    ["disney.com", "disneyplus.com", "go.com", "disneymoviesanywhere.com"],
+    ["disney.com", "disneyplus.com", "go.com"],
     ["stackexchange.com", "stackoverflow.com", "superuser.com", "serverfault.com", "askubuntu.com", "mathoverflow.net", "stackapps.com"],
     ["docusign.com", "docusign.net"],
     ["autodesk.com", "tinkercad.com"],
-    ["alibaba.com", "aliexpress.com", "aliyun.com"],
+    ["alibaba.com", "aliexpress.com"],
     // Airbnb: ein Konto für die Länder-Seiten
     [
         "airbnb.com", "airbnb.de", "airbnb.at", "airbnb.ch", "airbnb.co.uk", "airbnb.fr", "airbnb.it", "airbnb.es",
@@ -75,8 +79,21 @@ const GROUPS: string[][] = [
     ]
 ];
 
+const APPLE_GROUPS: string[][] = (appleQuirks as any).sharedCredentials ?? [];
+
+// Gruppen mit gemeinsamer Domain zusammenführen (z. B. Apples Microsoft-Gruppe und die eigene)
 const byDomain = new Map<string, string[]>();
-for (const group of GROUPS) for (const domain of group) byDomain.set(domain, group);
+for (const group of [...APPLE_GROUPS, ...GROUPS]) {
+    const merged = new Set(group.map(d => d.toLowerCase()));
+    for (const d of group) for (const other of byDomain.get(d.toLowerCase()) ?? []) merged.add(other);
+    const list = [...merged];
+    for (const d of list) byDomain.set(d, list);
+}
+
+// Alle Gruppen (für Tests)
+export function allRelatedGroups(): string[][] {
+    return [...new Set(byDomain.values())];
+}
 
 // Die anderen Domains der Gruppe dieser Domain (ohne sie selbst); leer, wenn sie zu keiner Gruppe gehört
 export function relatedDomains(domain: string): string[] {
