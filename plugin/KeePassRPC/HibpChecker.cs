@@ -21,7 +21,10 @@ namespace KeePassFerry
     /// k-Anonymität: gesendet werden nur die ersten 5 Zeichen des SHA-1-Hashes, verglichen wird lokal.
     /// Ergebnis im selben Feld und Format wie das Plugin "HIBP Offline Check" (beide verstehen es); Prüfzeitpunkt
     /// unsichtbar in den CustomData des Eintrags. Geleakte Passwörter werden nicht erneut geprüft (die Liste wächst nur),
-    /// andere alle 30 Tage, geänderte Einträge sofort. Kein Chronik-Eintrag, kein neues Änderungsdatum.
+    /// andere alle 30 Tage, geänderte Einträge sofort; nach dem (Wieder-)Einschalten alles einmal. Fällige Einträge
+    /// laufen ohne Pause in Paketen durch (die Bereichsabfrage ist nicht begrenzt); dann alle 30 s nachsehen.
+    /// Keine Meldungen in Windows: Stand, letzter Durchlauf und Verbindungsfehler zeigt die Erweiterung (Progress).
+    /// Kein Chronik-Eintrag, kein neues Änderungsdatum.
     /// Abbruch (Netz weg, KeePass zu, Datenbank gesperrt) ist unkritisch: Ungeprüftes kommt beim nächsten Mal dran,
     /// ein Fehler wird nie als "sicher" eingetragen.
     /// </summary>
@@ -29,6 +32,9 @@ namespace KeePassFerry
     {
         internal const string ConfigEnabled = "KeePassFerry.Hibp.Enabled";
         private const string CheckedKey = "KeePassFerry.HibpChecked";
+        // Zeitpunkt des letzten Einschaltens: ältere Ergebnisse werden einmal neu geprüft (auch geleakte), weil unklar
+        // ist, wie lange die Prüfung aus war
+        private const string ConfigEnabledAt = "KeePassFerry.Hibp.EnabledAt";
         private const string RangeUrl = "https://api.pwnedpasswords.com/range/";
         private static readonly TimeSpan RecheckAfter = TimeSpan.FromDays(30);
         private const int BatchSize = 40;
@@ -40,15 +46,11 @@ namespace KeePassFerry
         private readonly IPluginHost _host;
         private readonly System.Windows.Forms.Timer _timer;
         private volatile bool _busy;
-        private bool _manual;
-        private int _manualChecked;
-        private readonly List<string> _manualLeaked = new List<string>();
-        // Im Hintergrund neu gefundene Lecks: gesammelt und erst gemeldet, wenn nichts mehr fällig ist (eine Meldung je
-        // Durchlauf statt einer je Paket)
-        private readonly List<string> _passLeaked = new List<string>();
         // Datenbanken mit neuen Ergebnissen; gespeichert wird am Ende des Durchlaufs (nicht nach jedem Paket)
         private readonly HashSet<PwDatabase> _pendingSave = new HashSet<PwDatabase>();
         private bool _disposed;
+        // Für die Anzeige in der Erweiterung: letzter Verbindungsfehler (UTC)
+        private DateTime _lastFailure = DateTime.MinValue;
 
         private sealed class Item
         {
@@ -72,8 +74,27 @@ namespace KeePassFerry
             get { return _host.CustomConfig.GetBool(ConfigEnabled, false); }
             set
             {
-                _host.CustomConfig.SetBool(ConfigEnabled, value);
+                SetEnabledState(value);
                 if (value) Kick();
+            }
+        }
+
+        // Nur die Einstellung (aus jedem Thread); Kick muss im Oberflächen-Thread laufen
+        internal void SetEnabledState(bool value)
+        {
+            bool was = Enabled;
+            _host.CustomConfig.SetBool(ConfigEnabled, value);
+            if (value && !was)
+                _host.CustomConfig.SetString(ConfigEnabledAt, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+        }
+
+        private DateTime EnabledAt
+        {
+            get
+            {
+                DateTime at;
+                return DateTime.TryParse(_host.CustomConfig.GetString(ConfigEnabledAt, ""), CultureInfo.InvariantCulture,
+                    DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out at) ? at : DateTime.MinValue;
             }
         }
 
@@ -91,16 +112,6 @@ namespace KeePassFerry
             once.Start();
         }
 
-        // Menü "Passwörter jetzt prüfen": alles Fällige nacheinander, am Ende eine Zusammenfassung
-        internal void CheckAllNow()
-        {
-            if (_busy) return;
-            _manual = true;
-            _manualChecked = 0;
-            _manualLeaked.Clear();
-            RunBatch();
-        }
-
         // Alter Status gilt nicht mehr (Passwort über KeePassFerry geändert)
         internal static void Invalidate(PwEntry entry)
         {
@@ -111,11 +122,10 @@ namespace KeePassFerry
         private void RunBatch()
         {
             if (_disposed || _busy || !Enabled) return;
-            List<Item> items = CollectDue(_manual ? 200 : BatchSize);
+            List<Item> items = CollectDue(BatchSize);
             if (items.Count == 0)
             {
                 FinishPass();
-                FinishManual();
                 return;
             }
             _busy = true;
@@ -137,6 +147,7 @@ namespace KeePassFerry
         {
             var items = new List<Item>();
             DateTime now = DateTime.UtcNow;
+            DateTime enabledAt = EnabledAt;
             foreach (PwDocument doc in _host.MainWindow.DocumentManager.Documents)
             {
                 PwDatabase db = doc.Database;
@@ -155,6 +166,7 @@ namespace KeePassFerry
                         DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out checkedAt);
                     bool due = !hasChecked
                         || e.LastModificationTime.ToUniversalTime() > checkedAt
+                        || checkedAt < enabledAt
                         || (!leaked && now - checkedAt > RecheckAfter);
                     if (!due) continue;
                     items.Add(new Item { Db = db, Entry = e, Hash = Sha1Hex(pw), WasLeaked = leaked });
@@ -238,7 +250,6 @@ namespace KeePassFerry
             try
             {
                 var touched = new Dictionary<PwDatabase, bool>();
-                var newlyLeaked = new List<string>();
                 string stamp = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
                 foreach (Item it in items)
                 {
@@ -250,12 +261,6 @@ namespace KeePassFerry
                     if (it.Entry.Strings.ReadSafe(HibpStatus.ColumnName) != status)
                         it.Entry.Strings.Set(HibpStatus.ColumnName, new ProtectedString(false, status));
                     it.Entry.CustomData.Set(CheckedKey, stamp);
-                    if (leaked && !it.WasLeaked) newlyLeaked.Add(it.Entry.Strings.ReadSafe(PwDefs.TitleField));
-                    if (_manual)
-                    {
-                        _manualChecked++;
-                        if (leaked) _manualLeaked.Add(it.Entry.Strings.ReadSafe(PwDefs.TitleField));
-                    }
                 }
                 foreach (KeyValuePair<PwDatabase, bool> pair in touched) _pendingSave.Add(pair.Key);
                 if (touched.Count > 0)
@@ -263,7 +268,6 @@ namespace KeePassFerry
                     _host.MainWindow.RefreshEntriesList();
                     _host.MainWindow.UpdateUI(false, null, false, null, false, null, false);
                 }
-                if (!_manual) _passLeaked.AddRange(newlyLeaked);
             }
             catch (Exception)
             {
@@ -274,27 +278,19 @@ namespace KeePassFerry
                 _busy = false;
             }
 
-            if (_manual)
+            // Ohne Pause weiter, solange etwas fällig ist; bei Verbindungsproblemen erst wieder mit dem Takt (30 s)
+            if (failed) _lastFailure = DateTime.UtcNow;
+            else
             {
-                if (failed)
-                {
-                    _manual = false;
-                    Notify(FerryText.T("Keine Verbindung zu „Have I Been Pwned“. Geprüft: " + _manualChecked + " Passwörter; der Rest folgt später.",
-                        "No connection to \"Have I Been Pwned\". Checked: " + _manualChecked + " passwords; the rest follows later."), ToolTipIcon.Warning);
-                }
-                else RunBatch();
+                _lastFailure = DateTime.MinValue;
+                RunBatch();
             }
         }
 
-        // Durchlauf im Hintergrund fertig: gesammelte neue Lecks einmal melden, nur als Benachrichtigung (kein Dialog zu
-        // unerwarteter Zeit; das Popup zeigt die Warnung ohnehin)
+        // Nichts mehr fällig: Ergebnisse speichern
         private void FinishPass()
         {
             SavePending();
-            if (_passLeaked.Count == 0) return;
-            NotifyIcon tray = _host.MainWindow.MainNotifyIcon;
-            if (tray != null && tray.Visible) NotifyLeaked(new List<string>(_passLeaked));
-            _passLeaked.Clear();
         }
 
         // Ergebnisse speichern: nur wenn der Nutzer keine eigenen ungespeicherten Änderungen offen hat (sonst landen
@@ -319,10 +315,14 @@ namespace KeePassFerry
         }
 
         /// <summary>Stand für die Einstellungen: prüfbare Einträge, davon aktuell geprüft, davon geleakt, läuft gerade</summary>
-        internal void Progress(out int total, out int done, out int leaked, out bool running)
+        internal void Progress(out int total, out int done, out int leaked, out bool running, out DateTime lastPass,
+            out DateTime lastFailure)
         {
             total = done = leaked = 0;
-            running = _busy || _manual;
+            lastPass = DateTime.MinValue;
+            lastFailure = _lastFailure;
+            DateTime enabledAt = EnabledAt;
+            running = _busy;
             foreach (PwDocument doc in _host.MainWindow.DocumentManager.Documents)
             {
                 PwDatabase db = doc.Database;
@@ -337,46 +337,12 @@ namespace KeePassFerry
                     DateTime checkedAt;
                     bool hasChecked = DateTime.TryParse(e.CustomData.Get(CheckedKey), CultureInfo.InvariantCulture,
                         DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out checkedAt);
-                    if (!hasChecked || e.LastModificationTime.ToUniversalTime() > checkedAt) continue;
+                    if (hasChecked && checkedAt > lastPass) lastPass = checkedAt;
+                    if (!hasChecked || e.LastModificationTime.ToUniversalTime() > checkedAt || checkedAt < enabledAt) continue;
                     done++;
                     if (HibpStatus.StatusIsLeaked(e.Strings.ReadSafe(HibpStatus.ColumnName))) leaked++;
                 }
             }
-        }
-
-        private void FinishManual()
-        {
-            if (!_manual) return;
-            _manual = false;
-            string text = _manualLeaked.Count == 0
-                ? FerryText.T(_manualChecked + " Passwörter geprüft, keines in Datenlecks gefunden.",
-                    _manualChecked + " passwords checked, none found in data breaches.")
-                : FerryText.T(_manualChecked + " Passwörter geprüft, " + _manualLeaked.Count + " in Datenlecks gefunden: " + Names(_manualLeaked),
-                    _manualChecked + " passwords checked, " + _manualLeaked.Count + " found in data breaches: " + Names(_manualLeaked));
-            Notify(text, _manualLeaked.Count == 0 ? ToolTipIcon.Info : ToolTipIcon.Warning);
-        }
-
-        private void NotifyLeaked(List<string> titles)
-        {
-            Notify(titles.Count == 1
-                ? FerryText.T("Das Passwort von „" + titles[0] + "“ wurde in Datenlecks gefunden. Ändere es auf der Website.",
-                    "The password of \"" + titles[0] + "\" was found in data breaches. Change it on the website.")
-                : FerryText.T(titles.Count + " Passwörter wurden in Datenlecks gefunden: " + Names(titles),
-                    titles.Count + " passwords were found in data breaches: " + Names(titles)), ToolTipIcon.Warning);
-        }
-
-        private static string Names(List<string> titles)
-        {
-            var shown = titles.Count > 3 ? titles.GetRange(0, 3) : titles;
-            return string.Join(", ", shown.ToArray()) + (titles.Count > 3 ? " …" : "");
-        }
-
-        private void Notify(string text, ToolTipIcon icon)
-        {
-            NotifyIcon tray = _host.MainWindow.MainNotifyIcon;
-            if (tray != null && tray.Visible) tray.ShowBalloonTip(15000, "KeePassFerry", text, icon);
-            else MessageBox.Show(text, "KeePassFerry", MessageBoxButtons.OK,
-                icon == ToolTipIcon.Warning ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
         }
 
         private static string Sha1Hex(string text)

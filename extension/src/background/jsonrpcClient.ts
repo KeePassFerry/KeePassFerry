@@ -299,8 +299,23 @@ export class jsonrpcClient {
         return !!responses?.[0]?.resultWrapper?.result;
     }
 
+    // Abgelaufene Einträge ausblenden statt daran erinnern (Einstellung liegt im Plugin, das sie dann nicht liefert)
+    async getHideExpired(): Promise<boolean> {
+        const sessionManager = this.kprpcClient.getPrimarySessionManager();
+        if (!sessionManager) return false;
+        const responses = await this.kprpcClient.request([sessionManager], "GetHideExpired", []);
+        return !!responses?.[0]?.resultWrapper?.result;
+    }
+
+    async setHideExpired(hide: boolean): Promise<boolean> {
+        const sessionManager = this.kprpcClient.getPrimarySessionManager();
+        if (!sessionManager) return false;
+        const responses = await this.kprpcClient.request([sessionManager], "SetHideExpired", [hide]);
+        return !!responses?.[0]?.resultWrapper?.result;
+    }
+
     // Fortschritt der Passwortprüfung: { total, done, leaked, running } (nur Anzahlen)
-    async getHibpProgress(): Promise<{ total: number; done: number; leaked: number; running: boolean }> {
+    async getHibpProgress(): Promise<{ total: number; done: number; leaked: number; running: boolean; lastPass?: string; lastFailure?: string }> {
         const sessionManager = this.kprpcClient.getPrimarySessionManager();
         if (!sessionManager) return null;
         const responses = await this.kprpcClient.request([sessionManager], "GetHibpProgress", []);

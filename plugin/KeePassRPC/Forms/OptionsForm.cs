@@ -65,8 +65,8 @@ namespace KeePassFerry.Forms
             _backupPasswords = NewCheckBox(general, 80,
                 FerryText.T("Im Browser erzeugte Passwörter zusätzlich in KeePass sichern",
                     "Also keep a backup of passwords generated in the browser"));
-            new ToolTip().SetToolTip(_backupPasswords, FerryText.T("Gruppe „KeePassFerry – generierte Passwörter“",
-                "Group \"KeePassFerry – generated passwords\""));
+            new ToolTip().SetToolTip(_backupPasswords, FerryText.T("Gruppe „Generierte Passwörter“",
+                "Group \"Generated passwords\""));
             _autoSave.Checked = host.CustomConfig.GetBool(KeyAutoSave, true);
             _editNewEntries.Checked = host.CustomConfig.GetBool(KeyEditNewEntries, false);
             _backupPasswords.Checked = host.CustomConfig.GetBool(KeyBackupGeneratedPasswords, true);

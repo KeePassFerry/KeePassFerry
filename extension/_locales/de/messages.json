@@ -1156,7 +1156,7 @@
         "description": "KeePassFerry"
     },
     "ferry_password_leaked_hint": {
-        "message": "Laut „Have I Been Pwned“ (geprüft in KeePass). Ändere es auf der Website.",
+        "message": "Laut „Have I Been Pwned“. Ändere es auf der Website.",
         "description": "KeePassFerry"
     },
     "ferry_change_password": {
@@ -1399,6 +1399,150 @@
         "message": "Weitere",
         "description": "KeePassFerry"
     },
+    "ferry_setting_expiryMode": {
+        "message": "Abgelaufene Einträge",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_expiryMode_hint": {
+        "message": "Gilt nur für Einträge mit Ablaufdatum in KeePass („Gültig bis“). „Erinnern“ füllt weiter aus und weist auf einen Passwortwechsel hin; „Ausblenden“ schlägt sie nicht mehr vor.",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_expiryMode_unavailable": {
+        "message": "Benötigt das KeePass-Plugin ab Version 1.0.15 und eine entsperrte Datenbank.",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_mode_remind": {
+        "message": "An Passwortwechsel erinnern",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_mode_hide": {
+        "message": "Ausblenden",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_until_hidden": {
+        "message": "$1 · bis $2, danach ausgeblendet",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_keep_until": {
+        "message": "Unverändert (bis $1)",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_expiryWarnDays": {
+        "message": "Vorwarnung",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_warn_none": {
+        "message": "Keine Vorwarnung",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_warn_3": {
+        "message": "3 Tage vorher",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_warn_7": {
+        "message": "7 Tage vorher",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_warn_14": {
+        "message": "14 Tage vorher",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_warn_30": {
+        "message": "30 Tage vorher",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_soon_days": {
+        "message": "Passwort läuft in $1 Tagen ab",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_soon_tomorrow": {
+        "message": "Passwort läuft morgen ab",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_soon_today": {
+        "message": "Passwort läuft heute ab",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_expired": {
+        "message": "Passwort abgelaufen",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_until": {
+        "message": "$1 · bis $2",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_since": {
+        "message": "$1 · seit $2",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_expired_on": {
+        "message": "Passwort seit $1 abgelaufen",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_soon_on": {
+        "message": "Das Passwort läuft am $1 ab",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_hint": {
+        "message": "Ändere es auf der Website und speichere dann den Eintrag.",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_later": {
+        "message": "Später",
+        "description": "KeePassFerry"
+    },
+    "ferry_valid_until": {
+        "message": "Gültig bis",
+        "description": "KeePassFerry"
+    },
+    "ferry_valid_until_previous": {
+        "message": "bisher $1",
+        "description": "KeePassFerry"
+    },
+    "ferry_valid_until_previous_expired": {
+        "message": "bisher $1, abgelaufen",
+        "description": "KeePassFerry"
+    },
+    "ferry_valid_until_new": {
+        "message": "Neu: $1",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_never": {
+        "message": "Kein Ablauf",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_w1": {
+        "message": "1 Woche",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_w2": {
+        "message": "2 Wochen",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_m1": {
+        "message": "1 Monat",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_m3": {
+        "message": "3 Monate",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_m6": {
+        "message": "6 Monate",
+        "description": "KeePassFerry"
+    },
+    "ferry_expiry_y1": {
+        "message": "1 Jahr",
+        "description": "KeePassFerry"
+    },
+    "ferry_hibp_last_check": {
+        "message": "Zuletzt geprüft: $1",
+        "description": "KeePassFerry"
+    },
+    "ferry_hibp_offline": {
+        "message": "Keine Verbindung zu „Have I Been Pwned“ ($1), neuer Versuch läuft automatisch",
+        "description": "KeePassFerry"
+    },
     "ferry_setting_hibp": {
         "message": "Passwörter auf Datenlecks prüfen",
         "description": "KeePassFerry"
@@ -1437,14 +1581,6 @@
     },
     "ferry_setting_fieldIcons_hint": {
         "message": "Aus: Einträge wählst du nur über das KeePassFerry-Symbol in der Symbolleiste.",
-        "description": "KeePassFerry"
-    },
-    "ferry_setting_autoUnlock": {
-        "message": "Bei gesperrter Datenbank sofort entsperren",
-        "description": "KeePassFerry"
-    },
-    "ferry_setting_autoUnlock_hint": {
-        "message": "Startet Windows Hello, sobald eine Anmeldeseite erkannt wird. Aus: erst nach einem Klick auf das Schloss-Symbol.",
         "description": "KeePassFerry"
     },
     "ferry_setting_browserSaving": {

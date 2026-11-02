@@ -22,6 +22,8 @@ export class EntrySummary {
     hasOtp: boolean;
     passwordLeaked: boolean;
     passwordLeakCount: number;
+    // Ablaufdatum in KeePass (ISO UTC) oder null
+    expiryTime: string;
     // Nur über eine zugehörige Domain gefunden (siehe Entry.relatedDomain)
     relatedDomain?: string;
 
@@ -44,6 +46,7 @@ export class EntrySummary {
         this.hasOtp = !!e.hasOtp;
         this.passwordLeaked = !!e.passwordLeaked;
         this.passwordLeakCount = e.passwordLeakCount ?? 0;
+        this.expiryTime = e.expiryTime ?? null;
         this.relatedDomain = e.relatedDomain;
     }
 
@@ -65,6 +68,7 @@ export class EntrySummary {
             hasOtp: entry.hasOtp,
             passwordLeaked: entry.passwordLeaked,
             passwordLeakCount: entry.passwordLeakCount,
+            expiryTime: entry.expiryTime,
             relatedDomain: entry.relatedDomain
         });
     }
@@ -89,7 +93,8 @@ export class EntrySummary {
             hasPasskey: entrySummaryDto.hasPasskey,
             hasOtp: entrySummaryDto.hasOtp,
             passwordLeaked: entrySummaryDto.passwordLeaked,
-            passwordLeakCount: entrySummaryDto.passwordLeakCount
+            passwordLeakCount: entrySummaryDto.passwordLeakCount,
+            expiryTime: entrySummaryDto.expiryTime
         });
     }
 }

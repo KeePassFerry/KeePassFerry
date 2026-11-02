@@ -75,7 +75,7 @@ namespace KeePassFerry
             {
                 foreach (PwEntry e in db.RootGroup.GetEntries(true))
                 {
-                    if (db.RecycleBinEnabled && IsInRecycleBin(db, e)) continue;
+                    if ((db.RecycleBinEnabled && IsInRecycleBin(db, e)) || IsHiddenExpired(e)) continue;
                     bool rpMatch = string.Equals(e.Strings.ReadSafe(FieldRelyingParty), rpId, StringComparison.OrdinalIgnoreCase);
                     bool hostMatch = UrlHostMatchesRpId(e.Strings.ReadSafe(PwDefs.UrlField), rpId);
                     if (!rpMatch && !hostMatch) continue;
@@ -100,7 +100,7 @@ namespace KeePassFerry
             {
                 foreach (PwEntry e in db.RootGroup.GetEntries(true))
                 {
-                    if (db.RecycleBinEnabled && IsInRecycleBin(db, e)) continue;
+                    if ((db.RecycleBinEnabled && IsInRecycleBin(db, e)) || IsHiddenExpired(e)) continue;
                     if (!string.Equals(e.Strings.ReadSafe(FieldRelyingParty), rpId, StringComparison.OrdinalIgnoreCase)) continue;
                     string credId = e.Strings.ReadSafe(FieldCredentialId);
                     if (string.IsNullOrEmpty(credId) || string.IsNullOrEmpty(e.Strings.ReadSafe(FieldPrivateKey))) continue;

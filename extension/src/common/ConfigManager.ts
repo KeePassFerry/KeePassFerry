@@ -82,7 +82,7 @@ defaultConfig.ferryAutoFillOtp = true;
 defaultConfig.ferryDetectOtpSetup = true;
 defaultConfig.ferryPasskeys = true;
 defaultConfig.ferryShowFieldIcons = true;
-defaultConfig.ferryAutoUnlock = false;
+defaultConfig.ferryExpiryWarnDays = 7;
 defaultConfig.ferryDisableBrowserPasswordSaving = true;
 defaultConfig.ferryNetworkAuth = false;
 defaultConfig.autoFillFieldsWithExistingValue = false;
@@ -195,7 +195,7 @@ export class ConfigManager {
             ferryDetectOtpSetup: true,
             ferryPasskeys: true,
             ferryShowFieldIcons: true,
-            ferryAutoUnlock: false,
+            ferryExpiryWarnDays: 7,
             ferryDisableBrowserPasswordSaving: true,
             ferryNetworkAuth: false
         };

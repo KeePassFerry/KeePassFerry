@@ -3,7 +3,7 @@ import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup,
 import { forgetAutoFill } from "./otpRepeat";
 import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
 import { queryPageFields, fillPageField } from "./pageFields";
-import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
+import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, EXPIRY_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
 import { markNewsSeen } from "../common/whatsNew";
 import { isFirefox } from "webext-detect-page";
 import { kee, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
@@ -15,6 +15,7 @@ import type { AddonMessage } from "../common/AddonMessage";
 import { NetworkAuth } from "./NetworkAuth";
 import { pageStateOf } from "./pageState";
 import { appleChangePasswordUrl, changePasswordUrl } from "./changePassword";
+import { forgetExpiryNotice } from "./expiryNotice";
 
 function appleChangePasswordUrlFor(entryUrl: string): string {
     try {
@@ -257,7 +258,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     pluginOutdated: s.connected ? pluginUpdateAvailable(features) : false,
                     fieldProtection: s.connected && (features ?? []).includes(FIELD_PROTECTION_FEATURE),
                     entryRecycle: s.connected && (features ?? []).includes(ENTRY_RECYCLE_FEATURE),
-                    hibpCheck: s.connected && (features ?? []).includes(HIBP_CHECK_FEATURE)
+                    hibpCheck: s.connected && (features ?? []).includes(HIBP_CHECK_FEATURE),
+                    expiry: s.connected && (features ?? []).includes(EXPIRY_FEATURE)
                 };
             });
             break;
@@ -319,7 +321,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             work = kee.KeePassRPC.getHibpCheck();
             break;
         case "setHibpCheck":
-            work = kee.KeePassRPC.setHibpCheck(!!msg.enabled);
+            // Danach Einträge neu laden: ohne Prüfung zeigt das Popup keine Leak-Hinweise mehr
+            work = kee.KeePassRPC.setHibpCheck(!!msg.enabled).then(async result => {
+                await kee.refreshAfterEntryChange();
+                kee.redetectFormsInAllTabs();
+                return result;
+            });
+            break;
+        case "getHideExpired":
+            work = kee.KeePassRPC.getHideExpired();
+            break;
+        case "setHideExpired":
+            // Danach Einträge, Seitentreffer und Kontextmenü neu laden (abgelaufene verschwinden bzw. kommen zurück)
+            work = kee.KeePassRPC.setHideExpired(!!msg.hide).then(async result => {
+                await kee.refreshAfterEntryChange();
+                kee.redetectFormsInAllTabs();
+                return result;
+            });
             break;
         case "getHibpProgress":
             work = kee.KeePassRPC.getHibpProgress();
@@ -390,6 +408,7 @@ chrome.tabs.onRemoved.addListener(tabId => {
     kee?.persistentTabStates?.delete(tabId);
     forgetOtpSetup(tabId);
     forgetAutoFill(tabId);
+    forgetExpiryNotice(tabId);
     kee?.deleteTabState?.(tabId);
 });
 

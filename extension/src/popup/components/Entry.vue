@@ -28,6 +28,11 @@
                         <tabler-shield-lock class="ferry-ico" />
                         <v-tooltip location="top" activator="parent">{{ $i18n("ferry_extras_has_otp") }}</v-tooltip>
                     </span>
+                    <span v-if="expiry" class="ferry-entry-mark" :class="expiry.kind === 'expired' ? 'ferry-entry-leak' : 'ferry-entry-expiring'">
+                        <tabler-clock-x v-if="expiry.kind === 'expired'" class="ferry-ico" />
+                        <tabler-clock-exclamation v-else class="ferry-ico" />
+                        <v-tooltip location="top" activator="parent">{{ expiryTitle }}</v-tooltip>
+                    </span>
                     <span v-if="entrySummary.passwordLeaked" class="ferry-entry-mark ferry-entry-leak">
                         <tabler-alert-triangle class="ferry-ico" />
                         <v-tooltip location="top" activator="parent">{{ $i18n("ferry_password_leaked") }}</v-tooltip>
@@ -70,12 +75,25 @@
             </button>
         </div>
         <div v-if="expanded && entrySummary.fullDetails" class="ferry-entry-details">
-            <!-- Ergebnis von "HIBP Offline Check" in KeePass; KeePassFerry prüft selbst nichts -->
+            <!-- Ergebnis der Passwortprüfung des Plugins bzw. von "HIBP Offline Check" in KeePass -->
             <div v-if="entrySummary.passwordLeaked" class="ferry-note danger ferry-leak-note">
                 <tabler-alert-triangle class="ferry-ico" />
                 <div class="ferry-note-text">
                     <p class="ferry-leak-title">{{ leakTitle }}</p>
                     <p class="ferry-leak-hint">{{ $i18n("ferry_password_leaked_hint") }}</p>
+                    <v-btn variant="outlined" size="small" rounded="lg" class="ferry-leak-btn" @click.stop="openChangePassword">
+                        <tabler-external-link class="ferry-ico" />
+                        {{ $i18n("ferry_change_password") }}
+                    </v-btn>
+                </div>
+            </div>
+            <!-- Option "Ablaufdaten prüfen": KeePass "Gültig bis" bald erreicht bzw. überschritten -->
+            <div v-if="expiry" class="ferry-note ferry-leak-note" :class="expiry.kind === 'expired' ? 'danger' : 'warn ferry-expiry-soon'">
+                <tabler-clock-x v-if="expiry.kind === 'expired'" class="ferry-ico" />
+                <tabler-clock-exclamation v-else class="ferry-ico" />
+                <div class="ferry-note-text">
+                    <p class="ferry-leak-title">{{ expiryTitle }}</p>
+                    <p class="ferry-leak-hint">{{ expiryHint }}</p>
                     <v-btn variant="outlined" size="small" rounded="lg" class="ferry-leak-btn" @click.stop="openChangePassword">
                         <tabler-external-link class="ferry-ico" />
                         {{ $i18n("ferry_change_password") }}
@@ -115,6 +133,8 @@ import { EntrySummary } from "../../common/model/EntrySummary";
 import { tooltipDelay } from "../../common/Timings";
 import { mapState } from "pinia";
 import { $STR, $STRF } from "~/common/DollarPolyfills";
+import { configManager } from "../../common/ConfigManager";
+import { expiryState, expirySoonTitle, formatExpiryDate } from "../../common/expiry";
 
 export default {
     components: { Field, OtpRow, EntryExtras },
@@ -184,6 +204,21 @@ export default {
             return n > 0
                 ? $STRF("ferry_password_leaked_count", [n.toLocaleString()])
                 : $STR("ferry_password_leaked");
+        },
+        // KeePass "Gültig bis" bald erreicht bzw. überschritten (abgelaufene liefert das Plugin bei "Ausblenden" nicht)
+        expiry: function () {
+            return expiryState((this.entrySummary as EntrySummary).expiryTime, configManager.current.ferryExpiryWarnDays ?? 7);
+        },
+        expiryTitle: function () {
+            const s = this.expiry;
+            if (!s) return "";
+            return s.kind === "expired" ? $STRF("ferry_expiry_expired_on", [formatExpiryDate(s.date)]) : expirySoonTitle(s.daysLeft);
+        },
+        expiryHint: function () {
+            const s = this.expiry;
+            if (!s) return "";
+            const hint = $STR("ferry_expiry_hint");
+            return s.kind === "expired" ? hint : $STRF("ferry_expiry_soon_on", [formatExpiryDate(s.date)]) + ". " + hint;
         },
         isMatchedEntry: function () {
             const e = this.entrySummary as EntrySummary;
@@ -406,6 +441,10 @@ export default {
 }
 .ferry-entry-mark.ferry-entry-leak {
     color: rgb(var(--v-theme-error));
+}
+.ferry-entry-mark.ferry-entry-expiring,
+.ferry-expiry-soon .ferry-leak-title {
+    color: rgb(var(--v-theme-warning));
 }
 .ferry-leak-note {
     align-items: flex-start;

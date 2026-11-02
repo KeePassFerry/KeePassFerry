@@ -1,6 +1,7 @@
 import { offerPendingOtpSetup, recheckPendingOtpSetups } from "./otpSetup";
 import { sameSite } from "../common/relatedDomains";
 import { LoginCandidate, SubmittedLoginMatch, matchSubmittedLogin, submittedCredentials } from "../common/submittedLogin";
+import { expiryState } from "../common/expiry";
 import { diag } from "./ferryDiag";
 import { pageMutationOf, pageStateOf } from "./pageState";
 import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
@@ -656,7 +657,10 @@ class Kee {
             const domain = KeeURL.fromString(tab.url)?.domainOrIPAddress;
             if (last && sameSite(last.domain, domain)) {
                 const lastEntries: Entry[] = (await timeout(this.KeePassRPC.findLogins(tab.url, null, last.uuid, last.dbFileName, null, null))) ?? [];
-                result.push(...lastEntries.filter(e => e.uuid === last.uuid));
+                // Abfrage über die ID filtert im Plugin nicht: abgelaufene bei "Ausblenden" hier aussortieren
+                const expired = (e: Entry) => expiryState(e.expiryTime, 0)?.kind === "expired";
+                const hideExpired = lastEntries.some(expired) && (await this.KeePassRPC.getHideExpired().catch(() => false));
+                result.push(...lastEntries.filter(e => e.uuid === last.uuid && !(hideExpired && expired(e))));
             }
             const found: Entry[] = (await timeout(this.KeePassRPC.findLogins(tab.url, null, null, null, null, null))) ?? [];
             for (const e of found) if (!result.some(r => r.uuid === e.uuid)) result.push(e);
@@ -749,6 +753,20 @@ class Kee {
         } catch (e) {
             KeeLog.debug("Rescan after unlock failed: " + e);
         }
+    }
+
+    // Alle offenen Tabs suchen erneut nach Treffern (z. B. nach einer Einstellung, die ändert, welche Einträge das
+    // Plugin liefert; refreshFormStatus erreicht nur den Vordergrund-Tab, beim Umschalten ist das die Einstellungsseite)
+    redetectFormsInAllTabs() {
+        this.tabStates.forEach(ts => {
+            ts.framePorts.forEach(port => {
+                try {
+                    port.postMessage({ action: Action.DetectForms } as AddonMessage);
+                } catch (e) {
+                    // Tab ist weg
+                }
+            });
+        });
     }
 
     private refreshFormStatus(action: Action) {

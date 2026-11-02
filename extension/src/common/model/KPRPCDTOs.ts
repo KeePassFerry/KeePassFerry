@@ -93,6 +93,11 @@ export class EntryDto {
     hasOtp?: boolean;
     passwordLeaked?: boolean;
     passwordLeakCount?: number;
+    // KeePassFerry-Plugin ab 1.0.15: Ablaufdatum (ISO, UTC) und geschätzter Zeitraum in Tagen
+    expiryTime?: string;
+    expiryIntervalDays?: number;
+    // Nur beim Speichern: undefined = unverändert, "never" = kein Ablauf, sonst neues Ablaufdatum
+    newExpiryTime?: string;
 }
 
 export class EntrySummaryDto {
@@ -110,6 +115,8 @@ export class EntrySummaryDto {
     hasOtp?: boolean;
     passwordLeaked?: boolean;
     passwordLeakCount?: number;
+    // KeePassFerry-Plugin ab 1.0.15
+    expiryTime?: string;
 }
 
 // tslint:disable-next-line:class-name

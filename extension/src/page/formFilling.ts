@@ -17,6 +17,7 @@ import punycode from "punycode/";
 import NonReactiveStore from "../store/NonReactiveStore";
 import { findInputsInOpenShadowRoots, isHostedInForm } from "./shadowDom";
 import { httpsEntryOnHttpPage } from "../common/insecurePage";
+import { isEditable } from "./OtpFields";
 
 interface ScoreMatrix {
     score: number;
@@ -54,6 +55,9 @@ export class FormFilling {
 
     // Should really make this private and call indirectly but I'm wary of all performance overheads wrt DOM mutation observers
     public formFinderTimer: number = null;
+    // Automatisches Ausfüllen wartet auf ein noch unsichtbares Anmeldeformular (z. B. hinter "Anmelden"):
+    // die Seite sucht dann nach Klicks erneut (page.ts)
+    public hiddenLoginPending = false;
 
     private semanticWhitelistCache;
     private semanticBlacklistCache;
@@ -66,7 +70,7 @@ export class FormFilling {
         private formSaving: FormSaving,
         private Logger: KeeLogger,
         private config: Config,
-        private matchFinder: { (uri: string): void }
+        private matchFinder: { (uri: string, visible: boolean): void }
     ) {
         this.keeFieldIcon = new KeeFieldIcon(
             myPort,
@@ -564,6 +568,8 @@ export class FormFilling {
         this.Logger.debug("findMatches processing " + forms.length + " forms");
 
         let searchSentToKeePass = false;
+        // Sichtbare Anmeldefelder (versteckte Formulare, z. B. in einem zugeklappten "Anmelden"-Menü, zählen nicht)
+        let anyVisibleLoginField = false;
 
         // For every form, including any pseudo forms we created earlier
         for (let i = 0; i < forms.length; i++) {
@@ -637,6 +643,7 @@ export class FormFilling {
             }
 
             this.attachSubmitHandlers(form, submitTargetNeighbour, i);
+            if (isEditable(submitTargetNeighbour as HTMLInputElement)) anyVisibleLoginField = true;
 
             this.matchResult.usernameIndexArray[i] = usernameIndex;
             this.matchResult.passwordFieldsArray[i] = passwordFields;
@@ -651,14 +658,16 @@ export class FormFilling {
                 this.matchResult.wrappers[i] = this.findLoginOp;
                 this.matchResult.requestCount++;
 
-                // Search for matching entries for the relevant URL. This request is asynchronous.
-                this.matchFinder(url.href);
                 searchSentToKeePass = true;
             } else {
                 this.Logger.debug("form[" + i + "]: reusing entries from last form.");
                 this.findLoginOp.formIndexes.push(i);
             }
         } // end of form for loop
+
+        // Search for matching entries for the relevant URL. This request is asynchronous.
+        // Nach der Schleife, damit die Sichtbarkeit aller Formulare bekannt ist
+        if (searchSentToKeePass) this.matchFinder(url.href, anyVisibleLoginField);
     }
 
     // It's OK for this to take a few seconds - humans can't type that fast.
@@ -1141,7 +1150,24 @@ export class FormFilling {
                     action.submit = false;
                 }
 
+                // Von selbst nur in sichtbare Anmeldefelder: unsichtbare Formulare sind ein bekannter Weg, automatisch
+                // eingetragene Zugangsdaten abzugreifen. Wird das Formular später eingeblendet, füllt die erneute Suche aus.
+                if (automated && !isMatchedLoginRequest && !matchResult.mustAutoFillForm && action.fill) {
+                    const usernameIndex = matchResult.usernameIndexArray[matchResult.mostRelevantFormIndex];
+                    const loginFields = [
+                        ...(passwordFields ?? []).map(f => f?.DOMelement),
+                        usernameIndex >= 0 ? otherFields?.[usernameIndex]?.DOMelement : null
+                    ].filter(Boolean) as HTMLInputElement[];
+                    if (!loginFields.some(el => isEditable(el))) {
+                        this.Logger.info("Not auto-filling an invisible login form (yet)");
+                        action.fill = false;
+                        action.submit = false;
+                        this.hiddenLoginPending = true;
+                    }
+                }
+
                 if (action.fill || matchResult.mustAutoFillForm) {
+                    this.hiddenLoginPending = false;
                     this.Logger.debug("Going to auto-fill a form");
 
                     const features = this.store.state.KeePassDatabases.find(

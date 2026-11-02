@@ -103,7 +103,9 @@ export class Config {
     ferryDetectOtpSetup: boolean;
     ferryPasskeys: boolean;
     ferryShowFieldIcons: boolean;
-    ferryAutoUnlock: boolean;
+    // Einträge mit Ablaufdatum (KeePass "Gültig bis"): Vorwarnung so viele Tage vorher (0 = keine). Ob abgelaufene
+    // ausgeblendet werden oder an einen Wechsel erinnert wird, steht im Plugin (Get/SetHideExpired)
+    ferryExpiryWarnDays: number;
     ferryDisableBrowserPasswordSaving: boolean;
     // Anmeldefenster des Browsers (HTTP-Basic-Auth, Proxy) ausfüllen; aus Sicherheitsgründen nur auf Wunsch
     ferryNetworkAuth: boolean;

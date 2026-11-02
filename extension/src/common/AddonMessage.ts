@@ -25,7 +25,8 @@ export interface AddonMessage {
     startPluginUpdate?: boolean;
     addNotification?: KeeNotification;
     removeNotification?: string;
-    findMatches?: { uri?: string; uuid?: string; DBfilename?: string };
+    // visible: mindestens ein Anmeldefeld ist zu sehen (nur für das Diagnoseprotokoll)
+    findMatches?: { uri?: string; uuid?: string; DBfilename?: string; visible?: boolean };
     findMatchesResult?: Entry[];
     entries?: Entry[];
     action?: Action;
@@ -55,6 +56,8 @@ export interface AddonMessage {
     otpIssuer?: string;
     // ShowSaveNotice: Passwort eines vorhandenen Eintrags geändert (Benutzername bzw. Titel des Eintrags)
     saveNoticeUpdateFor?: string;
+    // ShowExpiryNotice: abgelaufen oder bald ablaufend, fertige Überschrift und Zeile darunter
+    expiryNotice?: { expired: boolean; title: string; text: string };
     // FilledLoginSubmitted: Benutzername der abgeschickten Anmeldung (fehlt bei reinen Passwortseiten)
     submittedUsername?: string;
     unlocked?: boolean;

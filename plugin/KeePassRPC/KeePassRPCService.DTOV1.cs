@@ -211,9 +211,17 @@ namespace KeePassFerry
             target.AttachmentCount = (int)pwe.Binaries.UCount;
             target.HasPasskey = !string.IsNullOrEmpty(pwe.Strings.ReadSafe(FieldCredentialId));
             target.HasOtp = Totp.HasTotp(pwe);
-            int leakCount;
-            target.PasswordLeaked = HibpStatus.IsLeaked(pwe, out leakCount);
+            int leakCount = 0;
+            target.PasswordLeaked = HibpStatus.ShowResults && HibpStatus.IsLeaked(pwe, out leakCount);
             target.PasswordLeakCount = leakCount;
+            if (pwe.Expires)
+            {
+                target.ExpiryTime = pwe.ExpiryTime.ToUniversalTime()
+                    .ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
+                // Abstand zur letzten Änderung: meist der Zeitraum, mit dem das Ablaufdatum gesetzt wurde
+                int days = (int)Math.Round((pwe.ExpiryTime - pwe.LastModificationTime).TotalDays);
+                target.ExpiryIntervalDays = days > 0 ? days : 0;
+            }
         }
 
         private Group GetGroupFromPwGroup(PwGroup pwg)
@@ -391,8 +399,8 @@ namespace KeePassFerry
 
             foreach (PwEntry pwe in output)
             {
-                if (EntryIsInRecycleBin(pwe, _host.Database))
-                    continue; // ignore if it's in the recycle bin
+                if (EntryIsInRecycleBin(pwe, _host.Database) || IsHiddenExpired(pwe))
+                    continue; // ignore if it's in the recycle bin (or expired and hidden)
 
                 if (urlRequired && string.IsNullOrEmpty(pwe.Strings.ReadSafe("URL")))
                     continue; // ignore if it has no URL
@@ -429,8 +437,8 @@ namespace KeePassFerry
 
                 foreach (PwEntry pwe in output)
                 {
-                    if (EntryIsInRecycleBin(pwe, pwd))
-                        continue; // ignore if it's in the recycle bin
+                    if (EntryIsInRecycleBin(pwe, pwd) || IsHiddenExpired(pwe))
+                        continue; // ignore if it's in the recycle bin (or expired and hidden)
 
                     if (urlRequired && string.IsNullOrEmpty(pwe.Strings.ReadSafe("URL")))
                         continue;

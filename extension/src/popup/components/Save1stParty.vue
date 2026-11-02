@@ -44,6 +44,17 @@
                     v-for="f of saveState.newEntry.fields" :key="f.uuid" :field="f" :removed="pendingRemoval.includes(f.uuid)"
                     @field-value-changed="fieldValueChanged" @field-deleted="fieldDeleted" />
             </div>
+            <!-- Option "Ablaufdaten prüfen": neues Ablaufdatum (KeePass "Gültig bis") gleich beim Speichern -->
+            <div v-if="showExpiryChoice" class="ferry-group">
+                <div class="ferry-group-title">
+                    {{ $i18n("ferry_valid_until") }}
+                    <span v-if="previousExpiryLabel" :class="{ 'ferry-expiry-old': previousExpired }">({{ previousExpiryLabel }})</span>
+                </div>
+                <v-select
+                    :model-value="expiryChoice" :items="expiryItems" item-title="title" item-value="value"
+                    density="compact" hide-details :hint="newExpiryLabel" :persistent-hint="!!newExpiryLabel"
+                    @update:model-value="setExpiryChoice" />
+            </div>
             <div v-if="showURLMismatchWarning" class="ferry-note warn ferry-edit-warn">
                 <tabler-alert-triangle class="ferry-ico" />
                 <div class="ferry-note-text">
@@ -127,6 +138,7 @@ import useStore from "../../store";
 import { mapState } from "pinia";
 import { KeeLog } from "~/common/Logger";
 import GroupSelectorTree from "./GroupSelectorTree.vue";
+import { EXPIRY_PRESETS, ExpiryChoice, addPreset, defaultExpiryChoice, formatExpiryDate, newExpiryTime } from "../../common/expiry";
 import { GroupListItem } from "./TreeItem.vue";
 
 export default {
@@ -167,7 +179,10 @@ export default {
         deleteSupported: false,
         confirmDelete: false,
         deleting: false,
-        deleteMessage: null as string
+        deleteMessage: null as string,
+        // "Gültig bis": Plugin liefert/übernimmt Ablaufdaten (KEEPASSFERRY_EXPIRY), gewählter Zeitraum
+        expirySupported: false,
+        expiryChoice: null as ExpiryChoice
     }),
     computed: {
         ...mapState(useStore, ["saveState", "KeePassDatabases", "ActiveKeePassDatabaseIndex"]),
@@ -184,8 +199,40 @@ export default {
                 this.pendingRemoval.length > 0 ||
                 this.saveState.titleResetValue !== e.title ||
                 e.fields.length !== this.originalFieldCount ||
-                e.fields.some(f => f.resetValue !== undefined && f.resetValue !== f.value)
+                e.fields.some(f => f.resetValue !== undefined && f.resetValue !== f.value) ||
+                !!e.newExpiryTime
             );
+        },
+        showExpiryChoice: function () {
+            return this.expirySupported && !this.createOnSave && !!this.expiryChoice;
+        },
+        previousExpiry: function (): Date {
+            const t = (this.saveState as SaveState).newEntry.expiryTime;
+            return this.editingExisting && t ? new Date(t) : null;
+        },
+        previousExpired: function () {
+            return !!this.previousExpiry && this.previousExpiry.getTime() <= Date.now();
+        },
+        previousExpiryLabel: function () {
+            if (!this.previousExpiry) return null;
+            const d = formatExpiryDate(this.previousExpiry);
+            return this.previousExpired ? this.$i18n("ferry_valid_until_previous_expired", [d]) : this.$i18n("ferry_valid_until_previous", [d]);
+        },
+        // Neu: "Kein Ablauf" + Zeiträume; vorhandener Eintrag zusätzlich "Unverändert" (ohne Ablaufdatum heißt das
+        // "Kein Ablauf"); abgelaufener ohne "Unverändert", damit er nicht abgelaufen bleibt
+        expiryChoices: function (): ExpiryChoice[] {
+            if (!this.editingExisting) return ["never", ...EXPIRY_PRESETS];
+            if (!this.previousExpiry) return ["keep", ...EXPIRY_PRESETS];
+            if (this.previousExpired) return [...EXPIRY_PRESETS, "never"];
+            return ["keep", ...EXPIRY_PRESETS, "never"];
+        },
+        expiryItems: function () {
+            return (this.expiryChoices as ExpiryChoice[]).map(c => ({ value: c, title: this.expiryChoiceLabel(c) }));
+        },
+        newExpiryLabel: function () {
+            const c = this.expiryChoice as ExpiryChoice;
+            if (!c || c === "keep" || c === "never") return null;
+            return this.$i18n("ferry_valid_until_new", [formatExpiryDate(addPreset(new Date(), c))]);
         },
         hasChanges: function () {
             return this.entryChanged || this.additionsChanged;
@@ -228,7 +275,14 @@ export default {
         this.originalFieldCount = (this.saveState as SaveState).newEntry.fields.length;
         chrome.runtime
             .sendMessage({ keepassferry: "connectionStatus" })
-            .then(s => (this.deleteSupported = !!s?.entryRecycle))
+            .then(s => {
+                this.deleteSupported = !!s?.entryRecycle;
+                this.expirySupported = !!s?.expiry;
+                if (this.expirySupported && !this.createOnSave) {
+                    const e = (this.saveState as SaveState).newEntry;
+                    this.setExpiryChoice(defaultExpiryChoice(!!this.editingExisting, e.expiryTime, e.expiryIntervalDays));
+                }
+            })
             .catch(() => undefined);
         this.preferToSkipWhere = configManager.current.rememberMRUGroup;
         const dbs = this.KeePassDatabases as Database[];
@@ -351,6 +405,21 @@ export default {
                 }
             } as AddonMessage);
             window.close();
+        },
+        setExpiryChoice: function (choice: ExpiryChoice) {
+            if (!choice) return;
+            this.expiryChoice = choice;
+            const updatedSaveState = Object.assign({}, JSON.parse(JSON.stringify(this.saveState))) as SaveState;
+            updatedSaveState.newEntry = new Entry({
+                ...updatedSaveState.newEntry,
+                newExpiryTime: newExpiryTime(choice, !!this.previousExpiry)
+            });
+            this.updateSaveState(updatedSaveState);
+        },
+        expiryChoiceLabel: function (c: ExpiryChoice) {
+            if (c === "keep" && !this.previousExpiry) return this.$i18n("ferry_expiry_never");
+            if (c === "keep") return this.$i18n("ferry_expiry_keep_until", [formatExpiryDate(this.previousExpiry)]);
+            return this.$i18n("ferry_expiry_" + c);
         },
         setTitle: function (value) {
             const updatedSaveState = Object.assign({}, JSON.parse(JSON.stringify(this.saveState))) as SaveState;
@@ -532,6 +601,9 @@ export default {
     margin-bottom: 10px;
 }
 /* Gruppenwahl für neue Einträge: sieht aus wie ein Eingabefeld, klappt den Gruppenbaum auf */
+.ferry-group-title .ferry-expiry-old {
+    color: rgb(var(--v-theme-error));
+}
 .ferry-group-pick {
     margin-bottom: 8px;
 }

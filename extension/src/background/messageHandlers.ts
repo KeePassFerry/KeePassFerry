@@ -7,6 +7,7 @@ import { submittedCredentials, supersedesSubmission } from "../common/submittedL
 import type { PersistentDataItem } from "./PersistentDataItem";
 import { BROWSER_UPDATE_PLUGIN_VERSION, pluginVersionAtLeast } from "../common/FeatureFlags";
 import { onFieldsAvailable } from "./pageFields";
+import { checkExpiryAfterFill, openChangePasswordFromNotice, snoozeExpiryNotice } from "./expiryNotice";
 import { KeeURL } from "../common/KeeURL";
 import type { AddonMessage } from "../common/AddonMessage";
 import { KeeLog } from "../common/Logger";
@@ -216,11 +217,8 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
     }
 
     if (msg.findMatches) {
-        // Gesperrt: die Seite zeigt das Gesperrt-Symbol, ein Klick entsperrt. Nur mit Einstellung
-        // "sofort entsperren" stößt schon das Erkennen der Anmeldemaske Windows Hello an (mit Bremsen)
-        if (configManager.current.ferryAutoUnlock && kee.store.state.connected && kee.store.state.KeePassDatabases.length === 0) {
-            kee.requestBackgroundUnlock(this.sender.tab.id, this.sender.url ?? msg.findMatches.uri);
-        }
+        // Gesperrt: die Seite zeigt das Gesperrt-Symbol, erst ein Klick darauf (oder aufs Erweiterungssymbol)
+        // entsperrt. Kein Entsperren beim bloßen Öffnen einer Seite (Option dafür in 1.0.15 entfernt, Issue #11)
         kee.tabStates.get(this.sender.tab.id).frames.get(this.sender.frameId).entries = [];
         const result = await kee.findLogins(
             msg.findMatches.uri,
@@ -376,6 +374,14 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
                 at: Date.now()
             };
         }
+        // Option "Ablaufdaten prüfen": Hinweis, wenn das Passwort bald abläuft oder abgelaufen ist
+        checkExpiryAfterFill(tabId, msg.filledEntry.uuid, msg.filledEntry.dbFileName);
+    }
+    if (msg.action === Action.OpenChangePassword) {
+        openChangePasswordFromNotice(this.sender.tab.id);
+    }
+    if (msg.action === Action.DismissExpiryNotice) {
+        snoozeExpiryNotice(this.sender.tab.id);
     }
     if (msg.action === Action.RequestOtp && msg.url) {
         // Nur für die eigene URL des Frames, nicht für eine von der Seite behauptete
@@ -384,7 +390,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             if (kee.store.state.connected && kee.store.state.KeePassDatabases.length === 0) {
                 // Nur nach einem Klick (Symbol am Codefeld) entsperren, nie beim bloßen Erkennen des Felds
                 diag("hintergrund", "otp angefragt, db gesperrt", { klick: !!msg.userInitiated });
-                if (msg.userInitiated || configManager.current.ferryAutoUnlock) {
+                if (msg.userInitiated) {
                     kee.requestBackgroundUnlock(this.sender.tab.id, frameUrl, !!msg.userInitiated);
                 }
                 return;

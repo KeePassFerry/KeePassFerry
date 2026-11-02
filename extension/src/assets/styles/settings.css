@@ -155,6 +155,12 @@ label.setting { cursor: pointer; }
 .setting-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .hint { display: block; font-size: 12.5px; font-weight: 400; color: var(--muted); }
 .checkbox, .form-horizontal { margin: 0; }
+/* Unterpunkt einer Einstellung darüber: eingerückt, ohne Trennlinie; ausgegraut, solange die Einstellung aus ist */
+.setting.sub {
+    border-top: 0; margin-left: 14px; padding: 4px 0 12px 14px;
+    border-left: 2px solid var(--border); font-weight: 400;
+}
+.setting.sub.off { opacity: 0.5; cursor: default; }
 .formSettingDropdown { flex: none; min-width: 220px; }
 .formSettingInput.narrow { width: 110px; flex: none; }
 .formSettingInput.wide { width: 340px; flex: none; }

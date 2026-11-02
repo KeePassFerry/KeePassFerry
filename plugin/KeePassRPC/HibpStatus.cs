@@ -45,6 +45,13 @@ namespace KeePassFerry
             return details ? InsecureText + " (password count: " + count.ToString(CultureInfo.InvariantCulture) + ")" : InsecureText;
         }
 
+        // Im Browser angezeigt wird das Ergebnis nur bei eingeschalteter Prüfung von KeePassFerry (aus = für KeePassFerry
+        // aus, auch wenn "HIBP Offline Check" das Feld in KeePass weiter pflegt)
+        internal static bool ShowResults
+        {
+            get { return KeePass.Program.Config.CustomConfig.GetBool(HibpChecker.ConfigEnabled, false); }
+        }
+
         internal static bool StatusIsLeaked(string value)
         {
             string insecure = InsecureText;

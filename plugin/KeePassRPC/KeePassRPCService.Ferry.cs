@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Jayrock.JsonRpc;
 using KeePassLib;
 using KeePassLib.Security;
@@ -33,6 +34,8 @@ namespace KeePassFerry
         /// <summary>
         /// Schreibt eine otpauth-URI (KeePassXC-Format) in das Feld "otp" eines bestehenden Eintrags.
         /// Vorher wandert der alte Stand in die Eintragshistorie. Ein vorhandenes TOTP wird nur mit overwrite ersetzt.
+        /// Vorhandene KeePass-eigene Felder (TimeOtp-*) werden dabei entfernt: sonst stünden zwei verschiedene Schlüssel
+        /// im Eintrag ({TIMEOTP}/Strg+T in KeePass nähmen den alten, Browser und Apps den neuen aus "otp").
         /// Ergebnis: status "ok" (mit erstem Code), "exists", "invalid" oder "notfound".
         /// </summary>
         [JsonRpcMethod]
@@ -57,6 +60,10 @@ namespace KeePassFerry
 
             entry.CreateBackup(db);
             entry.Strings.Set(Totp.OtpField, new ProtectedString(true, uri));
+            var nativeTotp = new List<string>();
+            foreach (KeyValuePair<string, ProtectedString> kv in entry.Strings)
+                if (kv.Key.StartsWith("TimeOtp-", StringComparison.Ordinal)) nativeTotp.Add(kv.Key);
+            foreach (string name in nativeTotp) entry.Strings.Remove(name);
             entry.Touch(true);
             _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), db);
 
@@ -398,8 +405,24 @@ namespace KeePassFerry
         {
             HibpChecker hibp = _keePassRpcPlugin.Hibp;
             if (hibp == null) return false;
-            _host.MainWindow.BeginInvoke(new Action(delegate { hibp.Enabled = enabled; }));
+            // Sofort speichern (die Erweiterung lädt gleich danach die Einträge neu), Prüfung dann im Oberflächen-Thread anstoßen
+            hibp.SetEnabledState(enabled);
+            if (enabled) _host.MainWindow.BeginInvoke(new Action(hibp.Kick));
             return enabled;
+        }
+
+        /// <summary>Abgelaufene Einträge ausblenden (true) oder nur daran erinnern (false); gespeichert in KeePass</summary>
+        [JsonRpcMethod]
+        public bool GetHideExpired()
+        {
+            return HideExpired;
+        }
+
+        [JsonRpcMethod]
+        public bool SetHideExpired(bool hide)
+        {
+            _host.CustomConfig.SetBool(HideExpiredConfigKey, hide);
+            return hide;
         }
 
         /// <summary>Fortschritt der Passwortprüfung: { total, done, leaked, running } (nur Anzahlen)</summary>
@@ -411,11 +434,12 @@ namespace KeePassFerry
             if (hibp == null) return result;
             int total = 0, done = 0, leaked = 0;
             bool running = false;
+            DateTime lastPass, lastFailure;
             // Wie die übrigen Abfragen im Thread der Verbindung (kein Warten auf die Oberfläche); ändert KeePass
             // gleichzeitig Einträge, fehlt die Anzeige eben dieses eine Mal
             try
             {
-                hibp.Progress(out total, out done, out leaked, out running);
+                hibp.Progress(out total, out done, out leaked, out running, out lastPass, out lastFailure);
             }
             catch (InvalidOperationException)
             {
@@ -425,6 +449,9 @@ namespace KeePassFerry
             result["done"] = done;
             result["leaked"] = leaked;
             result["running"] = running;
+            // Zeitpunkte (ISO, UTC) für "Zuletzt geprüft" bzw. "Keine Verbindung"; leer = noch nie
+            result["lastPass"] = lastPass == DateTime.MinValue ? "" : lastPass.ToString("o", System.Globalization.CultureInfo.InvariantCulture);
+            result["lastFailure"] = lastFailure == DateTime.MinValue ? "" : lastFailure.ToString("o", System.Globalization.CultureInfo.InvariantCulture);
             return result;
         }
 

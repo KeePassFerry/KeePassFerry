@@ -465,6 +465,39 @@ namespace KeePassFerry
             return matchedGroup;
         }
 
+        // Abgelaufene Einträge "Ausblenden" (wie KeePassXC, Issue #10): solche Einträge gibt das Plugin nirgends an den
+        // Browser (Ausfüllen, Treffer, Kontextmenü, Suche, Passkeys). Sonst "Erinnern" (macht die Erweiterung).
+        internal const string HideExpiredConfigKey = "KeePassFerry.HideExpired";
+
+        internal static bool HideExpired
+        {
+            get { return KeePass.Program.Config.CustomConfig.GetBool(HideExpiredConfigKey, false); }
+        }
+
+        internal static bool IsHiddenExpired(PwEntry pwe)
+        {
+            return pwe.Expires && pwe.ExpiryTime <= DateTime.UtcNow && HideExpired;
+        }
+
+        // Neues Ablaufdatum aus dem Speichern-Dialog der Erweiterung: null = unverändert, "never" = kein Ablauf,
+        // sonst Zeitpunkt (ISO 8601, UTC)
+        internal static void ApplyNewExpiry(PwEntry pwe, string newExpiry)
+        {
+            if (string.IsNullOrEmpty(newExpiry)) return;
+            if (newExpiry == "never")
+            {
+                pwe.Expires = false;
+                return;
+            }
+            DateTime when;
+            if (!DateTime.TryParse(newExpiry, System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal,
+                    out when))
+                return;
+            pwe.Expires = true;
+            pwe.ExpiryTime = DateTime.SpecifyKind(when, DateTimeKind.Utc);
+        }
+
         private bool EntryIsInRecycleBin(PwEntry pwe, PwDatabase db)
         {
             PwGroup parent = pwe.ParentGroup;

@@ -9,14 +9,19 @@ damit Seiten-CSS nicht durchschlägt.
 - "otp": auf der Seite wurde ein Zwei-Faktor-Schlüssel gefunden ("In KeePass speichern" öffnet die Eintragsauswahl)
 - "update": das gerade eingegebene Passwort weicht vom gespeicherten Eintrag ab ("Aktualisieren" öffnet diesen Eintrag
   mit dem neuen Passwort)
+- "expiring"/"expired": Passwort des ausgefüllten Eintrags läuft bald ab bzw. ist abgelaufen ("Passwort ändern" öffnet
+  die Änderungsseite der Website, "Später" blendet ihn für diesen Eintrag bis morgen aus). Verdrängt keinen anderen Hinweis.
 "Nicht jetzt" blendet den Hinweis für diesen Fund aus.
 */
 
-export type NoticeKind = "login" | "otp" | "update";
+export type NoticeKind = "login" | "otp" | "update" | "expiring" | "expired";
 
 export const HOST_ID = "keepassferry-save-notice";
 
-const NOTICE_TEXTS: Record<NoticeKind, { title: string; text: string; save: string; saveAction: Action; dismissAction: Action }> = {
+const NOTICE_TEXTS: Record<
+    NoticeKind,
+    { title: string; text: string; save: string; dismiss?: string; saveAction: Action; dismissAction: Action }
+> = {
     login: {
         title: "saveNotice_title",
         text: "saveNotice_text",
@@ -37,7 +42,33 @@ const NOTICE_TEXTS: Record<NoticeKind, { title: string; text: string; save: stri
         save: "updateNotice_save",
         saveAction: Action.OpenSavePopup,
         dismissAction: Action.DismissSaveNotice
+    },
+    // Überschrift und Text kommen fertig vom Hintergrund (Tage, Datum)
+    expiring: {
+        title: null,
+        text: null,
+        save: "ferry_change_password",
+        dismiss: "ferry_expiry_later",
+        saveAction: Action.OpenChangePassword,
+        dismissAction: Action.DismissExpiryNotice
+    },
+    expired: {
+        title: null,
+        text: null,
+        save: "ferry_change_password",
+        dismiss: "ferry_expiry_later",
+        saveAction: Action.OpenChangePassword,
+        dismissAction: Action.DismissExpiryNotice
     }
+};
+
+// Farbe des Randes und des Hauptknopfs
+const ACCENT: Record<NoticeKind, string> = {
+    login: "#16a34a",
+    otp: "#16a34a",
+    update: "#16a34a",
+    expiring: "#d97706",
+    expired: "#dc2626"
 };
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -70,13 +101,17 @@ const AUTO_HIDE_MS = 60000;
 
 let hideTimer: number = null;
 
-export function showSaveNotice(kind: NoticeKind = "login", detail?: string) {
+export function showSaveNotice(kind: NoticeKind = "login", detail?: string, fixed?: { title: string; text: string }) {
     if (window.top !== window) return;
     if (!document.body) return;
     const texts = NOTICE_TEXTS[kind];
+    const accent = ACCENT[kind];
+    const isExpiry = kind === "expiring" || kind === "expired";
     const existing = document.getElementById(HOST_ID);
     if (existing) {
         if (existing.dataset.kind === kind) return;
+        // Ablauf-Hinweis nur, wenn nichts anderes offen ist; er selbst weicht jedem anderen Hinweis
+        if (isExpiry) return;
         // Ein OTP-Fund ersetzt einen offenen Speichern-Hinweis nicht umgekehrt
         if (existing.dataset.kind === "otp") return;
         existing.remove();
@@ -95,7 +130,7 @@ export function showSaveNotice(kind: NoticeKind = "login", detail?: string) {
             font: 14px/1.4 "Segoe UI", system-ui, sans-serif;
             color: #10233d;
             background: #ffffff;
-            border-left: 6px solid #16a34a;
+            border-left: 6px solid ${accent};
             border-radius: 10px;
             box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
             padding: 14px 16px 12px 14px;
@@ -112,7 +147,7 @@ export function showSaveNotice(kind: NoticeKind = "login", detail?: string) {
             font: inherit; border-radius: 6px; padding: 6px 14px; cursor: pointer;
             border: 1px solid #c3ccd6; background: #ffffff; color: #10233d;
         }
-        button.primary { background: #16a34a; border-color: #16a34a; color: #ffffff; font-weight: 600; }
+        button.primary { background: ${accent}; border-color: ${accent}; color: #ffffff; font-weight: 600; }
         button:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
         @keyframes slide-in {
             from { transform: translateY(-20px); opacity: 0; }
@@ -120,7 +155,7 @@ export function showSaveNotice(kind: NoticeKind = "login", detail?: string) {
         }
         @keyframes attention {
             0%, 100% { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28); }
-            50% { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 0 0 6px rgba(22, 163, 74, 0.45); }
+            50% { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 0 0 6px ${accent}73; }
         }
         @media (prefers-reduced-motion: reduce) {
             .box { animation: none; }
@@ -135,24 +170,25 @@ export function showSaveNotice(kind: NoticeKind = "login", detail?: string) {
     const box = document.createElement("div");
     box.className = "box";
     box.setAttribute("role", "dialog");
-    box.setAttribute("aria-label", $STR(texts.title));
+    const titleText = fixed ? fixed.title : $STR(texts.title);
+    box.setAttribute("aria-label", titleText);
 
     const head = document.createElement("div");
     head.className = "head";
     const icon = createLogo();
     const title = document.createElement("span");
-    title.textContent = $STR(texts.title);
+    title.textContent = titleText;
     head.append(icon, title);
 
     const text = document.createElement("div");
     text.className = "text";
-    text.textContent = detail ? $STRF(texts.text, [detail]) : $STR(texts.text);
+    text.textContent = fixed ? fixed.text : detail ? $STRF(texts.text, [detail]) : $STR(texts.text);
 
     const buttons = document.createElement("div");
     buttons.className = "buttons";
     const dismiss = document.createElement("button");
     dismiss.type = "button";
-    dismiss.textContent = $STR("saveNotice_dismiss");
+    dismiss.textContent = $STR(texts.dismiss ?? "saveNotice_dismiss");
     dismiss.addEventListener("click", () => {
         Port.postMessage({ action: texts.dismissAction } as AddonMessage);
         hideSaveNotice();

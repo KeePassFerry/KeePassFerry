@@ -60,7 +60,11 @@ namespace KeePassFerry
             SecureChannel.PairingCommitFeature,
 
             // KeePassFerry: Passwortprüfung bei Have I Been Pwned (GetHibpCheck/SetHibpCheck) und Tipps (GetFerryTips)
-            "KEEPASSFERRY_HIBP_CHECK"
+            "KEEPASSFERRY_HIBP_CHECK",
+
+            // KeePassFerry: Ablaufdatum der Einträge (ExpiryTime/ExpiryIntervalDays), neues Ablaufdatum beim
+            // Speichern (NewExpiryTime), abgelaufene ausblenden (Get/SetHideExpired)
+            "KEEPASSFERRY_EXPIRY"
         };
 
         // Zusätzlich die Produktversion des Plugins ("KEEPASSFERRY_VERSION_1.2.3"): Die Erweiterung erkennt daran ein

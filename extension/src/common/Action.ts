@@ -33,5 +33,10 @@ export const enum Action {
     // Seite: "Passwort aktualisieren" nicht gezeigt, das Anmeldeformular blieb stehen (Anmeldung fehlgeschlagen)
     PasswordUpdateNotShown = "passwordUpdateNotShown",
     // Hintergrund: offenes Angebot zum Speichern bzw. Aktualisieren ist erledigt, Hinweis schließen
-    WithdrawSaveNotice = "withdrawSaveNotice"
+    WithdrawSaveNotice = "withdrawSaveNotice",
+    // Hintergrund: Passwort des gerade ausgefüllten Eintrags läuft bald ab bzw. ist abgelaufen
+    ShowExpiryNotice = "showExpiryNotice",
+    // Seite: aus diesem Hinweis "Passwort ändern" bzw. "Später"
+    OpenChangePassword = "openChangePassword",
+    DismissExpiryNotice = "dismissExpiryNotice"
 }

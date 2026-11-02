@@ -52,6 +52,11 @@ export class Entry {
     // Passwort laut "HIBP Offline Check" in KeePass geleakt (Anzahl, falls bekannt)
     readonly passwordLeaked: boolean;
     readonly passwordLeakCount: number;
+    // Ablaufdatum in KeePass ("Gültig bis", ISO UTC; null = kein Ablauf) und geschätzter Zeitraum, mit dem es gesetzt wurde
+    readonly expiryTime: string;
+    readonly expiryIntervalDays: number;
+    // Nur beim Speichern: neues Ablaufdatum aus dem Bearbeiten-Fenster (siehe expiry.ts newExpiryTime)
+    newExpiryTime?: string;
 
     // How relevant this entry is to the current form in
     // the browser - transient (not stored in KeePass)
@@ -84,6 +89,9 @@ export class Entry {
         this.hasOtp = !!e.hasOtp;
         this.passwordLeaked = !!e.passwordLeaked;
         this.passwordLeakCount = e.passwordLeakCount ?? 0;
+        this.expiryTime = e.expiryTime ?? null;
+        this.expiryIntervalDays = e.expiryIntervalDays ?? 0;
+        this.newExpiryTime = e.newExpiryTime;
         this.relevanceScore = e.relevanceScore;
         this.lowFieldMatchRatio = e.lowFieldMatchRatio;
         this.formIndex = e.formIndex;
@@ -144,7 +152,9 @@ export class Entry {
             hasPasskey: entryDto.hasPasskey,
             hasOtp: entryDto.hasOtp,
             passwordLeaked: entryDto.passwordLeaked,
-            passwordLeakCount: entryDto.passwordLeakCount
+            passwordLeakCount: entryDto.passwordLeakCount,
+            expiryTime: entryDto.expiryTime,
+            expiryIntervalDays: entryDto.expiryIntervalDays
         });
 
         return entry;
@@ -161,6 +171,7 @@ export class Entry {
         entryDto.neverAutoSubmit = entry.neverAutoSubmit;
         entryDto.title = entry.title;
         entryDto.uRLs = entry.URLs;
+        if (entry.newExpiryTime) entryDto.newExpiryTime = entry.newExpiryTime;
         return entryDto;
     }
 }

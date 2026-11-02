@@ -21,6 +21,10 @@ namespace KeePassFerry.Models.DataExchange
         public Group Parent;
         public Database Db;
 
+        // KeePassFerry, nur beim Speichern (AddLogin/UpdateLogin): null = Ablaufdatum unverändert, "never" = kein Ablauf,
+        // sonst neues Ablaufdatum (ISO 8601 UTC)
+        public string NewExpiryTime;
+
         public Entry() { }
 
         public Entry(

@@ -131,13 +131,23 @@ if (document.body) {
         );
     }
 
-    function matchFinder(uri: string) {
-        Port.postMessage({ findMatches: { uri } });
+    // Ein noch unsichtbares Anmeldeformular wird oft erst nach einem Klick eingeblendet (z. B. "Anmelden"-Menü):
+    // dann erneut suchen und, sobald es sichtbar ist, ausfüllen
+    const onInteraction = () => {
+        if (!formFilling?.hiddenLoginPending || formFilling.formFinderTimer !== null) return;
+        formFilling.formFinderTimer = window.setTimeout(() => formFilling.findMatchesInThisFrame(), 800);
+    };
+    document.addEventListener("click", onInteraction, true);
+    document.addEventListener("focusin", onInteraction, true);
+
+    function matchFinder(uri: string, visible: boolean) {
+        Port.postMessage({ findMatches: { uri, visible } });
         // Gesperrt: nicht von selbst entsperren, sondern Gesperrt-Symbol an den Anmeldefeldern zeigen
         // (Klick darauf oder aufs Erweiterungssymbol entsperrt); danach selbst neu suchen und ausfüllen
         pageDiag("anmeldeformular gefunden", {
             verbunden: !!store?.state.connected,
-            offeneDbs: store?.state.KeePassDatabases?.length ?? null
+            offeneDbs: store?.state.KeePassDatabases?.length ?? null,
+            sichtbar: visible
         });
         if (store?.state.connected && store.state.KeePassDatabases.length === 0) {
             formFilling.lockKeeIcons(startUnlockWaitIfLocked);
@@ -331,6 +341,10 @@ if (document.body) {
                 // Passwort eines vorhandenen Eintrags geändert: "aktualisieren?" statt "speichern?"
                 if (m.saveNoticeUpdateFor) offerPasswordUpdateNotice(m.saveNoticeUpdateFor);
                 else showSaveNotice();
+            }
+
+            if (m.action == Action.ShowExpiryNotice && m.expiryNotice) {
+                showSaveNotice(m.expiryNotice.expired ? "expired" : "expiring", null, m.expiryNotice);
             }
 
             if (m.action == Action.WithdrawSaveNotice) {

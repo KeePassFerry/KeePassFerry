@@ -109,11 +109,8 @@
                                 <label class="setting"><span class="setting-text"><span data-i18n="ferry_setting_browserSaving"></span><span class="hint" data-i18n="ferry_setting_browserSaving_hint"></span></span><input type="checkbox" class="switch" data-ferry-setting="ferryDisableBrowserPasswordSaving" /></label>
                             </div>
                             <div class="checkbox">
-                                <label class="setting"><span class="setting-text"><span data-i18n="ferry_setting_autoUnlock"></span><span class="hint" data-i18n="ferry_setting_autoUnlock_hint"></span></span><input type="checkbox" class="switch" data-ferry-setting="ferryAutoUnlock" /></label>
-                            </div>
-                            <div class="checkbox">
                                 <label class="setting"><span class="setting-text"><span data-i18n="ferry_setting_networkAuth"></span><span class="hint" data-i18n="ferry_setting_networkAuth_hint"></span></span><input type="checkbox" class="switch" data-ferry-setting="ferryNetworkAuth" /></label>
-                                <label class="setting"><span class="setting-text"><span data-i18n="pref_when_one_matching_network_login"></span></span><input type="checkbox" class="switch" id="pref_when_one_matching_network_login" /></label>
+                                <label class="setting sub" data-parent-setting="ferryNetworkAuth"><span class="setting-text"><span data-i18n="pref_when_one_matching_network_login"></span></span><input type="checkbox" class="switch" id="pref_when_one_matching_network_login" /></label>
                             </div>
                         </section>
 
@@ -177,6 +174,31 @@
 
                         <section class="card" id="panelFindingEntries">
                             <h2 data-i18n="pref_FindingEntries_heading"></h2>
+                            <div class="form-horizontal" id="expiry">
+                                <div class="form-group formSettingGroup setting">
+                                    <div class="formSettingLabel setting-text"><span data-i18n="ferry_setting_expiryMode"></span><span class="hint" id="ferryExpiryModeHint" data-i18n="ferry_setting_expiryMode_hint"></span></div>
+                                    <div class="formSettingDropdown">
+                                        <select class="form-control" id="ferryExpiryMode">
+                                            <option value="remind" data-i18n="ferry_expiry_mode_remind"></option>
+                                            <option value="hide" data-i18n="ferry_expiry_mode_hide"></option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-horizontal" id="ferryExpiryWarnRow">
+                                <div class="form-group formSettingGroup setting sub">
+                                    <div class="formSettingLabel setting-text"><span data-i18n="ferry_setting_expiryWarnDays"></span></div>
+                                    <div class="formSettingDropdown">
+                                        <select class="form-control" id="ferryExpiryWarnDays">
+                                            <option value="0" data-i18n="ferry_expiry_warn_none"></option>
+                                            <option value="3" data-i18n="ferry_expiry_warn_3"></option>
+                                            <option value="7" data-i18n="ferry_expiry_warn_7"></option>
+                                            <option value="14" data-i18n="ferry_expiry_warn_14"></option>
+                                            <option value="30" data-i18n="ferry_expiry_warn_30"></option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="checkbox">
                                 <label class="setting"><span class="setting-text"><span data-i18n="pref_searchAllOpenDBs_label"></span></span><input type="checkbox" class="switch" id="pref_searchAllOpenDBs_label" /></label>
                             </div>

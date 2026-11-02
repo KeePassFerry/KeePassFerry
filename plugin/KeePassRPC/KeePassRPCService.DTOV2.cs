@@ -281,8 +281,8 @@ namespace KeePassFerry
 
                 foreach (PwEntry pwe in output)
                 {
-                    if (EntryIsInRecycleBin(pwe, pwd))
-                        continue; // ignore if it's in the recycle bin
+                    if (EntryIsInRecycleBin(pwe, pwd) || IsHiddenExpired(pwe))
+                        continue; // ignore if it's in the recycle bin (or expired and hidden)
 
                     if (urlRequired && string.IsNullOrEmpty(pwe.Strings.ReadSafe("URL")))
                         continue;

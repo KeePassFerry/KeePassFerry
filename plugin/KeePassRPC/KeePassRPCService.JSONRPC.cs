@@ -390,6 +390,7 @@ namespace KeePassFerry
             PwEntry newLogin = new PwEntry(true, true);
 
             setPwEntryFromEntry(newLogin, login);
+            ApplyNewExpiry(newLogin, login.NewExpiryTime);
 
             // find the database
             PwDatabase chosenDB = SelectDatabase(dbFileName);
@@ -492,6 +493,7 @@ namespace KeePassFerry
                 throw new Exception("oldLoginUUID could not be resolved to an existing entry.");
 
             MergeEntries(entryToUpdate, newLoginData, urlMergeMode, chosenDB);
+            ApplyNewExpiry(entryToUpdate, login.NewExpiryTime);
 
             _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), chosenDB);
 
@@ -772,6 +774,7 @@ namespace KeePassFerry
 
                     foreach (PwEntry pwe in output)
                     {
+                        if (IsHiddenExpired(pwe)) continue;
                         Entry kpe = (Entry)GetEntryFromPwEntry(pwe, MatchAccuracy.None, true, db);
                         if (kpe != null)
                         {
@@ -821,8 +824,8 @@ namespace KeePassFerry
                         string entryUserName = pwe.Strings.ReadSafe(PwDefs.UserNameField);
                         entryUserName =
                             _keePassRpcPlugin.GetPwEntryStringFromDereferencableValue(pwe, entryUserName, db);
-                        if (EntryIsInRecycleBin(pwe, db))
-                            continue; // ignore if it's in the recycle bin
+                        if (EntryIsInRecycleBin(pwe, db) || IsHiddenExpired(pwe))
+                            continue; // ignore if it's in the recycle bin (or expired and hidden)
 
                         EntryConfigv2 conf =
                             pwe.GetKPRPCConfigNormalised(null, ref configErrors, dbConf.DefaultMatchAccuracy);
@@ -1283,8 +1286,8 @@ namespace KeePassFerry
                         string entryUserName = pwe.Strings.ReadSafe(PwDefs.UserNameField);
                         entryUserName =
                             _keePassRpcPlugin.GetPwEntryStringFromDereferencableValue(pwe, entryUserName, db);
-                        if (EntryIsInRecycleBin(pwe, db))
-                            continue; // ignore if it's in the recycle bin
+                        if (EntryIsInRecycleBin(pwe, db) || IsHiddenExpired(pwe))
+                            continue; // ignore if it's in the recycle bin (or expired and hidden)
 
                         EntryConfigv2 conf =
                             pwe.GetKPRPCConfigNormalised(null, ref configErrors, dbConf.DefaultMatchAccuracy);

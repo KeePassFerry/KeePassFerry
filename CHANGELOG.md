@@ -9,15 +9,13 @@ English · [Deutsch](#deutsch)
   as small chips. Rules from Apple's Password Manager Resources (MIT licence, bundled, no network access).
 - "Change password on the website": a key button at an expanded entry opens the website's change-password page
   (from Apple's list, otherwise the standard address /.well-known/change-password if the website supports it).
-- Leaked passwords: if the KeePass plugin "HIBP Offline Check" has marked an entry's password as found in data
-  breaches, the entry shows a red warning with a "Change password" button. KeePassFerry itself checks nothing and
-  sends nothing; the status field of that plugin is no longer listed as a custom field. Requires the plugin of this
-  version.
-- Check passwords for data breaches (optional, off by default): when turned on, KeePass checks new and changed
-  passwords at "Have I Been Pwned" and re-checks all others from time to time; only the first 5 characters of a
-  checksum (SHA-1) are sent, never the password. The result is written to the same field as "HIBP Offline Check";
-  a notification appears when a password is newly found in a breach. Also in the KeePass menu "KeePassFerry → Check
-  passwords now".
+- Check passwords for data breaches (Security, optional, off by default): when turned on, KeePass checks all
+  passwords at "Have I Been Pwned" in the background, new and changed ones right away, the others again every 30 days
+  and everything once more after turning the check back on; only the first 5 characters of a checksum (SHA-1) are
+  sent, never the password. The result is written to the same field and format as the KeePass plugin "HIBP Offline
+  Check" (both understand each other). Affected entries show a red warning with a "Change password" button; the
+  settings show progress, the time of the last check and connection problems. No Windows notifications. With the
+  check turned off, KeePassFerry shows no warnings. Requires the plugin of this version.
 - News and tips in the popup (✨ in the footer): what's new in this version, earlier versions to expand and tips for
   what is still missing (e.g. Windows Hello, breach check). After an update a notice appears once.
 - Faster popup on sites with many related domains (e.g. Amazon's country sites): the plugin no longer re-reads each
@@ -28,6 +26,21 @@ English · [Deutsch](#deutsch)
   new key each time, so the popup no longer offers an outdated key). A key found on the current page survives a
   restart of the extension's background.
 - Settings: the sections are in the same order as in the navigation.
+- Removed the option "Unlock a locked database immediately" (issue #11): it asked for Windows Hello as soon as a
+  page contained a login form, also on sites where you are already signed in (hidden login forms). A locked database
+  is unlocked by clicking the lock icon in the field or the toolbar icon, as before.
+- The group for backups of generated passwords is now created as "Generated passwords" (before: "KeePassFerry –
+  generated passwords"; issue #12). Existing groups keep their name; they can be renamed freely in KeePass.
+- Entries with an expiry date in KeePass ("Expires", issue #10): new setting "Expired entries" (Finding entries).
+  "Remind me to change the password" (default) keeps filling them in and shows a notice on the page right after
+  filling in and in the popup, before the date (advance warning adjustable, default 7 days) and after it, with a link
+  to the site's change-password page; "Later" hides it for that entry until the next day. "Hide" no
+  longer suggests, fills in or finds expired entries; the advance warning then says that the entry will be hidden.
+  When saving or updating an entry, "Expires" offers a new period (1 week to 1 year, or never), like the presets in
+  KeePass. Entries without an expiry date are not affected. Requires the plugin of this version.
+- Two-factor keys: when KeePassFerry saves a new key into an entry that still has KeePass's own `TimeOtp-*` fields,
+  these are removed (the old state stays in the entry history). Before, the entry ended up with two different keys,
+  and KeePass's {TIMEOTP} / Ctrl+T used the old one. Requires the plugin of this version.
 
 ## 1.0.14 – 2026-11-01
 
@@ -276,13 +289,13 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
   als kleine Chips darunter. Regeln aus Apples „Password Manager Resources“ (MIT-Lizenz, mitgeliefert, kein Netzzugriff).
 - „Passwort auf der Website ändern“: Ein Schlüssel-Knopf am aufgeklappten Eintrag öffnet die Seite zum Ändern des
   Passworts (aus Apples Liste, sonst die Standardadresse /.well-known/change-password, wenn die Website sie unterstützt).
-- Geleakte Passwörter: Hat das KeePass-Plugin „HIBP Offline Check“ das Passwort eines Eintrags als in Datenlecks
-  gefunden markiert, zeigt der Eintrag eine rote Warnung mit dem Knopf „Passwort ändern“. Das Statusfeld dieses Plugins
-  erscheint nicht mehr als eigenes Feld. Erfordert das Plugin dieser Version.
-- Passwörter auf Datenlecks prüfen (optional, standardmäßig aus): Eingeschaltet prüft KeePass neue und geänderte
-  Passwörter bei „Have I Been Pwned“ und alle anderen gelegentlich erneut; gesendet werden nur die ersten 5 Zeichen
-  einer Prüfsumme (SHA-1), nie das Passwort. Ergebnis im selben Feld wie bei „HIBP Offline Check“; Meldung, wenn ein
-  Passwort neu als geleakt erkannt wird. Zusätzlich im KeePass-Menü „KeePassFerry → Passwörter jetzt prüfen“.
+- Passwörter auf Datenlecks prüfen (Sicherheit, optional, standardmäßig aus): Eingeschaltet prüft KeePass im
+  Hintergrund alle Passwörter bei „Have I Been Pwned“, neue und geänderte sofort, die übrigen alle 30 Tage erneut und
+  nach dem Wiedereinschalten alles noch einmal; gesendet werden nur die ersten 5 Zeichen einer Prüfsumme (SHA-1), nie
+  das Passwort. Ergebnis im selben Feld und Format wie beim KeePass-Plugin „HIBP Offline Check“ (beide verstehen sich).
+  Betroffene Einträge zeigen eine rote Warnung mit dem Knopf „Passwort ändern“; die Einstellungen zeigen Fortschritt,
+  Zeitpunkt der letzten Prüfung und Verbindungsprobleme. Keine Meldungen in Windows. Bei ausgeschalteter Prüfung zeigt
+  KeePassFerry keine Warnungen. Erfordert das Plugin dieser Version.
 - Neuigkeiten und Tipps im Popup (✨ in der Fußleiste): Neuerungen der Version, frühere Versionen zum Aufklappen und
   Tipps für das, was noch fehlt (z. B. Windows Hello, Prüfung auf Datenlecks). Nach einem Update einmal ein Hinweis.
 - Schnelleres Popup auf Websites mit vielen zugehörigen Domains (z. B. Amazons Länderseiten): Das Plugin liest die
@@ -294,6 +307,24 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
   oder Verlassen der Seite verworfen (viele Websites erzeugen dann einen neuen, das Popup bietet so keinen veralteten
   mehr an). Ein Fund auf der aktuellen Seite übersteht einen Neustart des Hintergrunds der Erweiterung.
 - Einstellungen: Die Abschnitte stehen in derselben Reihenfolge wie in der Navigation.
+- Option „Bei gesperrter Datenbank sofort entsperren“ entfernt (Issue #11): Sie fragte nach Windows Hello, sobald eine
+  Seite ein Anmeldeformular enthielt, auch auf Websites, bei denen man längst angemeldet ist (versteckte Formulare).
+  Entsperrt wird wie bisher per Klick auf das Schloss-Symbol im Feld oder auf das Erweiterungssymbol.
+- Die Gruppe für Sicherungen generierter Passwörter heißt bei neuen Datenbanken „Generierte Passwörter“ (bisher
+  „KeePassFerry – generierte Passwörter“; Issue #12). Bestehende Gruppen behalten ihren Namen und lassen sich in
+  KeePass beliebig umbenennen.
+- Einträge mit Ablaufdatum in KeePass („Gültig bis“, Issue #10): neue Einstellung „Abgelaufene Einträge“ (Einträge
+  finden). „An Passwortwechsel erinnern“ (Standard) füllt weiter aus und zeigt direkt nach dem Ausfüllen auf der Seite
+  und im Popup einen Hinweis, vor dem Datum (Vorwarnung einstellbar, Standard 7 Tage) und danach, mit Link zur
+  Änderungsseite der Website; „Später“ blendet ihn für diesen Eintrag bis zum nächsten Tag aus. „Ausblenden“
+  schlägt abgelaufene Einträge nicht mehr vor, füllt sie nicht aus und findet sie nicht; die Vorwarnung
+  sagt dann, dass der Eintrag danach ausgeblendet wird. Beim Speichern oder Aktualisieren bietet „Gültig bis“ einen
+  neuen Zeitraum (1 Woche bis 1 Jahr oder kein Ablauf), wie die Vorgaben in KeePass. Einträge ohne Ablaufdatum sind
+  nicht betroffen. Erfordert das Plugin dieser Version.
+- Zwei-Faktor-Schlüssel: Speichert KeePassFerry einen neuen Schlüssel in einen Eintrag, der noch KeePass-eigene
+  `TimeOtp-*`-Felder hat, werden diese entfernt (der alte Stand bleibt in der Chronik). Bisher standen danach zwei
+  verschiedene Schlüssel im Eintrag, und KeePass' {TIMEOTP} bzw. Strg+T nahm den alten. Erfordert das Plugin dieser
+  Version.
 
 ## 1.0.14 – 2026-11-01
 

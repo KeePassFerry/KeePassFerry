@@ -19,6 +19,8 @@ export const FIELD_PROTECTION_FEATURE = "KEEPASSFERRY_FIELD_PROTECTION";
 export const ENTRY_RECYCLE_FEATURE = "KEEPASSFERRY_ENTRY_RECYCLE";
 // Passwortprüfung bei Have I Been Pwned und Tipps (GetHibpCheck/SetHibpCheck/GetFerryTips)
 export const HIBP_CHECK_FEATURE = "KEEPASSFERRY_HIBP_CHECK";
+// Ablaufdatum der Einträge (expiryTime) und neues Ablaufdatum beim Speichern (newExpiryTime)
+export const EXPIRY_FEATURE = "KEEPASSFERRY_EXPIRY";
 
 // true, wenn das Plugin mindestens diese Version meldet
 export function pluginVersionAtLeast(features: string[], min: string): boolean {

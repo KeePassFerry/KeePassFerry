@@ -16,6 +16,10 @@ namespace KeePassFerry.Models.DataExchange
         // KeePassFerry: Passwort laut Plugin "HIBP Offline Check" in Datenlecks gefunden (Anzahl, falls bekannt)
         public bool PasswordLeaked;
         public int PasswordLeakCount;
+        // KeePassFerry: Ablaufdatum ("Gültig bis", ISO 8601 UTC; null = kein Ablauf) und geschätzter Zeitraum in Tagen,
+        // mit dem es gesetzt wurde (0 = unbekannt)
+        public string ExpiryTime;
+        public int ExpiryIntervalDays;
 
         public LightEntry() { }
 
