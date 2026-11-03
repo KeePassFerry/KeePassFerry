@@ -133,20 +133,24 @@ function setupPluginSettings() {
     });
 }
 
-async function loadPluginSettings() {
-    let s: { hibpCheck?: boolean; expiry?: boolean } = null;
+// Anfrage an den Hintergrund; null bei Fehler oder ohne Antwort nach 5 s (eine hängende Anfrage soll die Seite nicht
+// blockieren)
+async function request<T>(msg: any): Promise<T> {
     try {
-        s = await chrome.runtime.sendMessage({ keepassferry: "connectionStatus" });
+        return await Promise.race([
+            chrome.runtime.sendMessage(msg) as Promise<T>,
+            new Promise<T>(resolve => setTimeout(() => resolve(null), 5000))
+        ]);
     } catch (e) {
-        s = null;
+        return null;
     }
+}
+
+// true, wenn das Plugin geantwortet hat; sonst liest refreshStatus beim nächsten Durchlauf erneut
+async function loadPluginSettings(): Promise<boolean> {
+    const s = await request<{ hibpCheck?: boolean; expiry?: boolean }>({ keepassferry: "connectionStatus" });
     const hibpSupported = !!s?.hibpCheck;
-    let backup: { setting?: boolean; group?: string } = null;
-    try {
-        backup = await chrome.runtime.sendMessage({ keepassferry: "getPasswordBackupInfo" });
-    } catch (e) {
-        backup = null;
-    }
+    const backup = await request<{ setting?: boolean; group?: string }>({ keepassferry: "getPasswordBackupInfo" });
     const backupInput = document.getElementById("ferryPasswordBackup") as HTMLInputElement;
     const backupHint = document.getElementById("ferryPasswordBackupHint");
     if (backupInput) {
@@ -160,13 +164,9 @@ async function loadPluginSettings() {
     }
     const expirySupported = !!s?.expiry;
     // null = keine Antwort: dann den angezeigten Stand nicht überschreiben (sonst stünde "aus" da, obwohl es an ist)
-    const ask = async (request: string): Promise<boolean> => {
-        try {
-            const r = await chrome.runtime.sendMessage({ keepassferry: request });
-            return r === true || r === false ? r : null;
-        } catch (e) {
-            return null;
-        }
+    const ask = async (name: string): Promise<boolean> => {
+        const r = await request<boolean>({ keepassferry: name });
+        return r === true || r === false ? r : null;
     };
     const hibp = hibpSupported ? await ask("getHibpCheck") : null;
     const hide = expirySupported ? await ask("getHideExpired") : null;
@@ -174,7 +174,7 @@ async function loadPluginSettings() {
     const hibpHint = document.getElementById("ferryHibpHint");
     if (hibpInput) {
         if (hibp !== null) hibpInput.checked = hibp;
-        hibpInput.disabled = !hibpSupported;
+        hibpInput.disabled = !hibpSupported || hibp === null;
     }
     if (hibpHint) hibpHint.textContent = hibpSupported ? $STR("ferry_setting_hibp_hint") : $STR("ferry_setting_hibp_unavailable");
 
@@ -184,7 +184,7 @@ async function loadPluginSettings() {
     const modeHint = document.getElementById("ferryExpiryModeHint");
     if (mode) {
         if (hide !== null) mode.value = hide ? "hide" : "remind";
-        mode.disabled = !expirySupported;
+        mode.disabled = !expirySupported || hide === null;
     }
     if (warn) {
         warn.value = String(configManager.current.ferryExpiryWarnDays ?? 7);
@@ -192,6 +192,7 @@ async function loadPluginSettings() {
     }
     if (modeHint) modeHint.textContent = expirySupported ? $STR("ferry_setting_expiryMode_hint") : $STR("ferry_setting_expiryMode_unavailable");
     refreshHibpProgress();
+    return (!hibpSupported || hibp !== null) && (!expirySupported || hide !== null);
 }
 
 // Stand der Passwortprüfung unter dem Schalter (alle 3 s, nur wenn eingeschaltet)
@@ -244,6 +245,7 @@ async function refreshHibpProgress() {
 }
 
 let pluginReady = false;
+let pluginLoading = false;
 
 async function refreshStatus() {
     let s: Status = null;
@@ -294,9 +296,18 @@ async function refreshStatus() {
         d = $STR("ferry_status_not_running_hint");
     }
     // KeePass gerade verbunden und entsperrt (z. B. nach dem Neuladen der Erweiterung): Plugin-Einstellungen neu lesen
-    const ready = !!s?.connected && (s?.databases?.length ?? 0) > 0;
-    if (ready && !pluginReady) loadPluginSettings();
-    pluginReady = ready;
+    const ready = !!s?.connected && !s?.pluginOutdated && (s?.databases?.length ?? 0) > 0;
+    // Nicht abwarten: die Statusanzeige darf nicht von den Plugin-Einstellungen abhängen
+    if (!ready) pluginReady = false;
+    else if (!pluginReady && !pluginLoading) {
+        pluginLoading = true;
+        loadPluginSettings()
+            .then(ok => (pluginReady = ok), e => {
+                console.warn("KeePassFerry: Plugin-Einstellungen nicht gelesen", e);
+                pluginReady = false;
+            })
+            .finally(() => (pluginLoading = false));
+    }
     dot.className = "status-dot " + tone;
     title.textContent = t;
     detail.textContent = d;

@@ -231,7 +231,8 @@ export class pluginClient {
     }
 
     processJSONRPCresponse(obj, sessionManager: NativeSessionManager) {
-        if ("result" in obj && obj.result !== false) {
+        // Auch "false" ist eine Antwort (z. B. GetHideExpired); sonst wartet die Anfrage ewig
+        if ("result" in obj) {
             try {
                 sessionManager.invokeCallback(obj.id, obj);
             } catch (e) {

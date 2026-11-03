@@ -256,15 +256,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case "connectionStatus":
             work = ferry.rpc.pluginClient.nativeSessionManager.status().then(s => {
                 const features = ferry.rpc.pluginClient.nativeSessionManager.features();
+                // Plugin zu alt für das Protokoll: nur "Jetzt aktualisieren", keine Plugin-Einstellungen
+                const usable = s.connected && !!ferry.rpc.pluginClient.getPrimarySessionManager();
                 return {
                     ...s,
                     databases: ferry.store.state.KeePassDatabases.map(db => db.name || db.fileName),
                     pluginVersion: s.connected ? pluginVersionFrom(features) : null,
                     pluginOutdated: s.connected ? pluginUpdateAvailable(features) : false,
-                    fieldProtection: s.connected && (features ?? []).includes(FIELD_PROTECTION_FEATURE),
-                    entryRecycle: s.connected && (features ?? []).includes(ENTRY_RECYCLE_FEATURE),
-                    hibpCheck: s.connected && (features ?? []).includes(HIBP_CHECK_FEATURE),
-                    expiry: s.connected && (features ?? []).includes(EXPIRY_FEATURE)
+                    fieldProtection: usable && (features ?? []).includes(FIELD_PROTECTION_FEATURE),
+                    entryRecycle: usable && (features ?? []).includes(ENTRY_RECYCLE_FEATURE),
+                    hibpCheck: usable && (features ?? []).includes(HIBP_CHECK_FEATURE),
+                    expiry: usable && (features ?? []).includes(EXPIRY_FEATURE)
                 };
             });
             break;

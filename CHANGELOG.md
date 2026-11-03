@@ -10,6 +10,11 @@ English · [Deutsch](#deutsch)
 - Fixed: "Update now" in the popup notice did nothing; the click never reached the background of the extension.
 - "Update now": the notice stays when the setup is cancelled (it can be started again) and disappears by itself as
   soon as the updated plugin is connected.
+- Fixed: answers "no" from the plugin (e.g. "Hide expired entries" is off) were dropped, so the request waited
+  forever. The settings page therefore showed plugin options (breach check, expired entries) as off for a while and
+  the connection status stayed grey. Options stored in KeePass are now greyed out until KeePass has answered.
+- KeePass plugin: the breach check is set up before the browser can connect, so an early request no longer reports
+  it as off.
 - Signing scripts use the renamed plugin folder.
 - Related domains: Apple's list of websites sharing one login (Password Manager Resources, MIT, about 200 groups,
   e.g. all Envato sites) is now included next to KeePassFerry's own list; only registrable domains are taken over.
@@ -375,6 +380,12 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 - Behoben: „Jetzt aktualisieren“ im Hinweis des Popups tat nichts; der Klick kam nie im Hintergrund der Erweiterung an.
 - „Jetzt aktualisieren“: Der Hinweis bleibt, wenn man das Setup abbricht (es lässt sich erneut starten), und
   verschwindet von selbst, sobald das aktualisierte Plugin verbunden ist.
+- Behoben: Antworten „nein“ des Plugins (z. B. „Abgelaufene Einträge ausblenden“ ist aus) gingen verloren, die Anfrage
+  wartete ewig. Die Einstellungsseite zeigte Optionen aus KeePass (Datenlecks-Prüfung, abgelaufene Einträge) deshalb
+  eine Weile als „aus“, und der Verbindungsstatus blieb grau. Solche Optionen sind jetzt ausgegraut, bis KeePass
+  geantwortet hat.
+- KeePass-Plugin: Die Datenlecks-Prüfung wird angelegt, bevor sich der Browser verbinden kann; eine frühe Anfrage
+  meldet sie nicht mehr als „aus“.
 - Signier-Skripte nutzen den umbenannten Plugin-Ordner.
 - Zugehörige Domains: Apples Liste der Websites mit gemeinsamer Anmeldung (Password Manager Resources, MIT, rund 200
   Gruppen, z. B. alle Envato-Seiten) ist jetzt neben der eigenen Liste von KeePassFerry enthalten; übernommen werden

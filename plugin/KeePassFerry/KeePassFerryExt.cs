@@ -150,6 +150,7 @@ namespace KeePassFerry
                 FerryIdentity = new FerryIdentity(host);
                 SaveConfigSoon();
 
+                Hibp = new HibpChecker(host);
                 try
                 {
                     _RPCServer = new NativePipeServer(RPCService, this);
@@ -160,6 +161,8 @@ namespace KeePassFerry
 
 Technical detail: " + ex.Message);
                     if (logger != null) logger.WriteLine("KeePassFerry startup failed: " + ex);
+                    Hibp.Dispose();
+                    Hibp = null;
                     _BackgroundWorkerAutoResetEvent.Set(); // terminate _BackgroundWorker
                     return false;
                 }
@@ -170,7 +173,6 @@ Technical detail: " + ex.Message);
                 _registrationTimer = new System.Windows.Forms.Timer { Interval = 15 * 60 * 1000 };
                 _registrationTimer.Tick += delegate { EnsureHostRegistration(); };
                 _registrationTimer.Start();
-                Hibp = new HibpChecker(host);
                 if (logger != null) logger.WriteLine("RPC server started.");
 
                 // Reste geöffneter Anhang-Kopien (z. B. nach einem Absturz)
