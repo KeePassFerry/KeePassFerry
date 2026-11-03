@@ -1873,5 +1873,21 @@
     "ferry_leaks_intro": {
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_16_1_title": {
+        "message": "Plugin-Update direkt aus dem Popup",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_16_1_text": {
+        "message": "Ist das KeePassFerry-Plugin in KeePass älter als die Erweiterung, zeigt das Popup einen Hinweis. „Jetzt aktualisieren“ installiert das neue Plugin, danach verschwindet der Hinweis von selbst.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_16_2_title": {
+        "message": "Mehr zusammengehörige Websites",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_16_2_text": {
+        "message": "Zugangsdaten werden auch auf zugehörigen Seiten eines Anbieters angeboten, jetzt für rund 200 Anbieter mehr (aus Apples offener Liste), z. B. alle Länderseiten von Mercado Libre oder Eventbrite.",
+        "description": "KeePassFerry"
     }
 }

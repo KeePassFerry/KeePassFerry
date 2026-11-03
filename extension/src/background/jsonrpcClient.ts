@@ -222,7 +222,7 @@ export class jsonrpcClient {
     // Plugin per Setup aktualisieren; "started", "uptodate", "download_failed", "checksum_mismatch", "cancelled",
     // "start_failed" oder null (Plugin kennt die Methode nicht)
     async startPluginUpdate(): Promise<string> {
-        const sessionManager = this.pluginClient.getPrimarySessionManager();
+        const sessionManager = this.pluginClient.getUpdateSessionManager();
         if (!sessionManager) return null;
         // KeePass darf nach vorne: sonst erscheint die Windows-Abfrage (UAC) für das Setup nur in der Taskleiste
         this.pluginClient.allowKeePassForeground();
@@ -399,8 +399,8 @@ export class jsonrpcClient {
 
     // Gesperrte Datenbank im Hintergrund entsperren lassen (Schlüsselabfrage/Windows Hello, ohne KeePass-Fenster)
     async requestUnlock(): Promise<string> {
-        const sessionManager = this.pluginClient.getSessionManagerByType(SessionType.Native);
-        if (!sessionManager?.isActive()) return "notConnected";
+        const sessionManager = this.pluginClient.getPrimarySessionManager();
+        if (!sessionManager) return "notConnected";
         this.pluginClient.allowKeePassForeground();
         const responses = await this.pluginClient.request([sessionManager], "RequestUnlock", []);
         return responses?.[0]?.resultWrapper?.result ?? "error";
@@ -408,8 +408,8 @@ export class jsonrpcClient {
 
     // Passkeys: Aufrufe an das Plugin über die KeePass-Sitzung (alle offenen Datenbanken)
     private async passkeyRpc(method: string, params: any[]): Promise<any> {
-        const sessionManager = this.pluginClient.getSessionManagerByType(SessionType.Native);
-        if (!sessionManager?.isActive()) return null;
+        const sessionManager = this.pluginClient.getPrimarySessionManager();
+        if (!sessionManager) return null;
         const responses = await this.pluginClient.request([sessionManager], method, params);
         return responses?.[0]?.resultWrapper?.result ?? null;
     }

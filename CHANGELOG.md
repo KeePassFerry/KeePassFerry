@@ -2,8 +2,15 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.16 – 2026-11-03
 
+- Fixed: with a KeePassFerry plugin older than 1.0.15, the extension 1.0.15 showed only "KeePass is not running" and no
+  update notice (the new protocol names were not recognised). It now shows the notice "The KeePassFerry plugin is
+  older than this extension" with "Update now"; everything else stays off until the plugin is updated.
+- Fixed: "Update now" in the popup notice did nothing; the click never reached the background of the extension.
+- "Update now": the notice stays when the setup is cancelled (it can be started again) and disappears by itself as
+  soon as the updated plugin is connected.
+- Signing scripts use the renamed plugin folder.
 - Related domains: Apple's list of websites sharing one login (Password Manager Resources, MIT, about 200 groups,
   e.g. all Envato sites) is now included next to KeePassFerry's own list; only registrable domains are taken over.
   Removed from the own list: disneymoviesanywhere.com (now Movies Anywhere, a separate account) and aliyun.com
@@ -359,8 +366,16 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.16 – 2026-11-03
 
+- Behoben: Mit einem KeePassFerry-Plugin vor 1.0.15 zeigte die Erweiterung 1.0.15 nur „KeePass läuft nicht“ und keinen
+  Update-Hinweis (die neuen Protokollnamen wurden nicht erkannt). Jetzt erscheint der Hinweis „Das KeePassFerry-Plugin
+  in KeePass ist älter als diese Erweiterung“ mit „Jetzt aktualisieren“; alles andere bleibt aus, bis das Plugin
+  aktualisiert ist.
+- Behoben: „Jetzt aktualisieren“ im Hinweis des Popups tat nichts; der Klick kam nie im Hintergrund der Erweiterung an.
+- „Jetzt aktualisieren“: Der Hinweis bleibt, wenn man das Setup abbricht (es lässt sich erneut starten), und
+  verschwindet von selbst, sobald das aktualisierte Plugin verbunden ist.
+- Signier-Skripte nutzen den umbenannten Plugin-Ordner.
 - Zugehörige Domains: Apples Liste der Websites mit gemeinsamer Anmeldung (Password Manager Resources, MIT, rund 200
   Gruppen, z. B. alle Envato-Seiten) ist jetzt neben der eigenen Liste von KeePassFerry enthalten; übernommen werden
   nur registrierbare Domains. Aus der eigenen Liste entfernt: disneymoviesanywhere.com (heute Movies Anywhere, eigenes

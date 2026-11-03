@@ -1873,5 +1873,21 @@
   "ferry_leaks_intro": {
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_16_1_title": {
+    "message": "Plugin update right from the popup",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_16_1_text": {
+    "message": "If the KeePassFerry plugin in KeePass is older than the extension, the popup shows a notice. \"Update now\" installs the new plugin; the notice then disappears by itself.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_16_2_title": {
+    "message": "More related websites",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_16_2_text": {
+    "message": "Logins are also offered on related sites of a provider, now for about 200 more providers (from Apple's open list), e.g. all country sites of Mercado Libre or Eventbrite.",
+    "description": "KeePassFerry"
   }
 }

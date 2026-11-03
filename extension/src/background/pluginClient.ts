@@ -2,7 +2,7 @@ import { NativeSessionManager } from "./NativeSession";
 import { SessionType } from "../common/SessionType";
 import { FerryLog } from "../common/Logger";
 import type { Button } from "../common/Button";
-import { FeatureFlags, PLUGIN_UPDATE_NOTICE, pluginUpdateAvailable } from "../common/FeatureFlags";
+import { FeatureFlags, PLUGIN_UPDATE_NOTICE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
 import { FerryNotification } from "../common/FerryNotification";
 import { utils } from "../common/utils";
 import BackgroundStore from "~/store/BackgroundStore";
@@ -75,12 +75,20 @@ export class pluginClient {
         return this.nativeSessionManager;
     }
 
+    // Plugin zu alt für das Protokoll dieser Erweiterung: Kanal bleibt nur für "Jetzt aktualisieren" offen
+    private pluginTooOld = false;
+
     getPrimarySessionManager() {
-        return this.nativeSessionManager.isActive() ? this.nativeSessionManager : null;
+        return this.nativeSessionManager.isActive() && !this.pluginTooOld ? this.nativeSessionManager : null;
     }
 
     getManagersForActiveSessions() {
-        return this.nativeSessionManager.isActive() ? [this.nativeSessionManager] : [];
+        return this.nativeSessionManager.isActive() && !this.pluginTooOld ? [this.nativeSessionManager] : [];
+    }
+
+    // Für das Plugin-Update auch dann, wenn das Plugin zu alt ist
+    getUpdateSessionManager() {
+        return this.nativeSessionManager.isActive() ? this.nativeSessionManager : null;
     }
 
     request(sessionManagers: NativeSessionManager[], method: string, params: any[]): Promise<SessionResponse[]> {
@@ -161,21 +169,32 @@ export class pluginClient {
     // Verschlüsselter Kanal zum Plugin steht (Handshake und ggf. Kopplung erledigt)
     setupNativeSession(features: string[]) {
         chrome.notifications.clear("keepassferry-pairing");
-        if (!this.serverHasRequiredFeatures(features)) {
+        this.pluginTooOld = !this.serverHasRequiredFeatures(features);
+        if (this.pluginTooOld) {
             FerryLog.error("KeePassFerry plugin is missing required features");
             this.store.updateLatestConnectionError("VERSION_CLIENT_TOO_HIGH");
-            this.nativeSessionManager.closeSession();
+            // Älteres KeePassFerry-Plugin (meldet seine Version, z. B. 1.0.14 vor der Umbenennung des Protokolls):
+            // Kanal offen lassen, damit "Jetzt aktualisieren" das Update in KeePass anstoßen kann; sonst trennen
+            if (pluginVersionFrom(features)) {
+                this.showPluginUpdateNotice();
+            } else {
+                this.nativeSessionManager.closeSession();
+            }
             return;
         }
         this.onConnectStartup();
-        // Der Store aktualisiert nur die Erweiterung: ein älteres Plugin um ein Update bitten
-        // Ohne × (Notification.vue): der Hinweis bleibt, bis das Plugin aktualisiert ist
-        if (pluginUpdateAvailable(features)) {
-            const button: Button = { label: $STR("ferry_plugin_update_button"), action: "startPluginUpdate" };
-            ferry.notifyUser(
-                new FerryNotification(PLUGIN_UPDATE_NOTICE, [button], utils.newGUID(), [$STR("ferry_plugin_update_message")], "Medium")
-            );
-        }
+        // Der Store aktualisiert nur die Erweiterung: ein älteres Plugin um ein Update bitten, nach dem Update den
+        // Hinweis wieder entfernen
+        if (pluginUpdateAvailable(features)) this.showPluginUpdateNotice();
+        else ferry.removeUserNotifications((n: FerryNotification) => n.name != PLUGIN_UPDATE_NOTICE);
+    }
+
+    // Ohne × (Notification.vue): der Hinweis bleibt, bis das Plugin aktualisiert ist
+    private showPluginUpdateNotice() {
+        const button: Button = { label: $STR("ferry_plugin_update_button"), action: "startPluginUpdate" };
+        ferry.notifyUser(
+            new FerryNotification(PLUGIN_UPDATE_NOTICE, [button], utils.newGUID(), [$STR("ferry_plugin_update_message")], "Medium")
+        );
     }
 
     // Erstkopplung: Prüfcode anzeigen, Bestätigung erfolgt in KeePass

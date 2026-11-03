@@ -12,16 +12,23 @@ class ContentPortManager {
     //     }
     // };
 
-    public postMessage(msg: AddonMessage) {
+    // Pfeilfunktion: bleibt auch als losgelöste Kopie (const pm = Port.postMessage) an diesen Port gebunden
+    public postMessage = (msg: AddonMessage) => {
         try {
             this.port.postMessage(msg);
         } catch (e) {
-            if (FerryLog && FerryLog.warn) FerryLog.warn("Failed to post a message. If the addon has just auto-updated this is expected.");
+            if (FerryLog && FerryLog.warn) FerryLog.warn("Failed to post a message. If the addon has just auto-updated this is expected. " + (e?.message ?? e) + (this.disconnectReason ? " (disconnected: " + this.disconnectReason + ")" : ""));
         }
     }
 
+    private disconnectReason: string = null;
+
     public startup(name: string) {
         this.port = chrome.runtime.connect({ name });
+        this.port.onDisconnect.addListener(() => {
+            this.disconnectReason = chrome.runtime.lastError?.message ?? "by the background";
+            if (FerryLog && FerryLog.warn) FerryLog.warn("Port " + name + " disconnected: " + this.disconnectReason);
+        });
     }
 
     public shutdown() {

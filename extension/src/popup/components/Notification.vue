@@ -67,8 +67,9 @@ export default {
             const pm = Port.postMessage;
             switch (action) {
                 case "startPluginUpdate":
+                    // Hinweis bleibt: bricht man das Setup ab, kann man es erneut starten
                     pm({ startPluginUpdate: true });
-                    break;
+                    return;
                 case "disableNotifyWhenEntryUpdated":
                     configManager.current.notifyWhenEntryUpdated = false;
                     configManager.save();
