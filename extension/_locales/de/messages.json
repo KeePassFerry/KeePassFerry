@@ -1780,6 +1780,30 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_18_1_title": {
+        "message": "Einmalcode aus der Liste am Feld kopieren",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_18_1_text": {
+        "message": "Bei Einträgen mit Einmalcode kopiert der Uhr-Knopf in der Liste am Login-Feld den aktuellen Code. Er wird erst beim Klick aus KeePass geholt.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_18_2_title": {
+        "message": "Liste schließt beim Klick daneben",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_18_2_text": {
+        "message": "Ein Klick auf die Seite neben der Liste „Passende Zugangsdaten“ schließt sie. Das × brauchst du dafür nicht mehr.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_18_3_title": {
+        "message": "Ruhigeres Feldsymbol",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_18_3_text": {
+        "message": "Auf Seiten mit Auge im Passwortfeld (z. B. bei Microsoft) springt das KeePassFerry-Symbol nicht mehr hin und her, und die Liste steht bündig unter dem Feld.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_17_1_title": {
         "message": "Einstellungen für KeePass jetzt in KeePass",
         "description": "KeePassFerry"

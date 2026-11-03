@@ -2,7 +2,7 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.18 – 2026-11-03
 
 - List of logins at a field: a click on the page next to the list closes it (like KeePassXC-Browser, only real
   clicks); before, only × closed it.
@@ -408,7 +408,7 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.18 – 2026-11-03
 
 - Liste der Anmeldungen am Feld: Ein Klick auf die Seite neben der Liste schließt sie (wie bei KeePassXC-Browser, nur
   echte Klicks); vorher ging das nur über ×.

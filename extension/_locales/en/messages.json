@@ -1780,6 +1780,30 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_18_1_title": {
+    "message": "Copy the one-time code from the list at the field",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_18_1_text": {
+    "message": "For entries with a one-time code, the clock button in the list at the login field copies the current code. It is fetched from KeePass only when you click.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_18_2_title": {
+    "message": "The list closes when you click next to it",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_18_2_text": {
+    "message": "A click on the page next to the \"Matching logins\" list closes it. You no longer need the ×.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_18_3_title": {
+    "message": "Calmer field icon",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_18_3_text": {
+    "message": "On pages with an eye in the password field (e.g. Microsoft), the KeePassFerry icon no longer jumps back and forth, and the list lines up with the field.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_17_1_title": {
     "message": "KeePass settings now in KeePass",
     "description": "KeePassFerry"
