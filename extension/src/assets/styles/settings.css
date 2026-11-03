@@ -136,10 +136,6 @@ body:has(#siteOptionsModeSpecific:checked) #panelConnection { display: none; }
 }
 .card.note { color: var(--muted); }
 /* Stand der Passwortprüfung unter dem Schalter */
-.hibp-progress { display: flex; align-items: center; gap: 10px; margin: -4px 0 12px; font-size: 12.5px; color: var(--muted); }
-.hibp-progress .bar { flex: none; width: 120px; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
-.hibp-progress .bar span { display: block; height: 100%; background: var(--accent); }
-.hibp-progress .leaked { color: #dc2626; font-weight: 600; }
 
 .intro p { margin: 6px 0; color: var(--muted); }
 
@@ -223,6 +219,14 @@ input[type="number"].form-control { text-align: right; }
 
 /* Verbindungsstatus */
 .status-row { display: flex; align-items: center; gap: 14px; padding: 10px 0 14px; }
+.status-row .status-text { flex: 1; min-width: 0; }
+.status-row .btn { flex: none; }
+.status-row .btn[hidden] { display: none; }
+.btn.busy::before {
+    content: ""; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid currentColor; border-right-color: transparent; animation: ferry-spin 0.8s linear infinite;
+}
+@keyframes ferry-spin { to { transform: rotate(360deg); } }
 .status-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--off); }
 .status-dot.ok { background: var(--ok); box-shadow: 0 0 0 5px color-mix(in srgb, var(--ok) 18%, transparent); }
 .status-dot.warn { background: var(--warn); box-shadow: 0 0 0 5px color-mix(in srgb, var(--warn) 18%, transparent); }

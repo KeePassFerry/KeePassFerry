@@ -234,22 +234,8 @@ namespace KeePassFerry
 
             ProtectedString newPassword = new ProtectedString();
             PwGenerator.Generate(out newPassword, profile, null, _host.PwGeneratorPool);
-            var password = newPassword.ReadString();
-
-            if (_host.CustomConfig.GetBool("KeePassFerry.BackupGeneratedPasswords", true))
-            {
-                // Sicherung darf das Erzeugen nie verhindern; Fehler ins Diagnoseprotokoll
-                try
-                {
-                    AddPasswordBackupLogin(password, url);
-                }
-                catch (Exception e)
-                {
-                    FerryUpdater.Log("Sicherung des erzeugten Passworts fehlgeschlagen: " + e);
-                }
-            }
-
-            return password;
+            // url: nur noch für ältere Erweiterungen im Protokoll (erzeugte Passwörter werden nicht mehr gesichert)
+            return newPassword.ReadString();
         }
 
         #endregion

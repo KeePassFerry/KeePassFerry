@@ -284,24 +284,25 @@ export class jsonrpcClient {
         return !!responses?.[0]?.resultWrapper?.result;
     }
 
-    // Passwortprüfung bei Have I Been Pwned (Einstellung liegt im Plugin, die Prüfung läuft dort)
-    async getHibpCheck(): Promise<boolean> {
+    // Abgelaufene Einträge ausblenden statt daran erinnern (Einstellung liegt im Plugin, das sie dann nicht liefert)
+    // Vorwarnung vor dem Ablaufdatum in Tagen (KeePassFerry-Optionen in KeePass); null ohne Antwort
+    async getExpiryWarnDays(): Promise<number> {
         const sessionManager = this.pluginClient.getPrimarySessionManager();
         if (!sessionManager) return null;
-        const responses = await this.pluginClient.request([sessionManager], "GetHibpCheck", []);
-        // null = keine Antwort (nicht "aus"), damit die Einstellungen keinen falschen Stand zeigen
+        const responses = await this.pluginClient.request([sessionManager], "GetExpiryWarnDays", []);
         const result = responses?.[0]?.resultWrapper?.result;
-        return typeof result === "boolean" ? result : null;
+        return typeof result === "number" ? result : null;
     }
 
-    async setHibpCheck(enabled: boolean): Promise<boolean> {
+    // KeePassFerry-Optionen in KeePass öffnen (KeePass kommt nach vorne)
+    async openOptions(): Promise<boolean> {
         const sessionManager = this.pluginClient.getPrimarySessionManager();
         if (!sessionManager) return false;
-        const responses = await this.pluginClient.request([sessionManager], "SetHibpCheck", [enabled]);
-        return !!responses?.[0]?.resultWrapper?.result;
+        this.pluginClient.allowKeePassForeground();
+        const responses = await this.pluginClient.request([sessionManager], "OpenOptions", []);
+        return responses?.[0]?.resultWrapper?.result === true;
     }
 
-    // Abgelaufene Einträge ausblenden statt daran erinnern (Einstellung liegt im Plugin, das sie dann nicht liefert)
     async getHideExpired(): Promise<boolean> {
         const sessionManager = this.pluginClient.getPrimarySessionManager();
         if (!sessionManager) return null;
@@ -311,50 +312,12 @@ export class jsonrpcClient {
         return typeof result === "boolean" ? result : null;
     }
 
-    async setHideExpired(hide: boolean): Promise<boolean> {
-        const sessionManager = this.pluginClient.getPrimarySessionManager();
-        if (!sessionManager) return false;
-        const responses = await this.pluginClient.request([sessionManager], "SetHideExpired", [hide]);
-        return !!responses?.[0]?.resultWrapper?.result;
-    }
-
-    // Sichert KeePass erzeugte Passwörter, und in welcher Gruppe
-    async setPasswordBackup(enabled: boolean): Promise<boolean> {
-        const sessionManager = this.pluginClient.getPrimarySessionManager();
-        if (!sessionManager) return false;
-        const responses = await this.pluginClient.request([sessionManager], "SetPasswordBackup", [enabled]);
-        return !!responses?.[0]?.resultWrapper?.result;
-    }
-
-    async getPasswordBackupInfo(): Promise<{ enabled: boolean; setting: boolean; group: string }> {
-        const sessionManager = this.pluginClient.getPrimarySessionManager();
-        if (!sessionManager) return null;
-        const responses = await this.pluginClient.request([sessionManager], "GetPasswordBackupInfo", []);
-        return responses?.[0]?.resultWrapper?.result ?? null;
-    }
-
-    // Selbst erzeugtes Passwort (Regeln der Website) in KeePass sichern wie beim Erzeugen über das Plugin
-    async backupGeneratedPassword(password: string, url: string): Promise<boolean> {
-        const sessionManager = this.pluginClient.getPrimarySessionManager();
-        if (!sessionManager) return false;
-        const responses = await this.pluginClient.request([sessionManager], "BackupGeneratedPassword", [password, url ?? ""]);
-        return !!responses?.[0]?.resultWrapper?.result;
-    }
-
     // Geleakte Einträge: seit "since" (ISO) neu gefundene, mit leerem "since" alle (nur Titel, Adresse, Anzahl)
     async getHibpLeaks(since: string): Promise<{ uuid: string; dbFileName: string; title: string; url: string; count: number; leakedAt: string }[]> {
         const sessionManager = this.pluginClient.getPrimarySessionManager();
         if (!sessionManager) return [];
         const responses = await this.pluginClient.request([sessionManager], "GetHibpLeaks", [since ?? ""]);
         return responses?.[0]?.resultWrapper?.result ?? [];
-    }
-
-    // Fortschritt der Passwortprüfung: { total, done, leaked, running } (nur Anzahlen)
-    async getHibpProgress(): Promise<{ total: number; done: number; leaked: number; running: boolean; lastPass?: string; lastFailure?: string }> {
-        const sessionManager = this.pluginClient.getPrimarySessionManager();
-        if (!sessionManager) return null;
-        const responses = await this.pluginClient.request([sessionManager], "GetHibpProgress", []);
-        return responses?.[0]?.resultWrapper?.result ?? null;
     }
 
     // Merkmale für die Tipps: { winHello, anyOtp, hibpCheck } (keine Inhalte)

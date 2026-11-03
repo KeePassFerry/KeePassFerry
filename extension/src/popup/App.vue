@@ -320,6 +320,12 @@ export default {
             .then(s => (this.otpPending = s ?? null))
             .catch(() => undefined);
 
+        // Aus dem Feld-Panel der Seite (Stift) geöffnet: gleich das Bearbeiten-Fenster dieses Eintrags
+        if (new URLSearchParams(window.location.search).get("edit") === "1") {
+            const p = await chrome.runtime.sendMessage({ keepassferry: "takePendingEdit" }).catch(() => null);
+            if (p?.uuid) await this.openEntryEditor(p.uuid, p.dbFileName);
+        }
+
         // Aus dem Speichern-Hinweis der Seite geöffnet: gleich den Speichern-Dialog zeigen
         if (new URLSearchParams(window.location.search).get("save") === "1") {
             // Die übermittelten Daten können kurz nach dem Start eintreffen
@@ -379,13 +385,19 @@ export default {
         editLeak: async function (leak: Leak, scrollTop = 0) {
             // Beim Zurückkommen an dieselbe Stelle der Liste
             this.leaksScroll = scrollTop;
+            if (!(await this.openEntryEditor(leak.uuid, leak.dbFileName))) return;
+            this.leaksShown = null;
+            this.returnToLeaks = true;
+        },
+        // Bearbeiten-Fenster für einen Eintrag (uuid, Datenbank); false, wenn er nicht gefunden wurde
+        openEntryEditor: async function (uuid: string, dbFileName: string): Promise<boolean> {
             let raw: Entry = null;
             try {
-                raw = await chrome.runtime.sendMessage({ keepassferry: "findEntryForEdit", uuid: leak.uuid, dbFileName: leak.dbFileName });
+                raw = await chrome.runtime.sendMessage({ keepassferry: "findEntryForEdit", uuid, dbFileName });
             } catch (e) {
                 raw = null;
             }
-            if (!raw) return;
+            if (!raw) return false;
             const entry = new Entry(raw);
             const ss = this.saveState as SaveState;
             const updatedSaveState = Object.assign({}, ss);
@@ -393,9 +405,8 @@ export default {
             updatedSaveState.showURLMismatchWarning = false;
             updatedSaveState.titleResetValue = entry.title;
             updatedSaveState.lastActiveAt = new Date();
-            this.leaksShown = null;
-            this.returnToLeaks = true;
             this.updateSaveState(updatedSaveState);
+            return true;
         },
         // Pfeil/Abbrechen im Bearbeiten-Fenster: kam es aus der Leak-Liste, dorthin zurück (alle geleakten Einträge)
         saveCanceled: function () {

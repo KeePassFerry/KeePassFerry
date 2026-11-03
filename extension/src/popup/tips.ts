@@ -51,11 +51,9 @@ export async function loadTips(reload: () => void = () => undefined): Promise<{ 
         browserSaving = false;
     }
     if (info && !info.hibpCheck) {
-        // Einschalten und gleich zum Schalter in den Einstellungen (dort Erklärung und Fortschritt)
-        tips.push({ id: "hibp", icon: "shield-search", tone: "warn", action: "ferry_tip_enable", primary: true, run: async () => {
-            await chrome.runtime.sendMessage({ keepassferry: "setHibpCheck", enabled: true }).catch(() => undefined);
-            const page = chrome.runtime.getManifest().options_ui?.page ?? "dist/settings/index.html";
-            chrome.tabs.create({ url: chrome.runtime.getURL(page) + "#hibp" });
+        // Die Prüfung läuft in KeePass: dort einschalten (KeePassFerry-Optionen, mit Erklärung und Fortschritt)
+        tips.push({ id: "hibp", icon: "shield-search", tone: "warn", action: "ferry_open_keepass_options", primary: true, run: async () => {
+            await chrome.runtime.sendMessage({ keepassferry: "openKeePassOptions" }).catch(() => undefined);
             window.close();
         } });
     }

@@ -111,10 +111,6 @@
         "message": "Abbrechen",
         "description": ""
     },
-    "Logins_Context_Edit_Login_label": {
-        "message": "Log-in-Daten bearbeiten...",
-        "description": ""
-    },
     "Menu_Button_copyNewPasswordToClipboard_label": {
         "message": "Neues Passwort generieren...",
         "description": ""
@@ -751,10 +747,6 @@
         "message": "Kopplung mit KeePass wirklich zurücksetzen? Du bestätigst danach in KeePass einen neuen Prüfcode.",
         "description": "KeePassFerry settings"
     },
-    "ferry_more_actions": {
-        "message": "Weitere Aktionen",
-        "description": "KeePassFerry"
-    },
     "ferry_status_pairing": {
         "message": "Kopplung in KeePass bestätigen",
         "description": "KeePassFerry"
@@ -1271,10 +1263,6 @@
         "message": "Ausblenden",
         "description": "KeePassFerry"
     },
-    "ferry_tip_enable": {
-        "message": "Einschalten",
-        "description": "KeePassFerry"
-    },
     "ferry_tip_disable": {
         "message": "Ausschalten",
         "description": "KeePassFerry"
@@ -1298,7 +1286,9 @@
     "ferry_tip_shortcut_text": {
         "message": "Mit $SHORTCUT$ trägst du Benutzername und Passwort der Website ins Anmeldeformular ein, ohne das Popup zu öffnen.",
         "placeholders": {
-            "shortcut": { "content": "$1" }
+            "shortcut": {
+                "content": "$1"
+            }
         },
         "description": "KeePassFerry"
     },
@@ -1362,18 +1352,6 @@
         "message": "Der Browser bietet noch selbst an, Passwörter zu speichern. Das übernimmt KeePassFerry, so gibt es keine doppelten Abfragen.",
         "description": "KeePassFerry"
     },
-    "ferry_hibp_progress": {
-        "message": "Geprüft: $1 von $2",
-        "description": "KeePassFerry"
-    },
-    "ferry_hibp_progress_running": {
-        "message": "läuft …",
-        "description": "KeePassFerry"
-    },
-    "ferry_hibp_progress_leaked": {
-        "message": "$1 in Datenlecks",
-        "description": "KeePassFerry"
-    },
     "ferry_security_heading": {
         "message": "Sicherheit",
         "description": "KeePassFerry"
@@ -1390,52 +1368,12 @@
         "message": "Abgelaufene Einträge",
         "description": "KeePassFerry"
     },
-    "ferry_setting_expiryMode_hint": {
-        "message": "Gilt nur für Einträge mit Ablaufdatum in KeePass („Gültig bis“). „Erinnern“ füllt weiter aus und weist auf einen Passwortwechsel hin; „Ausblenden“ schlägt sie nicht mehr vor.",
-        "description": "KeePassFerry"
-    },
-    "ferry_setting_expiryMode_unavailable": {
-        "message": "Benötigt das KeePass-Plugin ab Version 1.0.15 und eine entsperrte Datenbank.",
-        "description": "KeePassFerry"
-    },
-    "ferry_expiry_mode_remind": {
-        "message": "An Passwortwechsel erinnern",
-        "description": "KeePassFerry"
-    },
-    "ferry_expiry_mode_hide": {
-        "message": "Ausblenden",
-        "description": "KeePassFerry"
-    },
     "ferry_expiry_until_hidden": {
         "message": "$1 · bis $2, danach ausgeblendet",
         "description": "KeePassFerry"
     },
     "ferry_expiry_keep_until": {
         "message": "Unverändert (bis $1)",
-        "description": "KeePassFerry"
-    },
-    "ferry_setting_expiryWarnDays": {
-        "message": "Vorwarnung",
-        "description": "KeePassFerry"
-    },
-    "ferry_expiry_warn_none": {
-        "message": "Keine Vorwarnung",
-        "description": "KeePassFerry"
-    },
-    "ferry_expiry_warn_3": {
-        "message": "3 Tage vorher",
-        "description": "KeePassFerry"
-    },
-    "ferry_expiry_warn_7": {
-        "message": "7 Tage vorher",
-        "description": "KeePassFerry"
-    },
-    "ferry_expiry_warn_14": {
-        "message": "14 Tage vorher",
-        "description": "KeePassFerry"
-    },
-    "ferry_expiry_warn_30": {
-        "message": "30 Tage vorher",
         "description": "KeePassFerry"
     },
     "ferry_expiry_soon_days": {
@@ -1522,14 +1460,6 @@
         "message": "1 Jahr",
         "description": "KeePassFerry"
     },
-    "ferry_hibp_last_check": {
-        "message": "Zuletzt geprüft: $1",
-        "description": "KeePassFerry"
-    },
-    "ferry_hibp_offline": {
-        "message": "Keine Verbindung zu „Have I Been Pwned“ ($1), neuer Versuch läuft automatisch",
-        "description": "KeePassFerry"
-    },
     "ferry_leaks_new": {
         "message": "$1 Passwörter in Datenlecks gefunden",
         "description": "KeePassFerry"
@@ -1558,40 +1488,12 @@
         "message": "Keine betroffenen Einträge.",
         "description": "KeePassFerry"
     },
-    "ferry_generator_backup_hint": {
-        "message": "Zur Sicherheit auch in KeePass gespeichert, Gruppe „$1“.",
-        "description": "KeePassFerry"
-    },
-    "ferry_setting_passwordBackup": {
-        "message": "Erzeugte Passwörter in KeePass sichern",
-        "description": "KeePassFerry"
-    },
-    "ferry_setting_passwordBackup_hint": {
-        "message": "Jedes im Browser erzeugte Passwort landet zusätzlich in der Gruppe „$1“, falls das Speichern auf der Website schiefgeht.",
-        "description": "KeePassFerry"
-    },
-    "ferry_setting_passwordBackup_unavailable": {
-        "message": "Benötigt das KeePass-Plugin ab Version 1.0.15 und eine entsperrte Datenbank.",
-        "description": "KeePassFerry"
-    },
-    "ferry_backup_group_default": {
-        "message": "Generierte Passwörter",
-        "description": "KeePassFerry"
-    },
     "ferry_saved_title": {
         "message": "In KeePass gespeichert",
         "description": "KeePassFerry"
     },
     "ferry_setting_hibp": {
         "message": "Passwörter auf Datenlecks prüfen",
-        "description": "KeePassFerry"
-    },
-    "ferry_setting_hibp_hint": {
-        "message": "KeePass prüft neue und geänderte Passwörter bei „Have I Been Pwned“ und alle anderen gelegentlich erneut. Gesendet werden nur die ersten 5 Zeichen einer Prüfsumme, nie das Passwort.",
-        "description": "KeePassFerry"
-    },
-    "ferry_setting_hibp_unavailable": {
-        "message": "Benötigt das KeePass-Plugin ab Version 1.0.15 und eine entsperrte Datenbank.",
         "description": "KeePassFerry"
     },
     "ferry_setting_networkAuth": {
@@ -1656,6 +1558,10 @@
     },
     "ferry_extras_unsupported": {
         "message": "Für Felder und Anhänge braucht KeePassFerry in KeePass eine neuere Version.",
+        "description": "KeePassFerry"
+    },
+    "ferry_plugin_update_none": {
+        "message": "Für KeePass ist noch keine neuere Version veröffentlicht. Das installierte Plugin ist auf dem neuesten Stand.",
         "description": "KeePassFerry"
     },
     "ferry_plugin_update_unsafe": {
@@ -1874,6 +1780,30 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_17_1_title": {
+        "message": "Einstellungen für KeePass jetzt in KeePass",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_17_1_text": {
+        "message": "Datenlecks-Prüfung, abgelaufene Einträge und Vorwarnung stellst du jetzt in KeePass ein (Extras → KeePassFerry-Optionen). Sie gelten für alle verbundenen Browser; „In KeePass einstellen“ in den Einstellungen der Erweiterung führt direkt dorthin.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_17_2_title": {
+        "message": "Generator ohne Sicherungseinträge",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_17_2_text": {
+        "message": "Erzeugte Passwörter legen in KeePass keinen Sicherungseintrag mehr an. Vorhandene Sicherungen in der Gruppe „Generierte Passwörter“ kannst du löschen, wenn du sie nicht brauchst.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_17_3_title": {
+        "message": "Eintrag aus der Liste am Feld bearbeiten",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_17_3_text": {
+        "message": "Der Stift in der Liste am Login-Feld öffnet den Eintrag direkt im Bearbeiten-Fenster.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_16_1_title": {
         "message": "Plugin-Update direkt aus dem Popup",
         "description": "KeePassFerry"
@@ -1888,6 +1818,18 @@
     },
     "ferry_news_1_0_16_2_text": {
         "message": "Zugangsdaten werden auch auf zugehörigen Seiten eines Anbieters angeboten, jetzt für rund 200 Anbieter mehr (aus Apples offener Liste), z. B. alle Länderseiten von Mercado Libre oder Eventbrite.",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_in_keepass_hint": {
+        "message": "Wird in KeePass eingestellt und gilt für alle Browser (KeePassFerry-Optionen in KeePass).",
+        "description": "KeePassFerry"
+    },
+    "ferry_open_keepass_options": {
+        "message": "In KeePass einstellen",
+        "description": "KeePassFerry"
+    },
+    "ferry_open_keepass_options_unavailable": {
+        "message": "Dafür muss KeePass mit dem KeePassFerry-Plugin ab 1.0.17 laufen und die Datenbank entsperrt sein.",
         "description": "KeePassFerry"
     }
 }

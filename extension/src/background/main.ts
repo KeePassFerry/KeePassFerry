@@ -2,8 +2,9 @@ import { diag } from "./ferryDiag";
 import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup, parseOtpauth } from "./otpSetup";
 import { forgetAutoFill } from "./otpRepeat";
 import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
+import { takePendingEdit } from "./popupEdit";
 import { queryPageFields, fillPageField } from "./pageFields";
-import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, HIBP_LEAKS_FEATURE, PASSWORD_BACKUP_INFO_FEATURE, EXPIRY_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
+import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, HIBP_LEAKS_FEATURE, EXPIRY_FEATURE, OPTIONS_DIALOG_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
 import { markNewsSeen } from "../common/whatsNew";
 import { isFirefox } from "webext-detect-page";
 import { ferry, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
@@ -16,6 +17,7 @@ import { NetworkAuth } from "./NetworkAuth";
 import { pageStateOf } from "./pageState";
 import { appleChangePasswordUrl, changePasswordUrl } from "./changePassword";
 import { forgetExpiryNotice } from "./expiryNotice";
+import { startPluginUpdate } from "./messageHandlers";
 
 function appleChangePasswordUrlFor(entryUrl: string): string {
     try {
@@ -246,12 +248,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case "findEntryForEdit":
             work = findEntryForEdit(msg.uuid, msg.dbFileName);
             break;
+        case "takePendingEdit":
+            work = Promise.resolve(takePendingEdit());
+            break;
         case "discardSelectionSave":
             forgetSelectionSave(ferry.foregroundTabId);
             work = Promise.resolve(true);
             break;
         case "addImageAttachment":
             work = ferry.rpc.addImageAttachment(msg.uuid, msg.dbFileName, msg.fileName ?? "", msg.data ?? "");
+            break;
+        case "startPluginUpdate":
+            work = startPluginUpdate();
             break;
         case "connectionStatus":
             work = ferry.rpc.pluginClient.nativeSessionManager.status().then(s => {
@@ -266,7 +274,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     fieldProtection: usable && (features ?? []).includes(FIELD_PROTECTION_FEATURE),
                     entryRecycle: usable && (features ?? []).includes(ENTRY_RECYCLE_FEATURE),
                     hibpCheck: usable && (features ?? []).includes(HIBP_CHECK_FEATURE),
-                    expiry: usable && (features ?? []).includes(EXPIRY_FEATURE)
+                    expiry: usable && (features ?? []).includes(EXPIRY_FEATURE),
+                    optionsDialog: usable && (features ?? []).includes(OPTIONS_DIALOG_FEATURE)
                 };
             });
             break;
@@ -324,48 +333,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case "resetPairing":
             work = ferry.rpc.pluginClient.nativeSessionManager.resetPairing().then(() => true);
             break;
-        case "getHibpCheck":
-            work = ferry.rpc.getHibpCheck();
-            break;
-        case "setHibpCheck":
-            // Danach Einträge neu laden: ohne Prüfung zeigt das Popup keine Leak-Hinweise mehr
-            work = ferry.rpc.setHibpCheck(!!msg.enabled).then(async result => {
-                await ferry.refreshAfterEntryChange();
-                ferry.redetectFormsInAllTabs();
-                return result;
-            });
+        case "openKeePassOptions":
+            work = ferry.rpc.openOptions();
             break;
         case "getHideExpired":
             work = ferry.rpc.getHideExpired();
-            break;
-        case "setHideExpired":
-            // Danach Einträge, Seitentreffer und Kontextmenü neu laden (abgelaufene verschwinden bzw. kommen zurück)
-            work = ferry.rpc.setHideExpired(!!msg.hide).then(async result => {
-                await ferry.refreshAfterEntryChange();
-                ferry.redetectFormsInAllTabs();
-                return result;
-            });
-            break;
-        case "getPasswordBackupInfo":
-            work = (ferry.rpc.pluginClient.nativeSessionManager.features() ?? []).includes(PASSWORD_BACKUP_INFO_FEATURE)
-                ? ferry.rpc.getPasswordBackupInfo()
-                : Promise.resolve(null);
-            break;
-        case "setPasswordBackup":
-            work = ferry.rpc.setPasswordBackup(!!msg.enabled);
-            break;
-        case "backupGeneratedPassword":
-            work = (ferry.rpc.pluginClient.nativeSessionManager.features() ?? []).includes(PASSWORD_BACKUP_INFO_FEATURE)
-                ? ferry.rpc.backupGeneratedPassword(msg.password ?? "", msg.url ?? "")
-                : Promise.resolve(false);
             break;
         case "getHibpLeaks":
             work = (ferry.rpc.pluginClient.nativeSessionManager.features() ?? []).includes(HIBP_LEAKS_FEATURE)
                 ? ferry.rpc.getHibpLeaks(msg.since ?? "")
                 : Promise.resolve([]);
-            break;
-        case "getHibpProgress":
-            work = ferry.rpc.getHibpProgress();
             break;
         case "getFerryTips":
             work = ferry.rpc.getFerryTips();

@@ -99,7 +99,8 @@ export class FormFilling {
                     null,
                     this.parentFrameId,
                     this.matchedEntryCount(),
-                    this.matchedEntryTexts()
+                    this.matchedEntryTexts(),
+                    this.matchedRelatedCount()
                 );
                 this.matchedLoginsPanelStub.createPanel();
             }
@@ -123,7 +124,8 @@ export class FormFilling {
             target,
             this.parentFrameId,
             this.matchedEntryCount(),
-            this.matchedEntryTexts()
+            this.matchedEntryTexts(),
+            this.matchedRelatedCount()
         );
         FerryLog.debug("Creating panel...");
         this.matchedLoginsPanelStub.createPanel();
@@ -136,6 +138,13 @@ export class FormFilling {
     private matchedEntryCount(): number {
         const uuids = new Set<string>();
         for (const list of this.matchResult?.entries ?? []) for (const e of list ?? []) uuids.add(e.uuid);
+        return uuids.size;
+    }
+
+    // Einträge mit der Zusatzzeile "Zugehörige Domain" (ohne doppelte), für die Höhe der Auswahlliste
+    private matchedRelatedCount(): number {
+        const uuids = new Set<string>();
+        for (const list of this.matchResult?.entries ?? []) for (const e of list ?? []) if (e.relatedDomain) uuids.add(e.uuid);
         return uuids.size;
     }
 

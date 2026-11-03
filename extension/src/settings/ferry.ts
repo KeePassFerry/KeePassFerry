@@ -16,6 +16,7 @@ type Status = {
     databases: string[];
     pluginVersion?: string;
     pluginOutdated?: boolean;
+    optionsDialog?: boolean;
 };
 
 // Eigene Passwortspeicherung von Edge: abschalten (KeePassFerry übernimmt) oder wieder freigeben
@@ -102,150 +103,32 @@ function highlightFromHash() {
     else window.addEventListener("load", () => setTimeout(show, 150), { once: true });
 }
 
-// Einstellungen, die im Plugin liegen: Passwortprüfung (HIBP) und abgelaufene Einträge ausblenden/erinnern.
-// Änderungen fängt das Dokument ab (sofort, auch solange die Verbindung zu KeePass noch aufgebaut wird); den Stand
-// liest loadPluginSettings beim Öffnen und erneut, sobald KeePass verbunden und entsperrt ist (refreshStatus)
+// Einstellungen, die in KeePass wirken (Datenlecks-Prüfung, abgelaufene Einträge), liegen im KeePassFerry-Optionsdialog
+// von KeePass; die Knöpfe öffnen ihn. Ohne verbundenes KeePass (oder mit älterem Plugin) sind sie gesperrt.
 function setupPluginSettings() {
-    document.addEventListener("change", async e => {
-        const target = e.target as HTMLInputElement & HTMLSelectElement;
-        if (target?.id === "ferryHibpCheck") {
-            try {
-                await chrome.runtime.sendMessage({ keepassferry: "setHibpCheck", enabled: target.checked });
-            } catch (err) {
-                // Hintergrund startet gerade neu; beim nächsten Laden zeigt die Seite den gespeicherten Stand
-            }
-            refreshHibpProgress();
-        } else if (target?.id === "ferryPasswordBackup") {
-            try {
-                await chrome.runtime.sendMessage({ keepassferry: "setPasswordBackup", enabled: target.checked });
-            } catch (err) {
-                // wie oben
-            }
-        } else if (target?.id === "ferryExpiryMode") {
-            try {
-                await chrome.runtime.sendMessage({ keepassferry: "setHideExpired", hide: target.value === "hide" });
-            } catch (err) {
-                // wie oben
-            }
-        } else if (target?.id === "ferryExpiryWarnDays") {
-            configManager.setASAP({ ferryExpiryWarnDays: parseInt(target.value, 10) || 0 });
+    document.addEventListener("click", async e => {
+        const button = (e.target as HTMLElement)?.closest?.(".ferry-open-keepass-options") as HTMLButtonElement;
+        if (!button) return;
+        button.disabled = true;
+        try {
+            await chrome.runtime.sendMessage({ keepassferry: "openKeePassOptions" });
+        } catch (err) {
+            // Hintergrund startet gerade neu
+        } finally {
+            button.disabled = false;
         }
     });
 }
 
-// Anfrage an den Hintergrund; null bei Fehler oder ohne Antwort nach 5 s (eine hängende Anfrage soll die Seite nicht
-// blockieren)
-async function request<T>(msg: any): Promise<T> {
-    try {
-        return await Promise.race([
-            chrome.runtime.sendMessage(msg) as Promise<T>,
-            new Promise<T>(resolve => setTimeout(() => resolve(null), 5000))
-        ]);
-    } catch (e) {
-        return null;
+function updateKeePassOptionButtons(available: boolean) {
+    for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>(".ferry-open-keepass-options"))) {
+        button.disabled = !available;
+        button.title = available ? "" : $STR("ferry_open_keepass_options_unavailable");
     }
 }
 
-// true, wenn das Plugin geantwortet hat; sonst liest refreshStatus beim nächsten Durchlauf erneut
-async function loadPluginSettings(): Promise<boolean> {
-    const s = await request<{ hibpCheck?: boolean; expiry?: boolean }>({ keepassferry: "connectionStatus" });
-    const hibpSupported = !!s?.hibpCheck;
-    const backup = await request<{ setting?: boolean; group?: string }>({ keepassferry: "getPasswordBackupInfo" });
-    const backupInput = document.getElementById("ferryPasswordBackup") as HTMLInputElement;
-    const backupHint = document.getElementById("ferryPasswordBackupHint");
-    if (backupInput) {
-        backupInput.checked = backup ? !!backup.setting : true;
-        backupInput.disabled = !backup;
-    }
-    if (backupHint) {
-        backupHint.textContent = backup
-            ? $STRF("ferry_setting_passwordBackup_hint", [backup.group || $STR("ferry_backup_group_default")])
-            : $STR("ferry_setting_passwordBackup_unavailable");
-    }
-    const expirySupported = !!s?.expiry;
-    // null = keine Antwort: dann den angezeigten Stand nicht überschreiben (sonst stünde "aus" da, obwohl es an ist)
-    const ask = async (name: string): Promise<boolean> => {
-        const r = await request<boolean>({ keepassferry: name });
-        return r === true || r === false ? r : null;
-    };
-    const hibp = hibpSupported ? await ask("getHibpCheck") : null;
-    const hide = expirySupported ? await ask("getHideExpired") : null;
-    const hibpInput = document.getElementById("ferryHibpCheck") as HTMLInputElement;
-    const hibpHint = document.getElementById("ferryHibpHint");
-    if (hibpInput) {
-        if (hibp !== null) hibpInput.checked = hibp;
-        hibpInput.disabled = !hibpSupported || hibp === null;
-    }
-    if (hibpHint) hibpHint.textContent = hibpSupported ? $STR("ferry_setting_hibp_hint") : $STR("ferry_setting_hibp_unavailable");
 
-    await configManager.load();
-    const mode = document.getElementById("ferryExpiryMode") as HTMLSelectElement;
-    const warn = document.getElementById("ferryExpiryWarnDays") as HTMLSelectElement;
-    const modeHint = document.getElementById("ferryExpiryModeHint");
-    if (mode) {
-        if (hide !== null) mode.value = hide ? "hide" : "remind";
-        mode.disabled = !expirySupported || hide === null;
-    }
-    if (warn) {
-        warn.value = String(configManager.current.ferryExpiryWarnDays ?? 7);
-        warn.disabled = !expirySupported;
-    }
-    if (modeHint) modeHint.textContent = expirySupported ? $STR("ferry_setting_expiryMode_hint") : $STR("ferry_setting_expiryMode_unavailable");
-    refreshHibpProgress();
-    return (!hibpSupported || hibp !== null) && (!expirySupported || hide !== null);
-}
 
-// Stand der Passwortprüfung unter dem Schalter (alle 3 s, nur wenn eingeschaltet)
-async function refreshHibpProgress() {
-    const box = document.getElementById("ferryHibpProgress");
-    const input = document.getElementById("ferryHibpCheck") as HTMLInputElement;
-    if (!box || !input) return;
-    let p: { total: number; done: number; leaked: number; running: boolean; lastPass?: string; lastFailure?: string } = null;
-    if (input.checked && !input.disabled) {
-        try {
-            p = await chrome.runtime.sendMessage({ keepassferry: "getHibpProgress" });
-        } catch (e) {
-            p = null;
-        }
-    }
-    if (!p || !p.total) {
-        box.hidden = true;
-        return;
-    }
-    box.hidden = false;
-    const bar = document.createElement("span");
-    bar.className = "bar";
-    const fill = document.createElement("span");
-    fill.style.width = Math.round((100 * p.done) / p.total) + "%";
-    bar.append(fill);
-    const text = document.createElement("span");
-    text.textContent = $STRF("ferry_hibp_progress", [p.done.toLocaleString(), p.total.toLocaleString()]) +
-        (p.running || p.done < p.total ? " · " + $STR("ferry_hibp_progress_running") : "");
-    const parts: HTMLElement[] = [bar, text];
-    if (p.leaked > 0) {
-        const leaked = document.createElement("span");
-        leaked.className = "leaked";
-        leaked.textContent = $STRF("ferry_hibp_progress_leaked", [p.leaked.toLocaleString()]);
-        parts.push(leaked);
-    }
-    // Zuletzt geprüft bzw. Verbindungsproblem (statt einer Meldung in Windows)
-    const when = (iso: string) =>
-        new Date(iso).toLocaleString(chrome.i18n.getUILanguage(), { dateStyle: "short", timeStyle: "short" });
-    if (p.lastFailure) {
-        const failure = document.createElement("span");
-        failure.className = "leaked";
-        failure.textContent = $STRF("ferry_hibp_offline", [when(p.lastFailure)]);
-        parts.push(failure);
-    } else if (p.lastPass) {
-        const last = document.createElement("span");
-        last.textContent = $STRF("ferry_hibp_last_check", [when(p.lastPass)]);
-        parts.push(last);
-    }
-    box.replaceChildren(...parts);
-}
-
-let pluginReady = false;
-let pluginLoading = false;
 
 async function refreshStatus() {
     let s: Status = null;
@@ -297,20 +180,29 @@ async function refreshStatus() {
     }
     // KeePass gerade verbunden und entsperrt (z. B. nach dem Neuladen der Erweiterung): Plugin-Einstellungen neu lesen
     const ready = !!s?.connected && !s?.pluginOutdated && (s?.databases?.length ?? 0) > 0;
-    // Nicht abwarten: die Statusanzeige darf nicht von den Plugin-Einstellungen abhängen
-    if (!ready) pluginReady = false;
-    else if (!pluginReady && !pluginLoading) {
-        pluginLoading = true;
-        loadPluginSettings()
-            .then(ok => (pluginReady = ok), e => {
-                console.warn("KeePassFerry: Plugin-Einstellungen nicht gelesen", e);
-                pluginReady = false;
-            })
-            .finally(() => (pluginLoading = false));
-    }
+    updateKeePassOptionButtons(!!s?.optionsDialog);
+    const update = document.getElementById("ferryPluginUpdate");
+    if (update) update.hidden = !(s?.connected && s?.pluginOutdated);
     dot.className = "status-dot " + tone;
     title.textContent = t;
     detail.textContent = d;
+}
+
+// "Jetzt aktualisieren" neben dem Hinweis "Neue Version für KeePass verfügbar" (wie im Popup)
+function setupPluginUpdate() {
+    const button = document.getElementById("ferryPluginUpdate") as HTMLButtonElement;
+    button?.addEventListener("click", async () => {
+        const done = () => {
+            button.disabled = false;
+            button.classList.remove("busy");
+        };
+        button.disabled = true;
+        button.classList.add("busy");
+        const result = await chrome.runtime.sendMessage({ keepassferry: "startPluginUpdate" }).catch(() => null);
+        // Abgebrochen oder fehlgeschlagen: gleich wieder klickbar; sonst läuft das Setup und KeePass startet neu
+        if (result !== "started") done();
+        else setTimeout(done, 60000);
+    });
 }
 
 function setupResetPairing() {
@@ -359,6 +251,7 @@ function setupNav() {
 setupTheme();
 setupClipboardPermission();
 setupResetPairing();
+setupPluginUpdate();
 setupNav();
 refreshStatus();
 setupPluginSettings();
@@ -371,7 +264,5 @@ chrome.storage.onChanged.addListener((changes, area) => {
 document.addEventListener("visibilitychange", () => {
     if (!document.hidden && changedWhileHidden) location.reload();
 });
-loadPluginSettings();
 highlightFromHash();
-setInterval(refreshHibpProgress, 3000);
 setInterval(refreshStatus, 2000);

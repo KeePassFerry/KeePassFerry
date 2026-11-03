@@ -19,6 +19,7 @@ import {
 import { TabState } from "../common/TabState";
 import { Utils, utils } from "../common/utils";
 import { SearcherAll } from "../common/SearcherAll";
+import { OPTIONS_DIALOG_FEATURE } from "../common/FeatureFlags";
 import { configManager } from "../common/ConfigManager";
 import { FerryLog } from "../common/Logger";
 import type { AddonMessage } from "../common/AddonMessage";
@@ -342,6 +343,14 @@ class Ferry {
         }
     }
 
+    // Vorwarnung vor dem Ablaufdatum: Einstellung in KeePass (KeePassFerry-Optionen); hier nur für die Hinweise gemerkt
+    syncExpiryWarnDays() {
+        if (!(this.rpc.pluginClient.nativeSessionManager.features() ?? []).includes(OPTIONS_DIALOG_FEATURE)) return;
+        this.rpc.getExpiryWarnDays().then(days => {
+            if (days !== null && days !== configManager.current.ferryExpiryWarnDays) configManager.setASAP({ ferryExpiryWarnDays: days });
+        }, () => undefined);
+    }
+
     removeUserNotifications(unlessTrue: (notification: FerryNotification) => boolean) {
         this.store.updateNotifications(this.store.state.notifications.filter(unlessTrue));
     }
@@ -604,6 +613,7 @@ class Ferry {
     }
 
     _refreshKPDB() {
+        this.syncExpiryWarnDays();
         this.getAllDatabases();
         FerryLog.debug("Refresh of KeePassFerry's view of the KeePass database initiated.");
     }

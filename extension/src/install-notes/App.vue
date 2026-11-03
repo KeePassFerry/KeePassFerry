@@ -28,7 +28,7 @@
             </section>
 
             <section class="steps">
-                <div class="step" :class="{ done: status?.hostRunning || status?.connected }">
+                <div class="step" :class="{ done: (status?.hostRunning || status?.connected) && !pluginOutdated }">
                     <span class="num">1</span>
                     <div>
                         <h3>{{ $i18n("ferry_welcome_step1_title") }}</h3>
@@ -37,6 +37,16 @@
                             <a class="btn primary" href="https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/KeePassFerry-Setup.exe">
                                 {{ $i18n("ferry_welcome_download") }}
                             </a>
+                            <a class="link" href="https://github.com/KeePassFerry/KeePassFerry/releases/latest" target="_blank" rel="noopener">
+                                {{ $i18n("ferry_welcome_download_other") }}
+                            </a>
+                        </p>
+                        <!-- Plugin zu alt: Update in KeePass anstoßen (wie der Hinweis im Popup) -->
+                        <p v-else-if="pluginOutdated" class="download">
+                            <button class="btn primary" :disabled="updateStarted" @click="startUpdate">
+                                <span v-if="updateStarted" class="spinner" aria-hidden="true" />
+                                {{ $i18n("ferry_plugin_update_button") }}
+                            </button>
                             <a class="link" href="https://github.com/KeePassFerry/KeePassFerry/releases/latest" target="_blank" rel="noopener">
                                 {{ $i18n("ferry_welcome_download_other") }}
                             </a>
@@ -80,12 +90,23 @@ type Status = {
     pairingCode: string;
     blockedUntil: number;
     databases: string[];
+    pluginOutdated?: boolean;
 };
 
 const manifest = chrome.runtime.getManifest();
 const showPermissionsInfo = ref(false);
 const showToolbarInfo = ref(!isFirefox());
 const status = ref<Status>(null);
+const updateStarted = ref(false);
+const pluginOutdated = computed(() => !!status.value?.connected && !!status.value?.pluginOutdated);
+
+async function startUpdate() {
+    updateStarted.value = true;
+    const result = await chrome.runtime.sendMessage({ keepassferry: "startPluginUpdate" }).catch(() => null);
+    // Abgebrochen oder fehlgeschlagen: gleich wieder klickbar; sonst läuft das Setup und KeePass startet neu
+    if (result !== "started") updateStarted.value = false;
+    else setTimeout(() => (updateStarted.value = false), 60000);
+}
 
 async function requestPermissions() {
     await chrome.permissions.request({ origins: ["<all_urls>"] });
@@ -101,6 +122,7 @@ async function refresh() {
 
 const statusTone = computed(() => {
     const s = status.value;
+    if (s?.connected && s.pluginOutdated) return "warn";
     if (s?.connected && s.databases.length > 0) return "ok";
     if (s?.connected || s?.pairingCode || s?.blockedUntil) return "warn";
     return "off";
@@ -114,6 +136,8 @@ const formattedCode = computed(() => {
 const statusTitle = computed(() => {
     const s = status.value;
     if (!s) return $STR("ferry_status_unknown");
+    // Plugin zu alt: Update steht an, nicht "gesperrt" (wie auf der Einstellungsseite)
+    if (s.connected && s.pluginOutdated) return $STR("ferry_plugin_update_title");
     if (s.connected && s.databases.length > 0) return $STR("ferry_welcome_ready");
     if (s.pairingCode) return $STR("ferry_status_pairing");
     if (s.connected) return $STR("ferry_status_locked");
@@ -124,6 +148,7 @@ const statusTitle = computed(() => {
 const statusDetail = computed(() => {
     const s = status.value;
     if (!s) return "";
+    if (s.connected && s.pluginOutdated) return $STR("ferry_plugin_update_message");
     if (s.connected && s.databases.length > 0) return $STR("ferry_welcome_ready_hint");
     if (s.pairingCode) return $STRF("ferry_status_pairing_hint", [formattedCode.value]);
     if (s.connected) return $STR("ferry_status_locked_hint");
@@ -237,6 +262,13 @@ html, body, #main, .v-application {
     cursor: pointer;
 }
 .btn.primary { background: var(--w-accent); color: #fff; }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.btn .spinner {
+    display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px;
+    border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+    animation: ferry-spin 0.8s linear infinite;
+}
+@keyframes ferry-spin { to { transform: rotate(360deg); } }
 .step .download { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 10px; }
 .download .btn { text-decoration: none; display: inline-block; }
 .download .link { color: var(--w-accent); font-size: 13.5px; }

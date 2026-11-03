@@ -69,6 +69,11 @@ namespace KeePassFerry
             if (ioci == null)
                 ioci = Program.Config.Application.LastUsedFile;
 
+            // Aus dem Infobereich über KeePass selbst holen: Die native Wiederherstellung unten zeigt das Fenster, ohne
+            // Form.Visible zu setzen. Danach blieb das X wirkungslos, wenn es in den Infobereich minimieren soll (#16)
+            if (trayed)
+                _host.MainWindow.EnsureVisibleForegroundWindow(true, false);
+
             if (!Native.IsUnix())
             {
                 // We can't just Native.EnsureForegroundWindow() because most recent
@@ -322,47 +327,6 @@ namespace KeePassFerry
             _host.MainWindow.BeginInvoke((MethodInvoker)delegate { PromptUserToOpenDb(ioci, returnFocus); });
         }
 
-        private void AddPasswordBackupLogin(string password, string url)
-        {
-            if (!_host.Database.IsOpen)
-                return;
-
-            PwDatabase chosenDB = SelectDatabase("");
-            var parentGroup = _keePassRpcPlugin.GetAndInstallPasswordBackupGroup(chosenDB);
-
-            string explanatoryNote = FerryText.T(
-                "Dieser Eintrag sichert ein im Browser erzeugtes Passwort. Der Browser bietet ihn nicht an. " +
-                "Speichere nach der nächsten Anmeldung auf der Website lieber einen neuen Eintrag. Diese Sicherung " +
-                "kannst du löschen, sobald die Anmeldung mit dem neuen Passwort funktioniert.",
-                "This entry is a backup of a password generated in the browser. The browser does not offer it. " +
-                "We recommend saving a new entry after you next sign in to the website. You can delete this backup " +
-                "once you can sign in with the new password.");
-            PwEntry newLogin = new PwEntry(true, true);
-            // Titel: Website und Zeitpunkt (die Gruppe sagt schon, dass es ein erzeugtes Passwort ist; Issue #12)
-            string when = DateTime.Now.ToString("g");
-            Uri uri;
-            string title = Uri.TryCreate(url ?? "", UriKind.Absolute, out uri) && (uri.Scheme == "https" || uri.Scheme == "http")
-                ? uri.Host + " – " + when
-                : when;
-            newLogin.Strings.Set(PwDefs.TitleField, new ProtectedString(chosenDB.MemoryProtection.ProtectTitle, title));
-            newLogin.Strings.Set(PwDefs.UrlField, new ProtectedString(
-                chosenDB.MemoryProtection.ProtectUrl, url));
-            newLogin.Strings.Set(PwDefs.PasswordField, new ProtectedString(
-                chosenDB.MemoryProtection.ProtectPassword, password));
-            newLogin.Strings.Set(PwDefs.NotesField,
-                new ProtectedString(chosenDB.MemoryProtection.ProtectNotes, explanatoryNote));
-            EntryConfigv2 conf = (new EntryConfigv1(MatchAccuracyMethod.Hostname)).ConvertToV2(new GuidService());
-            var list = conf.MatcherConfigs.ToList();
-            list.Add(new EntryMatcherConfig { MatcherType = EntryMatcherType.Hide });
-            conf.MatcherConfigs = list.ToArray();
-            newLogin.SetFerryConfig(conf);
-            parentGroup.AddEntry(newLogin, true);
-
-            // We can't save the database at this point because KeePass steals
-            // window focus while saving; that breaks Firefox's Australis UI panels.
-            _host.MainWindow.BeginInvoke(new dlgUpdateUINoSave(updateUINoSave));
-        }
-
         // We can't just use the MatchAccuracyMethod found for the entry (in the conf parameter)
         // because the actual MAM to apply may have been modified based upon the specific URL(s) that
         // we're being asked to match against (the URLs shown in the browser rather than those 
@@ -472,6 +436,18 @@ namespace KeePassFerry
         // Abgelaufene Einträge "Ausblenden" (wie KeePassXC, Issue #10): solche Einträge gibt das Plugin nirgends an den
         // Browser (Ausfüllen, Treffer, Kontextmenü, Suche, Passkeys). Sonst "Erinnern" (macht die Erweiterung).
         internal const string HideExpiredConfigKey = "KeePassFerry.HideExpired";
+        // Vorwarnung vor dem Ablaufdatum in Tagen (0 = keine); liest die Erweiterung für ihre Hinweise
+        internal const string ExpiryWarnDaysConfigKey = "KeePassFerry.ExpiryWarnDays";
+        internal static readonly int[] ExpiryWarnDaysChoices = { 0, 3, 7, 14, 30 };
+
+        internal static int ExpiryWarnDays
+        {
+            get
+            {
+                long days = KeePass.Program.Config.CustomConfig.GetLong(ExpiryWarnDaysConfigKey, 7);
+                return Array.IndexOf(ExpiryWarnDaysChoices, (int)days) >= 0 ? (int)days : 7;
+            }
+        }
 
         internal static bool HideExpired
         {

@@ -151,6 +151,8 @@ namespace KeePassFerry
                 SaveConfigSoon();
 
                 Hibp = new HibpChecker(host);
+                // Seit 1.0.17 ohne Sicherung erzeugter Passwörter: alte Einstellung entfernen
+                host.CustomConfig.SetString("KeePassFerry.BackupGeneratedPasswords", null);
                 try
                 {
                     _RPCServer = new NativePipeServer(RPCService, this);
@@ -441,8 +443,24 @@ Technical detail: " + ex.Message);
 
         private void OnToolsOptions(object sender, EventArgs e)
         {
-            using (OptionsForm ofDlg = new OptionsForm(_host, this))
-                ofDlg.ShowDialog();
+            ShowOptions(false);
+        }
+
+        private OptionsForm _optionsForm;
+
+        // fromBrowser: KeePass-Fenster zuerst nach vorne holen (sonst öffnet sich der Dialog hinter dem Browser)
+        internal void ShowOptions(bool fromBrowser)
+        {
+            if (_optionsForm != null)
+            {
+                _optionsForm.Activate();
+                return;
+            }
+            // Auch aus dem Infobereich bzw. minimiert: KeePass zeigt und aktiviert sein Hauptfenster
+            if (fromBrowser) _host.MainWindow.EnsureVisibleForegroundWindow(true, true);
+            using (_optionsForm = new OptionsForm(_host, this))
+                _optionsForm.ShowDialog(_host.MainWindow);
+            _optionsForm = null;
         }
 
         private string[] getStandardIconsBase64(ImageList il)
@@ -498,72 +516,6 @@ Technical detail: " + ex.Message);
                         .AddIcon(_host.Database.IOConnectionInfo.Path, imageData);
                 }
             }
-        }
-
-        private static string BackupGroupName
-        {
-            get { return FerryText.T("Generierte Passwörter", "Generated passwords"); }
-        }
-
-        // Eigene Gruppe von KeePassFerry (eigene ID) auf oberster Ebene. Die Gruppen von Kee ("Kee", "Kee Generated
-        // Password Backups") bleiben unangetastet, damit ein Wechsel zurück zu Kee nichts verändert vorfindet.
-        private static readonly PwUuid BackupGroupUuid = new PwUuid(new byte[] {
-            0x46, 0xad, 0x93, 0xcd, 0xbd, 0xed, 0x44, 0x57,
-            0xb7, 0xb8, 0xf0, 0x12, 0xa2, 0x6a, 0x75, 0x03});
-
-        // Name der Gruppe für den Hinweis im Generator (vom Nutzer evtl. umbenannt; noch nicht angelegt: Standardname)
-        internal string BackupGroupDisplayName(PwDatabase pd)
-        {
-            PwGroup group = pd != null && pd.IsOpen ? pd.RootGroup.FindGroup(BackupGroupUuid, true) : null;
-            return group != null ? group.Name : BackupGroupName;
-        }
-
-        internal PwGroup GetAndInstallPasswordBackupGroup(PwDatabase pd)
-        {
-            PwUuid groupUuid = BackupGroupUuid;
-
-            PwGroup group = pd.RootGroup.FindGroup(groupUuid, true);
-            if (group == null)
-            {
-                group = new PwGroup(false, true, BackupGroupName, PwIcon.Folder);
-                group.Uuid = groupUuid;
-                group.CustomIconUuid = GetFerryIcon();
-                pd.RootGroup.AddGroup(group, true);
-            }
-            return group;
-        }
-
-        private PwUuid GetFerryIcon()
-        {
-            // KeePassFerry-Symbol (eigene UUID; das Kee-Symbol {EB9FF2ED-0512-4747-B83E-AFA515A30422} bleibt in alten Datenbanken)
-            PwUuid ferryIconUuid = new PwUuid(new byte[] {
-                0xa5, 0x14, 0xd6, 0x3f, 0x69, 0x4b, 0xcb, 0x47,
-                0x84, 0x98, 0xdf, 0x80, 0x88, 0xcc, 0xb3, 0xcc});
-
-            PwCustomIcon icon = null;
-
-            foreach (PwCustomIcon testIcon in _host.Database.CustomIcons)
-            {
-                if (testIcon.Uuid.Equals(ferryIconUuid))
-                {
-                    icon = testIcon;
-                    break;
-                }
-            }
-
-            if (icon == null)
-            {
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    Resources.FerryIcon64.Save(ms, ImageFormat.Png);
-
-                    // Create a new custom icon for use with this entry
-                    icon = new PwCustomIcon(ferryIconUuid,
-                        ms.ToArray());
-                    _host.Database.CustomIcons.Add(icon);
-                }
-            }
-            return ferryIconUuid;
         }
 
         private void CreateClientManagers()

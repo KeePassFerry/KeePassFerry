@@ -425,44 +425,22 @@ namespace KeePassFerry
             return hide;
         }
 
-        /// <summary>Werden erzeugte Passwörter in KeePass gesichert, und in welcher Gruppe (Hinweis im Generator)</summary>
+        /// <summary>Vorwarnung vor dem Ablaufdatum in Tagen (Einstellung in den KeePassFerry-Optionen)</summary>
         [JsonRpcMethod]
-        public Jayrock.Json.JsonObject GetPasswordBackupInfo()
+        public int GetExpiryWarnDays()
         {
-            var result = new Jayrock.Json.JsonObject();
-            bool enabled = _host.CustomConfig.GetBool("KeePassFerry.BackupGeneratedPasswords", true);
-            result["setting"] = enabled;
-            result["enabled"] = enabled && _host.Database.IsOpen;
-            result["group"] = _host.Database.IsOpen ? _keePassRpcPlugin.BackupGroupDisplayName(SelectDatabase("")) : "";
-            return result;
-        }
-
-        /// <summary>Sicherung erzeugter Passwörter ein- oder ausschalten (Einstellung der Erweiterung, gespeichert in KeePass)</summary>
-        [JsonRpcMethod]
-        public bool SetPasswordBackup(bool enabled)
-        {
-            _host.CustomConfig.SetBool("KeePassFerry.BackupGeneratedPasswords", enabled);
-            return enabled;
+            return ExpiryWarnDays;
         }
 
         /// <summary>
-        /// Von der Erweiterung selbst erzeugtes Passwort (nach den Regeln der Website) sichern wie GeneratePassword
+        /// KeePassFerry-Optionen in KeePass öffnen (Knopf in den Einstellungen der Erweiterung). Das Fenster kommt nach
+        /// vorne; ist es schon offen, wird es nur aktiviert.
         /// </summary>
         [JsonRpcMethod]
-        public bool BackupGeneratedPassword(string password, string url)
+        public bool OpenOptions()
         {
-            if (string.IsNullOrEmpty(password) || !_host.CustomConfig.GetBool("KeePassFerry.BackupGeneratedPasswords", true))
-                return false;
-            try
-            {
-                AddPasswordBackupLogin(password, url);
-                return true;
-            }
-            catch (Exception e)
-            {
-                FerryUpdater.Log("Sicherung des erzeugten Passworts fehlgeschlagen: " + e);
-                return false;
-            }
+            _host.MainWindow.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate { _keePassRpcPlugin.ShowOptions(true); });
+            return true;
         }
 
         /// <summary>Geleakte Einträge (seit "since" neu erkannte, sonst alle); leer, wenn die Prüfung aus ist</summary>

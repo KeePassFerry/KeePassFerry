@@ -22,6 +22,8 @@ export interface AddonMessage {
     frameId?: number;
     // Hinweis "Plugin veraltet": Update über das Plugin starten (Setup laden und ausführen)
     startPluginUpdate?: boolean;
+    // Antwort an das Popup: Ergebnis von "Jetzt aktualisieren" (Spinner im Knopf beenden)
+    pluginUpdateResult?: string;
     addNotification?: FerryNotification;
     removeNotification?: string;
     // visible: mindestens ein Anmeldefeld ist zu sehen (nur für das Diagnoseprotokoll)
@@ -35,6 +37,8 @@ export interface AddonMessage {
     passwordProfile?: string;
     submittedData?: SubmittedData;
     loginEditor?: { uuid: string; DBfilename: string };
+    // Stift im Feld-Panel: Eintrag im Popup bearbeiten
+    editEntryInPopup?: { uuid: string; DBfilename: string };
     loginsFound?: boolean;
     initialState?: FerryState;
     resetState?: FerryState;

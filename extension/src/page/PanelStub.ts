@@ -46,7 +46,8 @@ export class PanelStub {
     // Zusätzliche Parameter für die Panel-Seite (z. B. "&insert=1")
     public extraQuery = "";
 
-    constructor(options: PanelStubOptions, target: HTMLElement, parentFrameId: number, itemCount?: number, itemTexts?: string[]) {
+    // relatedCount: Einträge mit der Zusatzzeile "Zugehörige Domain" (je eine Zeile höher)
+    constructor(options: PanelStubOptions, target: HTMLElement, parentFrameId: number, itemCount?: number, itemTexts?: string[], relatedCount = 0) {
         this.target = target;
         this.options = options;
         this.parentFrameId = parentFrameId;
@@ -55,7 +56,7 @@ export class PanelStub {
             this.options = {
                 ...options,
                 width: PanelStub.matchedLoginsWidth(itemTexts ?? []),
-                height: Math.min(options.height, 58 + itemCount * 50)
+                height: Math.min(options.height, 58 + itemCount * 50 + relatedCount * 18)
             };
         }
     }

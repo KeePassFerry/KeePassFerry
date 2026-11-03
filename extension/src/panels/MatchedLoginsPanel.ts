@@ -7,6 +7,7 @@ import {setup as i18nSetup } from "../common/i18n";
 
 const QUICK_ICON_USER = "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 8a7 7 0 0 1 14 0";
 const QUICK_ICON_KEY = "M8 19a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm2.8-6.8L20 3m-3 3 3 3m-5.5-.5 2 2";
+const QUICK_ICON_EDIT = "M4 20h4L18.5 9.5a2.8 2.8 0 0 0-4-4L4 16v4zm9.5-13.5 4 4";
 
 export class MatchedLoginsPanel {
     constructor(
@@ -79,33 +80,17 @@ export class MatchedLoginsPanel {
             }
             // Voller Text als Tooltip, falls die Zeile trotz breiterer Liste abgeschnitten wird
             text.title = [usernameDisplayValue, entry.title, related].filter(Boolean).join("\n");
-            const more = document.createElement("button");
-            more.className = "ferry-login-more";
-            more.type = "button";
-            more.tabIndex = -1;
-            more.title = $STR("ferry_more_actions");
-            more.setAttribute("aria-label", more.title);
-            more.textContent = "⋯";
             row.append(icon, text);
             const quickUser = Entry.getUsernameField(entry);
             const quickPassword = Entry.getPasswordField(entry);
             if (quickUser?.value) row.append(this.quickCopyButton(QUICK_ICON_USER, $STR("copy_username_label"), quickUser.value));
             if (quickPassword?.value) row.append(this.quickCopyButton(QUICK_ICON_KEY, $STR("copy_password_label"), quickPassword.value));
-            row.append(more);
+            // Bearbeiten im Popup (wie dort beim aufgeklappten Eintrag)
+            row.append(this.quickButton(QUICK_ICON_EDIT, $STR("ferry_edit_entry"), () => {
+                this.myPort.postMessage({ editEntryInPopup: { uuid: entry.uuid, DBfilename: entry.database.fileName } } as AddonMessage);
+                this.myPort.postMessage({ action: Action.CloseAllPanels } as AddonMessage);
+            }));
             loginItem.appendChild(row);
-
-            const loginContextActions = this.createContextActions(entry);
-            loginItem.appendChild(loginContextActions);
-            more.addEventListener("click", event => {
-                event.stopPropagation();
-                event.preventDefault();
-                if (loginContextActions.classList.contains("enabled")) {
-                    loginContextActions.classList.remove("enabled");
-                    loginContextActions.classList.add("disabled");
-                } else {
-                    this.showContextActions(loginContextActions);
-                }
-            });
 
             loginItem.addEventListener("keydown", e => this.keyboardNavHandler(e), false);
             loginItem.addEventListener(
@@ -115,15 +100,6 @@ export class MatchedLoginsPanel {
                     if (event.button == 0 || event.button == 1) {
                         this.dispatchEvent(new Event("ferryCommand"));
                     }
-                },
-                false
-            );
-            loginItem.addEventListener(
-                "contextmenu",
-                event => {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    this.showContextActions(loginContextActions);
                 },
                 false
             );
@@ -170,16 +146,19 @@ export class MatchedLoginsPanel {
                 event.stopPropagation();
                 this.closePanel();
                 break;
-            case 93: // context
-                event.preventDefault();
-                event.stopPropagation();
-                target.dispatchEvent(new Event("contextmenu"));
-                break;
         }
     }
 
     // Kopierknopf in der Zeile; nach dem Kopieren schließt die Liste
     private quickCopyButton(svgPath: string, label: string, value: string) {
+        return this.quickButton(svgPath, label, async () => {
+            await copyStringToClipboard(value);
+            this.myPort.postMessage({ action: Action.CloseAllPanels } as AddonMessage);
+        });
+    }
+
+    // Kleiner Symbolknopf in der Zeile (Klick wählt nicht den Eintrag zum Ausfüllen)
+    private quickButton(svgPath: string, label: string, onClick: () => void | Promise<void>) {
         const b = document.createElement("button");
         b.type = "button";
         b.className = "ferry-login-quick";
@@ -195,108 +174,11 @@ export class MatchedLoginsPanel {
         b.addEventListener("click", async event => {
             event.stopPropagation();
             event.preventDefault();
-            await copyStringToClipboard(value);
-            this.myPort.postMessage({ action: Action.CloseAllPanels } as AddonMessage);
+            await onClick();
         });
         return b;
     }
 
-    public showContextActions(element: Element) {
-        element.classList.remove("disabled");
-        element.classList.add("enabled");
-    }
-
-    private createContextActions(this: MatchedLoginsPanel, entry: Entry) {
-        const loginContextActions = document.createElement("div");
-        loginContextActions.classList.add("disabled", "ferry-login-actions");
-
-        const editButton = document.createElement("button");
-        editButton.textContent = $STR("Logins_Context_Edit_Login_label");
-        //"pencil.png"
-        editButton.addEventListener(
-            "click",
-            event => {
-                event.stopPropagation();
-                event.preventDefault();
-                this.myPort.postMessage({
-                    loginEditor: {
-                        uuid: entry.uuid,
-                        DBfilename: entry.database.fileName
-                    }
-                } as AddonMessage);
-                this.myPort.postMessage({
-                    action: Action.CloseAllPanels
-                } as AddonMessage);
-            },
-            false
-        );
-        editButton.addEventListener("keydown", event => {
-            if (event.keyCode === 13) editButton.click();
-        });
-        loginContextActions.appendChild(editButton);
-
-        const otherFieldCount = entry.fields.filter(f => f.type !== "password").length ?? 0;
-        const passwordFieldCount = entry.fields.filter(f => f.type === "password").length ?? 0;
-
-        // Benutzername und Passwort kopieren: Knöpfe direkt in der Zeile (quickCopyButton)
-        if (otherFieldCount > 1) {
-            entry.fields
-                .filter(f => f.type !== "password")
-                .forEach((o, i) => {
-                    if (i != 0 && o.locators[0].type != "checkbox") {
-                        const button = document.createElement("button");
-                        button.textContent =
-                            $STR("copy") + " " + o.name + " (" + o.locators[0].id + ")";
-                        //"copy.png",
-                        button.addEventListener(
-                            "click",
-                            async event => {
-                                event.stopPropagation();
-                                event.preventDefault();
-                                await copyStringToClipboard(o.value);
-                                this.myPort.postMessage({
-                                    action: Action.CloseAllPanels
-                                } as AddonMessage);
-                            },
-                            false
-                        );
-                        button.addEventListener("keydown", event => {
-                            if (event.keyCode === 13) button.click();
-                        });
-                        loginContextActions.appendChild(button);
-                    }
-                });
-        }
-        if (passwordFieldCount > 1) {
-            entry.fields
-                .filter(f => f.type === "password")
-                .forEach((p, i) => {
-                    if (i != 0) {
-                        const button = document.createElement("button");
-                        button.textContent =
-                            $STR("copy") + " " + p.name + " (" + p.locators[0].id + ")";
-                        //"copy.png",
-                        button.addEventListener(
-                            "click",
-                            async event => {
-                                event.stopPropagation();
-                                event.preventDefault();
-                                await copyStringToClipboard(p.value);
-                                this.myPort.postMessage({
-                                    action: Action.CloseAllPanels
-                                } as AddonMessage);
-                            },
-                            false
-                        );
-                        button.addEventListener("keydown", event => {
-                            if (event.keyCode === 13) button.click();
-                        });
-                        loginContextActions.appendChild(button);
-                    }
-                });
-        }
-        return loginContextActions;
-    }
 
 }
 

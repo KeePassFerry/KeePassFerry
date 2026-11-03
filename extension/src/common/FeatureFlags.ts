@@ -21,8 +21,8 @@ export const ENTRY_RECYCLE_FEATURE = "KEEPASSFERRY_ENTRY_RECYCLE";
 export const HIBP_CHECK_FEATURE = "KEEPASSFERRY_HIBP_CHECK";
 // Liste geleakter Einträge für den Hinweis im Popup (GetHibpLeaks)
 export const HIBP_LEAKS_FEATURE = "KEEPASSFERRY_HIBP_LEAKS";
-// Hinweis im Generator, in welcher Gruppe KeePass das erzeugte Passwort sichert (GetPasswordBackupInfo)
-export const PASSWORD_BACKUP_INFO_FEATURE = "KEEPASSFERRY_PASSWORD_BACKUP_INFO";
+// Einstellungen zu KeePass im KeePassFerry-Optionsdialog (OpenOptions), Vorwarnung von dort (GetExpiryWarnDays)
+export const OPTIONS_DIALOG_FEATURE = "KEEPASSFERRY_OPTIONS_DIALOG";
 // Ablaufdatum der Einträge (expiryTime) und neues Ablaufdatum beim Speichern (newExpiryTime)
 export const EXPIRY_FEATURE = "KEEPASSFERRY_EXPIRY";
 
@@ -46,7 +46,7 @@ export function pluginIsOutdated(features: string[]): boolean {
 // Plugin-Version mit den neuesten Funktionen für diese Erweiterung. Nur erhöhen, wenn sich das Plugin im Release
 // geändert hat (nicht bei Releases, die nur die Erweiterung betreffen): ältere Plugins bekommen dann den Hinweis
 // "Neue Version für KeePass verfügbar" mit "Jetzt aktualisieren". Ohne Abfrage im Netz.
-export const RECOMMENDED_PLUGIN_VERSION = "1.0.15";
+export const RECOMMENDED_PLUGIN_VERSION = "1.0.17";
 
 // Name des Hinweises "Plugin älter als die Erweiterung" im Popup
 export const PLUGIN_UPDATE_NOTICE = "keepassferry-plugin-update";

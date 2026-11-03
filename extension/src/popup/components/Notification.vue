@@ -7,6 +7,7 @@
                 <v-btn
                     v-for="(but, index) of notification.buttons" :id="but.id" :key="index" size="small"
                     :variant="index === 0 ? 'tonal' : 'text'" color="primary"
+                    :loading="but.action === 'startPluginUpdate' && updating"
                     @click="dispatchActionResponse(notification.id, but.action, but.values)">
                     {{ but.label }}
                     <v-tooltip v-if="but.tooltip" location="top" activator="parent">{{ but.tooltip }}</v-tooltip>
@@ -55,7 +56,8 @@ export default {
     //     return { updateSaveState };
     // },
     data: () => ({
-        tooltipDelay
+        tooltipDelay,
+        updating: false
     }),
     computed: {
         closable: function (): boolean {
@@ -67,7 +69,16 @@ export default {
             const pm = Port.postMessage;
             switch (action) {
                 case "startPluginUpdate":
-                    // Hinweis bleibt: bricht man das Setup ab, kann man es erneut starten
+                    // Hinweis bleibt: bricht man das Setup ab, kann man es erneut starten. Spinner bis zur Antwort
+                    // (pluginUpdateResult); läuft das Setup, bleibt er, bis KeePass neu startet
+                    this.updating = true;
+                    const onResult = (m: AddonMessage) => {
+                        if (m.pluginUpdateResult === undefined) return;
+                        Port.raw?.onMessage.removeListener(onResult);
+                        if (m.pluginUpdateResult !== "started") this.updating = false;
+                        else setTimeout(() => (this.updating = false), 60000);
+                    };
+                    Port.raw?.onMessage.addListener(onResult);
                     pm({ startPluginUpdate: true });
                     return;
                 case "disableNotifyWhenEntryUpdated":

@@ -19,9 +19,48 @@ import { copyStringToClipboard } from "../common/copyStringToClipboard";
 import { ferry } from "./KF";
 import { pageStateOf } from "./pageState";
 import { commandManager } from "./commands";
+import { openEntryInPopup } from "./popupEdit";
 
 
 // callbacks for messaging / ports
+
+// "Jetzt aktualisieren" (Popup-Hinweis, Willkommensseite, Einstellungen): Update in KeePass anstoßen, sonst
+// Release-Seite öffnen. Ergebnis wie StartPluginUpdate ("started", "cancelled" …), "releasepage" für alte Plugins
+export async function startPluginUpdate(): Promise<string> {
+    // Plugins vor 1.0.8 führen das ganze Update auf dem Kanal zum Browser aus und können ihn dabei blockieren:
+    // für sie gleich die Release-Seite mit dem Setup öffnen
+    if (!pluginVersionAtLeast(ferry.rpc.pluginClient.nativeSessionManager.features(), BROWSER_UPDATE_PLUGIN_VERSION)) {
+        diag("hintergrund", "plugin-update", { ergebnis: "release-seite (altes plugin)" });
+        chrome.tabs.create({ url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest" });
+        return "releasepage";
+    }
+    // Plugins vor 1.0.4 kennen StartPluginUpdate nicht (Ergebnis null): dann die Download-Seite öffnen
+    const result = await ferry.rpc.startPluginUpdate();
+    diag("hintergrund", "plugin-update", { ergebnis: result });
+    if (result === "signature_invalid" || result === "checksum_mismatch") {
+        // Release nicht korrekt signiert: nicht zum Download schicken, sondern warnen
+        chrome.notifications.create("keepassferry-update-unsafe", {
+            type: "basic",
+            iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
+            title: $STR("security_warning_title"),
+            message: $STR("ferry_plugin_update_unsafe"),
+            requireInteraction: true,
+            priority: 2
+        });
+    } else if (result === "uptodate") {
+        // Installiertes Plugin ist das neueste Release (Erweiterung neuer als jedes veröffentlichte Plugin)
+        // Eigene ID je Meldung: bei gleicher ID ersetzt der Browser die alte still, ohne erneut anzuzeigen
+        chrome.notifications.create("keepassferry-update-none-" + Date.now(), {
+            type: "basic",
+            iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
+            title: "KeePassFerry",
+            message: $STR("ferry_plugin_update_none")
+        });
+    } else if (result !== "started" && result !== "cancelled") {
+        chrome.tabs.create({ url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest" });
+    }
+    return result;
+}
 
 export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg: AddonMessage) {
     if (msg.mutation) {
@@ -36,29 +75,9 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
         ferry.removeUserNotifications((n: FerryNotification) => n.id != msg.removeNotification);
     }
     if (msg.startPluginUpdate) {
-        // Plugins vor 1.0.8 führen das ganze Update auf dem Kanal zum Browser aus und können ihn dabei blockieren:
-        // für sie gleich die Release-Seite mit dem Setup öffnen
-        if (!pluginVersionAtLeast(ferry.rpc.pluginClient.nativeSessionManager.features(), BROWSER_UPDATE_PLUGIN_VERSION)) {
-            diag("hintergrund", "plugin-update", { ergebnis: "release-seite (altes plugin)" });
-            chrome.tabs.create({ url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest" });
-            return;
-        }
-        // Plugins vor 1.0.4 kennen StartPluginUpdate nicht (Ergebnis null): dann die Download-Seite öffnen
-        const result = await ferry.rpc.startPluginUpdate();
-        diag("hintergrund", "plugin-update", { ergebnis: result });
-        if (result === "signature_invalid" || result === "checksum_mismatch") {
-            // Release nicht korrekt signiert: nicht zum Download schicken, sondern warnen
-            chrome.notifications.create("keepassferry-update-unsafe", {
-                type: "basic",
-                iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
-                title: $STR("security_warning_title"),
-                message: $STR("ferry_plugin_update_unsafe"),
-                requireInteraction: true,
-                priority: 2
-            });
-        } else if (result !== "started" && result !== "cancelled" && result !== "uptodate") {
-            chrome.tabs.create({ url: "https://github.com/KeePassFerry/KeePassFerry/releases/latest" });
-        }
+        const result = await startPluginUpdate();
+        this.postMessage({ pluginUpdateResult: result } as AddonMessage);
+        return;
     }
     if (msg.action == Action.GetPasswordProfiles) {
         const passwordProfiles = await ferry.getPasswordProfiles();
@@ -569,6 +588,9 @@ export async function iframeMessageHandler(this: chrome.runtime.Port, msg: Addon
 
     if (msg.loginEditor) {
         ferry.launchLoginEditor(msg.loginEditor.uuid, msg.loginEditor.DBfilename);
+    }
+    if (msg.editEntryInPopup) {
+        openEntryInPopup(msg.editEntryInPopup.uuid, msg.editEntryInPopup.DBfilename, this.sender.tab?.windowId);
     }
 
     // Passwort-Generator: "Einsetzen" in das Feld, in das rechts geklickt wurde

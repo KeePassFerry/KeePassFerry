@@ -144,44 +144,6 @@ li.ferry-login:focus-within .ferry-login-quick { opacity: 1; }
 
 #Ferry-MatchedLoginsList { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 
-.ferry-login-more {
-    flex: none;
-    width: 28px;
-    height: 28px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--muted);
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-    opacity: 0;
-}
-li.ferry-login:hover .ferry-login-more,
-li.ferry-login:focus .ferry-login-more,
-li.ferry-login:focus-within .ferry-login-more { opacity: 1; }
-.ferry-login-more:hover { background: var(--border); color: var(--text); }
-
-.ferry-login-actions.enabled {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 0 8px 9px 52px;
-}
-.ferry-login-actions button {
-    font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    cursor: pointer;
-}
-.ferry-login-actions button:hover { border-color: var(--accent); color: var(--accent); }
-.ferry-login-actions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-
 #optionsContainer {
     flex-shrink: 0;
 }

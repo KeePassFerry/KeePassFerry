@@ -55,8 +55,9 @@ namespace KeePassFerry
 
             // KeePassFerry: geleakte Einträge für den Hinweis im Popup (GetHibpLeaks)
             "KEEPASSFERRY_HIBP_LEAKS",
-            // KeePassFerry: Hinweis im Generator, wo die Sicherung liegt (GetPasswordBackupInfo)
-            "KEEPASSFERRY_PASSWORD_BACKUP_INFO",
+            // KeePassFerry: Einstellungen zu KeePass im eigenen Dialog (OpenOptions), Vorwarnung von dort (GetExpiryWarnDays)
+            "KEEPASSFERRY_OPTIONS_DIALOG",
+
             // KeePassFerry: Ablaufdatum der Einträge (ExpiryTime/ExpiryIntervalDays), neues Ablaufdatum beim
             // Speichern (NewExpiryTime), abgelaufene ausblenden (Get/SetHideExpired)
             "KEEPASSFERRY_EXPIRY"

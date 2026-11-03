@@ -50,11 +50,6 @@
                         </v-btn>
                     </div>
                 </div>
-                <!-- KeePass sichert jedes erzeugte Passwort (falls ein Speichern auf der Website schiefgeht) -->
-                <p v-if="backupGroup && renderedPassword" class="ferry-gen-note ferry-gen-backup">
-                    <tabler-database class="ferry-ico" />
-                    {{ $i18n("ferry_generator_backup_hint", [backupGroup]) }}
-                </p>
                 <template v-if="!standalone">
                     <p class="ferry-gen-note">{{ $i18n("password_will_be_set_on_field") }}</p>
                     <v-checkbox v-model="forceCopy" :label="$i18n('also_copy_to_clipboard')" density="compact" color="primary" hide-details />
@@ -97,7 +92,6 @@ export default {
     },
     data: () => ({
         // Gruppe in KeePass, in der das erzeugte Passwort gesichert wird (null: keine Sicherung bzw. unbekannt)
-        backupGroup: null as string,
         selectedProfile: "",
         forceCopy: false,
         revealed: true,
@@ -174,10 +168,6 @@ export default {
         }
     },
     mounted: async function () {
-        chrome.runtime
-            .sendMessage({ keepassferry: "getPasswordBackupInfo" })
-            .then(info => (this.backupGroup = info?.enabled ? info.group : null))
-            .catch(() => undefined);
         await this.loadSiteRule();
         this.selectDefaultProfile();
     },
@@ -248,12 +238,6 @@ export default {
                     this.cachedGeneratedPassword = "";
                 }
                 this.loading = false;
-                // Wie beim Erzeugen über KeePass: Sicherung in "Generierte Passwörter"
-                if (this.cachedGeneratedPassword) {
-                    chrome.runtime
-                        .sendMessage({ keepassferry: "backupGeneratedPassword", password: this.cachedGeneratedPassword, url: this.siteUrl })
-                        .catch(() => undefined);
-                }
                 return;
             }
             try {
@@ -360,15 +344,5 @@ export default {
 }
 .ferry-gen-actions .v-btn {
     min-width: 112px;
-}
-.ferry-gen-backup {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.ferry-gen-backup .ferry-ico {
-    flex: none;
-    width: 14px;
-    height: 14px;
 }
 </style>
