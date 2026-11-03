@@ -19,7 +19,7 @@ class ContentPortManager {
         } catch (e) {
             if (FerryLog && FerryLog.warn) FerryLog.warn("Failed to post a message. If the addon has just auto-updated this is expected. " + (e?.message ?? e) + (this.disconnectReason ? " (disconnected: " + this.disconnectReason + ")" : ""));
         }
-    }
+    };
 
     private disconnectReason: string = null;
 

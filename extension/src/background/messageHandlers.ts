@@ -261,7 +261,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         if (frameState) frameState.urlEntries = result ?? [];
         if (this.sender.tab.id === ferry.foregroundTabId) commandManager.scheduleContextMenuUpdate();
         // Mehrseitige Anmeldung: den eben im Tab gewählten Eintrag auf Folgeseiten derselben Domain bevorzugen
-        let preferredUuid: string = undefined;
+        let preferredUuid: string;
         const last = ferry.persistentTabStates.get(this.sender.tab.id)?.lastFilledEntry;
         const domain = FerryURL.fromString(this.sender.url ?? msg.findMatches.uri ?? "")?.domainOrIPAddress;
         if (last && sameSite(last.domain, domain) && last.at > Date.now() - 10 * 60 * 1000 && result?.some(e => e.uuid === last.uuid)) {

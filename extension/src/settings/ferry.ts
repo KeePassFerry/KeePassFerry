@@ -128,8 +128,6 @@ function updateKeePassOptionButtons(available: boolean) {
 }
 
 
-
-
 async function refreshStatus() {
     let s: Status = null;
     try {

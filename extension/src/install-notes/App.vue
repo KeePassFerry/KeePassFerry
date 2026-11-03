@@ -16,7 +16,7 @@
             <section v-if="showPermissionsInfo" class="card">
                 <h2>{{ $i18n("ferry_welcome_permission_title") }}</h2>
                 <p>{{ $i18n("ferry_welcome_permission_text") }}</p>
-                <button class="btn primary" @click="requestPermissions">{{ $i18n("continue") }}</button>
+                <button class="btn btn-accent" @click="requestPermissions">{{ $i18n("continue") }}</button>
             </section>
 
             <section class="card status" :class="statusTone">
@@ -34,7 +34,7 @@
                         <h3>{{ $i18n("ferry_welcome_step1_title") }}</h3>
                         <p>{{ $i18n("ferry_welcome_step1_text") }}</p>
                         <p v-if="!(status?.hostRunning || status?.connected)" class="download">
-                            <a class="btn primary" href="https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/KeePassFerry-Setup.exe">
+                            <a class="btn btn-accent" href="https://github.com/KeePassFerry/KeePassFerry/releases/latest/download/KeePassFerry-Setup.exe">
                                 {{ $i18n("ferry_welcome_download") }}
                             </a>
                             <a class="link" href="https://github.com/KeePassFerry/KeePassFerry/releases/latest" target="_blank" rel="noopener">
@@ -43,7 +43,7 @@
                         </p>
                         <!-- Plugin zu alt: Update in KeePass anstoßen (wie der Hinweis im Popup) -->
                         <p v-else-if="pluginOutdated" class="download">
-                            <button class="btn primary" :disabled="updateStarted" @click="startUpdate">
+                            <button class="btn btn-accent" :disabled="updateStarted" @click="startUpdate">
                                 <span v-if="updateStarted" class="spinner" aria-hidden="true" />
                                 {{ $i18n("ferry_plugin_update_button") }}
                             </button>
@@ -261,7 +261,7 @@ html, body, #main, .v-application {
     padding: 9px 18px;
     cursor: pointer;
 }
-.btn.primary { background: var(--w-accent); color: #fff; }
+.btn.btn-accent { background: var(--w-accent); color: #fff; }
 .btn:disabled { opacity: 0.6; cursor: progress; }
 .btn .spinner {
     display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px;

@@ -29,22 +29,6 @@
     </div>
 </template>
 
-<style>
-.ferry-where-tree {
-    max-height: 300px;
-    min-height: 220px;
-    overflow-y: auto;
-    border: 1px solid var(--ferry-line);
-    border-radius: 10px;
-    padding: 4px 0;
-}
-.ferry-where-tree ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-</style>
-
 <script lang="ts">
 import { Port } from "../../common/port";
 import { Action } from "../../common/Action";
@@ -95,11 +79,11 @@ function findDatabaseAndGroupByGroupId(databases: Database[], uuid: string) {
 let selectedItem: any = {};
 
 export default {
-    emits: ["back"],
     components: {
         Tree: GroupSelectorTree
     },
     props: ["preferredGroupUuid", "displayReason"],
+    emits: ["back"],
     setup() {
         const { updateSaveState } = useStore();
         return { updateSaveState };
@@ -222,3 +206,19 @@ export default {
 };
 
 </script>
+
+<style>
+.ferry-where-tree {
+    max-height: 300px;
+    min-height: 220px;
+    overflow-y: auto;
+    border: 1px solid var(--ferry-line);
+    border-radius: 10px;
+    padding: 4px 0;
+}
+.ferry-where-tree ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+</style>

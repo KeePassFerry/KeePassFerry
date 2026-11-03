@@ -15,7 +15,7 @@ import { FerryURL } from "../common/FerryURL";
 describe("relatedDomains", () => {
     it("findet die anderen Domains der Gruppe", () => {
         const r = relatedDomains("live.com");
-        expect(r).toContain("outlook.com");
+        expect(r).toContain("hotmail.com");
         expect(r).toContain("microsoftonline.com");
         expect(r).not.toContain("live.com");
     });
@@ -32,7 +32,7 @@ describe("relatedDomains", () => {
     });
 
     it("mischt keine Anbieter", () => {
-        expect(relatedDomains("google.com")).not.toContain("outlook.com");
+        expect(relatedDomains("google.com")).toEqual([]);
         expect(relatedDomains("apple.com")).toEqual(["icloud.com"]);
     });
 });
@@ -42,9 +42,8 @@ describe("Liste zugehöriger Domains", () => {
     // sonst würde ein Eintrag auf beliebigen fremden Seiten unter dieser Endung angeboten
     it("enthält nur registrierbare Domains", () => {
         const all = new Set<string>();
-        for (const probe of ["live.com", "google.com", "apple.com", "amazon.de", "ebay.de", "paypal.com", "facebook.com",
-            "proton.me", "ui.com", "atlassian.com", "x.com", "disney.com", "stackoverflow.com", "docusign.com",
-            "autodesk.com", "alibaba.com", "airbnb.de", "yandex.ru"]) {
+        for (const probe of ["live.com", "apple.com", "amazon.de", "ebay.de", "facebook.com", "proton.me", "atlassian.com",
+            "x.com", "disney.com", "stackoverflow.com", "docusign.com", "alibaba.com", "airbnb.de"]) {
             const group = [probe, ...relatedDomains(probe)];
             expect(group.length).toBeGreaterThan(1);
             for (const d of group) all.add(d);
@@ -61,11 +60,9 @@ describe("Liste zugehöriger Domains", () => {
         }
     });
 
-    it("übernimmt Apples Gruppen und ergänzt sie um die eigene Liste", () => {
+    it("übernimmt Apples Gruppen", () => {
         expect(relatedDomains("envato.com")).toContain("themeforest.net");
-        // Apple führt Microsoft nur historisch und ohne outlook.com; die eigene Liste ergänzt es
-        expect(relatedDomains("outlook.com")).toContain("onenote.com");
-        expect(relatedDomains("onenote.com")).toContain("outlook.com");
+        expect(relatedDomains("onenote.com")).toContain("live.com");
     });
 });
 

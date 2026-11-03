@@ -40,13 +40,13 @@
                             <v-tooltip location="top" activator="parent">
                                 {{ revealed ? $i18n("ferry_generator_hide") : $i18n("ferry_generator_show") }}
                             </v-tooltip>
-                            <tabler-eye-off class="ferry-ico" v-if="revealed"/>
-                            <tabler-eye class="ferry-ico" v-else/>
+                            <tabler-eye-off v-if="revealed" class="ferry-ico"/>
+                            <tabler-eye v-else class="ferry-ico"/>
                         </v-btn>
                         <v-btn variant="text" icon size="small" :disabled="disabled" :color="copied ? 'success' : undefined" @click="copyOnly">
                             <v-tooltip location="top" activator="parent">{{ $i18n("copy_value_to_clipboard") }}</v-tooltip>
-                            <tabler-check class="ferry-ico" v-if="copied"/>
-                            <tabler-copy class="ferry-ico" v-else/>
+                            <tabler-check v-if="copied" class="ferry-ico"/>
+                            <tabler-copy v-else class="ferry-ico"/>
                         </v-btn>
                     </div>
                 </div>

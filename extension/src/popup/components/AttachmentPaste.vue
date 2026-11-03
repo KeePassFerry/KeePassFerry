@@ -1,8 +1,8 @@
 <template>
     <div
+        ref="zone"
         class="paste-zone"
         :class="{ active: dragOver, failed: failed, choice: !!totpUri }"
-        ref="zone"
         tabindex="0"
         role="group"
         :aria-label="$i18n('attachment_paste_hint')"

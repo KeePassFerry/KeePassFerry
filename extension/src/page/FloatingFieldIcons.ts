@@ -8,6 +8,7 @@ verdeckte oder unsichtbare Felder bekommen kein Symbol.
 - senkrecht: Mitte des sichtbaren Feldrahmens (auch über Shadow DOM hinweg), sonst Mitte des Felds
 */
 
+import { fieldFrameRect } from "./fieldFrame";
 import { isVisible } from "./visibility";
 
 const HOST_TAG = "keepassferry-field-icons";
@@ -37,7 +38,7 @@ interface IconState {
     onInput?: (e: Event) => void;
 }
 
-type PointRoot = { elementFromPoint(x: number, y: number): Element };
+type PointRoot = { elementFromPoint(x: number, y: number): Element; elementsFromPoint(x: number, y: number): Element[] };
 
 function rootFor(element: Element): PointRoot {
     const rootNode = element.getRootNode() as any;
@@ -69,7 +70,7 @@ function visibleLeft(el: Element, field: DOMRect): number {
 // Abstand vom rechten Feldrand: links neben einem eigenen Element der Seite, das rechts im Feld liegt
 export function computeIconOffset(element: HTMLElement, iconWidth: number): number {
     let offset = BASE_OFFSET;
-    const rect = element.getBoundingClientRect();
+    const rect = fieldFrameRect(element);
     if (rect.width <= 0 || rect.height <= 0) return offset;
     const y = rect.top + rect.height / 2;
     const root = rootFor(element);
@@ -78,7 +79,8 @@ export function computeIconOffset(element: HTMLElement, iconWidth: number): numb
         if (iconRight - iconWidth <= rect.left + rect.width / 2) break;
         let blocker: Element = null;
         for (const x of [iconRight - 1, iconRight - iconWidth / 2, iconRight - iconWidth + 1]) {
-            const topmost = root.elementFromPoint(x, y);
+            // Oberstes Seitenelement an der Stelle, das eigene Symbol übersprungen
+            const topmost = root.elementsFromPoint(x, y).find(h => !isOwnHost(h));
             if (topmost && topmost !== element && !isOwnHost(topmost) && !topmost.contains(element) && !element.contains(topmost)) {
                 blocker = topmost;
                 break;
@@ -208,17 +210,12 @@ export class FloatingFieldIcons {
         this.position(element, state);
     }
 
-    // Abstand zu eigenen Knöpfen der Seite (Auge, Stift …) neu bestimmen. Das eigene Symbol ist dabei kurz
-    // durchklickbar, damit darunterliegende Seitenelemente gefunden werden.
+    // Abstand zu eigenen Knöpfen der Seite (Auge, Stift …) neu bestimmen. Der Abstand wächst nur: Seiten wie die
+    // Microsoft-Anmeldung zeigen das Auge nur, solange die Maus im Feld ist, und auf unserem Symbol gilt sie als
+    // draußen. Rückte das Symbol beim Ausblenden zurück, lag die Maus wieder im Feld, das Auge kam wieder usw.
     private recomputeOffset(element: HTMLElement, state: IconState) {
         if (state.outside) return;
-        const previous = state.button.style.pointerEvents;
-        state.button.style.pointerEvents = "none";
-        try {
-            state.offset = computeIconOffset(element, state.width);
-        } finally {
-            state.button.style.pointerEvents = previous;
-        }
+        state.offset = Math.max(state.offset, computeIconOffset(element, state.width));
     }
 
     // Bild austauschen (z. B. Anzahl-Plakette oder Gültigkeitskreis), Position bleibt rechtsbündig
@@ -347,8 +344,10 @@ export class FloatingFieldIcons {
             state.button.style.display = "none";
             return;
         }
+        // Am sichtbaren Rahmen ausrichten: das Eingabefeld selbst kann schmaler werden, wenn die Seite ein Auge einblendet
+        const right = state.outside ? rect.right : fieldFrameRect(element).right;
         const offset = state.edgeTyped ? Math.max(state.offset, EDGE_REVEAL_OFFSET) : state.offset;
-        const left = Math.round(state.outside ? rect.right + 8 : rect.right - offset - state.width);
+        const left = Math.round(state.outside ? right + 8 : right - offset - state.width);
         const top = Math.round(visualCenterY(element, rect) - 8);
         // Neben dem Feld (Einzelziffern) liegt naturgemäß kein Feld unter dem Symbol: dort nicht prüfen
         if (!state.outside && !this.spotBelongsToField(element, state, left + state.width / 2, top + 8)) {
@@ -364,16 +363,13 @@ export class FloatingFieldIcons {
     // dort (Auswahlliste, Dialog, Cookie-Banner) und das Symbol darf nicht darüber schweben.
     private spotBelongsToField(element: HTMLElement, state: IconState, x: number, y: number): boolean {
         if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) return false;
-        const previous = state.button.style.pointerEvents;
-        state.button.style.pointerEvents = "none";
-        let hit: Element;
-        try {
-            hit = rootFor(element).elementFromPoint(x, y);
-        } finally {
-            state.button.style.pointerEvents = previous;
-        }
-        if (!hit) return false;
-        if (isOwnHost(hit) || hit === element || element.contains(hit) || hit.contains(element)) return true;
+        // Unter dem eigenen Symbol nachsehen, ohne es kurz durchklickbar zu machen: das Umschalten von
+        // pointer-events ließ den Mauszeiger auf dem Symbol scheinbar das Feld betreten und verlassen; Seiten blendeten
+        // dann ihr Auge ein und aus, das Symbol rückte hin und her und der Hinweis flackerte
+        const hits = rootFor(element).elementsFromPoint(x, y);
+        if (!hits.length) return false;
+        const hit = hits.find(h => !isOwnHost(h));
+        if (!hit || hit === element || element.contains(hit) || hit.contains(element)) return true;
         // Rahmen des Felds (bis zu drei Ebenen, kaum größer als das Feld) mit Seitenknöpfen wie dem Auge
         const fieldRect = element.getBoundingClientRect();
         let node: Element = element;

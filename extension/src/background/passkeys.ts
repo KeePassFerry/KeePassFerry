@@ -347,7 +347,7 @@ export async function signalPasskey(sender: chrome.runtime.MessageSender, kind: 
             const userId = String(payload?.userId ?? "");
             const name = String(payload?.name ?? "") || String(payload?.displayName ?? "");
             if (!userId || !name) return { result: "none" };
-            for (const p of all.filter(p => p.userHandle === userId && p.username !== name)) {
+            for (const p of all.filter(c => c.userHandle === userId && c.username !== name)) {
                 await ferry.rpc.passkeyUpdateUser(p.uuid, p.dbFileName, rpId, p.credentialId, name);
             }
             return { result: "none" };

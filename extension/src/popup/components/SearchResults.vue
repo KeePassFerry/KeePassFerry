@@ -116,9 +116,7 @@ export default {
         },
         nextInList(currentIndex: number, listName: string, listLength: any) {
             const currentVueNode = (listName === "listAarray" ? this.aNodes : this.bNodes).find(
-                e => {
-            return parseInt(e.dataIndex) === currentIndex;
-                }
+                e => parseInt(e.dataIndex) === currentIndex
             );
             const nodes = listName === "listAarray" ? this.aNodes : this.bNodes;
             if (currentIndex < listLength - 1) {

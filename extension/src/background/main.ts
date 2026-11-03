@@ -18,6 +18,7 @@ import { pageStateOf } from "./pageState";
 import { appleChangePasswordUrl, changePasswordUrl } from "./changePassword";
 import { forgetExpiryNotice } from "./expiryNotice";
 import { startPluginUpdate } from "./messageHandlers";
+import { copyStringToClipboard } from "../common/copyStringToClipboard";
 
 function appleChangePasswordUrlFor(entryUrl: string): string {
     try {
@@ -225,6 +226,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     switch (request) {
         case "getTotp":
             work = ferry.rpc.getTotp(msg.uuid, msg.dbFileName);
+            break;
+        case "copyTotp":
+            // Liste am Feld: Code holen und hier kopieren; die Liste schließt sich danach, das Kopieren darf nicht an
+            // ihrem iframe hängen
+            work = ferry.rpc.getTotp(msg.uuid, msg.dbFileName).then(async totp => {
+                if (!totp?.code) return false;
+                await copyStringToClipboard(totp.code);
+                return true;
+            });
             break;
         case "getOtpSetup":
             work = getOtpSetupForPopup(ferry.foregroundTabId);

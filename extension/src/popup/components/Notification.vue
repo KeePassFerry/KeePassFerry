@@ -22,24 +22,6 @@
     </div>
 </template>
 
-<style>
-.ferry-notification {
-    align-items: flex-start;
-}
-.ferry-notification > .ferry-ico {
-    margin-top: 2px;
-}
-.ferry-notification p {
-    margin: 0 0 4px;
-}
-.ferry-notification-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-}
-</style>
-
 <script lang="ts">
 import { ButtonAction } from "../../common/Button";
 import { configManager } from "../../common/ConfigManager";
@@ -68,7 +50,7 @@ export default {
         dispatchActionResponse(id: string, action: ButtonAction, data: { [id: string]: string }) {
             const pm = Port.postMessage;
             switch (action) {
-                case "startPluginUpdate":
+                case "startPluginUpdate": {
                     // Hinweis bleibt: bricht man das Setup ab, kann man es erneut starten. Spinner bis zur Antwort
                     // (pluginUpdateResult); läuft das Setup, bleibt er, bis KeePass neu startet
                     this.updating = true;
@@ -81,6 +63,7 @@ export default {
                     Port.raw?.onMessage.addListener(onResult);
                     pm({ startPluginUpdate: true });
                     return;
+                }
                 case "disableNotifyWhenEntryUpdated":
                     configManager.current.notifyWhenEntryUpdated = false;
                     configManager.save();
@@ -106,3 +89,21 @@ export default {
     }
 };
 </script>
+
+<style>
+.ferry-notification {
+    align-items: flex-start;
+}
+.ferry-notification > .ferry-ico {
+    margin-top: 2px;
+}
+.ferry-notification p {
+    margin: 0 0 4px;
+}
+.ferry-notification-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+</style>

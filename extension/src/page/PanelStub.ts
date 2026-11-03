@@ -1,4 +1,5 @@
 import { configManager } from "../common/ConfigManager";
+import { fieldFrameRect } from "./fieldFrame";
 
 export class PanelStubOptions {
     id: string;
@@ -45,9 +46,18 @@ export class PanelStub {
     private elementToRefocus: Element;
     // Zusätzliche Parameter für die Panel-Seite (z. B. "&insert=1")
     public extraQuery = "";
+    // Klick auf die Seite außerhalb des Panels (nur echte Klicks, wie KeePassXC-Browser); Klicks im Panel selbst
+    // landen im iframe und erreichen die Seite nicht
+    public onOutsideClick: () => void = null;
+    private outsideListener = (e: PointerEvent) => {
+        if (!e.isTrusted || !this.container) return;
+        const path = e.composedPath();
+        if (path.includes(this.container) || (this.target && path.includes(this.target))) return;
+        this.onOutsideClick?.();
+    };
 
     // relatedCount: Einträge mit der Zusatzzeile "Zugehörige Domain" (je eine Zeile höher)
-    constructor(options: PanelStubOptions, target: HTMLElement, parentFrameId: number, itemCount?: number, itemTexts?: string[], relatedCount = 0) {
+    constructor(options: PanelStubOptions, target: HTMLElement, parentFrameId: number, itemCount?: number, itemTexts?: string[], relatedCount = 0, anyOtp = false) {
         this.target = target;
         this.options = options;
         this.parentFrameId = parentFrameId;
@@ -55,7 +65,7 @@ export class PanelStub {
         if (options.name === "matchedLoginsLegacy" && itemCount > 0) {
             this.options = {
                 ...options,
-                width: PanelStub.matchedLoginsWidth(itemTexts ?? []),
+                width: PanelStub.matchedLoginsWidth(itemTexts ?? [], anyOtp),
                 height: Math.min(options.height, 58 + itemCount * 50 + relatedCount * 18)
             };
         }
@@ -63,8 +73,8 @@ export class PanelStub {
 
     // Breite der Auswahlliste: längster Benutzername/Titel plus Zeilenrahmen (Symbol, Schnellknöpfe, Abstände),
     // mindestens 340 px, höchstens 560 px und nie breiter als das Fenster
-    private static matchedLoginsWidth(texts: string[]): number {
-        const ROW_CHROME = 200;
+    private static matchedLoginsWidth(texts: string[], anyOtp = false): number {
+        const ROW_CHROME = 200 + (anyOtp ? 30 : 0);
         let longest = 0;
         const context = document.createElement("canvas").getContext("2d");
         if (context) {
@@ -93,7 +103,7 @@ export class PanelStub {
         shadow.appendChild(style);
 
         if (this.target) {
-            this.targetRelativeRect = this.target.getBoundingClientRect();
+            this.targetRelativeRect = fieldFrameRect(this.target);
             this.positionPanel();
         } else {
             this.container.style.setProperty("width", this.options.width + "px", "important");
@@ -147,11 +157,13 @@ export class PanelStub {
                 framesetElements[0].insertAdjacentElement("afterend", this.container);
             }
         }
+        // Erst nach dem Klick, der das Panel geöffnet hat
+        if (this.onOutsideClick) setTimeout(() => document.addEventListener("pointerdown", this.outsideListener, true), 0);
     }
 
     public updateBoundingClientRect() {
         const oldRect = this.targetRelativeRect;
-        this.targetRelativeRect = this.target.getBoundingClientRect();
+        this.targetRelativeRect = fieldFrameRect(this.target);
 
         if (
             oldRect.top != this.targetRelativeRect.top ||
@@ -215,6 +227,7 @@ export class PanelStub {
     }
 
     public closePanel() {
+        document.removeEventListener("pointerdown", this.outsideListener, true);
         const panel = document.getElementById(this.options.id);
         if (panel) panel.parentNode.removeChild(panel);
         if (this.elementToRefocus) {

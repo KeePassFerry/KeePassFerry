@@ -7,6 +7,7 @@ import {setup as i18nSetup } from "../common/i18n";
 
 const QUICK_ICON_USER = "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 8a7 7 0 0 1 14 0";
 const QUICK_ICON_KEY = "M8 19a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm2.8-6.8L20 3m-3 3 3 3m-5.5-.5 2 2";
+const QUICK_ICON_OTP = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0-13v4l3 2";
 const QUICK_ICON_EDIT = "M4 20h4L18.5 9.5a2.8 2.8 0 0 0-4-4L4 16v4zm9.5-13.5 4 4";
 
 export class MatchedLoginsPanel {
@@ -85,6 +86,13 @@ export class MatchedLoginsPanel {
             const quickPassword = Entry.getPasswordField(entry);
             if (quickUser?.value) row.append(this.quickCopyButton(QUICK_ICON_USER, $STR("copy_username_label"), quickUser.value));
             if (quickPassword?.value) row.append(this.quickCopyButton(QUICK_ICON_KEY, $STR("copy_password_label"), quickPassword.value));
+            // Einmalcode erst beim Klick aus KeePass holen (ändert sich alle 30 s)
+            if (entry.hasOtp) {
+                row.append(this.quickButton(QUICK_ICON_OTP, $STR("otp_copy_tip"), async () => {
+                    const copied = await chrome.runtime.sendMessage({ keepassferry: "copyTotp", uuid: entry.uuid, dbFileName: entry.database.fileName }).catch(() => false);
+                    if (copied) this.myPort.postMessage({ action: Action.CloseAllPanels } as AddonMessage);
+                }));
+            }
             // Bearbeiten im Popup (wie dort beim aufgeklappten Eintrag)
             row.append(this.quickButton(QUICK_ICON_EDIT, $STR("ferry_edit_entry"), () => {
                 this.myPort.postMessage({ editEntryInPopup: { uuid: entry.uuid, DBfilename: entry.database.fileName } } as AddonMessage);

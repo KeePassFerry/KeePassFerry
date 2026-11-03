@@ -100,8 +100,10 @@ export class FormFilling {
                     this.parentFrameId,
                     this.matchedEntryCount(),
                     this.matchedEntryTexts(),
-                    this.matchedRelatedCount()
+                    this.matchedRelatedCount(),
+                    this.matchedAnyOtp()
                 );
+                this.matchedLoginsPanelStub.onOutsideClick = () => this.closeMatchedLoginsPanel();
                 this.matchedLoginsPanelStub.createPanel();
             }
         }
@@ -114,6 +116,7 @@ export class FormFilling {
             null,
             specificFrameId
         );
+        this.matchedLoginsPanelStub.onOutsideClick = () => this.closeMatchedLoginsPanel();
         this.matchedLoginsPanelStub.createPanel();
     }
 
@@ -125,8 +128,10 @@ export class FormFilling {
             this.parentFrameId,
             this.matchedEntryCount(),
             this.matchedEntryTexts(),
-            this.matchedRelatedCount()
+            this.matchedRelatedCount(),
+            this.matchedAnyOtp()
         );
+        this.matchedLoginsPanelStub.onOutsideClick = () => this.closeMatchedLoginsPanel();
         FerryLog.debug("Creating panel...");
         this.matchedLoginsPanelStub.createPanel();
         this.matchedLoginsPanelStubRaf = requestAnimationFrame(() =>
@@ -148,14 +153,20 @@ export class FormFilling {
         return uuids.size;
     }
 
+    // Mindestens ein Eintrag mit Einmalcode (Knopf "Einmalcode kopieren" in der Zeile)
+    private matchedAnyOtp(): boolean {
+        return (this.matchResult?.entries ?? []).some(list => (list ?? []).some(e => e.hasOtp));
+    }
+
     // Angezeigte Texte der passenden Einträge (Benutzername, Titel) für die Breite der Auswahlliste
     private matchedEntryTexts(): string[] {
         const texts: string[] = [];
-        for (const list of this.matchResult?.entries ?? [])
+        for (const list of this.matchResult?.entries ?? []) {
             for (const e of list ?? []) {
                 texts.push(Entry.getUsernameField(e)?.value ?? "", e.title ?? "");
                 if (e.relatedDomain) texts.push($STRF("ferry_related_domain", [e.relatedDomain]));
             }
+        }
         return texts;
     }
 

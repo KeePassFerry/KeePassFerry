@@ -72,10 +72,6 @@ export default {
     },
     // close: (scrollTop), edit: (leak, scrollTop) – die Position gibt der Aufrufer beim nächsten Öffnen als restoreScroll mit
     emits: ["close", "edit"],
-    mounted: async function () {
-        if (this.startWithAll) await this.loadAll();
-        this.scrollBack();
-    },
     data: () => ({
         all: null as Leak[],
         loaded: true,
@@ -85,6 +81,10 @@ export default {
         shown: function (): Leak[] {
             return this.showAll ? this.all ?? [] : (this.leaks as Leak[]);
         }
+    },
+    mounted: async function () {
+        if (this.startWithAll) await this.loadAll();
+        this.scrollBack();
     },
     methods: {
         edit(leak: Leak) {

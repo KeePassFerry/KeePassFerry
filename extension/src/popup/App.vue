@@ -35,7 +35,8 @@
                     </div>
                 </div>
                 <!-- Nach einem Update einmal: Neuigkeiten dieser Version (Einstellungen > Neuigkeiten und Tipps) -->
-                <div v-if="news && !newLeaks.length && !otpPending && !showSaveRecovery" class="ferry-note ferry-news-note" role="button" tabindex="0"
+                <div
+v-if="news && !newLeaks.length && !otpPending && !showSaveRecovery" class="ferry-note ferry-news-note" role="button" tabindex="0"
                     @click="openNews" @keyup.enter="openNews">
                     <tabler-sparkles class="ferry-ico" />
                     <span class="ferry-note-text">{{ $i18n("ferry_news_popup", [news.version, String(news.items.length)]) }}</span>
@@ -77,11 +78,14 @@
                 <div v-if="showNotifications" id="notifications">
                     <Notification v-for="n of notifications" :key="n.id" :notification="n" />
                 </div>
-                <SearchResults v-show="showSearchPanel" :matched-entries-in="cachedMatchedEntries" :site-entries-in="siteEntries" :frame-id="frameId"
+                <SearchResults
+v-show="showSearchPanel" :matched-entries-in="cachedMatchedEntries" :site-entries-in="siteEntries" :frame-id="frameId"
                     @pref-entry-toggle="prefEntryToggle" />
-                <Save1stParty v-if="showSaveStart && !showSaveWhere" @save-where-clicked="saveWhere"
+                <Save1stParty
+v-if="showSaveStart && !showSaveWhere" @save-where-clicked="saveWhere"
                     @cancel-clicked="saveCanceled" @saved-additions-only="saveDiscard" />
-                <SaveWhere v-if="showSaveWhere" :display-reason="displayWhereReason"
+                <SaveWhere
+v-if="showSaveWhere" :display-reason="displayWhereReason"
                     :preferred-group-uuid="preferredGroupUuid" @back="showSaveWhere = false" />
             </main>
 
@@ -94,23 +98,27 @@
                     </v-tooltip>
                 </div>
                 <v-spacer />
-                <button v-show="showSearchPanel && !showSaveRecovery" type="button" class="ferry-ib" :class="hasSubmittedData ? 'pulse-button' : ''"
+                <button
+v-show="showSearchPanel && !showSaveRecovery" type="button" class="ferry-ib" :class="hasSubmittedData ? 'pulse-button' : ''"
                     :aria-label="$i18n('create_new_entry')" @click="saveStart">
                     <tabler-plus class="ferry-ico" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("create_new_entry") }}</v-tooltip>
                 </button>
-                <button v-show="showSearchPanel" type="button" class="ferry-ib"
+                <button
+v-show="showSearchPanel" type="button" class="ferry-ib"
                     :aria-label="$i18n('Menu_Button_copyNewPasswordToClipboard_label')" @click="showPasswordGenerator = true">
                     <tabler-wand class="ferry-ico" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_copyNewPasswordToClipboard_label") }}</v-tooltip>
                 </button>
-                <button v-show="showOpenKeePassButton" id="password-open-keepass" type="button" class="ferry-ib"
+                <button
+v-show="showOpenKeePassButton" id="password-open-keepass" type="button" class="ferry-ib"
                     :aria-label="$i18n('Menu_Button_open_keepass_label')" @click="openKeePass">
                     <tabler-app-window class="ferry-ico" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_open_keepass_label") }}</v-tooltip>
                 </button>
                 <!-- Geleakte Passwörter jederzeit erreichbar (die Karte "neu gefunden" erscheint nur einmal) -->
-                <button v-if="allLeakCount > 0" type="button" class="ferry-ib ferry-leaks-btn"
+                <button
+v-if="allLeakCount > 0" type="button" class="ferry-ib ferry-leaks-btn"
                     :aria-label="$i18n('ferry_leaks_footer', [String(allLeakCount)])" @click="openAllLeaks">
                     <tabler-alert-triangle class="ferry-ico" />
                     <span class="ferry-leaks-badge">{{ allLeakCount > 99 ? "99+" : allLeakCount }}</span>
@@ -129,9 +137,11 @@
             </footer>
         </div>
         <NewsView v-if="showNews" @close="showNews = false; refreshOpenTips()" @tips-changed="refreshOpenTips" />
-        <LeaksView v-if="leaksShown" :leaks="leaksShown" :start-with-all="leaksShowAll" :restore-scroll="leaksScroll"
+        <LeaksView
+v-if="leaksShown" :leaks="leaksShown" :start-with-all="leaksShowAll" :restore-scroll="leaksScroll"
             @close="leaksShown = null; leaksScroll = $event ?? 0" @edit="editLeak" />
-        <PasswordGenerator v-if="showPasswordGenerator" :standalone="true" @dialog-closed="passwordGeneratorClosed"
+        <PasswordGenerator
+v-if="showPasswordGenerator" :standalone="true" @dialog-closed="passwordGeneratorClosed"
             @copy-to-clipboard="copyToClipboard" />
     </v-app>
 </template>
@@ -601,7 +611,7 @@ export default {
                 // so closing the window avoids user seeing out of date information.
                 window.close();
             }
-        },
+        }
     }
 };
 </script>

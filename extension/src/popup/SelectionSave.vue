@@ -11,7 +11,7 @@
                 <header class="head">
                     <img src="/assets/images/48.png" alt="" class="logo" />
                     <div class="head-text">
-                        <div class="title">{{ $i18n("selSave_heading") }}</div>
+                        <div class="ferry-sheet-title">{{ $i18n("selSave_heading") }}</div>
                         <div v-if="setup" class="subtitle">{{ setup.domain }}</div>
                     </div>
                 </header>
@@ -59,7 +59,7 @@
                                 <span class="item-user">{{ c.username }}</span>
                             </span>
                             <span class="check">
-                                <tabler-circle-check class="ferry-ico" v-if="isSelected(c)"/>
+                                <tabler-circle-check v-if="isSelected(c)" class="ferry-ico"/>
                             </span>
                         </button>
                         <div v-if="shownEntries.length === 0" class="empty">{{ $i18n("otpSetup_none") }}</div>
@@ -76,7 +76,7 @@
                                 <span class="item-user">{{ setup.pageTitle || setup.domain }}</span>
                             </span>
                             <span class="check">
-                                <tabler-circle-check class="ferry-ico" v-if="newEntry"/>
+                                <tabler-circle-check v-if="newEntry" class="ferry-ico"/>
                             </span>
                         </button>
                     </div>
@@ -301,7 +301,7 @@ export default {
     width: 32px;
     height: 32px;
 }
-.title {
+.ferry-sheet-title {
     font-size: 16px;
     font-weight: 600;
 }

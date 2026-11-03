@@ -2,6 +2,20 @@
 
 English · [Deutsch](#deutsch)
 
+## Unreleased
+
+- List of logins at a field: a click on the page next to the list closes it (like KeePassXC-Browser, only real
+  clicks); before, only × closed it.
+- List of logins at a field: entries with a one-time code have a button "Copy one-time code"; the code is fetched from
+  KeePass only when clicked (issue #14).
+- List of logins at a field: aligned with the visible frame of the field; on pages where the input is narrower than
+  its frame (e.g. the Microsoft sign-in) it started in the middle of the field.
+- Field icon next to a page button that only shows while the mouse is in the field (e.g. the eye on the Microsoft
+  sign-in): the icon no longer jumps back and forth; once moved aside it stays there.
+- Code cleanup: the extension passes ESLint again (Vue 3 rule set, no functional changes).
+- Related domains come only from Apple's Password Manager Resources; the own list is gone. Apple covers all providers
+  whose login pages are on different domains (e.g. Microsoft, Amazon, eBay, Apple, Stack Exchange).
+
 ## 1.0.17 – 2026-11-03
 
 - List of logins at a field (issue #14): the ⋯ button did nothing visible (its menu opened outside the visible
@@ -393,6 +407,20 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## Unveröffentlicht
+
+- Liste der Anmeldungen am Feld: Ein Klick auf die Seite neben der Liste schließt sie (wie bei KeePassXC-Browser, nur
+  echte Klicks); vorher ging das nur über ×.
+- Liste der Anmeldungen am Feld: Einträge mit Einmalcode haben einen Knopf „Einmalcode kopieren“; der Code wird erst
+  beim Klick aus KeePass geholt (Issue #14).
+- Liste der Anmeldungen am Feld: am sichtbaren Rahmen des Felds ausgerichtet; auf Seiten, deren Eingabefeld schmaler
+  als sein Rahmen ist (z. B. Microsoft-Anmeldung), begann sie mitten im Feld.
+- Feldsymbol neben einem Knopf der Seite, der nur bei der Maus im Feld erscheint (z. B. das Auge bei der
+  Microsoft-Anmeldung): Das Symbol springt nicht mehr hin und her; einmal ausgewichen, bleibt es dort.
+- Aufräumen: Die Erweiterung besteht wieder die ESLint-Prüfung (Vue-3-Regeln, keine Funktionsänderung).
+- Zugehörige Domains kommen nur noch aus Apples „Password Manager Resources“; die eigene Liste entfällt. Apple deckt
+  alle Anbieter ab, deren Anmeldeseiten auf verschiedenen Domains liegen (z. B. Microsoft, Amazon, eBay, Apple, Stack Exchange).
 
 ## 1.0.17 – 2026-11-03
 

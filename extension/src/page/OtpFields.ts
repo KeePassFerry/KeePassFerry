@@ -20,6 +20,7 @@ Felder, deren Beschriftung auf SMS oder E-Mail hindeutet, werden ausgelassen (do
 */
 
 const OTP_HINT =
+    // eslint-disable-next-line max-len
     /(one[-_ ]?time|\botp\b|\botc\b|totp|\b2fa\b|\bmfa\b|two[-_ ]?factor|2[-_ ]?step|zwei[-_ ]?faktor|verification[-_ ]?code|verify[-_ ]?code|bestätigungscode|bestaetigungscode|sicherheitscode|security[-_ ]?code|auth(entication|enticator)?[-_ ]?code|authenticator|einmal[-_ ]?(code|passwort|kennwort)|totp[-_ ]?code|otp[-_ ]?code|mfa[-_ ]?code|app[-_ ]?code)/i;
 // Kein TOTP: SMS/E-Mail/Telefon, Captcha, Wiederherstellungs- und Backup-Codes
 const NOT_TOTP_HINT =
@@ -168,7 +169,7 @@ const SETUP_HINT =
     /(authenticator|zwei[-\s]?faktor|two[-\s]?factor|\b2fa\b|\bmfa\b|\btotp\b|qr[-\s]?code|einrichtungsschlüssel|setup key|secret key|geheimer schlüssel|schlüssel manuell|manuell eingeben|enter (this|the) key|can'?t scan|nicht scannen)/i;
 const OTPAUTH_RE = /otpauth:\/\/totp\/[^\s"'<>]+/i;
 // Base32 in Gruppen (z. B. "JBSW Y3DP EHPK 3PXP"), mindestens 16 Zeichen
-const SECRET_RE = /(?:^|[^A-Za-z2-7])((?:[A-Za-z2-7]{4}[  -]?){4,16}(?:[A-Za-z2-7]{1,4})?)(?![A-Za-z2-7])/g;
+const SECRET_RE = /(?:^|[^A-Za-z2-7])((?:[A-Za-z2-7]{4}[ \u00a0-]?){4,16}(?:[A-Za-z2-7]{1,4})?)(?![A-Za-z2-7])/g;
 
 function findOtpauthUri(): string {
     const link = document.querySelector("a[href^='otpauth:' i]") as HTMLAnchorElement;
@@ -182,7 +183,7 @@ function findSecretText(pageText: string): string {
     SECRET_RE.lastIndex = 0;
     let m: RegExpExecArray;
     while ((m = SECRET_RE.exec(pageText)) !== null) {
-        const raw = m[1].replace(/[\s -]/g, "");
+        const raw = m[1].replace(/[\s\u00a0-]/g, "");
         if (raw.length < 16 || raw.length > 64) continue;
         // Nur einheitliche Schreibweise und mindestens eine Ziffer 2–7 (schließt normale Wörter aus)
         if (raw !== raw.toUpperCase() && raw !== raw.toLowerCase()) continue;
@@ -403,14 +404,14 @@ export class OtpFields {
             report(key, { otpQrRects: rects, viewportWidth: window.innerWidth });
         }
         const images = qrCandidateImages(this.qrImagesSeen)
-            .then(images => {
-                if (images.length === 0) return;
+            .then(found => {
+                if (found.length === 0) return;
                 pageDiag("qr kandidaten", {
                     hauptframe: window.top === window,
-                    anzahl: images.length,
-                    arten: images.map(i => (i.startsWith("data:") ? "daten" : "adresse"))
+                    anzahl: found.length,
+                    arten: found.map(i => (i.startsWith("data:") ? "daten" : "adresse"))
                 });
-                report("img:" + images.map(i => i.length + i.slice(-32)).join(";"), { otpQrImages: images });
+                report("img:" + found.map(i => i.length + i.slice(-32)).join(";"), { otpQrImages: found });
             })
             .catch(() => undefined);
 
@@ -581,7 +582,9 @@ export class OtpFields {
             canvas.height = 32;
             const ctx = canvas.getContext("2d");
             ctx.drawImage(this.keyImage, 0, 0, 32, 32);
-            const cx = 50, cy = 16, r = 11;
+            const cx = 50;
+            const cy = 16;
+            const r = 11;
             ctx.lineWidth = 5;
             ctx.strokeStyle = "rgba(148, 163, 184, 0.35)";
             ctx.beginPath();

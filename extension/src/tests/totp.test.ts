@@ -4,7 +4,9 @@ import { base32Decode, parseTotpParams, totpAt, totpMatches } from "../common/to
 // Base32-Kodierung nur für die Testdaten
 function base32Encode(bytes: Uint8Array): string {
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-    let out = "", bits = 0, value = 0;
+    let out = "";
+    let bits = 0;
+    let value = 0;
     for (const b of bytes) {
         value = (value << 8) | b;
         bits += 8;

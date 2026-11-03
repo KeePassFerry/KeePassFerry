@@ -52,25 +52,6 @@
     </div>
 </template>
 
-<style>
-.ferry-field-editor {
-    margin-bottom: 8px;
-}
-.ferry-field-editor.removed input {
-    opacity: 0.5;
-    text-decoration: line-through;
-}
-.ferry-field-editor.removed .v-messages {
-    color: rgb(var(--v-theme-error));
-    opacity: 1;
-}
-.ferry-field-editor .v-field__append-inner {
-    gap: 0;
-    padding-top: 0;
-    align-items: center;
-}
-</style>
-
 <script lang="ts">
 import { Field } from "../../common/model/Field";
 import PasswordGenerator from "../../common/components/PasswordGenerator.vue";
@@ -134,3 +115,22 @@ export default {
     }
 };
 </script>
+
+<style>
+.ferry-field-editor {
+    margin-bottom: 8px;
+}
+.ferry-field-editor.removed input {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+.ferry-field-editor.removed .v-messages {
+    color: rgb(var(--v-theme-error));
+    opacity: 1;
+}
+.ferry-field-editor .v-field__append-inner {
+    gap: 0;
+    padding-top: 0;
+    align-items: center;
+}
+</style>

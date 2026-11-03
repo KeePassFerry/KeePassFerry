@@ -10,17 +10,6 @@ id="searchBox" single-line density="compact" variant="solo-filled" flat rounded=
     </v-text-field>
 </template>
 
-<style>
-.search .search-icon {
-    color: var(--ferry-faint);
-    margin-right: 2px;
-}
-.search .v-field {
-    font-size: 14px;
-    border-radius: 10px;
-}
-</style>
-
 <script lang="ts">
 import { configManager } from "../../common/ConfigManager";
 import { Port } from "../../common/port";
@@ -104,3 +93,14 @@ export default {
     }
 };
 </script>
+
+<style>
+.search .search-icon {
+    color: var(--ferry-faint);
+    margin-right: 2px;
+}
+.search .v-field {
+    font-size: 14px;
+    border-radius: 10px;
+}
+</style>

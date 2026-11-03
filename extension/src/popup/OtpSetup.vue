@@ -4,7 +4,7 @@
             <div v-if="done" class="otp-done">
                 <tabler-circle-check class="ferry-ico done-icon"/>
                 <div>
-                    <div class="title">{{ $i18n("otpSetup_doneTitle") }}</div>
+                    <div class="ferry-sheet-title">{{ $i18n("otpSetup_doneTitle") }}</div>
                     <div class="subtitle">{{ $i18n("otpSetup_done") }}</div>
                 </div>
             </div>
@@ -12,7 +12,7 @@
                 <header class="head">
                     <img src="/assets/images/48.png" alt="" class="logo" />
                     <div>
-                        <div class="title">{{ $i18n("otpSetup_heading") }}</div>
+                        <div class="ferry-sheet-title">{{ $i18n("otpSetup_heading") }}</div>
                         <div v-if="setup" class="subtitle">{{ subtitle }}</div>
                     </div>
                 </header>
@@ -66,7 +66,7 @@
                                 <v-tooltip activator="parent" location="top">{{ $i18n("otpSetup_hasOtp") }}</v-tooltip>
                             </span>
                             <span class="check">
-                                <tabler-circle-check class="ferry-ico" v-if="isSelected(c)"/>
+                                <tabler-circle-check v-if="isSelected(c)" class="ferry-ico"/>
                             </span>
                         </button>
                         <div v-if="shownEntries.length === 0" class="empty">{{ $i18n("otpSetup_none") }}</div>
@@ -253,7 +253,7 @@ export default {
     width: 36px;
     height: 36px;
 }
-.title {
+.ferry-sheet-title {
     font-size: 16px;
     font-weight: 600;
 }

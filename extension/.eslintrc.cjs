@@ -6,7 +6,7 @@ module.exports = {
     "extends": [
         "eslint:recommended",
         'plugin:@typescript-eslint/recommended',
-        'plugin:vue/recommended',
+        'plugin:vue/vue3-recommended',
         "plugin:prettier/recommended",
         "plugin:vuetify/base"
     ],
@@ -32,16 +32,16 @@ module.exports = {
     ],
     "rules": {
         "prettier/prettier": "off",
+        // TypeScript (vue-tsc) prüft undefinierte Namen selbst und kennt die Auto-Imports ($STR, reactive …);
+        // typescript-eslint rät, no-undef in TS-Projekten abzuschalten
+        "no-undef": "off",
         "vue/html-indent": "off",
         "vue/max-attributes-per-line": "off",
         "vue/html-closing-bracket-newline": "off",
         "vue/html-self-closing": "off",
         "vue/require-prop-types": "off",
-        "vue/singleline-html-element-content-newline": ["error", {
-            "ignoreWhenNoAttributes": true,
-            "ignoreWhenEmpty": true,
-            "ignores": htmlElementContentNewlineIgnores
-        }],
+        // Kurze Elemente stehen im Projekt in einer Zeile (<p class="hint">{{ … }}</p>)
+        "vue/singleline-html-element-content-newline": "off",
         "vue/multiline-html-element-content-newline": ["error", {
             "ignoreWhenEmpty": true,
             "ignores": htmlElementContentNewlineIgnores,

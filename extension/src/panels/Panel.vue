@@ -3,8 +3,8 @@
         <PasswordGenerator
             :standalone="true"
             :topmost="true"
-            @dialog-closed="passwordGeneratorClosed"
             :can-insert="canInsert"
+            @dialog-closed="passwordGeneratorClosed"
             @copy-to-clipboard="copyToClipboard"
             @insert="insert"
         />

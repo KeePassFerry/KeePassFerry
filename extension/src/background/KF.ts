@@ -719,8 +719,8 @@ class Ferry {
                 if (!r.fullDetails) continue;
                 this.rpc.findLogins(null, null, r.uuid, r.dbFileName, null, null)
                     .then((found: Entry[]) => {
-                        const fresh = found?.find(e => e.uuid === r.uuid);
-                        if (fresh) this.store.updateSearchResultWithFullDetails(fresh);
+                        const current = found?.find(e => e.uuid === r.uuid);
+                        if (current) this.store.updateSearchResultWithFullDetails(current);
                     })
                     .catch(() => undefined);
             }
