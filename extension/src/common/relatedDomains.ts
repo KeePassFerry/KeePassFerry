@@ -21,7 +21,6 @@ const GROUPS: string[][] = [
         "outlook.com",
         "hotmail.com",
         "msn.com",
-        "passport.net",
         "windows.com",
         "microsoftonline.com",
         "office.com",
@@ -49,7 +48,7 @@ const GROUPS: string[][] = [
     // eBay: ein Konto für die Länder-Seiten
     [
         "ebay.com", "ebay.de", "ebay.at", "ebay.ch", "ebay.co.uk", "ebay.fr", "ebay.it", "ebay.es", "ebay.nl", "ebay.be",
-        "ebay.ie", "ebay.pl", "ebay.ca", "ebay.com.au", "ebay.in", "ebay.co.jp", "ebay.com.hk", "ebay.com.sg",
+        "ebay.ie", "ebay.pl", "ebay.ca", "ebay.com.au", "ebay.com.hk", "ebay.com.sg",
         "ebay.com.my", "ebay.ph", "ebay.co.th", "ebay.com.tw", "ebay.cn"
     ],
     ["paypal.com", "paypal.me"],
@@ -57,7 +56,7 @@ const GROUPS: string[][] = [
     ["proton.me", "protonmail.com", "protonvpn.com"],
     // Ubiquiti (UniFi)
     ["ui.com", "ubnt.com"],
-    ["atlassian.com", "atlassian.net", "bitbucket.org", "trello.com", "jira.com", "statuspage.io"],
+    ["atlassian.com", "atlassian.net", "bitbucket.org", "trello.com"],
     ["x.com", "twitter.com"],
     ["disney.com", "disneyplus.com", "go.com"],
     ["stackexchange.com", "stackoverflow.com", "superuser.com", "serverfault.com", "askubuntu.com", "mathoverflow.net", "stackapps.com"],
@@ -73,7 +72,7 @@ const GROUPS: string[][] = [
         "airbnb.com.sg", "airbnb.com.hk", "airbnb.com.tw"
     ],
     [
-        "yandex.com", "yandex.ru", "ya.ru", "yandex.by", "yandex.kz", "yandex.ua", "yandex.uz", "yandex.com.tr",
+        "yandex.com", "yandex.ru", "ya.ru", "yandex.by", "yandex.kz", "yandex.uz", "yandex.com.tr",
         "yandex.fr", "yandex.pl", "yandex.lt", "yandex.lv", "yandex.ee", "yandex.fi", "yandex.az", "yandex.com.am",
         "yandex.com.ge", "yandex.co.il", "yandex.kg", "yandex.md", "yandex.tj", "yandex.tm"
     ]
