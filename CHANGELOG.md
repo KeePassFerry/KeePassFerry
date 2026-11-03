@@ -2,6 +2,29 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.17 – 2026-11-03
+
+- List of logins at a field (issue #14): the ⋯ button did nothing visible (its menu opened outside the visible
+  area). It is replaced by a pencil button that opens the entry in the edit window of the popup.
+- Settings that take effect in KeePass are now set in KeePass (Tools → KeePassFerry options): the breach check (with
+  its progress), expired entries and the advance warning. They apply to all browsers connected to that KeePass. The
+  extension's settings show a "Set in KeePass" button at these places that opens the dialog directly (issue #10). The
+  advance warning starts at 7 days; a value chosen in the browser before is not taken over.
+- Generated passwords are no longer backed up in KeePass (issue #15): every generated password, even unused ones,
+  created a backup entry. Copy or insert the password and save the entry as usual. Existing backups stay in the
+  database; the group "Generated passwords" can be deleted if not needed. The setting is gone.
+- The tip "Check passwords for data breaches" opens the KeePassFerry options in KeePass.
+- Requires the plugin of this version for the options dialog; the extension asks for the plugin update.
+- Welcome page: with an outdated plugin it showed "KeePass is locked"; it now says that the plugin needs an update and
+  step 1 has an "Update now" button (without a plugin it keeps the download button). The settings page shows the same
+  button next to "New version for KeePass available".
+- "Update now" shows a spinner while KeePass checks for the update and reports when no newer plugin has been released
+  yet; the button can then be clicked again.
+- "Open KeePass" from the browser while KeePass was in the notification area: afterwards the close button (X) did
+  nothing when it is set to minimize to the notification area (issue #16).
+- List of logins at a field: entries with the line "Related domain" no longer make the list scroll with only a few
+  entries.
+
 ## 1.0.16 – 2026-11-03
 
 - Fixed: with a KeePassFerry plugin older than 1.0.15, the extension 1.0.15 showed only "KeePass is not running" and no
@@ -370,6 +393,31 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.17 – 2026-11-03
+
+- Liste der Anmeldungen am Feld (Issue #14): Der Knopf ⋯ tat sichtbar nichts (sein Menü öffnete sich außerhalb des
+  sichtbaren Bereichs). Stattdessen öffnet ein Stift den Eintrag im Bearbeiten-Fenster des Popups.
+- Einstellungen, die in KeePass wirken, stellst du jetzt in KeePass ein (Extras → KeePassFerry-Optionen): die
+  Datenlecks-Prüfung (mit Fortschritt), abgelaufene Einträge und die Vorwarnung. Sie gelten für alle Browser, die mit
+  diesem KeePass verbunden sind. In den Einstellungen der Erweiterung öffnet an diesen Stellen ein Knopf „In KeePass
+  einstellen“ den Dialog direkt (Issue #10). Die Vorwarnung beginnt mit 7 Tagen; ein vorher im Browser gewählter Wert
+  wird nicht übernommen.
+- Generierte Passwörter werden nicht mehr in KeePass gesichert (Issue #15): Jedes erzeugte Passwort, auch ein nicht
+  benutztes, legte einen Sicherungseintrag an. Passwort kopieren oder einsetzen und den Eintrag wie gewohnt speichern.
+  Vorhandene Sicherungen bleiben in der Datenbank; die Gruppe „Generierte Passwörter“ kannst du löschen, wenn du sie
+  nicht brauchst. Die Einstellung entfällt.
+- Der Tipp „Passwörter auf Datenlecks prüfen“ öffnet die KeePassFerry-Optionen in KeePass.
+- Für den Optionsdialog ist das Plugin dieser Version nötig; die Erweiterung bittet um das Plugin-Update.
+- Willkommensseite: Bei einem veralteten Plugin stand dort „KeePass ist gesperrt“; jetzt steht dort, dass das Plugin
+  ein Update braucht, und Schritt 1 hat einen Knopf „Jetzt aktualisieren“ (ohne Plugin bleibt der Download-Knopf). Die
+  Einstellungsseite zeigt denselben Knopf neben „Neue Version für KeePass verfügbar“.
+- „Jetzt aktualisieren“ zeigt einen Spinner, solange KeePass nach dem Update sucht, und meldet, wenn noch kein neueres
+  Plugin veröffentlicht ist; danach kann man erneut klicken.
+- „KeePass öffnen“ aus dem Browser, während KeePass im Infobereich lag: Danach tat das X nichts, wenn es in den
+  Infobereich minimieren soll (Issue #16).
+- Liste der Anmeldungen am Feld: Einträge mit der Zeile „Zugehörige Domain“ lassen die Liste bei wenigen Einträgen
+  nicht mehr scrollen.
 
 ## 1.0.16 – 2026-11-03
 
