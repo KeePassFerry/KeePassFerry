@@ -2,6 +2,25 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.19 – 2026-11-04
+
+- Multi-step logins (e.g. Google): the username from the first step is remembered for the tab. On the password step
+  KeePassFerry picks the entry with that username; if there is none (new account), nothing is filled in automatically
+  and after signing in it offers to save the new account – even if it uses the same password as an existing one
+  (like Bitwarden).
+- Pages without a form (e.g. Google): pressing Enter and German button labels ("Weiter", "Anmelden") count as
+  submitting; a hidden field that already holds the site's username is no longer overwritten.
+- Pairing and the security warning show only one Windows notification instead of two.
+- KeePass options, paired browsers: new column "Last connected"; an unpacked developer build is named
+  "KeePassFerry (Edge, dev)"; "Reset pairing" in the extension removes its old pairing in KeePass first (plugin 1.0.19).
+- Read-only databases (e.g. shared view-only, plugin 1.0.19): not offered as a save target, no "update?" offer for
+  their entries, the pen is disabled with a reason, and the breach check skips them.
+- Popup footer: the active database's name, or "2 databases" with a list (active, read-only); with more than one
+  database open, each entry shows which database it is in.
+- Pages with several forms on top of each other (e.g. 4pda.to): a form hidden with `visibility: hidden` no longer wins;
+  icon position no longer taken from an invisible layout container (SourceForge).
+- Diagnostic log on: popup button "Capture page for diagnostics" writes the page's field structure (no contents).
+
 ## 1.0.18 – 2026-11-03
 
 - List of logins at a field: a click on the page next to the list closes it (like KeePassXC-Browser, only real
@@ -407,6 +426,27 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.19 – 2026-11-04
+
+- Mehrstufige Anmeldungen (z. B. Google): Der Benutzername aus dem ersten Schritt wird für den Tab gemerkt. Im
+  Passwort-Schritt wählt KeePassFerry den Eintrag mit diesem Benutzernamen; gibt es keinen (neues Konto), wird nichts
+  von selbst ausgefüllt, und nach dem Anmelden kommt das Angebot, das neue Konto zu speichern – auch wenn es dasselbe
+  Passwort wie ein vorhandenes hat (wie Bitwarden).
+- Seiten ohne Formular (z. B. Google): Eingabetaste und deutsche Knopfbeschriftungen („Weiter“, „Anmelden“) zählen
+  als Absenden; ein verstecktes Feld, das schon den Benutzernamen der Seite enthält, wird nicht mehr überschrieben.
+- Kopplung und Sicherheitswarnung zeigen nur noch eine Windows-Benachrichtigung statt zwei.
+- KeePass-Optionen, gekoppelte Browser: neue Spalte „Zuletzt verbunden“; eine entpackt geladene Entwicklerversion heißt
+  „KeePassFerry (Edge, dev)“; „Kopplung zurücksetzen“ in der Erweiterung entfernt zuerst die alte Kopplung in KeePass
+  (Plugin 1.0.19).
+- Schreibgeschützte Datenbanken (z. B. nur lesend geteilt, Plugin 1.0.19): kein Speicherziel, kein „aktualisieren?“
+  für ihre Einträge, Stift ausgegraut mit Begründung, die Datenleck-Prüfung lässt sie aus.
+- Popup-Fußzeile: Name der aktiven Datenbank bzw. „2 Datenbanken“ mit Liste (aktiv, nur lesen); bei mehreren offenen
+  Datenbanken zeigt jeder Eintrag, in welcher er liegt.
+- Seiten mit mehreren übereinanderliegenden Formularen (z. B. 4pda.to): ein per `visibility: hidden` verstecktes
+  Formular gewinnt nicht mehr; die Symbolposition richtet sich nicht mehr nach einem unsichtbaren Layout-Container
+  (SourceForge).
+- Diagnoseprotokoll an: Popup-Knopf „Seite für Diagnose erfassen“ schreibt den Aufbau der Felder (keine Inhalte).
 
 ## 1.0.18 – 2026-11-03
 

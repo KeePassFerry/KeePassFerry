@@ -3,8 +3,10 @@ import { diag } from "./ferryDiag";
 import { handleOtpSetupCandidate, dismissOtpSetup, isOtpSetupPending } from "./otpSetup";
 import { isRepeatedAutoFill, rememberAutoFill } from "./otpRepeat";
 import { sameSite } from "../common/relatedDomains";
-import { submittedCredentials, supersedesSubmission } from "../common/submittedLogin";
+import { submittedCredentials, supersedesSubmission, usernameMatches } from "../common/submittedLogin";
 import type { PersistentDataItem } from "./PersistentDataItem";
+import type { PersistentTabState } from "./PersistentTabState";
+import type { SubmittedData } from "../common/SubmittedData";
 import { BROWSER_UPDATE_PLUGIN_VERSION, pluginVersionAtLeast } from "../common/FeatureFlags";
 import { onFieldsAvailable } from "./pageFields";
 import { checkExpiryAfterFill, openChangePasswordFromNotice, snoozeExpiryNotice } from "./expiryNotice";
@@ -210,6 +212,32 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
 
 // Neue Anmeldung desselben Benutzers auf derselben Website: eine frühere abweichende Eingabe im Tab (z. B. vertipptes
 // Passwort) nicht mehr zum Speichern bzw. Aktualisieren anbieten und einen schon gezeigten Hinweis schließen
+// Benutzername aus dem ersten Schritt einer mehrstufigen Anmeldung derselben Website, 10 Minuten gültig
+function pendingUsernameFor(state: PersistentTabState, domain: string) {
+    const pending = state?.pendingUsername;
+    return pending && sameSite(pending.domain, domain) && pending.at > Date.now() - 10 * 60 * 1000 ? pending : null;
+}
+
+// Mehrstufige Anmeldung (wie Bitwarden): den Benutzernamen eines Formulars ohne Passwort merken; fehlt er im folgenden
+// Passwortformular derselben Website, gehört er zu dessen Anmeldung
+function applyPendingUsername(tabId: number, submitted: SubmittedData) {
+    const fields = submitted.fields ?? [];
+    const domain = FerryURL.fromString(submitted.url ?? "")?.domainOrIPAddress;
+    if (!domain) return;
+    if (!fields.some(f => f.type === "password" && f.value)) {
+        const field = fields.find(f => f.type !== "password" && f.type !== "boolean" && f.value);
+        if (!field) return;
+        if (!ferry.persistentTabStates.get(tabId)) ferry.persistentTabStates.set(tabId, { items: [] });
+        ferry.persistentTabStates.get(tabId).pendingUsername = { field, domain, at: Date.now() };
+        diag("hintergrund", "benutzername ohne passwort abgeschickt, vorgemerkt", { domain });
+        return;
+    }
+    if (submittedCredentials(fields).username) return;
+    const pending = pendingUsernameFor(ferry.persistentTabStates.get(tabId), domain);
+    diag("hintergrund", "passwort ohne benutzername abgeschickt", { vorgemerkt: !!pending });
+    if (pending) submitted.fields = [pending.field, ...fields];
+}
+
 function dropSupersededSubmission(tabId: number, url: string, username: string) {
     const item = ferry.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
     if (!item?.submittedData) return;
@@ -260,17 +288,30 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         const frameState = ferry.tabStates.get(this.sender.tab.id)?.frames.get(this.sender.frameId);
         if (frameState) frameState.urlEntries = result ?? [];
         if (this.sender.tab.id === ferry.foregroundTabId) commandManager.scheduleContextMenuUpdate();
-        // Mehrseitige Anmeldung: den eben im Tab gewählten Eintrag auf Folgeseiten derselben Domain bevorzugen
+        // Mehrseitige Anmeldung: auf Folgeseiten derselben Domain den Eintrag zum zuletzt abgeschickten Benutzernamen
+        // nehmen, sonst den eben im Tab gewählten Eintrag. Passt kein Eintrag zum Benutzernamen (neues Konto), füllt
+        // die Seite ein Passwortfeld ohne Benutzerfeld nicht von selbst aus
         let preferredUuid: string;
-        const last = ferry.persistentTabStates.get(this.sender.tab.id)?.lastFilledEntry;
+        let previousUsernameUnknown = false;
+        const tabState = ferry.persistentTabStates.get(this.sender.tab.id);
         const domain = FerryURL.fromString(this.sender.url ?? msg.findMatches.uri ?? "")?.domainOrIPAddress;
-        if (last && sameSite(last.domain, domain) && last.at > Date.now() - 10 * 60 * 1000 && result?.some(e => e.uuid === last.uuid)) {
-            preferredUuid = last.uuid;
+        const last = tabState?.lastFilledEntry;
+        const validLast = last && sameSite(last.domain, domain) && last.at > Date.now() - 10 * 60 * 1000 ? last : null;
+        const pending = pendingUsernameFor(tabState, domain);
+        if (pending && (!validLast || pending.at > validLast.at)) {
+            const matches = (result ?? []).filter(e => usernameMatches(pending.field.value, Entry.getUsernameField(e)?.value));
+            const chosen = matches.find(e => e.uuid === validLast?.uuid) ?? matches[0];
+            if (chosen) preferredUuid = chosen.uuid;
+            else previousUsernameUnknown = true;
+            diag("hintergrund", "benutzername der vorseite", { passenderEintrag: !!chosen });
+        } else if (validLast && result?.some(e => e.uuid === validLast.uuid)) {
+            preferredUuid = validLast.uuid;
         }
         this.postMessage({
             isForegroundTab: this.sender.tab.id === ferry.foregroundTabId,
             findMatchesResult: result,
-            preferredUuid
+            preferredUuid,
+            previousUsernameUnknown
         } as AddonMessage);
 
         //TODO:f: content scripts are responsible for recording the results from the searches they initiated into the shared data store (and updating the set of results when the active tab is changed).
@@ -310,6 +351,7 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         }
         diag("seite " + host + " f" + this.sender.frameId, msg.ferryDiag.event, msg.ferryDiag.data);
     }
+    if (msg.submittedData) applyPendingUsername(this.sender.tab.id, msg.submittedData);
     // Nur Formulare mit ausgefülltem Passwortfeld sind Anmeldungen (wie Bitwarden); Einstellungs-, Such- oder
     // Bankformulare ohne Passwort lösen keinen Speichern-Hinweis aus
     const submittedHasPassword = !!msg.submittedData?.fields?.some((f: any) => f.type === "password" && f.value);
@@ -329,7 +371,11 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
             ergebnis: submittedMatch.kind
         });
     }
-    if (msg.submittedData && submittedMatch.kind === "known") {
+    // Vorhandener Eintrag in einer schreibgeschützten Datenbank (z. B. nur lesend geteilt): Aktualisieren ginge nicht
+    const updateImpossible =
+        submittedMatch?.kind === "passwordChanged" &&
+        !!ferry.store.state.KeePassDatabases.find(db => db.fileName === submittedMatch.entry.dbFileName)?.readOnly;
+    if (msg.submittedData && (submittedMatch.kind === "known" || updateImpossible)) {
         FerryLog.debug("Submitted data matches an existing entry; no save offer");
         // Auch ein bekannter Benutzername allein (erster Schritt einer mehrstufigen Anmeldung) erledigt ein Angebot
         dropSupersededSubmission(this.sender.tab.id, msg.submittedData.url, submittedUser);

@@ -144,6 +144,7 @@ namespace KeePassFerry
                     }
                     identity.StoreClient(clientId, clientPub, name);
                 }
+                identity.MarkClientSeen(clientId);
 
                 var ready = new JsonObject();
                 ready["ferry"] = "ready";
@@ -286,6 +287,7 @@ namespace KeePassFerry
         private const string KeyServerId = "KeePassFerry.ServerId";
         private const string KeyServerKey = "KeePassFerry.ServerKey";
         private const string KeyClientPrefix = "KeePassFerry.Client.";
+        private const string KeyClientSeenPrefix = "KeePassFerry.ClientSeen.";
         private static readonly byte[] DpapiEntropy = Encoding.ASCII.GetBytes("KeePassFerry server key v1");
 
         private readonly IPluginHost _host;
@@ -395,12 +397,24 @@ namespace KeePassFerry
             _host.CustomConfig.SetString(KeyClientPrefix + clientId, value);
         }
 
+        /// <summary>Zuletzt verbunden (Tagesgenau, damit die Konfiguration nicht bei jeder Verbindung geändert wird)</summary>
+        public void MarkClientSeen(string clientId)
+        {
+            DateTime last;
+            string stored = _host.CustomConfig.GetString(KeyClientSeenPrefix + clientId, "");
+            if (DateTime.TryParse(stored, null, System.Globalization.DateTimeStyles.RoundtripKind, out last) &&
+                last.ToLocalTime().Date == DateTime.Now.Date)
+                return;
+            _host.CustomConfig.SetString(KeyClientSeenPrefix + clientId, DateTime.UtcNow.ToString("o"));
+        }
+
         /// <summary>Gekoppelter Browser (für die Anzeige in den Optionen)</summary>
         public sealed class PairedClient
         {
             public string Id;
             public string Name;
             public DateTime? PairedAt;
+            public DateTime? LastSeen;
         }
 
         /// <summary>
@@ -440,6 +454,10 @@ namespace KeePassFerry
                 DateTime pairedAt;
                 if (parts.Length > 2 && DateTime.TryParse(parts[2], null, System.Globalization.DateTimeStyles.RoundtripKind, out pairedAt))
                     client.PairedAt = pairedAt.ToLocalTime();
+                DateTime lastSeen;
+                if (DateTime.TryParse(_host.CustomConfig.GetString(KeyClientSeenPrefix + client.Id, ""), null,
+                        System.Globalization.DateTimeStyles.RoundtripKind, out lastSeen))
+                    client.LastSeen = lastSeen.ToLocalTime();
                 result.Add(client);
             }
             return result;
@@ -449,6 +467,7 @@ namespace KeePassFerry
         public void RemoveClient(string clientId)
         {
             _host.CustomConfig.SetString(KeyClientPrefix + clientId, null);
+            _host.CustomConfig.SetString(KeyClientSeenPrefix + clientId, null);
         }
     }
 }

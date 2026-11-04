@@ -11,6 +11,8 @@ export class DatabaseDto {
     iconImageData: string;
     root: GroupDto;
     active?: boolean;
+    // Plugin ab 1.0.19: Datei nicht beschreibbar (z. B. nur lesend geteilt)
+    readOnly?: boolean;
 }
 
 export class DatabaseSummaryDto {

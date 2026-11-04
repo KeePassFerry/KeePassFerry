@@ -1,4 +1,32 @@
 {
+  "ferry_capture_page": {
+    "message": "Capture page for diagnostics (field structure to the diagnostic log, no contents)",
+    "description": "KeePassFerry"
+  },
+  "ferry_capture_page_done": {
+    "message": "Written to the diagnostic log",
+    "description": "KeePassFerry"
+  },
+  "ferry_edit_read_only": {
+    "message": "Can't be edited: the database is read-only (e.g. shared view-only).",
+    "description": "KeePassFerry"
+  },
+  "ferry_footer_databases": {
+    "message": "$1 databases",
+    "description": "KeePassFerry"
+  },
+  "ferry_db_menu_title": {
+    "message": "Open databases",
+    "description": "KeePassFerry"
+  },
+  "ferry_db_active": {
+    "message": "active",
+    "description": "KeePassFerry"
+  },
+  "ferry_db_read_only": {
+    "message": "read-only",
+    "description": "KeePassFerry"
+  },
   "KB_shortcut_simple_2_desc": {
     "message": "Sign in to password manager / Select matched login / Show matched logins list",
     "description": "Description of keyboard shortcut setting for the primary action - exact behaviour depends on state when executed"
@@ -1778,6 +1806,30 @@
   },
   "ferry_leaks_intro": {
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_19_1_title": {
+    "message": "New account on multi-step logins",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_19_1_text": {
+    "message": "On logins in two steps (e.g. Google), KeePassFerry remembers the username from the first step. If there is no entry for it yet, nothing is filled in, and after signing in you are offered to save the new account – even with the same password as another account.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_19_2_title": {
+    "message": "Several databases at a glance",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_19_2_text": {
+    "message": "The bottom of the popup shows which databases are open; a click shows which one is active and which can only be read. With several databases, each entry shows which one it is in.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_19_3_title": {
+    "message": "Databases shared read-only",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_19_3_text": {
+    "message": "A read-only database is no longer offered for saving, its entries can't be edited (the pen tells you why), and the breach check skips it. This needs plugin 1.0.19.",
     "description": "KeePassFerry"
   },
   "ferry_news_1_0_18_1_title": {

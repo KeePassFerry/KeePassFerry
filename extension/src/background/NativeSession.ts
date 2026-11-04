@@ -36,6 +36,16 @@ function browserName(): string {
     return "Browser";
 }
 
+// Entpackt geladene Entwicklerversion im Namen kennzeichnen (Optionen in KeePass: welche Kopplung ist welche)
+let installVariant: Promise<string> = null;
+function clientName(): Promise<string> {
+    installVariant ??= Promise.resolve()
+        .then(() => chrome.management.getSelf())
+        .then(self => (self.installType === "development" ? ", dev" : ""))
+        .catch(() => "");
+    return installVariant.then(variant => "KeePassFerry (" + browserName() + variant + ")");
+}
+
 export class NativeSessionManager {
     private port: chrome.runtime.Port = null;
     private channel: FerryChannelClient = null;
@@ -200,10 +210,12 @@ export class NativeSessionManager {
             }
         });
         this.channel = channel;
-        channel.start("KeePassFerry (" + browserName() + ")", this.cb.clientFeatures()).catch(e => {
-            FerryLog.error("Could not start secure channel: " + e);
-            this.closeSession();
-        });
+        clientName()
+            .then(name => (this.channel === channel ? channel.start(name, this.cb.clientFeatures()) : undefined))
+            .catch(e => {
+                FerryLog.error("Could not start secure channel: " + e);
+                this.closeSession();
+            });
     }
 
     private receiveChunk(msg: { id: number; index: number; count: number; data: string }) {

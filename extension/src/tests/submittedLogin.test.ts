@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LoginCandidate, matchSubmittedLogin, submittedCredentials, supersedesSubmission } from "../common/submittedLogin";
+import { LoginCandidate, matchSubmittedLogin, submittedCredentials, supersedesSubmission, usernameMatches } from "../common/submittedLogin";
 
 const entry = (uuid: string, username: string, password: string, dbFileName = "a.kdbx"): LoginCandidate => ({
     uuid,
@@ -95,5 +95,21 @@ describe("supersedesSubmission", () => {
 describe("Maskiertes Passwort", () => {
     it("zählt nur Sternchen nicht als neues Passwort", () => {
         expect(submittedCredentials([{ type: "text", value: "max" }, { type: "password", value: "**********" }]).password).toBeNull();
+    });
+});
+
+describe("Mehrstufige Anmeldung", () => {
+    it("Benutzername ohne @ passt zum Teil vor dem @ im Eintrag", () => {
+        expect(usernameMatches("Erika", "erika@example.com")).toBe(true);
+        expect(usernameMatches("erika@example.com", "Erika@example.com")).toBe(true);
+        expect(usernameMatches("erik", "erika@example.com")).toBe(false);
+        expect(usernameMatches("erika@example.org", "erika@example.com")).toBe(false);
+        expect(usernameMatches("", "")).toBe(false);
+    });
+
+    it("neues Konto mit demselben Passwort wie ein vorhandenes ist neu", () => {
+        const vorhanden = entry("1", "max@example.com", "geheim");
+        expect(matchSubmittedLogin(form("erika", "geheim"), [vorhanden])).toEqual({ kind: "new" });
+        expect(matchSubmittedLogin(form("max", "geheim"), [vorhanden])).toEqual({ kind: "known" });
     });
 });

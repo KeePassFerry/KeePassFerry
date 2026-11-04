@@ -7,6 +7,8 @@ namespace KeePassFerry.Models.DataExchange
         public Group Root;
         public bool Active;
         public string IconImageData;
+        // KeePassFerry: Datei nicht beschreibbar (z. B. nur lesend geteilt); die Erweiterung bietet sie zum Speichern nicht an
+        public bool ReadOnly;
 
         public Database() { }
 

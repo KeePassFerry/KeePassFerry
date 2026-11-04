@@ -250,13 +250,66 @@ namespace KeePassFerry
 
                 return new Database(pwd.Name, pwd.IOConnectionInfo.Path, rt,
                     (pwd == _host.Database) ? true : false,
-                    IconCache<string>.GetIconEncoding(pwd.IOConnectionInfo.Path) ?? "");
+                    IconCache<string>.GetIconEncoding(pwd.IOConnectionInfo.Path) ?? "")
+                {
+                    ReadOnly = IsDatabaseReadOnly(pwd)
+                };
             }
             catch (Exception ex)
             {
                 if (_keePassRpcPlugin.logger != null)
                     _keePassRpcPlugin.logger.WriteLine("Failed to parse database. Exception: " + ex);
                 return null;
+            }
+        }
+
+        private static readonly Dictionary<string, KeyValuePair<DateTime, bool>> _readOnlyCache =
+            new Dictionary<string, KeyValuePair<DateTime, bool>>();
+
+        /// <summary>
+        /// Lokale Datei schreibgeschützt (Attribut oder keine Schreibrechte, z. B. nur lesend geteilt)? Prüft durch Öffnen
+        /// zum Schreiben ohne zu schreiben; Ergebnis 60 s zwischengespeichert. Im Zweifel (gesperrt, Netzwerkpfad, URL)
+        /// beschreibbar, damit nichts fälschlich ausgeblendet wird.
+        /// </summary>
+        internal static bool IsDatabaseReadOnly(PwDatabase pwd)
+        {
+            try
+            {
+                var ioc = pwd.IOConnectionInfo;
+                if (ioc == null || !ioc.IsLocalFile()) return false;
+                string path = ioc.Path;
+                lock (_readOnlyCache)
+                {
+                    KeyValuePair<DateTime, bool> cached;
+                    if (_readOnlyCache.TryGetValue(path, out cached) && DateTime.UtcNow - cached.Key < TimeSpan.FromSeconds(60))
+                        return cached.Value;
+                }
+                bool readOnly = false;
+                var info = new System.IO.FileInfo(path);
+                if (info.Exists && info.IsReadOnly)
+                    readOnly = true;
+                else if (info.Exists)
+                {
+                    try
+                    {
+                        using (new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Write,
+                                   System.IO.FileShare.ReadWrite | System.IO.FileShare.Delete)) { }
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        readOnly = true;
+                    }
+                    catch (System.IO.IOException)
+                    {
+                        // gesperrt o. Ä.: nicht als schreibgeschützt werten
+                    }
+                }
+                lock (_readOnlyCache) _readOnlyCache[path] = new KeyValuePair<DateTime, bool>(DateTime.UtcNow, readOnly);
+                return readOnly;
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
 

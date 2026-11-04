@@ -56,6 +56,7 @@ export interface AddonMessage {
     // FillOtp ohne Code: derselbe Code wurde hier schon von selbst eingetragen, nur das Symbol am Feld zeigen
     otpIconOnly?: boolean;
     preferredUuid?: string;
+    previousUsernameUnknown?: boolean;
     otpIssuer?: string;
     // ShowSaveNotice: Passwort eines vorhandenen Eintrags geändert (Benutzername bzw. Titel des Eintrags)
     saveNoticeUpdateFor?: string;

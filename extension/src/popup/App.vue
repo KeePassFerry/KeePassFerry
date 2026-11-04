@@ -90,13 +90,26 @@ v-if="showSaveWhere" :display-reason="displayWhereReason"
             </main>
 
             <footer v-show="!showSaveStart && !showSaveWhere" class="ferry-foot">
-                <div class="ferry-status" :class="statusTone">
+                <button type="button" class="ferry-status" :class="statusTone" :disabled="!openDatabases.length">
                     <span class="ferry-dot" />
                     <span class="ferry-status-text">{{ footerStatus }}</span>
-                    <v-tooltip location="top" activator="parent">
-                        <span>{{ connectionStatusDetail }}</span>
-                    </v-tooltip>
-                </div>
+                    <tabler-chevron-up v-if="openDatabases.length" class="ferry-ico ferry-status-chevron" />
+                    <!-- Geöffnete Datenbanken: welche aktiv ist, welche nur gelesen werden kann -->
+                    <v-menu v-if="openDatabases.length" activator="parent" location="top start" :offset="6">
+                        <div class="ferry-db-menu">
+                            <div class="ferry-db-menu-title">{{ $i18n("ferry_db_menu_title") }}</div>
+                            <div v-for="db of openDatabases" :key="db.fileName" class="ferry-db-row">
+                                <tabler-database class="ferry-ico" />
+                                <span class="ferry-db-name">{{ db.label }}</span>
+                                <span v-if="db.active" class="ferry-db-tag ok">{{ $i18n("ferry_db_active") }}</span>
+                                <span v-if="db.readOnly" class="ferry-db-tag">
+                                    <tabler-lock class="ferry-ico" />{{ $i18n("ferry_db_read_only") }}
+                                </span>
+                                <v-tooltip location="top" activator="parent">{{ db.fileName }}</v-tooltip>
+                            </div>
+                        </div>
+                    </v-menu>
+                </button>
                 <v-spacer />
                 <button
 v-show="showSearchPanel && !showSaveRecovery" type="button" class="ferry-ib" :class="hasSubmittedData ? 'pulse-button' : ''"
@@ -129,6 +142,16 @@ v-if="allLeakCount > 0" type="button" class="ferry-ib ferry-leaks-btn"
                     <tabler-sparkles class="ferry-ico" />
                     <span v-if="openTips > 0" class="ferry-news-dot" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("ferry_news_heading") }}</v-tooltip>
+                </button>
+                <!-- Nur mit Diagnoseprotokoll: Aufbau der Seite ins Protokoll (für Fehlerberichte zu einzelnen Seiten) -->
+                <button
+                    v-if="diagnosticsOn && databaseIsOpen" type="button" class="ferry-ib"
+                    :aria-label="$i18n('ferry_capture_page')" @click="capturePage">
+                    <tabler-check v-if="pageCaptured" class="ferry-ico" />
+                    <tabler-bug v-else class="ferry-ico" />
+                    <v-tooltip location="top" activator="parent">
+                        {{ pageCaptured ? $i18n("ferry_capture_page_done") : $i18n("ferry_capture_page") }}
+                    </v-tooltip>
                 </button>
                 <button type="button" class="ferry-ib" :aria-label="$i18n('Menu_Button_options_label')" @click="showOptions">
                     <tabler-settings class="ferry-ico" />
@@ -165,6 +188,8 @@ import { SaveState } from "../common/SaveState";
 import { Entry } from "../common/model/Entry";
 import { supplementEntryState, supplementExistingEntry } from "./supplementEntryState";
 import { reconcileURLs } from "./reconcileURLs";
+import { databaseLabel } from "../common/databaseLabel";
+import type { Database } from "../common/model/Database";
 import { fetchFavicon, getFaviconUrl } from "./favicon";
 import { autoRecoveryTimeMs, manualRecoveryPromptTimeMs, tooltipDelay } from "../common/Timings";
 import { SaveEntryResult } from "../common/SaveEntryResult";
@@ -194,6 +219,9 @@ export default {
     },
     data: function () {
         return {
+            // Knopf "Seite für Diagnose erfassen" nur bei eingeschaltetem Diagnoseprotokoll
+            diagnosticsOn: !!configManager.current?.ferryDiagnostics,
+            pageCaptured: false,
             // We can't use the Vuex property directly because when it changes it causes
             // the app to re-render from scratch, destroying the user input that triggered
             // the datestamp change. Instead we can watch for changes and only modify this
@@ -249,7 +277,9 @@ export default {
             "notifications",
             "showNotifications",
             "connectedNative",
-            "saveEntryResult"
+            "saveEntryResult",
+            "KeePassDatabases",
+            "ActiveKeePassDatabaseIndex"
         ]),
         statusTone: function () {
             if (this.connected && this.databaseIsOpen) return "ok";
@@ -268,8 +298,21 @@ export default {
                 new Date(Date.now() - this.manualRecoveryPromptTimeMs)
             );
         },
+        // Geöffnete Datenbanken für die Liste an der Statusanzeige
+        openDatabases: function () {
+            if (!this.connected || !this.databaseIsOpen) return [];
+            return (this.KeePassDatabases as Database[]).map((db, i) => ({
+                fileName: db.fileName,
+                label: databaseLabel(db),
+                active: i === this.ActiveKeePassDatabaseIndex,
+                readOnly: !!db.readOnly
+            }));
+        },
         footerStatus: function () {
-            if (this.connected && this.databaseIsOpen) return this.connectionStatus;
+            if (this.connected && this.databaseIsOpen) {
+                const dbs = this.openDatabases;
+                return dbs.length > 1 ? this.$i18n("ferry_footer_databases", [String(dbs.length)]) : dbs[0]?.label ?? this.connectionStatus;
+            }
             if (this.connected) return this.$i18n("ferry_footer_locked");
             return this.$i18n("ferry_footer_offline");
         },
@@ -438,6 +481,12 @@ export default {
             this.leaksShowAll = false;
             this.leaksShown = [...this.newLeaks];
             await this.acknowledgeLeaks();
+        },
+        capturePage: async function () {
+            const ok = await chrome.runtime.sendMessage({ keepassferry: "capturePageAnalysis" }).catch(() => false);
+            if (!ok) return;
+            this.pageCaptured = true;
+            setTimeout(() => (this.pageCaptured = false), 2500);
         },
         openNews: function () {
             this.news = null;
@@ -743,6 +792,52 @@ export default {
     font-weight: 600;
     background: var(--ferry-hover);
 }
+button.ferry-status {
+    border: none;
+    color: inherit;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+button.ferry-status:disabled { cursor: default; }
+.ferry-status-chevron { width: 14px; height: 14px; flex: none; opacity: 0.6; }
+.ferry-db-menu {
+    min-width: 220px;
+    max-width: 320px;
+    padding: 6px;
+    border-radius: 10px;
+    background: rgb(var(--v-theme-surface));
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+    font-size: 13px;
+}
+.ferry-db-menu-title {
+    padding: 4px 8px 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    opacity: 0.65;
+}
+.ferry-db-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+.ferry-db-row:hover { background: var(--ferry-hover); }
+.ferry-db-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ferry-db-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--ferry-hover);
+}
+.ferry-db-tag .ferry-ico { width: 12px; height: 12px; }
+.ferry-db-tag.ok { background: rgba(var(--v-theme-success), 0.14); color: rgb(var(--v-theme-success)); }
 .ferry-status-text {
     overflow: hidden;
     text-overflow: ellipsis;

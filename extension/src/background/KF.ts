@@ -315,7 +315,8 @@ class Ferry {
         return true;
     }
 
-    notifyUser(notification: FerryNotification, nativeNotification?: NativeNotification) {
+    // osNotification false: der Aufrufer zeigt schon eine eigene Windows-Benachrichtigung (z. B. Kopplungscode)
+    notifyUser(notification: FerryNotification, nativeNotification?: NativeNotification, osNotification = true) {
         this.removeUserNotifications((n: FerryNotification) => n.name != notification.name);
         this.store.addNotification(notification);
         this.configureBrowserActionIcon();
@@ -326,7 +327,7 @@ class Ferry {
                 title: nativeNotification.title,
                 message: nativeNotification.message
             });
-        } else {
+        } else if (osNotification) {
             if (configManager.current.notificationCountGeneric < 5) {
                 // Der eigentliche Hinweis statt eines allgemeinen Texts; ein Klick öffnet das Popup mit dem ganzen Hinweis
                 chrome.notifications.create(OPEN_POPUP_NOTIFICATION_PREFIX + notification.id, {

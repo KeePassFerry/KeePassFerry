@@ -14,6 +14,7 @@ import { offerPasswordUpdateNotice, cancelPasswordUpdateNotice, withdrawSaveNoti
 import { OtpFields } from "./OtpFields";
 import { availableFieldKinds, fillContextTarget, fillFieldKind, trackContextTarget } from "./fieldFill";
 import { pageDiag } from "./ferryDiagPage";
+import { capturePageAnalysis } from "./pageAnalysis";
 import NonReactiveStore from "../store/NonReactiveStore";
 import { Mutation } from "../store/Mutation";
 import { findOpenShadowRoots } from "./shadowDom";
@@ -307,7 +308,7 @@ if (document.body) {
             }
 
             if (m.findMatchesResult) {
-                formFilling.findLoginsResultHandler(m.findMatchesResult, m.preferredUuid);
+                formFilling.findLoginsResultHandler(m.findMatchesResult, m.preferredUuid, m.previousUsernameUnknown);
             }
 
             if (m.action == Action.ManualFill && m.selectedEntryIndex != null) {
@@ -388,6 +389,9 @@ if (document.body) {
                 } else {
                     fillFieldKind(m.fillKind, m.fillValue);
                 }
+            }
+            if (m.action == Action.CapturePageAnalysis) {
+                capturePageAnalysis(formFilling?.analysisSummary() ?? {});
             }
             if (m.action == Action.FillContextTarget) {
                 fillContextTarget(m.fillValue);

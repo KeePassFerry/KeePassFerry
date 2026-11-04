@@ -40,7 +40,7 @@
                     </span>
                 </span>
                 <span class="ferry-entry-sub">
-                    {{ expanded && entrySummary.fullDetails ? metaLine : usernameDisplayValue }}
+                    {{ expanded && entrySummary.fullDetails ? metaLine : collapsedLine }}
                     <v-tooltip v-if="expanded && entrySummary.fullDetails" location="bottom" activator="parent">
                         {{ fullEntryPath }} · {{ entrySummary.url }}
                     </v-tooltip>
@@ -57,9 +57,13 @@
             </button>
             <button
                 v-if="expanded && entrySummary.fullDetails" type="button" class="ferry-ib"
-                :aria-label="$i18n('ferry_edit_entry')" @click.stop="editEntry">
+                :class="{ 'ferry-ib-off': readOnly }" :aria-disabled="readOnly"
+                :aria-label="readOnly ? $i18n('ferry_edit_read_only') : $i18n('ferry_edit_entry')"
+                @click.stop="readOnly || editEntry()">
                 <tabler-pencil class="ferry-ico" />
-                <v-tooltip location="top" activator="parent">{{ $i18n("ferry_edit_entry") }}</v-tooltip>
+                <v-tooltip location="top" activator="parent">
+                    {{ readOnly ? $i18n("ferry_edit_read_only") : $i18n("ferry_edit_entry") }}
+                </v-tooltip>
             </button>
             <button
                 type="button" class="ferry-ib" :aria-label="expanded ? $i18n('ferry_hide_details') : $i18n('ferry_show_details')"
@@ -124,6 +128,8 @@ import { supplementEntryState, supplementExistingEntry } from "../supplementEntr
 import { reconcileURLs } from "../reconcileURLs";
 import { SaveState } from "../../common/SaveState";
 import { Entry } from "../../common/model/Entry";
+import type { Database } from "../../common/model/Database";
+import { databaseLabel } from "../../common/databaseLabel";
 import { EntrySummary } from "../../common/model/EntrySummary";
 import { tooltipDelay } from "../../common/Timings";
 import { mapState } from "pinia";
@@ -148,7 +154,21 @@ export default {
         changeUrlChecked: false
     }),
     computed: {
-        ...mapState(useStore, ["saveState"]),
+        ...mapState(useStore, ["saveState", "KeePassDatabases"]),
+        // Mehrere Datenbanken offen: in welcher der Eintrag liegt
+        databaseLabel: function (): string {
+            const dbs = this.KeePassDatabases as Database[];
+            if (!dbs || dbs.length < 2) return "";
+            return databaseLabel(dbs.find(db => db.fileName === this.entrySummary?.dbFileName));
+        },
+        // Datenbank nur lesbar (z. B. nur lesend geteilt): Bearbeiten nicht möglich
+        readOnly: function (): boolean {
+            const dbs = this.KeePassDatabases as Database[];
+            return !!dbs?.find(db => db.fileName === this.entrySummary?.dbFileName)?.readOnly;
+        },
+        collapsedLine: function (): string {
+            return [this.usernameDisplayValue, this.databaseLabel].filter(Boolean).join(" · ");
+        },
         iconSrc: function () {
             const data = (this.entrySummary as EntrySummary)?.icon?.iconImageData;
             return data ? "data:image/png;base64," + data : null;
@@ -156,7 +176,7 @@ export default {
         // Aufgeklappt: Gruppe und Domain in einer Zeile statt zwei eigener Zeilen
         metaLine: function () {
             const group = (this.entrySummary.fullDetails as Entry)?.parentGroup?.path ?? "";
-            return [group, this.entryDomain].filter(Boolean).join(" · ");
+            return [this.databaseLabel, group, this.entryDomain].filter(Boolean).join(" · ");
         },
         usernameDisplayValue: function () {
             const e = this.entrySummary as EntrySummary;
@@ -299,6 +319,7 @@ export default {
         },
         // Stift in der Vorschau: Bearbeiten-Fenster öffnen, dort gleich diesen Zusatz zum Bearbeiten
         editExtra: async function (key: string) {
+            if (this.readOnly) return;
             requestExtraEdit(this.entrySummary.uuid, key);
             await this.editEntry();
         },
@@ -394,6 +415,7 @@ export default {
 </script>
 
 <style>
+.ferry-ib-off { opacity: 0.4; cursor: not-allowed; }
 .ferry-entry {
     border-bottom: 1px solid var(--ferry-line);
     outline: none;

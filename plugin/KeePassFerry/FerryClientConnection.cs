@@ -60,7 +60,10 @@ namespace KeePassFerry
 
             // KeePassFerry: Ablaufdatum der Einträge (ExpiryTime/ExpiryIntervalDays), neues Ablaufdatum beim
             // Speichern (NewExpiryTime), abgelaufene ausblenden (Get/SetHideExpired)
-            "KEEPASSFERRY_EXPIRY"
+            "KEEPASSFERRY_EXPIRY",
+
+            // KeePassFerry: eigene Kopplung entfernen (RemoveOwnPairing, vor "Kopplung zurücksetzen")
+            "KEEPASSFERRY_REMOVE_OWN_PAIRING"
         };
 
         // Zusätzlich die Produktversion des Plugins ("KEEPASSFERRY_VERSION_1.2.3"): Die Erweiterung erkennt daran ein
@@ -80,6 +83,7 @@ namespace KeePassFerry
         // ID des nächsten Signals an die Erweiterung
         private int _currentCallBackId;
         private readonly string[] _clientFeatures;
+        private readonly string _clientId;
 
         /// <summary>Verbindung zur Erweiterung (verschlüsselter Ferry-Kanal)</summary>
         public IClientTransport Transport { get; private set; }
@@ -98,7 +102,11 @@ namespace KeePassFerry
             Transport = connection;
             Authorised = connection.IsSecure;
             var secure = connection as SecureChannel;
-            if (secure != null) _clientFeatures = secure.ClientFeatures;
+            if (secure != null)
+            {
+                _clientFeatures = secure.ClientFeatures;
+                _clientId = secure.ClientId;
+            }
         }
 
         /// <summary>
@@ -144,7 +152,8 @@ namespace KeePassFerry
             JsonRpcDispatcher dispatcher = JsonRpcDispatcherFactory.CreateDispatcher(service);
             (dispatcher as FerryJsonRpcDispatcher).ClientMetadata = new ClientMetadata
             {
-                Features = ClientFeatures
+                Features = ClientFeatures,
+                ClientId = _clientId
             };
             using (StringReader request = new StringReader(message))
             using (StringWriter response = new StringWriter(sb))

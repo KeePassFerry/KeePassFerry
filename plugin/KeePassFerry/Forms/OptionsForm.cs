@@ -121,8 +121,9 @@ namespace KeePassFerry.Forms
                 Location = new Point(12, 24),
                 Size = new Size(504, 124)
             };
-            _clients.Columns.Add(FerryText.T("Browser", "Browser"), 310);
-            _clients.Columns.Add(FerryText.T("Gekoppelt am", "Paired on"), 170);
+            _clients.Columns.Add(FerryText.T("Browser", "Browser"), 220);
+            _clients.Columns.Add(FerryText.T("Gekoppelt am", "Paired on"), 130);
+            _clients.Columns.Add(FerryText.T("Zuletzt verbunden", "Last connected"), 130);
             _clients.SelectedIndexChanged += delegate { _unpair.Enabled = _clients.SelectedItems.Count > 0; };
             _unpair = new Button
             {
@@ -219,7 +220,9 @@ namespace KeePassFerry.Forms
             {
                 string name = string.IsNullOrEmpty(client.Name) ? client.Id : client.Name;
                 string pairedAt = client.PairedAt.HasValue ? client.PairedAt.Value.ToString("g") : "";
-                var item = new ListViewItem(new[] { name, pairedAt }) { Tag = client.Id };
+                // Vor Plugin 1.0.19 gekoppelt und seitdem nicht verbunden: kein Datum
+                string lastSeen = client.LastSeen.HasValue ? client.LastSeen.Value.ToString("d") : "–";
+                var item = new ListViewItem(new[] { name, pairedAt, lastSeen }) { Tag = client.Id };
                 _clients.Items.Add(item);
             }
             _unpair.Enabled = false;

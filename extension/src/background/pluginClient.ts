@@ -208,7 +208,7 @@ export class pluginClient {
             requireInteraction: true,
             priority: 2
         });
-        this.showConnectionMessage($STRF("pairing_message", [display]));
+        this.showConnectionMessage($STRF("pairing_message", [display]), undefined, false);
     }
 
     showChannelProblem(kind: "denied" | "serverKeyChanged" | "pairingNeedsUpdate" | "error") {
@@ -224,7 +224,7 @@ export class pluginClient {
                 requireInteraction: true,
                 priority: 2
             });
-            this.showConnectionMessage($STR("security_server_key_changed"));
+            this.showConnectionMessage($STR("security_server_key_changed"), undefined, false);
         } else if (kind === "pairingNeedsUpdate") {
             this.showConnectionMessage($STR("pairing_needs_plugin_update"));
         }
@@ -258,7 +258,11 @@ export class pluginClient {
         }
     }
 
-    showConnectionMessage(msg: string, buttons?: Button[]) {
-        ferry.notifyUser(new FerryNotification("ferry-connection-message", buttons ? buttons : [], utils.newGUID(), [msg], "Medium"));
+    showConnectionMessage(msg: string, buttons?: Button[], osNotification = true) {
+        ferry.notifyUser(
+            new FerryNotification("ferry-connection-message", buttons ? buttons : [], utils.newGUID(), [msg], "Medium"),
+            undefined,
+            osNotification
+        );
     }
 }

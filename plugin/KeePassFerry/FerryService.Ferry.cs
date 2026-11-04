@@ -701,6 +701,21 @@ namespace KeePassFerry
             };
             timer.Start();
         }
+        /// <summary>
+        /// Entfernt die Kopplung des anfragenden Browsers ("Kopplung zurücksetzen" in der Erweiterung), damit sich in
+        /// den Optionen keine alten Kopplungen ansammeln. Nur die eigene: die Kennung kommt aus dem Kanal.
+        /// </summary>
+        [JsonRpcMethod]
+        public bool RemoveOwnPairing()
+        {
+            string clientId = ClientMetadata != null ? ClientMetadata.ClientId : null;
+            if (string.IsNullOrEmpty(clientId) || _keePassRpcPlugin.FerryIdentity == null) return false;
+            _keePassRpcPlugin.FerryIdentity.RemoveClient(clientId);
+            var mw = _host.MainWindow;
+            mw.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate { mw.SaveConfig(); });
+            return true;
+        }
+
         private static readonly object _diagLock = new object();
         private const long DiagMaxBytes = 2 * 1024 * 1024;
 

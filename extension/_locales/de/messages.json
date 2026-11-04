@@ -1,4 +1,32 @@
 {
+    "ferry_capture_page": {
+        "message": "Seite für Diagnose erfassen (Aufbau der Felder ins Diagnoseprotokoll, keine Inhalte)",
+        "description": "KeePassFerry"
+    },
+    "ferry_capture_page_done": {
+        "message": "Ins Diagnoseprotokoll geschrieben",
+        "description": "KeePassFerry"
+    },
+    "ferry_edit_read_only": {
+        "message": "Nicht bearbeitbar: Die Datenbank ist schreibgeschützt (z. B. nur lesend geteilt).",
+        "description": "KeePassFerry"
+    },
+    "ferry_footer_databases": {
+        "message": "$1 Datenbanken",
+        "description": "KeePassFerry"
+    },
+    "ferry_db_menu_title": {
+        "message": "Geöffnete Datenbanken",
+        "description": "KeePassFerry"
+    },
+    "ferry_db_active": {
+        "message": "aktiv",
+        "description": "KeePassFerry"
+    },
+    "ferry_db_read_only": {
+        "message": "nur lesen",
+        "description": "KeePassFerry"
+    },
     "black_list": {
         "message": "Ausschlussliste",
         "description": "List of items that cause behaviour to be disabled if they match. For example, the list of names of form fields that prevent KeePassFerry from searching for logins for the form containing that field."
@@ -1778,6 +1806,30 @@
     },
     "ferry_leaks_intro": {
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_19_1_title": {
+        "message": "Neues Konto bei mehrstufigen Anmeldungen",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_19_1_text": {
+        "message": "Bei Anmeldungen in zwei Schritten (z. B. Google) merkt sich KeePassFerry den Benutzernamen aus dem ersten Schritt. Gibt es dazu noch keinen Eintrag, wird nichts eingetragen, und nach dem Anmelden kommt das Angebot, das neue Konto zu speichern – auch mit demselben Passwort wie ein anderes Konto.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_19_2_title": {
+        "message": "Mehrere Datenbanken im Blick",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_19_2_text": {
+        "message": "Unten im Popup steht, welche Datenbanken geöffnet sind; ein Klick zeigt, welche aktiv ist und welche nur gelesen werden kann. Bei mehreren Datenbanken zeigt jeder Eintrag, in welcher er liegt.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_19_3_title": {
+        "message": "Nur lesend geteilte Datenbanken",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_19_3_text": {
+        "message": "Eine schreibgeschützte Datenbank wird nicht mehr zum Speichern angeboten, ihre Einträge lassen sich nicht bearbeiten (der Stift sagt warum), und die Datenleck-Prüfung lässt sie aus. Dafür ist das Plugin 1.0.19 nötig.",
         "description": "KeePassFerry"
     },
     "ferry_news_1_0_18_1_title": {

@@ -18,6 +18,7 @@ import NonReactiveStore from "../store/NonReactiveStore";
 import { findInputsInOpenShadowRoots, isHostedInForm } from "./shadowDom";
 import { httpsEntryOnHttpPage } from "../common/insecurePage";
 import { isEditable } from "./OtpFields";
+import { pageDiag } from "./ferryDiagPage";
 
 interface ScoreMatrix {
     score: number;
@@ -333,7 +334,22 @@ export class FormFilling {
                 formField.field.locators[0].type
             );
 
-            if (
+            // Verstecktes Feld mit Wert, das wir nicht selbst gefüllt haben, nicht überschreiben, auch beim Ausfüllen von
+            // Hand. Google behält den Benutzernamen der Vorseite auf der Passwortseite in einem Feld, das unsere
+            // Sichtbarkeitsprüfung als sichtbar sieht: passt der Benutzername der Vorseite zu keinem Eintrag (neues
+            // Konto), bleibt jeder vorhandene Wert außer im Passwortfeld
+            const notPassword = formField.field.type !== "password" && !!currentValue;
+            const keepHiddenValue =
+                notPassword &&
+                (this.matchResult.previousUsernameUnknown ||
+                    (currentValue !== (domElement as any).ferryInitialDetectedValue &&
+                        !this.formUtils.isDOMElementVisible(domElement)));
+            if (keepHiddenValue) {
+                pageDiag("verstecktes feld nicht überschrieben", {
+                    automatisch: automated,
+                    neuesKonto: !!this.matchResult.previousUsernameUnknown
+                });
+            } else if (
                 automated &&
                 currentValue &&
                 currentValue !== (domElement as any).ferryInitialDetectedValue
@@ -360,12 +376,14 @@ export class FormFilling {
                 );
             }
 
-            filledFields.push({
-                id: formField.field.locators[0].id,
-                DOMelement: domElement,
-                name: formField.field.locators[0].name,
-                value: dataField.value
-            });
+            if (!keepHiddenValue) {
+                filledFields.push({
+                    id: formField.field.locators[0].id,
+                    DOMelement: domElement,
+                    name: formField.field.locators[0].name,
+                    value: dataField.value
+                });
+            }
 
             fieldScoreMatrix = fieldScoreMatrix.filter(function (element) {
                 return element.dataFieldIndex != dfi && element.formFieldIndex != ffi;
@@ -490,6 +508,7 @@ export class FormFilling {
         //TODO:5: #6 create new object might cause issues with multi-page or submit behaviour? if not, this would be neater:
         // matchResult = new MatchResult();
         this.matchResult.UUID = "";
+        this.matchResult.previousUsernameUnknown = false;
         this.matchResult.entries = [];
         this.matchResult.mostRelevantFormIndex = null;
 
@@ -702,7 +721,11 @@ export class FormFilling {
             await Promise.resolve();
             const start = performance.now();
             const submitTarget = this.findSubmitButton(form, submitTargetNeighbour);
-            this.formSaving.addSubmitHandler(submitTarget, form);
+            this.formSaving.addSubmitHandler(submitTarget, form, [submitTargetNeighbour]);
+            pageDiag("absende-knopf", {
+                ohneForm: form.id === "Ferry-pseudo-form",
+                knopf: submitTarget ? (submitTarget.textContent || submitTarget.getAttribute("aria-label") || "").trim().slice(0, 30) : null
+            });
             FerryLog.info(
                 "Submit handlers attached asynchronously to form " +
                     formNumber +
@@ -762,7 +785,7 @@ export class FormFilling {
         return pseudoForm;
     }
 
-    public findLoginsResultHandler(entries: Entry[], preferredUuid?: string) {
+    public findLoginsResultHandler(entries: Entry[], preferredUuid?: string, previousUsernameUnknown?: boolean) {
         if (!entries) return;
         const validEntries = entries.filter(
             e => Entry.getUsernameField(e) || Entry.getPasswordField(e)
@@ -781,8 +804,18 @@ export class FormFilling {
             this.matchResult.UUID = preferred.uuid;
             this.matchResult.dbFileName = preferred.database?.fileName;
         }
+        // Benutzername der Vorseite passt zu keinem Eintrag (neues Konto): ein Formular ohne sichtbares Benutzerfeld
+        // nicht von selbst ausfüllen; die Liste am Feldsymbol bleibt
+        this.matchResult.previousUsernameUnknown = !!previousUsernameUnknown && !preferred && !this.hasVisibleUsernameField();
 
         this.fillAndSubmit(true);
+    }
+
+    private hasVisibleUsernameField(): boolean {
+        const i = this.matchResult.mostRelevantFormIndex;
+        if (i == null) return false;
+        const field = this.matchResult.otherFieldsArray[i]?.[this.matchResult.usernameIndexArray[i]];
+        return !!field && this.formUtils.isDOMElementVisible(field.DOMelement);
     }
 
     getRelevanceOfLoginMatchesAgainstAllForms(
@@ -809,16 +842,12 @@ export class FormFilling {
 
             this.Logger.info("match found!");
 
-            const formVisible = this.formUtils.isDOMElementVisible(matchResult.submitTargets[i]);
+            const formVisible = this.isShownForScoring(matchResult.submitTargets[i]);
             this.Logger.debug("formVisible: " + formVisible);
 
             const visibleFieldCache = {
-                other: matchResult.otherFieldsArray[i].map(f =>
-                    this.formUtils.isDOMElementVisible(f.DOMelement)
-                ),
-                password: matchResult.passwordFieldsArray[i].map(f =>
-                    this.formUtils.isDOMElementVisible(f.DOMelement)
-                )
+                other: matchResult.otherFieldsArray[i].map(f => this.isShownForScoring(f.DOMelement)),
+                password: matchResult.passwordFieldsArray[i].map(f => this.isShownForScoring(f.DOMelement))
             };
 
             // determine the relevance of each entry to this form
@@ -894,6 +923,14 @@ export class FormFilling {
         return matchResult;
     }
 
+    // Sichtbar für die Wahl des Formulars: zusätzlich zu Größe/offsetParent auch "visibility: hidden" (erbt sich auf die
+    // Felder). 4pda legt Anmelden, Registrieren und Passwort vergessen übereinander und blendet zwei davon so aus;
+    // ohne diese Prüfung gewann ein unsichtbares Formular und das sichtbare bekam weder Symbol noch Ausfüllen
+    private isShownForScoring(element: HTMLElement): boolean {
+        if (!this.formUtils.isDOMElementVisible(element)) return false;
+        return !(element instanceof Element) || getComputedStyle(element).visibility !== "hidden";
+    }
+
     getMostRelevantForm(formIndex?: number) {
         const findMatchesResult = this.matchResult;
 
@@ -957,6 +994,13 @@ export class FormFilling {
 
         if (!isMatchedLoginRequest) {
             matchResult.mostRelevantFormIndex = this.getMostRelevantForm().bestFormIndex;
+            if (automated && matchResult.formRelevanceScores.length > 1) {
+                pageDiag("formular gewählt", {
+                    index: matchResult.mostRelevantFormIndex,
+                    punkte: matchResult.formRelevanceScores.map(p => Math.round(p ?? 0)),
+                    sichtbar: this.isShownForScoring(matchResult.submitTargets[matchResult.mostRelevantFormIndex])
+                });
+            }
         }
 
         // Supplied formID overrides any that we just automatically calculated above
@@ -1000,7 +1044,7 @@ export class FormFilling {
         matchResult.cannotAutoFillForm = false;
         matchResult.cannotAutoSubmitForm = false;
 
-        if (automated && matchResult.autofillOnSuccess === false) {
+        if (automated && (matchResult.autofillOnSuccess === false || matchResult.previousUsernameUnknown)) {
             matchResult.cannotAutoFillForm = true;
         }
         if (automated && matchResult.autosubmitOnSuccess === false) {
@@ -1537,7 +1581,7 @@ export class FormFilling {
         semanticWhitelistCache,
         semanticBlacklistCache
     ) {
-        //TODO:5: other languages
+        // Englisch und Deutsch (z. B. Google: "Weiter" neben "E-Mail-Adresse vergessen?")
         const goodWords = [
             "submit",
             "login",
@@ -1546,7 +1590,11 @@ export class FormFilling {
             "signin",
             "sign in",
             "next",
-            "continue"
+            "continue",
+            "weiter",
+            "anmelden",
+            "einloggen",
+            "fortfahren"
         ];
         const badWords = [
             "reset",
@@ -1563,7 +1611,12 @@ export class FormFilling {
             "dismiss",
             "delete",
             "show",
-            "reveal"
+            "reveal",
+            "vergessen",
+            "abbrechen",
+            "zurück",
+            "löschen",
+            "anzeigen"
         ];
         let goodScore = false;
         let badScore = false;
@@ -1907,6 +1960,19 @@ export class FormFilling {
             totalRelevanceScore += mostRelevantScore;
         }
         return [totalRelevanceScore, fieldMatchSuccesses];
+    }
+
+    // Für die Seiten-Analyse: welches Formular KeePassFerry gewählt hat und warum
+    public analysisSummary(): Record<string, unknown> {
+        const m = this.matchResult;
+        const i = m?.mostRelevantFormIndex;
+        return {
+            gewaehlt: i ?? null,
+            punkte: (m?.formRelevanceScores ?? []).map(p => Math.round(p ?? 0)),
+            eintraege: i != null ? (m.entries?.[i]?.length ?? 0) : 0,
+            sichtbar: i != null && m.submitTargets?.[i] ? this.isShownForScoring(m.submitTargets[i]) : null,
+            neuesKonto: !!m?.previousUsernameUnknown
+        };
     }
 
     public removeFieldIconFromAllFields() {

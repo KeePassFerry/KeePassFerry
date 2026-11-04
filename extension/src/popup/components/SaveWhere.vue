@@ -119,7 +119,8 @@ export default {
         },
         items: function () {
             // array of all databases root group
-            const groups = this.KeePassDatabases.map(db => recursiveFilterMap(db.root, g => true, g => {
+            // Schreibgeschützte Datenbanken (z. B. nur lesend geteilt) nicht als Ziel anbieten
+            const groups = this.KeePassDatabases.filter(db => !db.readOnly).map(db => recursiveFilterMap(db.root, g => true, g => {
                 const grp = new Group({
                     entrySummaries: [],
                     groups: g.groups,

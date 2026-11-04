@@ -393,6 +393,17 @@ export class jsonrpcClient {
         return this.passkeyRpc("PasskeyGetAssertion", [uuid, dbFileName, rpId, clientDataHash]);
     }
 
+    // Eigene Kopplung in KeePass entfernen; ältere Plugins kennen die Methode nicht. Höchstens 3 s warten
+    removeOwnPairing(): Promise<boolean> {
+        if (!(this.pluginClient.nativeSessionManager.features() ?? []).includes("KEEPASSFERRY_REMOVE_OWN_PAIRING")) {
+            return Promise.resolve(false);
+        }
+        return Promise.race([
+            this.passkeyRpc("RemoveOwnPairing", []).then(r => r === true),
+            new Promise<boolean>(resolve => self.setTimeout(() => resolve(false), 3000))
+        ]);
+    }
+
     // Diagnoseprotokoll: Zeilen an das Plugin, das sie in die Protokolldatei schreibt
     ferryDiagLog(lines: string[]): Promise<boolean> {
         return this.passkeyRpc("FerryDiagLog", [lines]);

@@ -155,6 +155,8 @@ namespace KeePassFerry
             {
                 PwDatabase db = doc.Database;
                 if (db == null || !db.IsOpen || _host.MainWindow.IsFileLocked(doc)) continue;
+                // Schreibgeschützt (z. B. nur lesend geteilt): Ergebnis ließe sich nicht speichern
+                if (FerryService.IsDatabaseReadOnly(db)) continue;
                 PwGroup bin = db.RecycleBinEnabled ? db.RootGroup.FindGroup(db.RecycleBinUuid, true) : null;
                 foreach (PwEntry e in db.RootGroup.GetEntries(true))
                 {
@@ -304,7 +306,7 @@ namespace KeePassFerry
         {
             foreach (PwDatabase db in _pendingSave)
             {
-                if (!db.IsOpen) continue;
+                if (!db.IsOpen || FerryService.IsDatabaseReadOnly(db)) continue;
                 if (db.Modified) continue;
                 db.Modified = true;
                 try

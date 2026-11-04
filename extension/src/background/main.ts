@@ -341,8 +341,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             work = fillPageField(ferry.foregroundTabId, msg.kind, msg.uuid, msg.dbFileName, msg.value);
             break;
         case "resetPairing":
-            work = ferry.rpc.pluginClient.nativeSessionManager.resetPairing().then(() => true);
+            // Alte Kopplung zuerst in KeePass entfernen (Plugin ab 1.0.19), sonst sammeln sie sich in den Optionen an
+            work = ferry.rpc
+                .removeOwnPairing()
+                .catch(() => false)
+                .then(() => ferry.rpc.pluginClient.nativeSessionManager.resetPairing())
+                .then(() => true);
             break;
+        case "capturePageAnalysis": {
+            // Alle Frames des Tabs schreiben ihren Aufbau ins Diagnoseprotokoll
+            const ports = ferry.tabStates.get(ferry.foregroundTabId)?.framePorts;
+            diag("hintergrund", "seiten-analyse angefordert", { frames: ports?.size ?? 0 });
+            ports?.forEach(port => {
+                try {
+                    port.postMessage({ action: Action.CapturePageAnalysis } as AddonMessage);
+                } catch (e) {
+                    // Frame ist weg
+                }
+            });
+            work = Promise.resolve(!!ports?.size);
+            break;
+        }
         case "openKeePassOptions":
             work = ferry.rpc.openOptions();
             break;

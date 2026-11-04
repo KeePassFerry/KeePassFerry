@@ -257,7 +257,11 @@ export default {
         groupItems: function (): GroupListItem[] {
             const map = (g: Group): GroupListItem =>
                 new GroupListItem(g.uuid, g.title, (g.groups ?? []).map(map), g.uuid === this.targetGroup?.uuid, []);
-            return reactive((this.KeePassDatabases as Database[]).filter(db => db.root).map(db => map(db.root)));
+            return reactive(this.writableDatabases.filter(db => db.root).map(db => map(db.root)));
+        },
+        // Schreibgeschützte Datenbanken (z. B. nur lesend geteilt) kommen als Ziel nicht in Frage
+        writableDatabases: function (): Database[] {
+            return (this.KeePassDatabases as Database[]).filter(db => !db.readOnly);
         },
         targetGroupLabel: function (): string {
             return this.targetGroup?.label ?? "—";
@@ -288,7 +292,7 @@ export default {
         // "Speichern" und schiebt die Aktionsleiste aus dem Popup)
         try {
             this.preferToSkipWhere = configManager.current.rememberMRUGroup;
-            const dbs = this.KeePassDatabases as Database[];
+            const dbs = this.writableDatabases;
             const { preferredGroupUuid, preferredDb, primaryFound } = this.getPreferredGroup(
                 configManager.current.mruGroup,
                 dbs
@@ -296,7 +300,8 @@ export default {
             this.preferredGroupUuid = preferredGroupUuid;
             // Neuer Eintrag aus dem Kontextmenü: zuletzt benutzte Gruppe wie beim normalen Speichern, sonst Wurzel der aktiven DB
             if (this.createOnSave) {
-                const activeDb = dbs[this.ActiveKeePassDatabaseIndex] ?? dbs[0];
+                const active = (this.KeePassDatabases as Database[])[this.ActiveKeePassDatabaseIndex];
+                const activeDb = active && !active.readOnly ? active : dbs[0];
                 this.setTargetGroup(preferredGroupUuid) || this.setTargetGroup(activeDb?.root?.uuid);
             }
             if (this.preferToSkipWhere) {
@@ -321,7 +326,7 @@ export default {
         },
         setTargetGroup: function (uuid: string): boolean {
             if (!uuid) return false;
-            for (const db of this.KeePassDatabases as Database[]) {
+            for (const db of this.writableDatabases) {
                 const group = db.root ? Group.matchingId(db.root, uuid) : null;
                 if (!group) continue;
                 // Pfad ohne den Namen der Wurzelgruppe ist kürzer; bei der Wurzel selbst ihr Name

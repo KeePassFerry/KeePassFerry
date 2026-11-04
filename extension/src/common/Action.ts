@@ -28,6 +28,8 @@ export const enum Action {
     QueryFields = "queryFields",
     FillField = "fillField",
     FillContextTarget = "fillContextTarget",
+    // Popup (Diagnoseprotokoll an): Aufbau der Anmeldefelder jedes Frames ins Protokoll schreiben
+    CapturePageAnalysis = "capturePageAnalysis",
     // Seite: Anmeldung mit unverändert eingetragenen Daten abgeschickt
     FilledLoginSubmitted = "filledLoginSubmitted",
     // Seite: "Passwort aktualisieren" nicht gezeigt, das Anmeldeformular blieb stehen (Anmeldung fehlgeschlagen)

@@ -23,6 +23,7 @@ export class FormSaving {
     private Logger: FerryLogger;
     private formUtils: FormUtils;
     private SubmitHandlerAttachments: SubmitHandlerAttachment[] = [];
+    private EnterHandlerAttachments: { fields: HTMLElement[]; handler: (e: KeyboardEvent) => void }[] = [];
     private matchResult: MatchResult; //TODO:5: May be overkill to have all this data available for saving
     // Letztes ausgewertetes Absenden: Klick auf den Absende-Knopf und das folgende "submit" sind derselbe Versuch
     private lastSubmit: { form: HTMLFormElement; at: number } = null;
@@ -32,7 +33,7 @@ export class FormSaving {
         this.formUtils = formUtils;
     }
 
-    public addSubmitHandler(target: HTMLElement, formToSubmit: HTMLFormElement) {
+    public addSubmitHandler(target: HTMLElement, formToSubmit: HTMLFormElement, enterFields: HTMLElement[] = []) {
         const handler = (e: Event) => this.submitHandler(e, formToSubmit);
         this.SubmitHandlerAttachments.push({
             target: target,
@@ -41,6 +42,12 @@ export class FormSaving {
         });
         if (target) target.addEventListener("click", handler);
         formToSubmit.addEventListener("submit", handler);
+        // Seiten ohne <form> (z. B. Google) senden beim Drücken der Eingabetaste kein "submit"
+        const enterHandler = (e: KeyboardEvent) => {
+            if (e.key === "Enter" && !e.isComposing) handler(e);
+        };
+        for (const field of enterFields) field.addEventListener("keydown", enterHandler);
+        this.EnterHandlerAttachments.push({ fields: enterFields, handler: enterHandler });
     }
 
     public removeAllSubmitHandlers() {
@@ -51,6 +58,8 @@ export class FormSaving {
             attachment.form.removeEventListener("submit", attachment.handler);
         });
         this.SubmitHandlerAttachments = [];
+        this.EnterHandlerAttachments.forEach(a => a.fields.forEach(f => f.removeEventListener("keydown", a.handler)));
+        this.EnterHandlerAttachments = [];
     }
 
     public updateMatchResult(matchResult: MatchResult) {
@@ -160,7 +169,9 @@ export class FormSaving {
             nonEmptyOtherFields.map(f => f.field),
             nonEmptyPasswordFields.map(f => f.field)
         );
-        if (differentPassword || differentOther) {
+        // Ohne von uns eingetragenen Benutzernamen (z. B. zweiter Schritt einer mehrstufigen Anmeldung) entscheidet der
+        // Hintergrund mit dem Benutzernamen der Vorseite, ob das Konto schon in KeePass ist
+        if (differentPassword || differentOther || !this.matchResult?.lastFilledOther?.length) {
             const submittedData = {
                 url: url.href,
                 fields,

@@ -140,7 +140,9 @@ export async function createSelectionEntry(
 ): Promise<{ uuid: string; dbFileName: string; title: string }> {
     const s = pending.get(tabId);
     const dbs = ferry.store.state.KeePassDatabases;
-    const db = dbs.find(d => d.fileName === dbFileName) ?? dbs[ferry.store.state.ActiveKeePassDatabaseIndex] ?? dbs[0];
+    const writable = dbs.filter(d => !d.readOnly);
+    const active = dbs[ferry.store.state.ActiveKeePassDatabaseIndex];
+    const db = writable.find(d => d.fileName === dbFileName) ?? (active && !active.readOnly ? active : writable[0]);
     if (!s || !db) return null;
     const entryTitle = (title ?? "").trim() || s.pageTitle.trim() || s.domain;
     const created = await ferry.rpc.addLogin(

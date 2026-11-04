@@ -12,6 +12,8 @@ export class MatchResult {
     allMatchingLogins: any[];
     formRelevanceScores: number[];
     UUID: string;
+    // Benutzername der Vorseite passt zu keinem Eintrag: nicht von selbst ausfüllen
+    previousUsernameUnknown?: boolean;
     mustAutoFillForm: boolean;
     cannotAutoFillForm: boolean;
     mustAutoSubmitForm: boolean;
