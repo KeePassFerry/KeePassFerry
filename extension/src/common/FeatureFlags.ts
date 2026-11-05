@@ -46,7 +46,7 @@ export function pluginIsOutdated(features: string[]): boolean {
 // Plugin-Version mit den neuesten Funktionen für diese Erweiterung. Nur erhöhen, wenn sich das Plugin im Release
 // geändert hat (nicht bei Releases, die nur die Erweiterung betreffen): ältere Plugins bekommen dann den Hinweis
 // "Neue Version für KeePass verfügbar" mit "Jetzt aktualisieren". Ohne Abfrage im Netz.
-export const RECOMMENDED_PLUGIN_VERSION = "1.0.20";
+export const RECOMMENDED_PLUGIN_VERSION = "1.0.21";
 
 // Name des Hinweises "Plugin älter als die Erweiterung" im Popup
 export const PLUGIN_UPDATE_NOTICE = "keepassferry-plugin-update";
