@@ -50,6 +50,20 @@ export class FormSaving {
         this.EnterHandlerAttachments.push({ fields: enterFields, handler: enterHandler });
     }
 
+    // Für die Seiten-Analyse: welcher Knopf je Formular als Absenden gilt, und das letzte erkannte Absenden
+    public analysisSubmit(): Record<string, unknown> {
+        const label = (el: HTMLElement) =>
+            el ? (el.textContent || el.getAttribute("aria-label") || (el as HTMLInputElement).value || el.tagName).trim().slice(0, 40) : null;
+        return {
+            knoepfe: this.SubmitHandlerAttachments.map(a => ({
+                formular: a.form.id === "Ferry-pseudo-form" ? "ohne <form>" : (a.form.getAttribute("action") ?? "").replace(/\?.*$/, "").slice(0, 60),
+                knopf: label(a.target),
+                eingabetaste: this.EnterHandlerAttachments.some(e => e.fields.length > 0)
+            })),
+            letztesAbsendenVorSek: this.lastSubmit ? Math.round((Date.now() - this.lastSubmit.at) / 1000) : null
+        };
+    }
+
     public removeAllSubmitHandlers() {
         this.SubmitHandlerAttachments.forEach(attachment => {
             if (attachment.target) {

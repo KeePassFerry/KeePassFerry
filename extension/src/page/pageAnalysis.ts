@@ -1,6 +1,7 @@
 import { pageDiag } from "./ferryDiagPage";
 import { isUsernameField } from "./loginFields";
 import { fieldFrameRect } from "./fieldFrame";
+import { isOtpField, kpfFilledHow, pageHas2faContext } from "./OtpFields";
 
 /*
 pageAnalysis.ts: Knopf "Seite für Diagnose erfassen" im Popup (nur bei eingeschaltetem Diagnoseprotokoll).
@@ -48,7 +49,35 @@ function collectInputs(root: Document | ShadowRoot, where: string, out: { el: HT
     });
 }
 
-export function capturePageAnalysis(selection: Record<string, unknown>) {
+// Hinweise der Seite am Feld (Beschriftung, Platzhalter, aria-label): Seitentext, nie Eingaben; gekürzt
+function hintsOf(el: HTMLInputElement): string {
+    const parts = [el.placeholder, el.getAttribute("aria-label"), el.getAttribute("title")];
+    if (el.labels) for (const label of Array.from(el.labels)) parts.push(label.textContent);
+    const labelledBy = el.getAttribute("aria-labelledby");
+    if (labelledBy) for (const id of labelledBy.split(/\s+/)) parts.push(document.getElementById(id)?.textContent);
+    return parts
+        .filter(Boolean)
+        .map(p => p.replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .join(" | ")
+        .slice(0, 120);
+}
+
+// Sichtbarer Text der Seite rund ums Feld (z. B. "Please enter the 6-digit code" ohne <label>): erste Ebene darüber,
+// die Text enthält, höchstens drei Ebenen; textContent enthält keine Feldwerte. Gekürzt
+function surroundingText(el: HTMLInputElement): string {
+    let node: Element = el;
+    for (let i = 0; i < 3 && node.parentElement && node.parentElement !== document.body; i++) {
+        node = node.parentElement;
+        const text = (node.textContent ?? "").replace(/\s+/g, " ").trim();
+        if (text) return text.slice(0, 120);
+    }
+    return "";
+}
+
+export type FieldRoleOf = (el: HTMLElement) => { rolle: string; formIndex: number; vonKpfGefuellt: boolean };
+
+export function capturePageAnalysis(selection: Record<string, unknown>, roleOf?: FieldRoleOf) {
     const frame = window === window.top ? "haupt" : "iframe";
     const inputs: { el: HTMLInputElement; where: string }[] = [];
     collectInputs(document, "seite", inputs);
@@ -58,6 +87,8 @@ export function capturePageAnalysis(selection: Record<string, unknown>) {
         adresse: location.origin + location.pathname,
         frame,
         fenster: window.innerWidth + "x" + window.innerHeight,
+        erweiterung: chrome.runtime.getManifest().version,
+        zweiFaktorKontext: pageHas2faContext(),
         formulare: forms.length,
         felder: inputs.length,
         iframes: Array.from(document.querySelectorAll("iframe")).map(f => {
@@ -104,6 +135,14 @@ export function capturePageAnalysis(selection: Record<string, unknown>) {
             name: el.name,
             id: el.id,
             autocomplete: el.getAttribute("autocomplete") ?? "",
+            hinweise: hintsOf(el),
+            textUmFeld: surroundingText(el),
+            maxlength: el.maxLength,
+            inputmode: el.getAttribute("inputmode") ?? "",
+            codefeld: isOtpField(el),
+            ...(roleOf ? roleOf(el) : {}),
+            // Wer den aktuellen Wert eingetragen hat: anmeldung (Liste/automatisch), code, popup, kontextmenü; sonst null
+            gefuelltDurch: roleOf?.(el)?.vonKpfGefuellt ? "anmeldung" : kpfFilledHow(el),
             formular: el.form ? forms.indexOf(el.form) : null,
             pos: round(r),
             offsetParent: !!el.offsetParent,

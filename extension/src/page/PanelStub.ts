@@ -1,5 +1,6 @@
 import { configManager } from "../common/ConfigManager";
 import { fieldFrameRect } from "./fieldFrame";
+import { setValue } from "./OtpFields";
 
 export class PanelStubOptions {
     id: string;
@@ -57,15 +58,17 @@ export class PanelStub {
     };
 
     // relatedCount: Einträge mit der Zusatzzeile "Zugehörige Domain" (je eine Zeile höher)
-    constructor(options: PanelStubOptions, target: HTMLElement, parentFrameId: number, itemCount?: number, itemTexts?: string[], relatedCount = 0, anyOtp = false) {
+    constructor(options: PanelStubOptions, target: HTMLElement, parentFrameId: number, itemCount?: number, itemTexts?: string[], relatedCount = 0) {
         this.target = target;
+        // Liste an einem Feld: "In dieses Feld eintragen" möglich (mittig ohne Feld nur Kopieren)
+        if (target) this.extraQuery += "&target=1";
         this.options = options;
         this.parentFrameId = parentFrameId;
         // Auswahlliste nur so hoch wie nötig (Kopf + Einträge, Rest scrollt) und so breit wie der längste Eintrag
         if (options.name === "matchedLoginsLegacy" && itemCount > 0) {
             this.options = {
                 ...options,
-                width: PanelStub.matchedLoginsWidth(itemTexts ?? [], anyOtp),
+                width: PanelStub.matchedLoginsWidth(itemTexts ?? []),
                 height: Math.min(options.height, 58 + itemCount * 50 + relatedCount * 18)
             };
         }
@@ -73,8 +76,9 @@ export class PanelStub {
 
     // Breite der Auswahlliste: längster Benutzername/Titel plus Zeilenrahmen (Symbol, Schnellknöpfe, Abstände),
     // mindestens 340 px, höchstens 560 px und nie breiter als das Fenster
-    private static matchedLoginsWidth(texts: string[], anyOtp = false): number {
-        const ROW_CHROME = 200 + (anyOtp ? 30 : 0);
+    private static matchedLoginsWidth(texts: string[]): number {
+        // Symbol, Abstände und der Aktionsknopf ⋯
+        const ROW_CHROME = 130;
         let longest = 0;
         const context = document.createElement("canvas").getContext("2d");
         if (context) {
@@ -224,6 +228,23 @@ export class PanelStub {
         this.container.style.setProperty("height", containerHeight + "px", "important");
         this.container.style.setProperty("top", top + "px", "important");
         this.container.style.setProperty("left", left + "px", "important");
+    }
+
+    // Aktionsansicht der Liste: andere Höhe (0 = ursprüngliche)
+    private baseHeight: number = null;
+    public resize(height: number) {
+        if (!this.container || !this.target) return;
+        if (this.baseHeight === null) this.baseHeight = this.options.height;
+        this.options = { ...this.options, height: height > 0 ? height : this.baseHeight };
+        this.positionPanel();
+    }
+
+    // Wert in das Feld eintragen, an dem die Liste hängt (wie "Einmalcode" im Rechtsklick-Menü)
+    public fillTarget(value: string, how: string): boolean {
+        const target = this.target as HTMLInputElement;
+        if (!(target instanceof HTMLInputElement) || !target.isConnected) return false;
+        setValue(target, value, how);
+        return true;
     }
 
     public closePanel() {

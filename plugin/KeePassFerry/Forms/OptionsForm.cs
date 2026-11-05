@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using KeePass.Plugins;
 using KeePass.UI;
+using KeePassLib;
 using KeePassFerry.Properties;
 
 namespace KeePassFerry.Forms
@@ -26,6 +27,7 @@ namespace KeePassFerry.Forms
         private readonly ComboBox _expiryWarn;
         private readonly ListView _clients;
         private readonly Button _unpair;
+        private readonly CheckedListBox _hibpDbs;
 
         public OptionsForm(IPluginHost host, KeePassFerryExt plugin)
         {
@@ -41,7 +43,7 @@ namespace KeePassFerry.Forms
             StartPosition = FormStartPosition.CenterParent;
             AutoScaleMode = AutoScaleMode.Dpi;
             AutoScaleDimensions = new SizeF(96F, 96F);
-            ClientSize = new Size(560, 716);
+            ClientSize = new Size(560, 796);
             Font = new Font("Segoe UI", 9F);
 
             var hint = new Label
@@ -71,7 +73,7 @@ namespace KeePassFerry.Forms
             {
                 Text = FerryText.T("Datenlecks", "Data breaches"),
                 Location = new Point(16, 166),
-                Size = new Size(528, 120)
+                Size = new Size(528, 200)
             };
             _hibp = NewCheckBox(breaches, 24,
                 FerryText.T("Passwörter auf Datenlecks prüfen", "Check passwords for data breaches"));
@@ -81,11 +83,34 @@ namespace KeePassFerry.Forms
                 "KeePass prüft neue und geänderte Passwörter bei „Have I Been Pwned“ und alle anderen gelegentlich erneut. Gesendet werden nur die ersten 5 Zeichen einer Prüfsumme, nie das Passwort.",
                 "KeePass checks new and changed passwords at \"Have I Been Pwned\" and re-checks all others from time to time. Only the first 5 characters of a checksum are sent, never the password.")));
             breaches.Controls.Add(NewHint(86, 28, HibpProgressText()));
+            // Pro Datenbank: neue Datenbanken sind nicht eingeschaltet; schreibgeschützte lassen sich nicht prüfen
+            breaches.Controls.Add(new Label
+            {
+                Text = FerryText.T("Für diese Datenbanken (gilt für diesen PC):", "For these databases (on this PC):"),
+                AutoSize = true,
+                Location = new Point(30, 116)
+            });
+            _hibpDbs = new CheckedListBox { Location = new Point(30, 136), Size = new Size(486, 56), CheckOnClick = true, IntegralHeight = false };
+            foreach (PwDocument doc in host.MainWindow.DocumentManager.Documents)
+            {
+                PwDatabase db = doc.Database;
+                if (db == null || !db.IsOpen || host.MainWindow.IsFileLocked(doc)) continue;
+                bool readOnly = FerryService.IsDatabaseReadOnly(db);
+                string label = HibpChecker.DisplayName(db) + (readOnly ? FerryText.T(" (nur lesen)", " (read-only)") : "");
+                bool on = !readOnly && _plugin.Hibp != null && _plugin.Hibp.IsDatabaseEnabled(db, false);
+                _hibpDbs.Items.Add(new HibpDbItem { Db = db, Label = label, ReadOnly = readOnly }, on);
+            }
+            _hibpDbs.ItemCheck += (s, e) =>
+            {
+                if (((HibpDbItem)_hibpDbs.Items[e.Index]).ReadOnly) e.NewValue = CheckState.Unchecked;
+            };
+            _hibpDbs.Enabled = _plugin.Hibp != null;
+            breaches.Controls.Add(_hibpDbs);
 
             var expiry = new GroupBox
             {
                 Text = FerryText.T("Abgelaufene Einträge", "Expired entries"),
-                Location = new Point(16, 296),
+                Location = new Point(16, 376),
                 Size = new Size(528, 120)
             };
             expiry.Controls.Add(new Label { Text = FerryText.T("Verhalten:", "Behaviour:"), AutoSize = true, Location = new Point(12, 27) });
@@ -108,7 +133,7 @@ namespace KeePassFerry.Forms
             var paired = new GroupBox
             {
                 Text = FerryText.T("Gekoppelte Browser", "Paired browsers"),
-                Location = new Point(16, 426),
+                Location = new Point(16, 506),
                 Size = new Size(528, 196)
             };
             _clients = new ListView
@@ -147,23 +172,23 @@ namespace KeePassFerry.Forms
             var version = new Label
             {
                 AutoSize = true,
-                Location = new Point(16, 638),
+                Location = new Point(16, 718),
                 Text = "KeePassFerry " + FerryUpdater.InstalledVersion
             };
             var update = new Button
             {
                 Text = FerryText.T("Nach Updates suchen …", "Check for updates …"),
                 AutoSize = true,
-                Location = new Point(160, 632)
+                Location = new Point(160, 712)
             };
             update.Click += delegate { _plugin.OnCheckForUpdates(this, EventArgs.Empty); };
 
-            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(362, 676), Size = new Size(88, 28) };
+            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(362, 756), Size = new Size(88, 28) };
             var cancel = new Button
             {
                 Text = FerryText.T("Abbrechen", "Cancel"),
                 DialogResult = DialogResult.Cancel,
-                Location = new Point(456, 676),
+                Location = new Point(456, 756),
                 Size = new Size(88, 28)
             };
             ok.Click += OnOk;
@@ -172,6 +197,14 @@ namespace KeePassFerry.Forms
             AcceptButton = ok;
             CancelButton = cancel;
             ShowPairedClients();
+        }
+
+        private sealed class HibpDbItem
+        {
+            public PwDatabase Db;
+            public string Label;
+            public bool ReadOnly;
+            public override string ToString() { return Label; }
         }
 
         private static Label NewHint(int top, int height, string text)
@@ -255,6 +288,12 @@ namespace KeePassFerry.Forms
             _host.CustomConfig.SetBool(KeyAutoSave, _autoSave.Checked);
             _host.CustomConfig.SetBool(KeyEditNewEntries, _editNewEntries.Checked);
             if (_plugin.Hibp != null && _plugin.Hibp.Enabled != _hibp.Checked) _plugin.Hibp.Enabled = _hibp.Checked;
+            if (_plugin.Hibp != null)
+                for (int i = 0; i < _hibpDbs.Items.Count; i++)
+                {
+                    var item = (HibpDbItem)_hibpDbs.Items[i];
+                    if (!item.ReadOnly && item.Db.IsOpen) _plugin.Hibp.SetDatabaseEnabled(item.Db, _hibpDbs.GetItemChecked(i));
+                }
             _host.CustomConfig.SetBool(FerryService.HideExpiredConfigKey, _expiryMode.SelectedIndex == 1);
             _host.CustomConfig.SetLong(FerryService.ExpiryWarnDaysConfigKey, FerryService.ExpiryWarnDaysChoices[Math.Max(0, _expiryWarn.SelectedIndex)]);
             _host.MainWindow.Invoke((MethodInvoker)delegate { _host.MainWindow.SaveConfig(); });

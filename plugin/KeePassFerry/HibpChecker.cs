@@ -37,6 +37,11 @@ namespace KeePassFerry
         // Zeitpunkt des letzten Einschaltens: ältere Ergebnisse werden einmal neu geprüft (auch geleakte), weil unklar
         // ist, wie lange die Prüfung aus war
         private const string ConfigEnabledAt = "KeePassFerry.Hibp.EnabledAt";
+        // Pro Datenbank (pro PC, nicht in der Datenbank): "1" prüfen, "0" nicht; fehlt der Wert, ist noch nicht
+        // entschieden und die Datenbank wird nicht geprüft (Tipp in der Erweiterung, Haken in den Optionen)
+        private const string ConfigDbPrefix = "KeePassFerry.Hibp.Db.";
+        // Erster Start mit Prüfung pro Datenbank: Datenbanken mit vorhandenen Prüfergebnissen bleiben eingeschaltet
+        private const string ConfigPerDb = "KeePassFerry.Hibp.PerDb";
         private const string RangeUrl = "https://api.pwnedpasswords.com/range/";
         private static readonly TimeSpan RecheckAfter = TimeSpan.FromDays(30);
         private const int BatchSize = 40;
@@ -63,9 +68,13 @@ namespace KeePassFerry
             public int Count = -1;
         }
 
+        private readonly bool _migrationSession;
+
         internal HibpChecker(IPluginHost host)
         {
             _host = host;
+            _migrationSession = !host.CustomConfig.GetBool(ConfigPerDb, false);
+            if (_migrationSession) host.CustomConfig.SetBool(ConfigPerDb, true);
             _timer = new System.Windows.Forms.Timer { Interval = TickMs };
             _timer.Tick += delegate { RunBatch(); };
             _timer.Start();
@@ -157,6 +166,7 @@ namespace KeePassFerry
                 if (db == null || !db.IsOpen || _host.MainWindow.IsFileLocked(doc)) continue;
                 // Schreibgeschützt (z. B. nur lesend geteilt): Ergebnis ließe sich nicht speichern
                 if (FerryService.IsDatabaseReadOnly(db)) continue;
+                if (!IsDatabaseEnabled(db, true)) continue;
                 PwGroup bin = db.RecycleBinEnabled ? db.RootGroup.FindGroup(db.RecycleBinUuid, true) : null;
                 foreach (PwEntry e in db.RootGroup.GetEntries(true))
                 {
@@ -359,6 +369,65 @@ namespace KeePassFerry
             return result;
         }
 
+        private static string DbKey(PwDatabase db)
+        {
+            return ConfigDbPrefix + Sha1Hex((db.IOConnectionInfo.Path ?? "").ToLowerInvariant()).Substring(0, 16);
+        }
+
+        /// <summary>Entscheidung für diese Datenbank: true/false, null = noch nicht entschieden</summary>
+        internal bool? DatabaseDecision(PwDatabase db)
+        {
+            string value = _host.CustomConfig.GetString(DbKey(db), "");
+            if (value == "1") return true;
+            if (value == "0") return false;
+            return null;
+        }
+
+        internal void SetDatabaseEnabled(PwDatabase db, bool enabled)
+        {
+            _host.CustomConfig.SetString(DbKey(db), enabled ? "1" : "0");
+        }
+
+        /// <summary>
+        /// Wird diese Datenbank geprüft? Neue Datenbanken nicht (erst nach Zustimmung). Beim ersten Start mit der Prüfung
+        /// pro Datenbank bleiben Datenbanken mit vorhandenen Ergebnissen eingeschaltet (record: Entscheidung speichern).
+        /// </summary>
+        internal bool IsDatabaseEnabled(PwDatabase db, bool record)
+        {
+            bool? decision = DatabaseDecision(db);
+            if (decision.HasValue) return decision.Value;
+            if (!_migrationSession || !HasResults(db)) return false;
+            if (record) SetDatabaseEnabled(db, true);
+            return true;
+        }
+
+        private static bool HasResults(PwDatabase db)
+        {
+            foreach (PwEntry e in db.RootGroup.GetEntries(true))
+                if (!string.IsNullOrEmpty(e.CustomData.Get(CheckedKey))) return true;
+            return false;
+        }
+
+        /// <summary>Geöffnete, beschreibbare Datenbanken ohne Entscheidung (für den Tipp in der Erweiterung): Namen</summary>
+        internal List<string> UndecidedDatabases()
+        {
+            var result = new List<string>();
+            foreach (PwDocument doc in _host.MainWindow.DocumentManager.Documents)
+            {
+                PwDatabase db = doc.Database;
+                if (db == null || !db.IsOpen || _host.MainWindow.IsFileLocked(doc)) continue;
+                if (FerryService.IsDatabaseReadOnly(db) || IsDatabaseEnabled(db, false) || DatabaseDecision(db).HasValue) continue;
+                result.Add(DisplayName(db));
+            }
+            return result;
+        }
+
+        internal static string DisplayName(PwDatabase db)
+        {
+            if (!string.IsNullOrEmpty(db.Name)) return db.Name;
+            return Path.GetFileNameWithoutExtension(db.IOConnectionInfo.Path ?? "");
+        }
+
         /// <summary>Stand für die Einstellungen: prüfbare Einträge, davon aktuell geprüft, davon geleakt, läuft gerade</summary>
         internal void Progress(out int total, out int done, out int leaked, out bool running, out DateTime lastPass,
             out DateTime lastFailure)
@@ -372,6 +441,7 @@ namespace KeePassFerry
             {
                 PwDatabase db = doc.Database;
                 if (db == null || !db.IsOpen || _host.MainWindow.IsFileLocked(doc)) continue;
+                if (FerryService.IsDatabaseReadOnly(db) || !IsDatabaseEnabled(db, false)) continue;
                 PwGroup bin = db.RecycleBinEnabled ? db.RootGroup.FindGroup(db.RecycleBinUuid, true) : null;
                 foreach (PwEntry e in db.RootGroup.GetEntries(true))
                 {

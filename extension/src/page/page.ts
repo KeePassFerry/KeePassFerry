@@ -390,8 +390,16 @@ if (document.body) {
                     fillFieldKind(m.fillKind, m.fillValue);
                 }
             }
+            if (m.action == Action.ResizePanel) {
+                formFilling.matchedLoginsPanelStub?.resize(m.panelHeight);
+            }
+            if (m.action == Action.FillPanelTarget && m.fillValue) {
+                if (formFilling.matchedLoginsPanelStub?.fillTarget(m.fillValue, m.fillHow ?? "liste") && m.filledEntry?.uuid) {
+                    Port.postMessage({ action: Action.EntryFilled, filledEntry: m.filledEntry } as AddonMessage);
+                }
+            }
             if (m.action == Action.CapturePageAnalysis) {
-                capturePageAnalysis(formFilling?.analysisSummary() ?? {});
+                capturePageAnalysis(formFilling?.analysisSummary() ?? {}, el => formFilling?.analysisFieldRole(el));
             }
             if (m.action == Action.FillContextTarget) {
                 fillContextTarget(m.fillValue);

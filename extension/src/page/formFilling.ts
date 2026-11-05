@@ -101,8 +101,7 @@ export class FormFilling {
                     this.parentFrameId,
                     this.matchedEntryCount(),
                     this.matchedEntryTexts(),
-                    this.matchedRelatedCount(),
-                    this.matchedAnyOtp()
+                    this.matchedRelatedCount()
                 );
                 this.matchedLoginsPanelStub.onOutsideClick = () => this.closeMatchedLoginsPanel();
                 this.matchedLoginsPanelStub.createPanel();
@@ -129,8 +128,7 @@ export class FormFilling {
             this.parentFrameId,
             this.matchedEntryCount(),
             this.matchedEntryTexts(),
-            this.matchedRelatedCount(),
-            this.matchedAnyOtp()
+            this.matchedRelatedCount()
         );
         this.matchedLoginsPanelStub.onOutsideClick = () => this.closeMatchedLoginsPanel();
         FerryLog.debug("Creating panel...");
@@ -152,11 +150,6 @@ export class FormFilling {
         const uuids = new Set<string>();
         for (const list of this.matchResult?.entries ?? []) for (const e of list ?? []) if (e.relatedDomain) uuids.add(e.uuid);
         return uuids.size;
-    }
-
-    // Mindestens ein Eintrag mit Einmalcode (Knopf "Einmalcode kopieren" in der Zeile)
-    private matchedAnyOtp(): boolean {
-        return (this.matchResult?.entries ?? []).some(list => (list ?? []).some(e => e.hasOtp));
     }
 
     // Angezeigte Texte der passenden Einträge (Benutzername, Titel) für die Breite der Auswahlliste
@@ -1962,6 +1955,29 @@ export class FormFilling {
         return [totalRelevanceScore, fieldMatchSuccesses];
     }
 
+    // Für die Seiten-Analyse: Rolle eines Felds in KeePassFerrys Erkennung und ob KeePassFerry es zuletzt gefüllt hat
+    public analysisFieldRole(el: HTMLElement): { rolle: string; formIndex: number; vonKpfGefuellt: boolean } {
+        const m = this.matchResult;
+        let rolle = "keins";
+        let formIndex: number = null;
+        (m?.passwordFieldsArray ?? []).forEach((fields, i) => {
+            if (fields?.some(f => f.DOMelement === el)) {
+                rolle = "passwort";
+                formIndex = i;
+            }
+        });
+        (m?.otherFieldsArray ?? []).forEach((fields, i) => {
+            const index = fields?.findIndex(f => f.DOMelement === el) ?? -1;
+            if (index < 0) return;
+            rolle = index === m.usernameIndexArray?.[i] ? "benutzer" : "anderes";
+            formIndex = i;
+        });
+        const filled = [...(m?.lastFilledPasswords ?? []), ...(m?.lastFilledOther ?? [])];
+        const value = (el as HTMLInputElement).value;
+        const vonKpfGefuellt = !!value && filled.some(f => f.DOMelement === el && f.value === value);
+        return { rolle, formIndex, vonKpfGefuellt };
+    }
+
     // Für die Seiten-Analyse: welches Formular KeePassFerry gewählt hat und warum
     public analysisSummary(): Record<string, unknown> {
         const m = this.matchResult;
@@ -1971,7 +1987,8 @@ export class FormFilling {
             punkte: (m?.formRelevanceScores ?? []).map(p => Math.round(p ?? 0)),
             eintraege: i != null ? (m.entries?.[i]?.length ?? 0) : 0,
             sichtbar: i != null && m.submitTargets?.[i] ? this.isShownForScoring(m.submitTargets[i]) : null,
-            neuesKonto: !!m?.previousUsernameUnknown
+            neuesKonto: !!m?.previousUsernameUnknown,
+            absenden: this.formSaving.analysisSubmit()
         };
     }
 

@@ -16,7 +16,7 @@
                         <component :is="iconComponent(tip.icon)" class="ferry-ico" />
                     </span>
                     <span class="ferry-news-text">
-                        <span class="ferry-news-item-title">{{ $i18n("ferry_tip_" + tip.id + "_title") }}</span>
+                        <span class="ferry-news-item-title">{{ $i18n("ferry_tip_" + (tip.textKey ?? tip.id) + "_title") }}</span>
                         <span class="ferry-news-item-hint">{{ tipText(tip) }}</span>
                         <span class="ferry-news-actions">
                             <v-btn

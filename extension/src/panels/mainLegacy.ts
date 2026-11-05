@@ -36,7 +36,7 @@ async function start() {
 
     switch (params["panel"]) {
         case "matchedLoginsLegacy":
-            matchedLoginsPanel = new MatchedLoginsPanel(Port.raw, closePanel, parentFrameId);
+            matchedLoginsPanel = new MatchedLoginsPanel(Port.raw, closePanel, parentFrameId, params["target"] === "1");
             store = new NonReactiveStore((mutationPayload: Mutation, _excludedPort) => {
                 FerryLog.debug("New legacy panel mutation being distributed.");
                 Port.postMessage({ mutation: mutationPayload } as AddonMessage);

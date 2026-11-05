@@ -321,7 +321,7 @@ export class jsonrpcClient {
     }
 
     // Merkmale für die Tipps: { winHello, anyOtp, hibpCheck } (keine Inhalte)
-    async getFerryTips(): Promise<{ winHello: boolean; anyOtp: boolean; anyPasskey?: boolean; hibpCheck: boolean }> {
+    async getFerryTips(): Promise<{ winHello: boolean; anyOtp: boolean; anyPasskey?: boolean; hibpCheck: boolean; hibpUndecided?: string[] }> {
         const sessionManager = this.pluginClient.getPrimarySessionManager();
         if (!sessionManager) return null;
         const responses = await this.pluginClient.request([sessionManager], "GetFerryTips", []);

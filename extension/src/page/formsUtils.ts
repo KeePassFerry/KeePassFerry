@@ -114,7 +114,8 @@ export class FormUtils {
                 continue; // ignoring other form types
             }
 
-            if (domType != "password" && isOtpField(elements[i])) continue;
+            // Codefelder (auch als Passwortfeld gebaut) sind weder Benutzer- noch Passwortfeld
+            if (isOtpField(elements[i])) continue;
 
             if (domType == "radio" && isSubmission && elements[i].checked == false) continue;
             if (domType == "password" && isSubmission && !elements[i].value) continue;

@@ -57,6 +57,10 @@ export interface AddonMessage {
     otpIconOnly?: boolean;
     preferredUuid?: string;
     previousUsernameUnknown?: boolean;
+    // Liste am Feld: neue Höhe (0 = ursprüngliche) bzw. Einmalcode dieses Eintrags statt fillValue eintragen
+    panelHeight?: number;
+    otpFor?: { uuid: string; dbFileName: string };
+    fillHow?: string;
     otpIssuer?: string;
     // ShowSaveNotice: Passwort eines vorhandenen Eintrags geändert (Benutzername bzw. Titel des Eintrags)
     saveNoticeUpdateFor?: string;

@@ -14,6 +14,8 @@ export interface Tip {
     run?: () => void;
     // Platzhalter im Text ($1 …)
     args?: string[];
+    // Texte unter einem anderen Schlüssel als die id (id ändert sich mit dem Inhalt, z. B. je Datenbank)
+    textKey?: string;
 }
 
 // Früher landete hier die reaktive Vue-Liste (Proxy); chrome.storage speicherte sie als Objekt {"0": "…"}, und
@@ -37,7 +39,7 @@ export async function saveDismissedTips(ids: string[]) {
 export async function loadTips(reload: () => void = () => undefined): Promise<{ tips: Tip[]; connected: boolean }> {
     const tips: Tip[] = [];
     let status: any = null;
-    let info: { winHello: boolean; anyOtp: boolean; anyPasskey?: boolean; hibpCheck: boolean } = null;
+    let info: { winHello: boolean; anyOtp: boolean; anyPasskey?: boolean; hibpCheck: boolean; hibpUndecided?: string[] } = null;
     try {
         status = await chrome.runtime.sendMessage({ keepassferry: "connectionStatus" });
         if (status?.hibpCheck) info = await chrome.runtime.sendMessage({ keepassferry: "getFerryTips" });
@@ -56,6 +58,19 @@ export async function loadTips(reload: () => void = () => undefined): Promise<{ 
             await chrome.runtime.sendMessage({ keepassferry: "openKeePassOptions" }).catch(() => undefined);
             window.close();
         } });
+    }
+    // Weitere Datenbank geöffnet, für die noch nicht entschieden ist, ob KeePass sie prüft (nie von selbst eingeschaltet).
+    // Die id enthält die Namen: eine später hinzukommende Datenbank erscheint wieder, auch wenn ein früherer Tipp
+    // ausgeblendet wurde
+    if (info?.hibpCheck && info.hibpUndecided?.length) {
+        const names = info.hibpUndecided.map(n => "„" + n + "“").join(", ");
+        tips.push({
+            id: "hibpdb:" + info.hibpUndecided.join("|"), textKey: "hibpdb", icon: "shield-search", tone: "warn",
+            action: "ferry_open_keepass_options", primary: true, args: [names], run: async () => {
+                await chrome.runtime.sendMessage({ keepassferry: "openKeePassOptions" }).catch(() => undefined);
+                window.close();
+            }
+        });
     }
     if (info && !info.winHello) {
         tips.push({ id: "winhello", icon: "fingerprint", tone: "plain", action: "ferry_tip_guide", run: () => {
@@ -117,7 +132,7 @@ export async function openTipCount(): Promise<number> {
 // Text mit eingesetzten Platzhaltern ($1 …): chrome.i18n bekommt eindeutige Markierungen, die danach durch die echten
 // Werte ersetzt werden (das Tastenkürzel kam sonst teils leer an: "Mit  trägst du …")
 export function tipText(tip: Tip): string {
-    const key = "ferry_tip_" + tip.id + "_text";
+    const key = "ferry_tip_" + (tip.textKey ?? tip.id) + "_text";
     const args = tip.args ?? [];
     if (!args.length) return chrome.i18n.getMessage(key) || "";
     const marks = args.map((_, i) => "⁣KPF" + i + "⁣");

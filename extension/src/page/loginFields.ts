@@ -9,6 +9,8 @@ Ein Textfeld ist ein Benutzerfeld, wenn
 Alles andere (Name, Adresse, IBAN, Suche, Einstellungen …) erfüllt keine dieser Bedingungen.
 */
 
+import { isOtpField } from "./OtpFields";
+
 const TEXT_TYPES = ["text", "email", "tel", ""];
 const LOGIN_NAME = /\b(user|username|login|log in|logon|sign in|signin|e-?mail|benutzer|benutzername|anmeldename|anmeldung|identifier)\b/i;
 
@@ -23,7 +25,7 @@ function isTextInput(el: HTMLInputElement): boolean {
 }
 
 function isPasswordInput(el: HTMLInputElement): boolean {
-    return el.type === "password" && !el.disabled && isShown(el);
+    return el.type === "password" && !el.disabled && isShown(el) && !isOtpField(el);
 }
 
 // Name, ID, Platzhalter und Beschriftung; "userName" -> "user Name", "login_email" -> "login email"

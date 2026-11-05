@@ -163,3 +163,32 @@ li.ferry-login:focus-within .ferry-login-quick { opacity: 1; }
 .enabled {
     display: block;
 }
+
+/* Aktionsknopf ⋯ je Eintrag: immer sichtbar (einziger Knopf der Zeile) */
+.ferry-login-more { opacity: 0.7; }
+.ferry-login-more svg { stroke-width: 3.2; }
+
+/* Aktionsansicht eines Eintrags: Werte in dieses Feld eintragen, ⧉ kopiert */
+#Ferry-EntryActions { flex-grow: 1000; overflow-y: auto; display: flex; flex-direction: column; }
+.ferry-actions-head { display: flex; align-items: center; gap: 6px; padding: 2px 4px 6px; border-bottom: 1px solid var(--border); }
+.ferry-actions-back { opacity: 1; }
+.ferry-actions-name { flex: 1; min-width: 0; }
+.ferry-actions-heading { padding: 8px 10px 4px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+ul.ferry-actions { margin: 0; padding: 0 2px 4px; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+li.ferry-action {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 38px;
+    padding: 0 6px 0 10px;
+    border-radius: 9px;
+    cursor: pointer;
+    outline: none;
+}
+li.ferry-action:hover { background: var(--hover); }
+li.ferry-action:focus { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
+li.ferry-action.ferry-action-separated { margin-top: 4px; border-top: 1px solid var(--border); border-radius: 0 0 9px 9px; }
+.ferry-action-icon { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ferry-action-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ferry-action-copy { opacity: 0.45; }
+li.ferry-action:hover .ferry-action-copy, li.ferry-action:focus .ferry-action-copy { opacity: 1; }

@@ -1,4 +1,48 @@
 {
+    "ferry_panel_copy_heading": {
+        "message": "Kopieren",
+        "description": "KeePassFerry"
+    },
+    "ferry_panel_more": {
+        "message": "Weitere Aktionen",
+        "description": "KeePassFerry"
+    },
+    "ferry_panel_back": {
+        "message": "Zurück zur Liste",
+        "description": "KeePassFerry"
+    },
+    "ferry_panel_fill_heading": {
+        "message": "In dieses Feld eintragen",
+        "description": "KeePassFerry"
+    },
+    "ferry_panel_username": {
+        "message": "Benutzername",
+        "description": "KeePassFerry"
+    },
+    "ferry_panel_password": {
+        "message": "Passwort",
+        "description": "KeePassFerry"
+    },
+    "ferry_panel_otp": {
+        "message": "Einmalcode",
+        "description": "KeePassFerry"
+    },
+    "ferry_panel_field": {
+        "message": "Feld",
+        "description": "KeePassFerry"
+    },
+    "ferry_panel_copy": {
+        "message": "Kopieren",
+        "description": "KeePassFerry"
+    },
+    "ferry_tip_hibpdb_title": {
+        "message": "Weitere Datenbank auf Datenlecks prüfen?",
+        "description": "KeePassFerry"
+    },
+    "ferry_tip_hibpdb_text": {
+        "message": "Für $1 prüft KeePass die Passwörter noch nicht. Neue Datenbanken werden nie von selbst geprüft – in den KeePass-Optionen kannst du sie einzeln einschalten.",
+        "description": "KeePassFerry"
+    },
     "ferry_capture_page": {
         "message": "Seite für Diagnose erfassen (Aufbau der Felder ins Diagnoseprotokoll, keine Inhalte)",
         "description": "KeePassFerry"
@@ -1806,6 +1850,30 @@
     },
     "ferry_leaks_intro": {
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_20_1_title": {
+        "message": "Einzelne Werte direkt ins Feld",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_20_1_text": {
+        "message": "In der Liste am Feld hat jeder Eintrag jetzt einen Knopf ⋯. Er trägt Benutzername, Passwort, Einmalcode oder ein weiteres Feld des Eintrags genau in das Feld ein, an dem die Liste hängt – praktisch, wenn eine Seite ein Feld anders gebaut hat als üblich. Das kleine ⧉ daneben kopiert.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_20_2_title": {
+        "message": "Codefelder besser erkannt",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_20_2_text": {
+        "message": "Ist das Feld für den Einmalcode als Passwortfeld gebaut (z. B. „totp“), bekommt es jetzt den Code statt des Passworts, und es kommt kein Angebot mehr, das Passwort durch den Code zu ersetzen. Falsche Hinweise „Zwei-Faktor-Schlüssel gefunden“ auf normalen Seiten sind seltener.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_20_3_title": {
+        "message": "Datenleck-Prüfung pro Datenbank",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_20_3_text": {
+        "message": "Eine weitere geöffnete Datenbank wird nicht mehr von selbst geprüft. Ein Tipp führt zu den KeePass-Optionen, dort schaltest du sie einzeln ein. Dafür ist das Plugin 1.0.20 nötig.",
         "description": "KeePassFerry"
     },
     "ferry_news_1_0_19_1_title": {

@@ -1,4 +1,48 @@
 {
+  "ferry_panel_copy_heading": {
+    "message": "Copy",
+    "description": "KeePassFerry"
+  },
+  "ferry_panel_more": {
+    "message": "More actions",
+    "description": "KeePassFerry"
+  },
+  "ferry_panel_back": {
+    "message": "Back to the list",
+    "description": "KeePassFerry"
+  },
+  "ferry_panel_fill_heading": {
+    "message": "Fill into this field",
+    "description": "KeePassFerry"
+  },
+  "ferry_panel_username": {
+    "message": "Username",
+    "description": "KeePassFerry"
+  },
+  "ferry_panel_password": {
+    "message": "Password",
+    "description": "KeePassFerry"
+  },
+  "ferry_panel_otp": {
+    "message": "One-time code",
+    "description": "KeePassFerry"
+  },
+  "ferry_panel_field": {
+    "message": "Field",
+    "description": "KeePassFerry"
+  },
+  "ferry_panel_copy": {
+    "message": "Copy",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_hibpdb_title": {
+    "message": "Check another database for data breaches?",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_hibpdb_text": {
+    "message": "KeePass doesn't check the passwords of $1 yet. New databases are never checked on their own – you can turn them on one by one in the KeePass options.",
+    "description": "KeePassFerry"
+  },
   "ferry_capture_page": {
     "message": "Capture page for diagnostics (field structure to the diagnostic log, no contents)",
     "description": "KeePassFerry"
@@ -1806,6 +1850,30 @@
   },
   "ferry_leaks_intro": {
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_20_1_title": {
+    "message": "Single values straight into the field",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_20_1_text": {
+    "message": "In the list at a field, each entry now has a ⋯ button. It fills the username, password, one-time code or another field of the entry into exactly the field the list belongs to – handy when a site builds a field differently than usual. The small ⧉ next to it copies.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_20_2_title": {
+    "message": "Code fields recognised better",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_20_2_text": {
+    "message": "If the one-time code field is built as a password field (e.g. \"totp\"), it now gets the code instead of the password, and you are no longer offered to replace your password with the code. False \"Two-factor key found\" notices on ordinary pages are rarer.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_20_3_title": {
+    "message": "Breach check per database",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_20_3_text": {
+    "message": "Another open database is no longer checked on its own. A tip takes you to the KeePass options, where you turn it on one by one. This needs plugin 1.0.20.",
     "description": "KeePassFerry"
   },
   "ferry_news_1_0_19_1_title": {

@@ -523,6 +523,11 @@ namespace KeePassFerry
             result["anyOtp"] = anyOtp;
             result["anyPasskey"] = anyPasskey;
             result["hibpCheck"] = GetHibpCheck();
+            // Datenbanken, für die noch nicht entschieden ist, ob sie geprüft werden (Tipp mit Verweis auf die Optionen)
+            var undecided = new Jayrock.Json.JsonArray();
+            if (_keePassRpcPlugin.Hibp != null && _keePassRpcPlugin.Hibp.Enabled)
+                foreach (string name in _keePassRpcPlugin.Hibp.UndecidedDatabases()) undecided.Add(name);
+            result["hibpUndecided"] = undecided;
             return result;
         }
 

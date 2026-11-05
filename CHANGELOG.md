@@ -2,6 +2,23 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.20 – 2026-11-05
+
+- Breach check per database (plugin): a newly opened database is never checked on its own. A tip in the popup
+  points to the KeePass options, where each open database can be turned on (setting per PC, not stored in the
+  database). On the first start, databases that already have check results stay on.
+- One-time code fields built as password fields (e.g. `name="totp"`) are recognised: they get the code instead of
+  the password, and submitting them no longer offers to replace the entry's password with the code.
+- List at a login field: one action button (⋯) per entry instead of a row of buttons. It opens "Fill into this
+  field" with username, password, one-time code and the entry's other fields – the value goes into the field the list
+  belongs to (e.g. the code into a code field that was taken for a password field); a small ⧉ copies instead; "Edit"
+  below. Without a field (list opened by shortcut) a click copies.
+- No more false "Two-factor key found" notices on ordinary pages (e.g. a project name that happens to be valid
+  Base32 next to "2FA" in a review): a key in lower case must be grouped, and it must be close to the setup text.
+- "Capture page for diagnostics" also records extension/plugin version, browser, the requested frames, and per field
+  the page's label/placeholder, maximum length, input mode, whether it counts as a code field, its role in the
+  detection and whether KeePassFerry filled it (still never field contents).
+
 ## 1.0.19 – 2026-11-04
 
 - Multi-step logins (e.g. Google): the username from the first step is remembered for the tab. On the password step
@@ -426,6 +443,24 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.20 – 2026-11-05
+
+- Datenleck-Prüfung pro Datenbank (Plugin): Eine neu geöffnete Datenbank wird nie von selbst geprüft. Ein Tipp im
+  Popup verweist auf die KeePass-Optionen, dort lässt sich jede geöffnete Datenbank einschalten (Einstellung pro PC,
+  nicht in der Datenbank). Beim ersten Start bleiben Datenbanken mit vorhandenen Prüfergebnissen eingeschaltet.
+- Codefelder, die als Passwortfeld gebaut sind (z. B. `name="totp"`), werden erkannt: Sie bekommen den Einmalcode
+  statt des Passworts, und beim Absenden kommt kein Angebot mehr, das Passwort durch den Code zu ersetzen.
+- Liste am Anmeldefeld: ein Aktionsknopf (⋯) je Eintrag statt einer Knopfreihe. Er öffnet „In dieses Feld eintragen“
+  mit Benutzername, Passwort, Einmalcode und den weiteren Feldern des Eintrags – der Wert kommt in das Feld, an dem die
+  Liste hängt (z. B. der Code in ein Codefeld, das für ein Passwortfeld gehalten wurde); ein kleines ⧉ kopiert
+  stattdessen; darunter „Bearbeiten“. Ohne Feld (Liste per Tastenkürzel) kopiert ein Klick.
+- Kein falscher Hinweis „Zwei-Faktor-Schlüssel gefunden“ mehr auf normalen Seiten (z. B. ein Projektname, der
+  zufällig gültiges Base32 ist, neben „2FA“ in einer Bewertung): kleingeschriebene Schlüssel müssen in Gruppen stehen
+  und nahe am Einrichtungstext.
+- „Seite für Diagnose erfassen“ schreibt zusätzlich Version von Erweiterung und Plugin, Browser, die angefragten Frames
+  und pro Feld Beschriftung/Platzhalter der Seite, Höchstlänge, Eingabemodus, ob es als Codefeld gilt, seine Rolle in
+  der Erkennung und ob KeePassFerry es gefüllt hat (weiterhin nie Feldinhalte).
 
 ## 1.0.19 – 2026-11-04
 

@@ -351,7 +351,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case "capturePageAnalysis": {
             // Alle Frames des Tabs schreiben ihren Aufbau ins Diagnoseprotokoll
             const ports = ferry.tabStates.get(ferry.foregroundTabId)?.framePorts;
-            diag("hintergrund", "seiten-analyse angefordert", { frames: ports?.size ?? 0 });
+            // Angefragte Frames mit Herkunft (wer nicht mit "seiten-analyse" antwortet, hat kein Inhaltsskript o. Ä.)
+            const frames: string[] = [];
+            ports?.forEach((port, id) => {
+                let origin = "?";
+                try {
+                    origin = new URL(port.sender?.url ?? "").origin;
+                } catch (e) {
+                    // ohne Adresse
+                }
+                frames.push("f" + id + " " + origin);
+            });
+            diag("hintergrund", "seiten-analyse angefordert", {
+                frames,
+                erweiterung: chrome.runtime.getManifest().version,
+                plugin: pluginVersionFrom(ferry.rpc.pluginClient.nativeSessionManager.features()),
+                browser: navigator.userAgent.replace(/^.*\) /, "").slice(0, 80)
+            });
             ports?.forEach(port => {
                 try {
                     port.postMessage({ action: Action.CapturePageAnalysis } as AddonMessage);

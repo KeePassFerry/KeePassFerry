@@ -34,7 +34,7 @@ const PAGE_2FA_CONTEXT =
     /(authenticator|authentifizierungs[-\s]?app|zwei[-\s]?(faktor|schritt)|two[-\s]?(factor|step)|2[-\s]?step|\b2fa\b|\bmfa\b|einmal[-\s]?(kennwort|passwort|code)|one[-\s]?time[-\s]?(code|password|passcode)|\botp\b|\btotp\b)/i;
 
 let pageContextCache: { at: number; value: boolean } = null;
-function pageHas2faContext(): boolean {
+export function pageHas2faContext(): boolean {
     if (pageContextCache && Date.now() - pageContextCache.at < 1500) return pageContextCache.value;
     const text = (document.body?.innerText ?? "").slice(0, 50000);
     const value = PAGE_2FA_CONTEXT.test(text) || PAGE_2FA_CONTEXT.test(document.title ?? "");
@@ -45,13 +45,17 @@ function pageHas2faContext(): boolean {
 export function isOtpField(el: HTMLInputElement): boolean {
     if (!(el instanceof HTMLInputElement)) return false;
     const type = (el.getAttribute("type") ?? "").toLowerCase();
-    if (!TEXT_TYPES.includes(type)) return false;
+    // Manche Seiten bauen das Codefeld als Passwortfeld (Sharekhan: type=password name=totp): dann zählen nur eindeutige
+    // Hinweise, sonst bekäme es das Passwort
+    const passwordType = type === "password";
+    if (!TEXT_TYPES.includes(type) && !passwordType) return false;
     const hints = hintText(el);
     if (NOT_TOTP_HINT.test(hints)) return false;
     if ((el.getAttribute("autocomplete") ?? "").toLowerCase().includes("one-time-code")) return true;
     const max = el.maxLength;
     // Eindeutige Hinweise: Länge egal (manche Seiten erlauben 20+ Zeichen), mindestens 4
     if (OTP_HINT.test(hints)) return max <= 0 || max >= 4;
+    if (passwordType) return false;
     // Allgemeiner Name ("Code", "PIN") nur mit Zwei-Faktor-Kontext auf der Seite und passender Länge
     if (WEAK_HINT.test(hints) && pageHas2faContext()) return max <= 0 || (max >= 4 && max <= 20);
     return false;
@@ -179,7 +183,7 @@ function findOtpauthUri(): string {
     return m ? m[0] : null;
 }
 
-function findSecretText(pageText: string): string {
+export function findSecretText(pageText: string): string {
     SECRET_RE.lastIndex = 0;
     let m: RegExpExecArray;
     while ((m = SECRET_RE.exec(pageText)) !== null) {
@@ -188,6 +192,12 @@ function findSecretText(pageText: string): string {
         // Nur einheitliche Schreibweise und mindestens eine Ziffer 2–7 (schließt normale Wörter aus)
         if (raw !== raw.toUpperCase() && raw !== raw.toLowerCase()) continue;
         if (!/[2-7]/.test(raw)) continue;
+        // Kleingeschrieben nur in Gruppen ("abcd efgh …" wie bei Google): sonst passt jeder Projektname mit 2–7
+        // (SourceForge: "keepass2developerextensions" neben "2FA" in einer Bewertung, Issue #19)
+        if (raw === raw.toLowerCase() && !/[\s\u00a0-]/.test(m[1].trim())) continue;
+        // Einrichtungsbegriff in der Nähe des Schlüssels, nicht irgendwo auf der Seite
+        const near = pageText.slice(Math.max(0, m.index - 400), m.index + m[0].length + 400);
+        if (!SETUP_HINT.test(near) && !SETUP_HINT_MORE.test(near)) continue;
         return raw.toUpperCase();
     }
     return null;
@@ -284,7 +294,22 @@ async function qrCandidateImages(seen: WeakMap<Element, string>): Promise<string
     return images;
 }
 
-export function setValue(el: HTMLInputElement, value: string) {
+// Von KeePassFerry eingetragene Werte außerhalb des Anmelde-Ausfüllens (Einmalcode, Popup, Kontextmenü), für die
+// Seiten-Analyse: nur die Art, der Wert dient nur dem Vergleich und landet nie im Protokoll
+const kpfFilled = new WeakMap<HTMLElement, { value: string; how: string }>();
+
+export function markKpfFilled(el: HTMLElement, value: string, how: string) {
+    kpfFilled.set(el, { value, how });
+}
+
+// Art des Eintrags, wenn der aktuelle Wert noch der von KeePassFerry eingetragene ist
+export function kpfFilledHow(el: HTMLInputElement): string {
+    const filled = kpfFilled.get(el);
+    return filled && el.value && filled.value === el.value ? filled.how : null;
+}
+
+export function setValue(el: HTMLInputElement, value: string, how = "popup") {
+    markKpfFilled(el, value, how);
     el.focus();
     // Über den nativen Setter, damit React/Vue die Änderung mitbekommen
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
@@ -392,6 +417,7 @@ export class OtpFields {
         // 1. otpauth-Link im Dokument: eindeutig, in jeder Sprache
         const uri = findOtpauthUri();
         if (uri) {
+            pageDiag("otp-einrichtung als link", {});
             report("uri:" + uri, { otpUri: uri });
             return Promise.resolve();
         }
@@ -419,7 +445,12 @@ export class OtpFields {
         const pageText = (document.body.innerText ?? "").slice(0, 200000);
         if (SETUP_HINT.test(pageText) || SETUP_HINT_MORE.test(pageText)) {
             const secret = findSecretText(pageText);
-            if (secret) report("text:" + secret, { otpSecret: secret });
+            if (secret) {
+                // Warum hier eine Einrichtung vermutet wird (Fehlalarme nachvollziehen): Begriff und Länge, nie der Schlüssel
+                const hint = (pageText.match(SETUP_HINT) ?? pageText.match(SETUP_HINT_MORE))?.[0];
+                pageDiag("otp-einrichtung als text", { begriff: hint, laenge: secret.length });
+                report("text:" + secret, { otpSecret: secret });
+            }
         }
         return images;
     }
@@ -498,8 +529,8 @@ export class OtpFields {
         if (target.length > 1 && code.length !== target.length) return;
         const filled = target.every(el => !el.value) || force;
         if (filled) {
-            if (target.length === 1) setValue(target[0], code);
-            else target.forEach((el, i) => setValue(el, code[i]));
+            if (target.length === 1) setValue(target[0], code, "code");
+            else target.forEach((el, i) => setValue(el, code[i], "code"));
         }
         // Symbol und Zeitkreis sind Zusatz: ein Fehler dort darf das Eintragen nicht verhindern
         try {

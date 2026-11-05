@@ -1,4 +1,4 @@
-import { setValue } from "./OtpFields";
+import { markKpfFilled, setValue } from "./OtpFields";
 import { findPasswordField, findUsernameField } from "./loginFields";
 import type { PageFieldKind, PageFieldKinds } from "../common/AddonMessage";
 
@@ -39,6 +39,7 @@ export function fillContextTarget(value: string): boolean {
     const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
     if (setter) setter.call(el, value);
     else el.value = value;
+    markKpfFilled(el, value, "kontextmenü");
     el.dispatchEvent(new Event("input", { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
     return true;

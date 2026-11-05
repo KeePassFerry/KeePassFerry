@@ -610,6 +610,26 @@ export async function iframeMessageHandler(this: chrome.runtime.Port, msg: Addon
         ferry.tabStates.get(tabId).framePorts.get(0).postMessage(msg);
     }
 
+    if (msg.action == Action.ResizePanel) {
+        ferry.tabStates.get(tabId)?.framePorts.get(msg.frameId || 0)?.postMessage(msg);
+    }
+
+    // Liste am Feld: einzelnen Wert in genau dieses Feld eintragen (Einmalcode erst jetzt aus KeePass)
+    if (msg.action == Action.FillPanelTarget) {
+        const port = ferry.tabStates.get(tabId)?.framePorts.get(msg.frameId || 0);
+        let value = msg.fillValue;
+        let how = "liste";
+        if (msg.otpFor) {
+            const totp = await ferry.rpc.getTotp(msg.otpFor.uuid, msg.otpFor.dbFileName).catch(() => null);
+            value = totp?.code;
+            how = "code";
+        }
+        if (port && value) {
+            port.postMessage({ action: Action.FillPanelTarget, fillValue: value, fillHow: how, filledEntry: msg.filledEntry } as AddonMessage);
+            ferry.tabStates.get(tabId).framePorts.get(0)?.postMessage({ action: Action.CloseAllPanels });
+        }
+    }
+
     if (msg.action == Action.GetPasswordProfiles) {
         const passwordProfiles = await ferry.getPasswordProfiles();
         ferry.store.updatePasswordProfiles(passwordProfiles);
