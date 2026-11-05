@@ -1,4 +1,8 @@
 {
+  "ferry_panel_open_keepass": {
+    "message": "Open in KeePass",
+    "description": "KeePassFerry"
+  },
   "ferry_panel_copy_heading": {
     "message": "Copy",
     "description": "KeePassFerry"
@@ -1850,6 +1854,22 @@
   },
   "ferry_leaks_intro": {
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_21_1_title": {
+    "message": "Your own fields straight into the field",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_21_1_text": {
+    "message": "The ⋯ button of the list at a field now also lists the fields you created in KeePass yourself (Advanced → String fields, e.g. PIN or customer number). A click fills them in, ⧉ copies them.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_21_2_title": {
+    "message": "Open directly in KeePass",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_21_2_text": {
+    "message": "At the bottom of the ⋯ button, \"Open in KeePass\" opens the entry in KeePass' edit window – where you maintain it anyway.",
     "description": "KeePassFerry"
   },
   "ferry_news_1_0_20_1_title": {

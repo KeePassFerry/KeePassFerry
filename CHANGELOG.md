@@ -2,6 +2,15 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.21 – 2026-11-05
+
+- List at a field, ⋯ view: also shows your own fields from KeePass (Advanced → String fields, e.g. PIN, customer
+  number); protected ones are fetched only when clicked. Fill and copy work for them too.
+- ⋯ view: "Open in KeePass" instead of "Edit entry" – opens the entry in KeePass' own edit window.
+- ⋯ view: the entry stays where it is when the view opens (no jump), the view starts at the top.
+- KeePass edit window opened from the browser uses the entry's own database (with several databases open it used
+  the active one's icons and suggestions).
+
 ## 1.0.20 – 2026-11-05
 
 - Breach check per database (plugin): a newly opened database is never checked on its own. A tip in the popup
@@ -443,6 +452,15 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.21 – 2026-11-05
+
+- Liste am Feld, ⋯-Ansicht: zeigt auch deine eigenen Felder aus KeePass (Erweitert → Zeichenfolgen, z. B. PIN,
+  Kundennummer); geschützte werden erst beim Klick geholt. Eintragen und Kopieren gehen auch dafür.
+- ⋯-Ansicht: „In KeePass öffnen“ statt „Eintrag bearbeiten“ – öffnet den Eintrag im Bearbeiten-Fenster von KeePass.
+- ⋯-Ansicht: Der Eintrag bleibt beim Öffnen an seiner Stelle (kein Springen), die Ansicht beginnt oben.
+- Das aus dem Browser geöffnete Bearbeiten-Fenster von KeePass nutzt die Datenbank des Eintrags (bei mehreren
+  offenen Datenbanken kamen Symbole und Vorschläge der aktiven).
 
 ## 1.0.20 – 2026-11-05
 

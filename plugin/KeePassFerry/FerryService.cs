@@ -221,7 +221,8 @@ namespace KeePassFerry
         {
             using (PwEntryForm ef = new PwEntryForm())
             {
-                ef.InitEx(pe, PwEditMode.EditExistingEntry, _host.Database, _host.MainWindow.ClientIcons, false, false);
+                // Datenbank des Eintrags, nicht die aktive (bei mehreren offenen Datenbanken sonst falsche Symbole/Vorschläge)
+                ef.InitEx(pe, PwEditMode.EditExistingEntry, db ?? _host.Database, _host.MainWindow.ClientIcons, false, false);
 
                 ef.BringToFront();
                 ef.ShowInTaskbar = true;

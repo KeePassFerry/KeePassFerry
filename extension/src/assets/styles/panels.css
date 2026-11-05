@@ -170,7 +170,9 @@ li.ferry-login:focus-within .ferry-login-quick { opacity: 1; }
 
 /* Aktionsansicht eines Eintrags: Werte in dieses Feld eintragen, ⧉ kopiert */
 #Ferry-EntryActions { flex-grow: 1000; overflow-y: auto; display: flex; flex-direction: column; }
-.ferry-actions-head { display: flex; align-items: center; gap: 6px; padding: 2px 4px 6px; border-bottom: 1px solid var(--border); }
+/* Gleiche Höhe und Abstände wie die Zeile in der Liste (.ferry-login-row): der Eintrag bleibt stehen und rückt nur um den Zurück-Knopf nach rechts */
+.ferry-actions-head { display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 0; border-bottom: 1px solid var(--border); }
+.ferry-actions-head .ferry-actions-back { margin-right: -4px; }
 .ferry-actions-back { opacity: 1; }
 .ferry-actions-name { flex: 1; min-width: 0; }
 .ferry-actions-heading { padding: 8px 10px 4px; font-size: 11.5px; font-weight: 600; color: var(--muted); }

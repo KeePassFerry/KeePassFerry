@@ -8,11 +8,11 @@ import {setup as i18nSetup } from "../common/i18n";
 const QUICK_ICON_USER = "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 8a7 7 0 0 1 14 0";
 const QUICK_ICON_KEY = "M8 19a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm2.8-6.8L20 3m-3 3 3 3m-5.5-.5 2 2";
 const QUICK_ICON_OTP = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0-13v4l3 2";
-const QUICK_ICON_EDIT = "M4 20h4L18.5 9.5a2.8 2.8 0 0 0-4-4L4 16v4zm9.5-13.5 4 4";
 const ICON_MORE = "M5 12h.01M12 12h.01M19 12h.01";
 const ICON_COPY = "M9 9h10v10H9zM5 15V5h10";
 const ICON_BACK = "M15 18l-6-6 6-6";
 const ICON_FIELD = "M4 7h16M4 12h16M4 17h10";
+const ICON_KEEPASS = "M4 5h16v14H4zM4 9h16M14 13h4M14 16h2";
 
 export class MatchedLoginsPanel {
     constructor(
@@ -157,11 +157,11 @@ export class MatchedLoginsPanel {
 
     // Aktionsansicht eines Eintrags statt der Liste: je Wert eine Zeile "in dieses Feld eintragen" mit ⧉ zum Kopieren,
     // darunter Bearbeiten. Das Panel wächst auf die nötige Höhe und kehrt mit "Zurück" zur Liste zurück
-    private showActions(entry: Entry, usernameDisplayValue: string) {
+    private async showActions(entry: Entry, usernameDisplayValue: string) {
         const list = document.getElementById("Ferry-MatchedLoginsList");
-        if (!list) return;
+        if (!list || document.getElementById("Ferry-EntryActions")) return;
         const ref = { uuid: entry.uuid, dbFileName: entry.database.fileName };
-        const rows: { icon: string; label: string; fill: () => void; copy: () => Promise<void> }[] = [];
+        const rows: { icon: string; label: string; fill: () => void | Promise<void>; copy: () => Promise<void> }[] = [];
         const fillValue = (value: string) => () =>
             this.myPort.postMessage({ action: Action.FillPanelTarget, frameId: this.parentFrameId, fillValue: value, filledEntry: ref } as AddonMessage);
         const copyValue = (value: string) => async () => {
@@ -184,11 +184,38 @@ export class MatchedLoginsPanel {
                 }
             });
         }
-        // Weitere Felder des Eintrags (PIN, Kundennummer …) mit ihrem Namen
+        // Weitere Formularfelder des Eintrags (von KeePassFerry beim Speichern übernommen, z. B. E-Mail, Land)
         for (const f of entry.fields ?? []) {
             if (!f.value || f === user || f === password || f.type === "boolean" || f.type === "existing") continue;
             rows.push({ icon: ICON_FIELD, label: f.name || $STR("ferry_panel_field"), fill: fillValue(f.value), copy: copyValue(f.value) });
         }
+        // Eigene Felder aus KeePass (Erweitert → Zeichenfolgen, z. B. PIN, Kundennummer); geschützte Werte erst beim Klick
+        const extras = await Promise.race([
+            chrome.runtime.sendMessage({ keepassferry: "getEntryExtras", ...ref }).catch(() => null),
+            new Promise(resolve => setTimeout(() => resolve(null), 1500))
+        ]) as { fields?: { name: string; isProtected: boolean; value: string }[] };
+        const known = new Set(rows.map(r => r.label.toLowerCase()));
+        for (const f of extras?.fields ?? []) {
+            if (!f?.name || known.has(f.name.toLowerCase())) continue;
+            if (!f.isProtected && !f.value) continue;
+            const value = async (): Promise<string> =>
+                f.isProtected
+                    ? await chrome.runtime.sendMessage({ keepassferry: "getEntryFieldValue", ...ref, name: f.name }).catch(() => null)
+                    : f.value;
+            rows.push({
+                icon: ICON_FIELD,
+                label: f.name,
+                fill: async () => {
+                    const v = await value();
+                    if (v) fillValue(v)();
+                },
+                copy: async () => {
+                    const v = await value();
+                    if (v) await copyValue(v)();
+                }
+            });
+        }
+        if (document.getElementById("Ferry-EntryActions")) return;
 
         const view = document.createElement("div");
         view.id = "Ferry-EntryActions";
@@ -198,7 +225,7 @@ export class MatchedLoginsPanel {
             view.remove();
             list.style.display = "";
             this.myPort.postMessage({ action: Action.ResizePanel, frameId: this.parentFrameId, panelHeight: 0 } as AddonMessage);
-            (list.querySelector("li.ferry-login") as HTMLElement)?.focus();
+            (list.querySelector("li.ferry-login") as HTMLElement)?.focus({ preventScroll: true });
         });
         back.classList.add("ferry-actions-back");
         const name = document.createElement("div");
@@ -223,7 +250,7 @@ export class MatchedLoginsPanel {
 
         const items = document.createElement("ul");
         items.className = "ferry-actions";
-        const addRow = (icon: string, label: string, onClick: () => void, copy?: () => Promise<void>) => {
+        const addRow = (icon: string, label: string, onClick: () => void | Promise<void>, copy?: () => Promise<void>) => {
             const li = document.createElement("li");
             li.className = "ferry-action";
             li.tabIndex = 0;
@@ -237,9 +264,9 @@ export class MatchedLoginsPanel {
                 copyButton.classList.add("ferry-action-copy");
                 li.append(copyButton);
             }
-            li.addEventListener("click", onClick);
+            li.addEventListener("click", () => void onClick());
             li.addEventListener("keydown", e => {
-                if (e.key === "Enter") onClick();
+                if (e.key === "Enter") void onClick();
                 if (e.key === "Escape") this.closePanel();
                 if (e.key === "ArrowDown") (li.nextElementSibling as HTMLElement)?.focus();
                 if (e.key === "ArrowUp") (li.previousElementSibling as HTMLElement)?.focus();
@@ -250,11 +277,12 @@ export class MatchedLoginsPanel {
             if (this.hasTarget) addRow(r.icon, r.label, r.fill, r.copy);
             else addRow(r.icon, r.label, () => void r.copy());
         }
-        const editRow = () => {
-            this.myPort.postMessage({ editEntryInPopup: { uuid: entry.uuid, DBfilename: entry.database.fileName } } as AddonMessage);
+        // Eintrag in KeePass öffnen (Bearbeiten-Fenster von KeePass): dort, wo der Eintrag wirklich gepflegt wird
+        const openInKeePass = () => {
+            this.myPort.postMessage({ loginEditor: { uuid: entry.uuid, DBfilename: entry.database.fileName } } as AddonMessage);
             this.close();
         };
-        addRow(QUICK_ICON_EDIT, $STR("ferry_edit_entry"), editRow);
+        addRow(ICON_KEEPASS, $STR("ferry_panel_open_keepass"), openInKeePass);
         items.lastElementChild?.classList.add("ferry-action-separated");
 
         view.append(head, heading, items);
@@ -264,7 +292,11 @@ export class MatchedLoginsPanel {
         const bottomPadding = parseFloat(getComputedStyle(document.body).paddingBottom) || 0;
         const needed = Math.ceil(view.getBoundingClientRect().top + window.scrollY + view.scrollHeight + bottomPadding + 12);
         this.myPort.postMessage({ action: Action.ResizePanel, frameId: this.parentFrameId, panelHeight: needed } as AddonMessage);
-        (items.firstElementChild as HTMLElement)?.focus();
+        // Fokus ohne Scrollen: die Ansicht ist noch so klein wie die Liste, bis das Panel gewachsen ist; sonst rutschte
+        // der Inhalt kurz nach oben und sprang beim Wachsen von oben herein
+        (items.firstElementChild as HTMLElement)?.focus({ preventScroll: true });
+        view.scrollTop = 0;
+        document.scrollingElement?.scrollTo(0, 0);
     }
 
     private icon(svgPath: string) {

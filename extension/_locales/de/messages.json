@@ -1,4 +1,8 @@
 {
+    "ferry_panel_open_keepass": {
+        "message": "In KeePass öffnen",
+        "description": "KeePassFerry"
+    },
     "ferry_panel_copy_heading": {
         "message": "Kopieren",
         "description": "KeePassFerry"
@@ -1850,6 +1854,22 @@
     },
     "ferry_leaks_intro": {
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_21_1_title": {
+        "message": "Eigene Felder direkt ins Feld",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_21_1_text": {
+        "message": "Im Knopf ⋯ der Liste am Feld stehen jetzt auch die Felder, die du in KeePass selbst angelegt hast (Erweitert → Zeichenfolgen, z. B. PIN oder Kundennummer). Ein Klick trägt sie ins Feld ein, ⧉ kopiert sie.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_21_2_title": {
+        "message": "Direkt in KeePass öffnen",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_21_2_text": {
+        "message": "Unten im Knopf ⋯ öffnet „In KeePass öffnen“ den Eintrag im Bearbeiten-Fenster von KeePass – dort, wo du ihn ohnehin pflegst.",
         "description": "KeePassFerry"
     },
     "ferry_news_1_0_20_1_title": {
