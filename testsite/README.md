@@ -29,7 +29,8 @@ entstehen lassen. Beispielkonto beim ersten Besuch: `demo@spielwiese.test` / `St
 | Anmeldung ohne Neuladen | „Anmelden ohne Neuladen“ | Hinweise erscheinen, sobald das Formular verschwunden ist |
 | Zwei Schritte | „Anmelden in zwei Schritten“ (Passwortseite ohne Benutzerfeld) | wie bei der klassischen Anmeldung |
 | Online-Banking mit Sternchen | „Online-Banking“ mit `4711000123` / `Bank-Start1`, Eintrag in KeePass vorhanden | kein „Neues Passwort erkannt“ (die Seite ersetzt das Passwort nach dem Absenden durch Sternchen, bevor die Erweiterung es liest) |
-| Zwei-Faktor einrichten | Kundenkonto → Zwei-Faktor als Link, Text, QR-Bild oder QR-SVG | „Zwei-Faktor-Schlüssel gefunden“; nach dem Speichern trägt die Erweiterung den Bestätigungscode ein |
+| Zwei-Faktor einrichten | Kundenkonto → Zwei-Faktor als Link, QR-Bild oder QR-SVG | „Zwei-Faktor-Schlüssel gefunden“; nach dem Speichern trägt die Erweiterung den Bestätigungscode ein |
+| Schlüssel nur als Text | Kundenkonto → Zwei-Faktor als Text | kein Hinweis; Schlüssel lässt sich von Hand im Eintrag einfügen |
 | Schlüssel schon gespeichert | Einrichtungsseite nach dem Speichern neu laden | kein Hinweis mehr, Code wird eingetragen |
 | Code bei der Anmeldung | Konto mit aktivem Zwei-Faktor abmelden und wieder anmelden | Code wird auf der Code-Seite eingetragen |
 

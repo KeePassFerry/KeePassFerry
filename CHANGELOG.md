@@ -2,6 +2,19 @@
 
 English · [Deutsch](#deutsch)
 
+## Unreleased
+
+- Two-factor setup detection: a key shown as plain text no longer triggers the notice (issue #19). Only a QR code or an
+  otpauth link whose content is a valid key does. A QR code is first read directly from the page; a picture of the
+  visible tab is only taken if that finds no key.
+- Add → Two-factor key: "Paste from clipboard" and Ctrl+V accept a screenshot of the QR code. It is checked for a valid
+  key; the image itself is not stored. A key or link can still be pasted as text.
+- Add → Image: a QR code only counts as a two-factor key if its content is valid; otherwise it is saved as an image.
+- Popup: "Open KeePass" moved from the footer to the database menu at the bottom left, which also opens without an open
+  database.
+- Related domains: Apple's one-way relations are taken over, e.g. entries of trello.com are offered on
+  id.atlassian.com, but not the other way round.
+
 ## 1.0.21 – 2026-11-05
 
 - List at a field, ⋯ view: also shows your own fields from KeePass (Advanced → String fields, e.g. PIN, customer
@@ -452,6 +465,21 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## Unveröffentlicht
+
+- Erkennung der Zwei-Faktor-Einrichtung: Ein als Text angezeigter Schlüssel löst keinen Hinweis mehr aus (Issue #19). Das
+  tun nur noch ein QR-Code oder ein otpauth-Link, deren Inhalt ein gültiger Schlüssel ist. Ein QR-Code wird zuerst direkt
+  von der Seite gelesen; ein Bild des sichtbaren Tabs entsteht nur, wenn das keinen Schlüssel ergibt.
+- Hinzufügen → Zwei-Faktor-Schlüssel: „Aus Zwischenablage einfügen“ und Strg+V nehmen einen Screenshot des QR-Codes an.
+  Er wird auf einen gültigen Schlüssel geprüft; das Bild selbst wird nicht gespeichert. Schlüssel oder Link lassen sich
+  weiter als Text einfügen.
+- Hinzufügen → Bild: Ein QR-Code gilt nur noch als Zwei-Faktor-Schlüssel, wenn sein Inhalt gültig ist; sonst wird er als
+  Bild gespeichert.
+- Popup: „KeePass öffnen“ ist aus der Fußleiste ins Datenbank-Menü unten links gewandert, das sich jetzt auch ohne offene
+  Datenbank öffnen lässt.
+- Zusammengehörige Domains: Apples Beziehungen in nur einer Richtung werden übernommen, z. B. werden Einträge von
+  trello.com auf id.atlassian.com angeboten, aber nicht umgekehrt.
 
 ## 1.0.21 – 2026-11-05
 

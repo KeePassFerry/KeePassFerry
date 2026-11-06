@@ -74,7 +74,6 @@ export interface AddonMessage {
     webauthn?: any;
     otpSetup?: {
         otpUri?: string;
-        otpSecret?: string;
         otpQrRects?: { x: number; y: number; w: number; h: number }[];
         otpQrImages?: string[];
         viewportWidth?: number;

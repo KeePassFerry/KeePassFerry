@@ -108,9 +108,12 @@
                 <v-text-field
                     v-if="kind === 'custom' || kind === 'recovery'" v-model="name"
                     :label="$i18n('ferry_add_name')" hide-details class="mb-2" />
-                <v-textarea
-                    ref="value" v-model="value" :label="$i18n('ferry_add_value')" :placeholder="$i18n('ferry_add_paste_hint')"
-                    rows="2" auto-grow hide-details class="ferry-compact-text" @update:model-value="onValueChanged" />
+                <div @paste="onValuePaste">
+                    <v-textarea
+                        ref="value" v-model="value" :label="$i18n('ferry_add_value')"
+                        :placeholder="$i18n(kind === 'totp' ? 'ferry_add_totp_paste_hint' : 'ferry_add_paste_hint')"
+                        rows="2" auto-grow hide-details class="ferry-compact-text" @update:model-value="onValueChanged" />
+                </div>
                 <v-btn size="small" variant="text" color="primary" class="ferry-paste-btn" @click="pasteText">
                     <tabler-clipboard-text class="ferry-ico mr-1" />
                     {{ $i18n("ferry_paste_clipboard") }}
@@ -148,6 +151,7 @@ import AttachmentPaste from "./AttachmentPaste.vue";
 import ExtraPreview from "./ExtraPreview.vue";
 import { fillPageField, pageFieldKinds } from "../pageFields";
 import { readClipboard } from "../clipboard";
+import { decodeOtpQr } from "../otpQr";
 import {
     canOpenExternally, formatSize, takeAddition, takeExtraEdit, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
 } from "../extras";
@@ -319,7 +323,30 @@ export default {
             this.error = null;
             if (this.kind !== "totp" && OTPAUTH_RE.test((this.value ?? "").trim())) this.kind = "totp";
         },
-        // "Aus Zwischenablage einfügen" bei einer Textart; ein Bild in der Zwischenablage wechselt zu "Bild"
+        // Screenshot eines QR-Codes: nur der Schlüssel daraus wird vorgemerkt, das Bild nie gespeichert
+        stageTotpFromImage: async function (image: File) {
+            let uri: string = null;
+            try {
+                uri = await decodeOtpQr(image);
+            } catch (e) {
+                uri = null;
+            }
+            if (uri) this.stageTotp(uri);
+            else this.clipboardNotice = this.$i18n("ferry_add_totp_no_qr");
+        },
+        // Strg+V im Feld bei "Zwei-Faktor-Schlüssel": Bild wie beim Knopf prüfen; Text fügt das Feld selbst ein
+        onValuePaste: function (e: ClipboardEvent) {
+            if (this.kind !== "totp") return;
+            const image = Array.from(e.clipboardData?.items ?? [])
+                .find(i => i.kind === "file" && i.type.startsWith("image/"))
+                ?.getAsFile();
+            if (!image) return;
+            e.preventDefault();
+            this.clipboardNotice = null;
+            this.stageTotpFromImage(image);
+        },
+        // "Aus Zwischenablage einfügen" bei einer Textart: Bild beim Zwei-Faktor-Schlüssel auf einen QR-Code prüfen,
+        // bei den anderen Arten zu "Bild" wechseln
         pasteText: async function () {
             this.clipboardNotice = null;
             const content = await readClipboard();
@@ -327,6 +354,8 @@ export default {
                 this.clipboardNotice = this.$i18n("ferry_clipboard_denied");
             } else if (content === "empty") {
                 this.clipboardNotice = this.$i18n("ferry_clipboard_empty");
+            } else if (content.image && this.kind === "totp") {
+                await this.stageTotpFromImage(content.image);
             } else if (content.image) {
                 this.pendingImage = content.image;
                 this.kind = "image";

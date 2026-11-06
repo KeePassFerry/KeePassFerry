@@ -1039,6 +1039,14 @@
     "message": "Type",
     "description": "KeePassFerry"
   },
+  "ferry_add_totp_no_qr": {
+    "message": "The image contains no valid two-factor QR code.",
+    "description": "KeePassFerry"
+  },
+  "ferry_add_totp_paste_hint": {
+    "message": "Paste a link, a key or a screenshot of the QR code",
+    "description": "KeePassFerry"
+  },
   "ferry_add_totp_invalid": {
     "message": "Not a valid two-factor key (otpauth link or Base32 key).",
     "description": "KeePassFerry"
@@ -1581,7 +1589,7 @@
     "description": "KeePassFerry"
   },
   "ferry_setting_detectOtpSetup_hint": {
-    "message": "Offers to save a QR code or key shown on the page in the matching entry.",
+    "message": "Offers to save a QR code or otpauth link from the page in the matching entry.",
     "description": "KeePassFerry"
   },
   "ferry_setting_passkeys": {

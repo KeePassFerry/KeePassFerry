@@ -1,5 +1,6 @@
 import { diag } from "./ferryDiag";
-import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup, parseOtpauth } from "./otpSetup";
+import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup } from "./otpSetup";
+import { parseOtpauth } from "../common/otpauth";
 import { forgetAutoFill } from "./otpRepeat";
 import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
 import { takePendingEdit } from "./popupEdit";

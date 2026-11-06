@@ -165,42 +165,13 @@ function findOtpTarget(allowFilled = false): HTMLInputElement[] | null {
     return single ? [single] : null;
 }
 
-// Begriffe, die auf eine Zwei-Faktor-Einrichtung hindeuten. Nur für den Schlüssel als Text nötig;
-// otpauth-Links und QR-Codes werden sprachunabhängig über ihren Inhalt erkannt.
-const SETUP_HINT_MORE =
-    /(deux facteurs|double authentification|clé secrète|dos pasos|dos factores|clave secreta|due fattori|chiave segreta|twee stappen|tweestaps|geheime sleutel|dwuetapow|klucz|dvoufázov|kétlépcsős|двухфактор|ключ)/i;
-const SETUP_HINT =
-    /(authenticator|zwei[-\s]?faktor|two[-\s]?factor|\b2fa\b|\bmfa\b|\btotp\b|qr[-\s]?code|einrichtungsschlüssel|setup key|secret key|geheimer schlüssel|schlüssel manuell|manuell eingeben|enter (this|the) key|can'?t scan|nicht scannen)/i;
 const OTPAUTH_RE = /otpauth:\/\/totp\/[^\s"'<>]+/i;
-// Base32 in Gruppen (z. B. "JBSW Y3DP EHPK 3PXP"), mindestens 16 Zeichen
-const SECRET_RE = /(?:^|[^A-Za-z2-7])((?:[A-Za-z2-7]{4}[ \u00a0-]?){4,16}(?:[A-Za-z2-7]{1,4})?)(?![A-Za-z2-7])/g;
-
 function findOtpauthUri(): string {
     const link = document.querySelector("a[href^='otpauth:' i]") as HTMLAnchorElement;
     if (link && OTPAUTH_RE.test(link.href)) return link.href.match(OTPAUTH_RE)[0];
     const html = document.documentElement.outerHTML.slice(0, 2000000).replace(/&amp;/g, "&");
     const m = html.match(OTPAUTH_RE);
     return m ? m[0] : null;
-}
-
-export function findSecretText(pageText: string): string {
-    SECRET_RE.lastIndex = 0;
-    let m: RegExpExecArray;
-    while ((m = SECRET_RE.exec(pageText)) !== null) {
-        const raw = m[1].replace(/[\s\u00a0-]/g, "");
-        if (raw.length < 16 || raw.length > 64) continue;
-        // Nur einheitliche Schreibweise und mindestens eine Ziffer 2–7 (schließt normale Wörter aus)
-        if (raw !== raw.toUpperCase() && raw !== raw.toLowerCase()) continue;
-        if (!/[2-7]/.test(raw)) continue;
-        // Kleingeschrieben nur in Gruppen ("abcd efgh …" wie bei Google): sonst passt jeder Projektname mit 2–7
-        // (SourceForge: "keepass2developerextensions" neben "2FA" in einer Bewertung, Issue #19)
-        if (raw === raw.toLowerCase() && !/[\s\u00a0-]/.test(m[1].trim())) continue;
-        // Einrichtungsbegriff in der Nähe des Schlüssels, nicht irgendwo auf der Seite
-        const near = pageText.slice(Math.max(0, m.index - 400), m.index + m[0].length + 400);
-        if (!SETUP_HINT.test(near) && !SETUP_HINT_MORE.test(near)) continue;
-        return raw.toUpperCase();
-    }
-    return null;
 }
 
 export interface QrRect {
@@ -408,51 +379,43 @@ export class OtpFields {
     // Hinweise auf eine Zwei-Faktor-Einrichtung melden (je Art einmal pro Seite)
     private scanSetup(): Promise<void> {
         if (!document.body || configManager.current.ferryDetectOtpSetup === false) return Promise.resolve();
-        const report = (key: string, otpSetup: AddonMessage["otpSetup"]) => {
-            if (this.setupReported.has(key)) return;
-            this.setupReported.add(key);
-            Port.postMessage({ action: Action.OtpSetupCandidate, otpSetup } as AddonMessage);
-        };
+        const send = (otpSetup: AddonMessage["otpSetup"]) => Port.postMessage({ action: Action.OtpSetupCandidate, otpSetup } as AddonMessage);
 
         // 1. otpauth-Link im Dokument: eindeutig, in jeder Sprache
         const uri = findOtpauthUri();
         if (uri) {
-            pageDiag("otp-einrichtung als link", {});
-            report("uri:" + uri, { otpUri: uri });
+            const key = "uri:" + uri;
+            if (!this.setupReported.has(key)) {
+                this.setupReported.add(key);
+                pageDiag("otp-einrichtung als link", {});
+                send({ otpUri: uri });
+            }
             return Promise.resolve();
         }
 
         // 2. QR-Code-Kandidaten: in jeder Sprache, Prüfung im Hintergrund über den Inhalt.
-        // Bilddaten in jedem Frame (z. B. Einstellungen im iframe), Bildschirmfoto-Ausschnitt nur im Hauptframe
-        const rects = window.top === window ? qrCandidateRects() : [];
-        if (rects.length > 0) {
-            const key = "qr:" + rects.map(r => `${r.x},${r.y},${r.w}`).join(";");
-            report(key, { otpQrRects: rects, viewportWidth: window.innerWidth });
-        }
-        const images = qrCandidateImages(this.qrImagesSeen)
+        // Bilddaten in jedem Frame (z. B. Einstellungen im iframe), Bildschirmfoto-Ausschnitt nur im Hauptframe;
+        // das Bildschirmfoto nimmt der Hintergrund nur, wenn die Bilddaten keinen Schlüssel ergeben
+        return qrCandidateImages(this.qrImagesSeen)
+            .catch(() => [] as string[])
             .then(found => {
-                if (found.length === 0) return;
-                pageDiag("qr kandidaten", {
-                    hauptframe: window.top === window,
-                    anzahl: found.length,
-                    arten: found.map(i => (i.startsWith("data:") ? "daten" : "adresse"))
-                });
-                report("img:" + found.map(i => i.length + i.slice(-32)).join(";"), { otpQrImages: found });
-            })
-            .catch(() => undefined);
-
-        // 3. Schlüssel als Text: nur mit Einrichtungsbegriffen auf der Seite (sonst zu viele Fehltreffer)
-        const pageText = (document.body.innerText ?? "").slice(0, 200000);
-        if (SETUP_HINT.test(pageText) || SETUP_HINT_MORE.test(pageText)) {
-            const secret = findSecretText(pageText);
-            if (secret) {
-                // Warum hier eine Einrichtung vermutet wird (Fehlalarme nachvollziehen): Begriff und Länge, nie der Schlüssel
-                const hint = (pageText.match(SETUP_HINT) ?? pageText.match(SETUP_HINT_MORE))?.[0];
-                pageDiag("otp-einrichtung als text", { begriff: hint, laenge: secret.length });
-                report("text:" + secret, { otpSecret: secret });
-            }
-        }
-        return images;
+                const rects = window.top === window ? qrCandidateRects() : [];
+                const imagesKey = "img:" + found.map(i => i.length + i.slice(-32)).join(";");
+                const rectsKey = "qr:" + rects.map(r => `${r.x},${r.y},${r.w}`).join(";");
+                const images = found.length > 0 && !this.setupReported.has(imagesKey) ? found : [];
+                const newRects = rects.length > 0 && !this.setupReported.has(rectsKey) ? rects : [];
+                if (images.length === 0 && newRects.length === 0) return;
+                this.setupReported.add(imagesKey);
+                this.setupReported.add(rectsKey);
+                if (images.length > 0) {
+                    pageDiag("qr kandidaten", {
+                        hauptframe: window.top === window,
+                        anzahl: images.length,
+                        arten: images.map(i => (i.startsWith("data:") ? "daten" : "adresse"))
+                    });
+                }
+                send({ otpQrImages: images, otpQrRects: newRects, viewportWidth: window.innerWidth });
+            });
     }
 
     // Nach dem Entsperren erneut nach einem OTP-Feld fragen (vorherige Anfrage lief bei gesperrter DB ins Leere)

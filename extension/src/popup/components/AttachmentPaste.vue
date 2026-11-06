@@ -50,8 +50,8 @@
 </template>
 
 <script lang="ts">
-import jsQR from "jsqr";
 import { readClipboard } from "../clipboard";
+import { decodeOtpQr } from "../otpQr";
 
 // Einfügezone im Bearbeiten-Fenster: "Aus Zwischenablage einfügen", Datei auswählen, Ablegen oder Strg+V in der
 // (beim Öffnen fokussierten) Zone selbst – Einfügen anderswo im Fenster wird nicht abgefangen.
@@ -90,25 +90,6 @@ async function compressImage(file: File): Promise<Blob> {
             scale *= 0.8;
         }
         return best;
-    } finally {
-        bitmap.close();
-    }
-}
-
-// otpauth-TOTP-URI aus einem Bild mit QR-Code, sonst null
-async function decodeOtpQr(file: File): Promise<string> {
-    const bitmap = await createImageBitmap(file);
-    try {
-        const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-        const w = Math.max(1, Math.round(bitmap.width * scale));
-        const h = Math.max(1, Math.round(bitmap.height * scale));
-        const canvas = new OffscreenCanvas(w, h);
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(bitmap, 0, 0, w, h);
-        const result = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "attemptBoth" });
-        return result?.data && OTPAUTH_RE.test(result.data) ? result.data : null;
     } finally {
         bitmap.close();
     }

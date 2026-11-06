@@ -9,15 +9,17 @@ import { diag } from "./ferryDiag";
 import { rememberAutoFill } from "./otpRepeat";
 import { sameSite } from "../common/relatedDomains";
 import { totpMatches } from "../common/totp";
+import { parseOtpauth } from "../common/otpauth";
 
 /*
 otpSetup.ts: Einrichtung eines Zwei-Faktor-Schlüssels (TOTP) von einer Webseite.
-Die Seite meldet Hinweise (otpauth-Link, Schlüssel als Text, QR-artiges Bild). Für QR-Codes wird
-der sichtbare Tab abfotografiert und mit jsQR dekodiert. Der Fund wird je Tab vorgehalten, bis der
-Nutzer ihn in einem Eintrag speichert oder verwirft. Das Secret geht nur an das KeePass-Plugin.
+Die Seite meldet Hinweise (otpauth-Link, QR-artiges Bild). QR-Codes werden direkt aus den Bilddaten
+gelesen; nur wenn das keinen Schlüssel ergibt, wird der sichtbare Tab abfotografiert. Der Fund wird je
+Tab vorgehalten, bis der Nutzer ihn in einem Eintrag speichert oder verwirft. Das Secret geht nur an
+das KeePass-Plugin.
 */
 
-type Source = "uri" | "qr" | "text";
+type Source = "uri" | "qr";
 
 interface PendingOtpSetup {
     uri: string;
@@ -77,30 +79,6 @@ const restored: Promise<void> = (async () => {
     }
 })();
 
-// Prüft eine otpauth-URI (nur TOTP mit Base32-Secret) und liest Aussteller und Konto aus
-export function parseOtpauth(uri: string): { issuer: string; account: string } {
-    if (!/^otpauth:\/\/totp\//i.test(uri)) return null;
-    try {
-        const u = new URL(uri);
-        const secret = (u.searchParams.get("secret") ?? "").replace(/\s/g, "");
-        if (secret.length < 16 || !/^[A-Z2-7]+=*$/i.test(secret)) return null;
-        const label = decodeURIComponent(u.pathname.replace(/^\/+/, ""));
-        let issuer = u.searchParams.get("issuer") ?? "";
-        let account = label;
-        const colon = label.indexOf(":");
-        if (colon >= 0) {
-            if (!issuer) issuer = label.slice(0, colon);
-            account = label.slice(colon + 1);
-        } else if (issuer && label === issuer) {
-            // Nur Aussteller im Label (z. B. aus einem Schlüssel als Text): kein Kontoname bekannt
-            account = "";
-        }
-        return { issuer: issuer.trim(), account: account.trim() };
-    } catch (e) {
-        return null;
-    }
-}
-
 // QR-Codes bestehen fast nur aus sehr hellen und sehr dunklen Pixeln; Fotos, Avatare und Logos nicht
 function looksTwoTone(data: Uint8ClampedArray): boolean {
     let dark = 0;
@@ -148,6 +126,22 @@ async function decodeOtpQrFromVisibleTab(
     return null;
 }
 
+// Bildschirmfoto als Rückfall: höchstens eines alle 2 Sekunden je Tab, nur im aktiven Tab
+async function decodeOtpQrFromTab(tabId: number, rects: { x: number; y: number; w: number; h: number }[], viewportWidth: number): Promise<string> {
+    if (Date.now() - (lastQrScan.get(tabId) ?? 0) < 2000) return null;
+    lastQrScan.set(tabId, Date.now());
+    const tab = await chrome.tabs.get(tabId);
+    if (!tab?.active) return null;
+    try {
+        const data = await decodeOtpQrFromVisibleTab(tab.windowId, rects.slice(0, 8), viewportWidth);
+        diag("hintergrund", "qr bildschirmfoto geprüft", { ausschnitte: rects.length, otpauth: !!data });
+        return data;
+    } catch (e) {
+        FerryLog.debug("QR scan failed: " + e);
+        return null;
+    }
+}
+
 // Von der Seite gelieferte Bilder (Daten-URL oder https-Adresse) dekodieren; liefert die erste otpauth-TOTP-URI.
 // Anmeldedaten (Cookies) nur bei Bildern derselben Herkunft wie die Seite mitschicken
 async function decodeOtpQrFromImages(images: string[], frameUrl: string): Promise<string> {
@@ -191,7 +185,7 @@ async function decodeOtpQrFromImages(images: string[], frameUrl: string): Promis
     return null;
 }
 
-const sourceRank: Record<Source, number> = { text: 0, qr: 1, uri: 2 };
+const sourceRank: Record<Source, number> = { qr: 1, uri: 2 };
 
 // Hinweis einer Seite auswerten; bei einem gültigen Fund den Hinweis in der Seite anzeigen
 export function handleOtpSetupCandidate(
@@ -290,7 +284,6 @@ async function evaluateCandidate(
     frameUrl: string,
     candidate: {
         otpUri?: string;
-        otpSecret?: string;
         otpQrRects?: { x: number; y: number; w: number; h: number }[];
         otpQrImages?: string[];
         viewportWidth?: number;
@@ -305,31 +298,10 @@ async function evaluateCandidate(
     if (candidate.otpUri) {
         uri = candidate.otpUri;
         source = "uri";
-    } else if (candidate.otpSecret) {
-        const secret = candidate.otpSecret.replace(/[\s-]/g, "").toUpperCase();
-        uri = `otpauth://totp/${encodeURIComponent(domain)}?secret=${secret}&issuer=${encodeURIComponent(domain)}`;
-        source = "text";
-    } else if (candidate.otpQrImages?.length) {
-        const data = await decodeOtpQrFromImages(candidate.otpQrImages, frameUrl);
-        if (data) {
-            uri = data;
-            source = "qr";
-        }
-    } else if (candidate.otpQrRects?.length) {
-        // Höchstens ein Screenshot alle 2 Sekunden je Tab, nur im aktiven Tab
-        if (Date.now() - (lastQrScan.get(tabId) ?? 0) < 2000) return;
-        lastQrScan.set(tabId, Date.now());
-        const tab = await chrome.tabs.get(tabId);
-        if (!tab?.active) return;
-        try {
-            const data = await decodeOtpQrFromVisibleTab(tab.windowId, candidate.otpQrRects.slice(0, 8), candidate.viewportWidth ?? 0);
-            if (data) {
-                uri = data;
-                source = "qr";
-            }
-        } catch (e) {
-            FerryLog.debug("QR scan failed: " + e);
-        }
+    } else {
+        if (candidate.otpQrImages?.length) uri = await decodeOtpQrFromImages(candidate.otpQrImages, frameUrl);
+        if (!uri && candidate.otpQrRects?.length) uri = await decodeOtpQrFromTab(tabId, candidate.otpQrRects, candidate.viewportWidth ?? 0);
+        source = "qr";
     }
     if (!uri) return;
     const info = parseOtpauth(uri);
