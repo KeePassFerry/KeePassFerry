@@ -1,6 +1,6 @@
 {
  "source": "https://github.com/apple/password-manager-resources",
- "commit": "bdbd8ef2533d8d81351477349d18c8d8a4c2fc16",
+ "commit": "2d6868e87a0bec602e78c9dc6f51507e144237ca",
  "license": "MIT, Copyright (c) Apple Inc.",
  "passwordRules": {
   "163.com": "minlength: 6; maxlength: 16;",
@@ -1127,7 +1127,7 @@
   "twilio.com": "https://www.twilio.com/console/user/settings",
   "twitch.tv": "https://www.twitch.tv/settings/security",
   "twitter.com": "https://twitter.com/settings/password",
-  "uber.com": "https://account.uber.com/workflow?workflow=PASSWORD&workflow_next_url=BACK",
+  "uber.com": "https://account.uber.com/workflow?workflow=PASSWORD",
   "udacity.com": "https://classroom.udacity.com/settings/password",
   "udel.edu": "https://udapps.nss.udel.edu/myUDsettings/password",
   "ugg.com": "https://www.ugg.com/password/edit",
@@ -1221,10 +1221,6 @@
    "videohive.net"
   ],
   [
-   "a2hosting.com",
-   "hosting.com"
-  ],
-  [
    "aa.com",
    "americanairlines.com",
    "americanairlines.jp"
@@ -1249,20 +1245,6 @@
   [
    "ad.nl",
    "dpgmedia.nl"
-  ],
-  [
-   "adidas.com",
-   "runtastic.com"
-  ],
-  [
-   "admin.ro",
-   "gazduire.com.ro",
-   "gazduire.net"
-  ],
-  [
-   "adobe.com",
-   "adobelogin.com",
-   "behance.net"
   ],
   [
    "airbnb.at",
@@ -1329,10 +1311,6 @@
    "airnewzealand.co.nz",
    "airnewzealand.com",
    "airnewzealand.com.au"
-  ],
-  [
-   "alaskaair.com",
-   "hawaiianairlines.com"
   ],
   [
    "albertsonsmarket.com",
@@ -1410,20 +1388,12 @@
    "astyle.jp"
   ],
   [
-   "angel.co",
-   "wellfound.com"
-  ],
-  [
    "anthem.com",
    "sydneyhealth.com"
   ],
   [
    "anylist.com",
    "anylistapp.com"
-  ],
-  [
-   "appannie.com",
-   "data.ai"
   ],
   [
    "apple.com",
@@ -1439,7 +1409,9 @@
   ],
   [
    "askubuntu.com",
+   "mathoverflow.net",
    "serverfault.com",
+   "stackapps.com",
    "stackexchange.com",
    "stackoverflow.com",
    "superuser.com"
@@ -1458,10 +1430,6 @@
    "luxilon.com",
    "slugger.com",
    "wilson.com"
-  ],
-  [
-   "atlassian.com",
-   "trello.com"
   ],
   [
    "att.com",
@@ -1513,10 +1481,6 @@
    "whistlerblackcomb.com"
   ],
   [
-   "bedbathandbeyond.com",
-   "overstock.com"
-  ],
-  [
    "bgg.cc",
    "boardgamegeek.com",
    "rpggeek.com",
@@ -1534,24 +1498,12 @@
    "probikeshop.pt"
   ],
   [
-   "bit.ly",
-   "bitly.com"
-  ],
-  [
-   "blade.com",
-   "flyblade.com"
-  ],
-  [
    "boingo.com",
    "boingohotspot.com"
   ],
   [
    "bol.com",
    "kobo.com"
-  ],
-  [
-   "borradh.io",
-   "borrah.com"
   ],
   [
    "boudinbakery.com",
@@ -1590,11 +1542,6 @@
    "questdiagnostics.com"
   ],
   [
-   "carsensor.net",
-   "hotpepper.jp",
-   "jalan.net"
-  ],
-  [
    "casemates.com",
    "hammacher.com",
    "mediocre.com",
@@ -1630,18 +1577,6 @@
    "citibankonline.com"
   ],
   [
-   "clarity.com",
-   "hiive.com"
-  ],
-  [
-   "cleanshot.cloud",
-   "cleanshot.com"
-  ],
-  [
-   "coach.com",
-   "coachoutlet.com"
-  ],
-  [
    "collecting.com",
    "collectingcars.com",
    "watchcollecting.com"
@@ -1663,41 +1598,16 @@
    "vulture.com"
   ],
   [
-   "dairyqueen.com",
-   "dq.com"
-  ],
-  [
    "dan.org",
    "diversalertnetwork.org"
-  ],
-  [
-   "daum.net",
-   "kakao.com"
-  ],
-  [
-   "deel.com",
-   "letsdeel.com"
-  ],
-  [
-   "digi.ro",
-   "digiromania.ro",
-   "rcs-rds.ro"
   ],
   [
    "dinersclubnorthamerica.com",
    "dinersclubus.com"
   ],
   [
-   "discord.com",
-   "discordapp.com"
-  ],
-  [
    "discord.store",
    "discordmerch.com"
-  ],
-  [
-   "discover.com",
-   "discovercard.com"
   ],
   [
    "dish.com",
@@ -1747,10 +1657,6 @@
    "theverge.com"
   ],
   [
-   "ebay-kleinanzeigen.de",
-   "kleinanzeigen.de"
-  ],
-  [
    "ebay.at",
    "ebay.be",
    "ebay.ca",
@@ -1778,24 +1684,6 @@
    "eki-net.com",
    "jreast.co.jp",
    "jrepoint.jp"
-  ],
-  [
-   "eo.nl",
-   "gld.nl",
-   "kro-ncrv.nl",
-   "l1.nl",
-   "npo.nl",
-   "npoluister.nl",
-   "nporadio5.nl",
-   "omroepwest.nl",
-   "omroepzeeland.nl",
-   "omropfryslan.nl",
-   "oost.nl",
-   "rijnmond.nl",
-   "rtvdrenthe.nl",
-   "rtvnoord.nl",
-   "rtvutrecht.nl",
-   "wnl.tv"
   ],
   [
    "epicgames.com",
@@ -1841,19 +1729,8 @@
    "messenger.com"
   ],
   [
-   "fancourier.ro",
-   "selfawb.ro"
-  ],
-  [
    "fandango.com",
    "fandangonow.com"
-  ],
-  [
-   "fandom.com",
-   "gamepedia.com",
-   "wikia.com",
-   "wikia.org",
-   "wikicities.com"
   ],
   [
    "fidelity.com",
@@ -1862,10 +1739,6 @@
   [
    "firecut.ai",
    "firecut.com"
-  ],
-  [
-   "flaglerclerk.com",
-   "flaglerclerk.gov"
   ],
   [
    "fnac.com",
@@ -1878,10 +1751,6 @@
   [
    "foursquare.com",
    "swarmapp.com"
-  ],
-  [
-   "gamechanger.com",
-   "gc.com"
   ],
   [
    "gedi.it",
@@ -1901,28 +1770,6 @@
    "gogoinflight.com"
   ],
   [
-   "going.com",
-   "scottscheapflights.com"
-  ],
-  [
-   "happen.com",
-   "lendingclub.com"
-  ],
-  [
-   "harrypotter.com",
-   "wizardingworld.com"
-  ],
-  [
-   "hbo.com",
-   "hbomax.com",
-   "hbonow.com",
-   "max.com"
-  ],
-  [
-   "hdfc.bank.in",
-   "hdfcbank.com"
-  ],
-  [
    "hejj.io",
    "skoophr.com"
   ],
@@ -1934,14 +1781,6 @@
   [
    "ikonpass.com",
    "skilynx.com"
-  ],
-  [
-   "infotechexpress.com",
-   "workflowmanager.app"
-  ],
-  [
-   "ing.com",
-   "ing.de"
   ],
   [
    "instagram.com",
@@ -1957,20 +1796,8 @@
    "spark.net"
   ],
   [
-   "jobsdb.com",
-   "jobstreet.com"
-  ],
-  [
    "kaiserpermanente.org",
    "kp.org"
-  ],
-  [
-   "keypointcu.com",
-   "kpcu.com"
-  ],
-  [
-   "kodeco.com",
-   "raywenderlich.com"
   ],
   [
    "liebherr.com",
@@ -2025,49 +1852,8 @@
    "wiktionary.org"
   ],
   [
-   "mega.io",
-   "mega.nz"
-  ],
-  [
    "melio.com",
    "meliopayments.com"
-  ],
-  [
-   "mercadolibre.cl",
-   "mercadolibre.co.cr",
-   "mercadolibre.com",
-   "mercadolibre.com.ar",
-   "mercadolibre.com.bo",
-   "mercadolibre.com.co",
-   "mercadolibre.com.do",
-   "mercadolibre.com.ec",
-   "mercadolibre.com.gt",
-   "mercadolibre.com.hn",
-   "mercadolibre.com.mx",
-   "mercadolibre.com.ni",
-   "mercadolibre.com.pa",
-   "mercadolibre.com.pe",
-   "mercadolibre.com.py",
-   "mercadolibre.com.sv",
-   "mercadolibre.com.uy",
-   "mercadolibre.com.ve",
-   "mercadopago.cl",
-   "mercadopago.com.ar",
-   "mercadopago.com.co",
-   "mercadopago.com.ec",
-   "mercadopago.com.mx",
-   "mercadopago.com.pe",
-   "mercadopago.com.uy",
-   "mercadopago.com.ve"
-  ],
-  [
-   "mercadolivre.com",
-   "mercadolivre.com.br",
-   "mercadopago.com.br"
-  ],
-  [
-   "mi.com",
-   "xiaomi.com"
   ],
   [
    "minecraft.net",
@@ -2085,11 +1871,6 @@
    "monarchmoney.com"
   ],
   [
-   "moneybird.com",
-   "moneybird.de",
-   "moneybird.nl"
-  ],
-  [
    "myuhc.com",
    "optum.com",
    "optumrx.com",
@@ -2100,11 +1881,6 @@
    "neatoshop.com"
   ],
   [
-   "nebula.app",
-   "nebula.tv",
-   "watchnebula.com"
-  ],
-  [
    "nettv.com.np",
    "worldlink.com.np"
   ],
@@ -2113,18 +1889,9 @@
    "vanityfair.com"
   ],
   [
-   "next.ink",
-   "nextinpact.com"
-  ],
-  [
    "nintendolife.com",
    "purexbox.com",
    "pushsquare.com"
-  ],
-  [
-   "nordaccount.com",
-   "nordpass.com",
-   "nordvpn.com"
   ],
   [
    "norwegian.com",
@@ -2142,14 +1909,6 @@
    "padmapper.com",
    "zumper.com",
    "zumperrentals.com"
-  ],
-  [
-   "parkmobile.io",
-   "parkmobile.us"
-  ],
-  [
-   "peacock.com",
-   "peacocktv.com"
   ],
   [
    "pinterest.at",
@@ -2196,10 +1955,6 @@
    "pretendo.network"
   ],
   [
-   "prog-8.com",
-   "progate.com"
-  ],
-  [
    "proton.me",
    "protonmail.ch",
    "protonmail.com",
@@ -2226,13 +1981,6 @@
    "rocketmortgage.com"
   ],
   [
-   "rtlplus.com",
-   "rtlplus.de",
-   "tvnow.at",
-   "tvnow.ch",
-   "tvnow.de"
-  ],
-  [
    "scholarshare529.com",
    "secureaccountview.com"
   ],
@@ -2249,14 +1997,6 @@
    "scribbr.se"
   ],
   [
-   "seznam.cz",
-   "szn.cz"
-  ],
-  [
-   "smash.gg",
-   "start.gg"
-  ],
-  [
    "spirit-airlines.com",
    "spirit.com"
   ],
@@ -2268,10 +2008,6 @@
    "steamcommunity.com",
    "steamgames.com",
    "steampowered.com"
-  ],
-  [
-   "telegram.me",
-   "telegram.org"
   ],
   [
    "tesla.com",
@@ -2291,14 +2027,6 @@
    "tplinkcloud.com"
   ],
   [
-   "transferwise.com",
-   "wise.com"
-  ],
-  [
-   "twitter.com",
-   "x.com"
-  ],
-  [
    "ubi.com",
    "ubisoft.com"
   ],
@@ -2316,10 +2044,6 @@
    "vzw.com"
   ],
   [
-   "wacom.com",
-   "wacom.eu"
-  ],
-  [
    "wellsfargo.com",
    "wellsfargoadvisors.com"
   ],
@@ -2328,12 +2052,587 @@
    "wiimmfi.de"
   ],
   [
-   "ynab.com",
-   "youneedabudget.com"
-  ],
-  [
    "zixmail.net",
    "zixmessagecenter.com"
   ]
+ ],
+ "oneWayCredentials": [
+  {
+   "from": [
+    "a2hosting.com"
+   ],
+   "to": [
+    "hosting.com"
+   ]
+  },
+  {
+   "from": [
+    "adobelogin.com",
+    "behance.net"
+   ],
+   "to": [
+    "adobe.com"
+   ]
+  },
+  {
+   "from": [
+    "angel.co"
+   ],
+   "to": [
+    "wellfound.com"
+   ]
+  },
+  {
+   "from": [
+    "appannie.com"
+   ],
+   "to": [
+    "data.ai"
+   ]
+  },
+  {
+   "from": [
+    "atlassian.net",
+    "bitbucket.org",
+    "trello.com"
+   ],
+   "to": [
+    "atlassian.com"
+   ]
+  },
+  {
+   "from": [
+    "benjamincrozat.com"
+   ],
+   "to": [
+    "redblueonline.com"
+   ]
+  },
+  {
+   "from": [
+    "bit.ly"
+   ],
+   "to": [
+    "bitly.com"
+   ]
+  },
+  {
+   "from": [
+    "borradh.io"
+   ],
+   "to": [
+    "borrah.com"
+   ]
+  },
+  {
+   "from": [
+    "carsensor.net",
+    "hotpepper.jp",
+    "jalan.net"
+   ],
+   "to": [
+    "recruit.co.jp"
+   ]
+  },
+  {
+   "from": [
+    "cleanshot.cloud"
+   ],
+   "to": [
+    "cleanshot.com"
+   ]
+  },
+  {
+   "from": [
+    "coachoutlet.com"
+   ],
+   "to": [
+    "coach.com"
+   ]
+  },
+  {
+   "from": [
+    "costco.ca"
+   ],
+   "to": [
+    "costco.com"
+   ]
+  },
+  {
+   "from": [
+    "dhl.com"
+   ],
+   "to": [
+    "express.dhl"
+   ]
+  },
+  {
+   "from": [
+    "digiromania.ro",
+    "rcs-rds.ro"
+   ],
+   "to": [
+    "digi.ro"
+   ]
+  },
+  {
+   "from": [
+    "discordapp.com"
+   ],
+   "to": [
+    "discord.com"
+   ]
+  },
+  {
+   "from": [
+    "discovercard.com"
+   ],
+   "to": [
+    "discover.com"
+   ]
+  },
+  {
+   "from": [
+    "dq.com"
+   ],
+   "to": [
+    "dairyqueen.com"
+   ]
+  },
+  {
+   "from": [
+    "ebay-kleinanzeigen.de"
+   ],
+   "to": [
+    "kleinanzeigen.de"
+   ]
+  },
+  {
+   "from": [
+    "eo.nl",
+    "gld.nl",
+    "kro-ncrv.nl",
+    "l1.nl",
+    "npoluister.nl",
+    "nporadio5.nl",
+    "omroepwest.nl",
+    "omroepzeeland.nl",
+    "omropfryslan.nl",
+    "oost.nl",
+    "rijnmond.nl",
+    "rtvdrenthe.nl",
+    "rtvnoord.nl",
+    "rtvutrecht.nl",
+    "wnl.tv"
+   ],
+   "to": [
+    "npo.nl"
+   ]
+  },
+  {
+   "from": [
+    "fancourier.ro"
+   ],
+   "to": [
+    "selfawb.ro"
+   ]
+  },
+  {
+   "from": [
+    "flaglerclerk.com"
+   ],
+   "to": [
+    "flaglerclerk.gov"
+   ]
+  },
+  {
+   "from": [
+    "flyblade.com"
+   ],
+   "to": [
+    "blade.com"
+   ]
+  },
+  {
+   "from": [
+    "gamechanger.com"
+   ],
+   "to": [
+    "gc.com"
+   ]
+  },
+  {
+   "from": [
+    "gamefaqs.com"
+   ],
+   "to": [
+    "gamespot.com"
+   ]
+  },
+  {
+   "from": [
+    "gamepedia.com",
+    "wikia.com",
+    "wikia.org",
+    "wikicities.com"
+   ],
+   "to": [
+    "fandom.com"
+   ]
+  },
+  {
+   "from": [
+    "gazduire.com.ro",
+    "gazduire.net"
+   ],
+   "to": [
+    "admin.ro"
+   ]
+  },
+  {
+   "from": [
+    "hawaiianairlines.com"
+   ],
+   "to": [
+    "alaskaair.com"
+   ]
+  },
+  {
+   "from": [
+    "hbo.com",
+    "hbomax.com",
+    "hbonow.com"
+   ],
+   "to": [
+    "max.com"
+   ]
+  },
+  {
+   "from": [
+    "hdfcbank.com"
+   ],
+   "to": [
+    "hdfc.bank.in"
+   ]
+  },
+  {
+   "from": [
+    "heroku.com"
+   ],
+   "to": [
+    "salesforce.com"
+   ]
+  },
+  {
+   "from": [
+    "hiive.com"
+   ],
+   "to": [
+    "clarity.com"
+   ]
+  },
+  {
+   "from": [
+    "ing.de"
+   ],
+   "to": [
+    "ing.com"
+   ]
+  },
+  {
+   "from": [
+    "jobsdb.com",
+    "jobstreet.co.id",
+    "jobstreet.com",
+    "jobstreet.com.my",
+    "jobstreet.com.ph",
+    "jobstreet.com.sg",
+    "seek.co.nz",
+    "seek.com.au"
+   ],
+   "to": [
+    "seek.com"
+   ]
+  },
+  {
+   "from": [
+    "kakao.com"
+   ],
+   "to": [
+    "daum.net"
+   ]
+  },
+  {
+   "from": [
+    "keypointcu.com"
+   ],
+   "to": [
+    "kpcu.com"
+   ]
+  },
+  {
+   "from": [
+    "lendingclub.com"
+   ],
+   "to": [
+    "happen.com"
+   ]
+  },
+  {
+   "from": [
+    "letsdeel.com"
+   ],
+   "to": [
+    "deel.com"
+   ]
+  },
+  {
+   "from": [
+    "mega.io"
+   ],
+   "to": [
+    "mega.nz"
+   ]
+  },
+  {
+   "from": [
+    "mercadolibre.cl",
+    "mercadolibre.co.cr",
+    "mercadolibre.com.ar",
+    "mercadolibre.com.bo",
+    "mercadolibre.com.co",
+    "mercadolibre.com.do",
+    "mercadolibre.com.ec",
+    "mercadolibre.com.gt",
+    "mercadolibre.com.hn",
+    "mercadolibre.com.mx",
+    "mercadolibre.com.ni",
+    "mercadolibre.com.pa",
+    "mercadolibre.com.pe",
+    "mercadolibre.com.py",
+    "mercadolibre.com.sv",
+    "mercadolibre.com.uy",
+    "mercadolibre.com.ve",
+    "mercadopago.cl",
+    "mercadopago.com.ar",
+    "mercadopago.com.co",
+    "mercadopago.com.ec",
+    "mercadopago.com.mx",
+    "mercadopago.com.pe",
+    "mercadopago.com.uy",
+    "mercadopago.com.ve"
+   ],
+   "to": [
+    "mercadolibre.com"
+   ]
+  },
+  {
+   "from": [
+    "mercadolivre.com.br",
+    "mercadopago.com.br"
+   ],
+   "to": [
+    "mercadolivre.com"
+   ]
+  },
+  {
+   "from": [
+    "moneybird.de",
+    "moneybird.nl"
+   ],
+   "to": [
+    "moneybird.com"
+   ]
+  },
+  {
+   "from": [
+    "nebula.app",
+    "watchnebula.com"
+   ],
+   "to": [
+    "nebula.tv"
+   ]
+  },
+  {
+   "from": [
+    "nextinpact.com"
+   ],
+   "to": [
+    "next.ink"
+   ]
+  },
+  {
+   "from": [
+    "nordpass.com",
+    "nordvpn.com"
+   ],
+   "to": [
+    "nordaccount.com"
+   ]
+  },
+  {
+   "from": [
+    "overstock.com"
+   ],
+   "to": [
+    "bedbathandbeyond.com"
+   ]
+  },
+  {
+   "from": [
+    "parkmobile.us"
+   ],
+   "to": [
+    "parkmobile.io"
+   ]
+  },
+  {
+   "from": [
+    "peacock.com"
+   ],
+   "to": [
+    "peacocktv.com"
+   ]
+  },
+  {
+   "from": [
+    "prog-8.com"
+   ],
+   "to": [
+    "progate.com"
+   ]
+  },
+  {
+   "from": [
+    "raywenderlich.com"
+   ],
+   "to": [
+    "kodeco.com"
+   ]
+  },
+  {
+   "from": [
+    "runtastic.com"
+   ],
+   "to": [
+    "adidas.com"
+   ]
+  },
+  {
+   "from": [
+    "scottscheapflights.com"
+   ],
+   "to": [
+    "going.com"
+   ]
+  },
+  {
+   "from": [
+    "smash.gg"
+   ],
+   "to": [
+    "start.gg"
+   ]
+  },
+  {
+   "from": [
+    "sncf-connect.com"
+   ],
+   "to": [
+    "monidentifiant.sncf"
+   ]
+  },
+  {
+   "from": [
+    "szn.cz"
+   ],
+   "to": [
+    "seznam.cz"
+   ]
+  },
+  {
+   "from": [
+    "telegram.me"
+   ],
+   "to": [
+    "telegram.org"
+   ]
+  },
+  {
+   "from": [
+    "transferwise.com"
+   ],
+   "to": [
+    "wise.com"
+   ]
+  },
+  {
+   "from": [
+    "tvnow.at",
+    "tvnow.ch",
+    "tvnow.de"
+   ],
+   "to": [
+    "rtl.de",
+    "rtlplus.com",
+    "rtlplus.de"
+   ]
+  },
+  {
+   "from": [
+    "twitter.com"
+   ],
+   "to": [
+    "x.com"
+   ]
+  },
+  {
+   "from": [
+    "vistaprint.ca"
+   ],
+   "to": [
+    "vistaprint.com"
+   ]
+  },
+  {
+   "from": [
+    "wacom.eu"
+   ],
+   "to": [
+    "wacom.com"
+   ]
+  },
+  {
+   "from": [
+    "wizardingworld.com"
+   ],
+   "to": [
+    "harrypotter.com"
+   ]
+  },
+  {
+   "from": [
+    "workflowmanager.app"
+   ],
+   "to": [
+    "infotechexpress.com"
+   ]
+  },
+  {
+   "from": [
+    "xiaomi.com"
+   ],
+   "to": [
+    "mi.com"
+   ]
+  },
+  {
+   "from": [
+    "youneedabudget.com"
+   ],
+   "to": [
+    "ynab.com"
+   ]
+  }
  ]
 }

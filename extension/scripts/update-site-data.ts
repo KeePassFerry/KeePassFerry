@@ -56,21 +56,40 @@ async function main() {
         changePasswordUrls[d] = url;
     }
 
-    // Zusammengehörige Domains: "shared" als Gruppe, "from"/"to" (umgezogene Domains) ebenfalls als Gruppe.
-    // Nur registrierbare Domains laut Public Suffix List (keine Endungen wie "co.uk", keine Subdomains)
+    // Zusammengehörige Domains laut Public Suffix List; öffentliche Endungen wie "co.uk" fallen weg.
+    // "shared" als Gruppe, nur mit registrierbaren Domains: Hosts wie kcls.overdrive.com sind Mandanten einer Plattform,
+    // über deren Domain würden sich fremde Konten mischen.
+    // "from"/"to" als Einweg-Eintrag (Einträge von "from" werden auf "to" angeboten, nicht umgekehrt); Hosts wie
+    // id.atlassian.com werden zur registrierbaren Domain.
     publicSuffixList.parse(fs.readFileSync(PSL, "utf8"), punycode.toASCII);
     let dropped = 0;
+    const domains = (list: string[] = []): string[] => {
+        const result = new Set<string>();
+        for (const d of list) {
+            const domain = publicSuffixList.getDomain(String(d).toLowerCase());
+            if (domain) result.add(domain);
+            else dropped++;
+        }
+        return [...result].sort();
+    };
     const groups: string[][] = [];
+    const oneWay: { from: string[]; to: string[] }[] = [];
     for (const e of shared) {
-        const raw: string[] = [...(e.shared ?? []), ...(e.from ?? []), ...(e.to ?? [])];
-        const group = [...new Set(raw.map(d => String(d).toLowerCase()))].filter(d => {
-            const ok = publicSuffixList.getDomain(d) === d;
-            if (!ok) dropped++;
-            return ok;
-        });
-        if (group.length > 1) groups.push(group.sort());
+        if (e.shared) {
+            const group = [...new Set<string>(e.shared.map((d: unknown) => String(d).toLowerCase()))].filter(d => {
+                const ok = publicSuffixList.getDomain(d) === d;
+                if (!ok) dropped++;
+                return ok;
+            });
+            if (group.length > 1) groups.push(group.sort());
+        } else {
+            const to = domains(e.to);
+            const from = domains(e.from).filter(d => !to.includes(d));
+            if (from.length > 0 && to.length > 0) oneWay.push({ from, to });
+        }
     }
     groups.sort((a, b) => a[0].localeCompare(b[0]));
+    oneWay.sort((a, b) => a.from[0].localeCompare(b.from[0]));
 
     const data = {
         source: "https://github.com/" + REPO,
@@ -78,14 +97,15 @@ async function main() {
         license: "MIT, Copyright (c) Apple Inc.",
         passwordRules: sorted(passwordRules),
         changePasswordUrls: sorted(changePasswordUrls),
-        sharedCredentials: groups
+        sharedCredentials: groups,
+        oneWayCredentials: oneWay
     };
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
     fs.writeFileSync(OUT, JSON.stringify(data, null, 1) + "\n");
     console.log(
         `Commit ${commit}: Passwortregeln ${Object.keys(passwordRules).length}, Passwort-ändern-Adressen ` +
             `${Object.keys(changePasswordUrls).length} (verworfen: ${Object.keys(urls).length - Object.keys(changePasswordUrls).length}), ` +
-            `Domain-Gruppen ${groups.length} (verworfene Domains: ${dropped})`
+            `Domain-Gruppen ${groups.length}, Einweg-Einträge ${oneWay.length} (verworfene Domains: ${dropped})`
     );
 }
 

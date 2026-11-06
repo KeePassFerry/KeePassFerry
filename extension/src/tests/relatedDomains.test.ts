@@ -63,6 +63,23 @@ describe("Liste zugehöriger Domains", () => {
     it("übernimmt Apples Gruppen", () => {
         expect(relatedDomains("envato.com")).toContain("themeforest.net");
         expect(relatedDomains("onenote.com")).toContain("live.com");
+        expect(relatedDomains("stackoverflow.com")).toContain("mathoverflow.net");
+    });
+
+    it("bildet Apples Host-Ziele auf die Domain ab und beachtet die Einweg-Richtung", () => {
+        expect(relatedDomains("atlassian.com")).toEqual(expect.arrayContaining(["atlassian.net", "bitbucket.org", "trello.com"]));
+        expect(relatedDomains("atlassian.net")).toEqual([]);
+        expect(relatedDomains("trello.com")).toEqual([]);
+    });
+
+    it("mischt keine Mandanten einer Plattform", () => {
+        expect(relatedDomains("overdrive.com")).toEqual([]);
+    });
+
+    it("sameSite gilt bei Einweg-Einträgen in beide Richtungen", () => {
+        expect(sameSite("trello.com", "atlassian.com")).toBe(true);
+        expect(sameSite("atlassian.com", "trello.com")).toBe(true);
+        expect(sameSite("trello.com", "bitbucket.org")).toBe(false);
     });
 });
 

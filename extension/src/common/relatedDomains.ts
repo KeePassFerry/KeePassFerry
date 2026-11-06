@@ -7,37 +7,49 @@ fremden Seite angeboten. Keine Dienste mit Kundeninhalten unter eigener Subdomai
 Quelle: nur Apples "Password Manager Resources" (shared-credentials, MIT, siteData/appleQuirks.json, wöchentlich per
 scripts/update-site-data.ts abgeglichen). Gebraucht werden nur Konten, deren Anmeldeseiten auf verschiedenen Domains
 liegen (gespeichert wird die URL der Formularseite); fehlt dort eine Gruppe, gehört sie per PR zu Apple.
-Gruppen mit gemeinsamen Domains werden zusammengeführt.
+Apples "shared" gilt in beide Richtungen, "from"/"to" nur von "from" nach "to" (z. B. Einträge von trello.com auf
+id.atlassian.com, nicht umgekehrt). Über gemeinsame Domains werden die Beziehungen weitergeführt.
 */
 import appleQuirks from "./siteData/appleQuirks.json";
 
 const APPLE_GROUPS: string[][] = (appleQuirks as any).sharedCredentials ?? [];
+const APPLE_ONE_WAY: { from: string[]; to: string[] }[] = (appleQuirks as any).oneWayCredentials ?? [];
 
-// Gruppen mit gemeinsamer Domain zusammenführen
+// Zu jeder Domain die Domains, deren Einträge dort direkt angeboten werden dürfen
+const offeredFrom = new Map<string, Set<string>>();
+const link = (from: string, to: string) => {
+    if (from === to) return;
+    if (!offeredFrom.has(to)) offeredFrom.set(to, new Set());
+    offeredFrom.get(to).add(from);
+};
+for (const group of APPLE_GROUPS) for (const a of group) for (const b of group) link(a, b);
+for (const { from, to } of APPLE_ONE_WAY) for (const f of from) for (const t of to) link(f, t);
+
+// Dasselbe einschließlich der Beziehungen über gemeinsame Domains
 const byDomain = new Map<string, string[]>();
-for (const group of APPLE_GROUPS) {
-    const merged = new Set(group.map(d => d.toLowerCase()));
-    for (const d of group) for (const other of byDomain.get(d.toLowerCase()) ?? []) merged.add(other);
-    const list = [...merged];
-    for (const d of list) byDomain.set(d, list);
+for (const domain of offeredFrom.keys()) {
+    const found = new Set<string>([domain]);
+    for (const d of found) for (const other of offeredFrom.get(d) ?? []) found.add(other);
+    found.delete(domain);
+    byDomain.set(domain, [...found]);
 }
 
-// Alle Gruppen (für Tests)
+// Alle Domains mit den Domains, deren Einträge dort angeboten werden (für Tests)
 export function allRelatedGroups(): string[][] {
-    return [...new Set(byDomain.values())];
+    return [...byDomain].map(([domain, related]) => [domain, ...related]);
 }
 
-// Die anderen Domains der Gruppe dieser Domain (ohne sie selbst); leer, wenn sie zu keiner Gruppe gehört
+// Die Domains, deren Einträge auf dieser Domain angeboten werden (ohne sie selbst); leer, wenn es keine gibt
 export function relatedDomains(domain: string): string[] {
-    const group = byDomain.get((domain ?? "").toLowerCase());
-    return group ? group.filter(d => d !== domain.toLowerCase()) : [];
+    return byDomain.get((domain ?? "").toLowerCase()) ?? [];
 }
 
-// Gleiche Website im Sinne von "zuletzt gewählter Eintrag": gleiche Domain oder dieselbe Anbieter-Gruppe
-// (z. B. Benutzername auf login.microsoftonline.com, Kennwort danach auf login.live.com)
+// Gleiche Website im Sinne von "zuletzt gewählter Eintrag": gleiche Domain oder zugehörige Domain in einer der beiden
+// Richtungen (z. B. Benutzername auf login.microsoftonline.com, Kennwort danach auf login.live.com)
 export function sameSite(a: string, b: string): boolean {
     if (!a || !b) return false;
-    return a.toLowerCase() === b.toLowerCase() || relatedDomains(a).includes(b.toLowerCase());
+    const [x, y] = [a.toLowerCase(), b.toLowerCase()];
+    return x === y || relatedDomains(x).includes(y) || relatedDomains(y).includes(x);
 }
 
 // Liegt der Hostname in einer der Domains (Domain selbst oder Subdomain davon)?
