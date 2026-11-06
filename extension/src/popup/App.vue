@@ -90,14 +90,14 @@ v-if="showSaveWhere" :display-reason="displayWhereReason"
             </main>
 
             <footer v-show="!showSaveStart && !showSaveWhere" class="ferry-foot">
-                <button type="button" class="ferry-status" :class="statusTone" :disabled="!openDatabases.length">
+                <button type="button" class="ferry-status" :class="statusTone" :disabled="!hasStatusMenu">
                     <span class="ferry-dot" />
                     <span class="ferry-status-text">{{ footerStatus }}</span>
-                    <tabler-chevron-up v-if="openDatabases.length" class="ferry-ico ferry-status-chevron" />
-                    <!-- Geöffnete Datenbanken: welche aktiv ist, welche nur gelesen werden kann -->
-                    <v-menu v-if="openDatabases.length" activator="parent" location="top start" :offset="6">
+                    <tabler-chevron-up v-if="hasStatusMenu" class="ferry-ico ferry-status-chevron" />
+                    <!-- Geöffnete Datenbanken: welche aktiv ist, welche nur gelesen werden kann; KeePass öffnen -->
+                    <v-menu v-if="hasStatusMenu" activator="parent" location="top start" :offset="6">
                         <div class="ferry-db-menu">
-                            <div class="ferry-db-menu-title">{{ $i18n("ferry_db_menu_title") }}</div>
+                            <div v-if="openDatabases.length" class="ferry-db-menu-title">{{ $i18n("ferry_db_menu_title") }}</div>
                             <div v-for="db of openDatabases" :key="db.fileName" class="ferry-db-row">
                                 <tabler-database class="ferry-ico" />
                                 <span class="ferry-db-name">{{ db.label }}</span>
@@ -107,6 +107,12 @@ v-if="showSaveWhere" :display-reason="displayWhereReason"
                                 </span>
                                 <v-tooltip location="top" activator="parent">{{ db.fileName }}</v-tooltip>
                             </div>
+                            <button
+                                v-if="showOpenKeePassButton" id="password-open-keepass" type="button" class="ferry-db-row ferry-db-action"
+                                @click="openKeePass">
+                                <tabler-app-window class="ferry-ico" />
+                                <span class="ferry-db-name">{{ $i18n("Menu_Button_open_keepass_label") }}</span>
+                            </button>
                         </div>
                     </v-menu>
                 </button>
@@ -122,12 +128,6 @@ v-show="showSearchPanel" type="button" class="ferry-ib"
                     :aria-label="$i18n('Menu_Button_copyNewPasswordToClipboard_label')" @click="showPasswordGenerator = true">
                     <tabler-wand class="ferry-ico" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_copyNewPasswordToClipboard_label") }}</v-tooltip>
-                </button>
-                <button
-v-show="showOpenKeePassButton" id="password-open-keepass" type="button" class="ferry-ib"
-                    :aria-label="$i18n('Menu_Button_open_keepass_label')" @click="openKeePass">
-                    <tabler-app-window class="ferry-ico" />
-                    <v-tooltip location="top" activator="parent">{{ $i18n("Menu_Button_open_keepass_label") }}</v-tooltip>
                 </button>
                 <!-- Geleakte Passwörter jederzeit erreichbar (die Karte "neu gefunden" erscheint nur einmal) -->
                 <button
@@ -299,6 +299,9 @@ export default {
             );
         },
         // Geöffnete Datenbanken für die Liste an der Statusanzeige
+        hasStatusMenu: function (): boolean {
+            return this.openDatabases.length > 0 || this.showOpenKeePassButton;
+        },
         openDatabases: function () {
             if (!this.connected || !this.databaseIsOpen) return [];
             return (this.KeePassDatabases as Database[]).map((db, i) => ({
@@ -825,6 +828,20 @@ button.ferry-status:disabled { cursor: default; }
     border-radius: 6px;
 }
 .ferry-db-row:hover { background: var(--ferry-hover); }
+.ferry-db-action {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.ferry-db-action:not(:first-child) {
+    margin-top: 4px;
+    border-radius: 0 0 6px 6px;
+    border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
 .ferry-db-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ferry-db-tag {
     display: inline-flex;
