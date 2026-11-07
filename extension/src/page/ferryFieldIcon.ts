@@ -8,6 +8,8 @@ import { isUsernameField } from "./loginFields";
 import { pageDiag } from "./ferryDiagPage";
 import { configManager } from "../common/ConfigManager";
 import { drawLockGlyph, LOCK_COLOR } from "../common/lockGlyph";
+import { extraFields, sameFieldTarget } from "../common/fieldLocators";
+import type { Locator } from "../common/model/Locator";
 
 export class FerryFieldIcon {
     constructor(
@@ -23,6 +25,8 @@ export class FerryFieldIcon {
     private iconWidth = 16;
     private passwordFields: MatchedField[];
     private otherFields: MatchedField[];
+    // Eingabefelder, für die ein passender Eintrag ein Zusatzfeld gespeichert hat (z. B. eine PIN)
+    private storedExtras: Locator[] = [];
 
     // Gesperrt: Symbole bleiben stehen, ein Klick entsperrt (Windows Hello) statt die Auswahl zu öffnen
     private locked = false;
@@ -33,6 +37,7 @@ export class FerryFieldIcon {
         this.locked = false;
         this.passwordFields = null;
         this.otherFields = null;
+        this.storedExtras = [];
     }
 
     // Datenbank gesperrt: vorhandene Symbole auf "gesperrt" stellen und erkannte Anmeldefelder (Passwort,
@@ -114,6 +119,7 @@ export class FerryFieldIcon {
     ) {
         this.passwordFields = passwordFields;
         this.otherFields = otherFields;
+        this.storedExtras = entries.flatMap(e => extraFields(e.fields)).map(f => f.locators[0]);
         // Einstellung "Symbole in Eingabefeldern" aus: Auswahl nur über das Popup
         if (configManager.current.ferryShowFieldIcons === false) return;
 
@@ -125,7 +131,7 @@ export class FerryFieldIcon {
         }
     }
 
-    private skipField(field: MatchedField) {
+    private unsuitableForIcon(field: MatchedField) {
         if (
             !this.formUtils.isATextFormFieldType(field.field.type) &&
             field.field.type != "password"
@@ -140,10 +146,19 @@ export class FerryFieldIcon {
             return true;
         }
         if (field.DOMelement.maxLength > 0 && field.DOMelement.maxLength <= 3) return true;
-        if (field.DOMelement.offsetWidth < 50) return true;
+        return field.DOMelement.offsetWidth < 50;
+    }
+
+    private skipField(field: MatchedField) {
+        if (this.unsuitableForIcon(field)) return true;
         // Textfelder nur, wenn sie das Benutzerfeld einer Anmeldung sind (Regeln in loginFields.ts)
-        if (field.field.type !== "password" && !isUsernameField(field.DOMelement as HTMLInputElement)) return true;
-        return false;
+        return field.field.type !== "password" && !isUsernameField(field.DOMelement as HTMLInputElement);
+    }
+
+    // Gespeichertes Zusatzfeld: die Seite verrät nichts darüber, bekannt ist das Feld nur über den Eintrag
+    private hasStoredExtra(field: MatchedField) {
+        if ((field.field.type !== "text" && field.field.type !== "password") || this.unsuitableForIcon(field)) return false;
+        return this.storedExtras.some(l => sameFieldTarget(field.field.locators[0], l));
     }
 
     private addIcon(field: MatchedField, image: string) {
@@ -176,7 +191,8 @@ export class FerryFieldIcon {
         // Put icons in only the top 2 matching password and text fields
         const fieldSet1 = this.limitFields(this.passwordFields);
         const fieldSet2 = this.limitFields(this.otherFields);
-        for (const field of fieldSet1.concat(fieldSet2)) {
+        const extras = this.passwordFields.concat(this.otherFields).filter(f => this.hasStoredExtra(f));
+        for (const field of new Set(fieldSet1.concat(fieldSet2, extras))) {
             this.addIcon(field, image);
         }
     }

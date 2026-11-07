@@ -93,17 +93,12 @@ namespace KeePassFerry
             entry.CustomData.Set(EntryConfigKey, JsonConvert.ExportToString(newConfig));
         }
 
-        public static MatchAccuracyMethod GetMatchAccuracyMethod(this PwEntry entry, URLSummary urlsum, DatabaseConfig dbConf)
-        {
-            return GetMatchAccuracyMethod(entry.GetFerryConfigNormalised(dbConf.DefaultMatchAccuracy), urlsum, dbConf);
-        }
-
         // Mit schon gelesener Eintragskonfiguration (Suche über viele Adressen: nicht je Adresse neu einlesen)
-        public static MatchAccuracyMethod GetMatchAccuracyMethod(EntryConfigv2 conf, URLSummary urlsum, DatabaseConfig dbConf)
+        public static MatchAccuracyMethod GetMatchAccuracyMethod(EntryConfigv2 conf, URLSummary urlsum)
         {
             MatchAccuracyMethod overridenMethod;
             if (urlsum.Domain != null && urlsum.Domain.RegistrableDomain != null &&
-                dbConf.MatchedURLAccuracyOverrides.TryGetValue(urlsum.Domain.RegistrableDomain, out overridenMethod))
+                MatchAccuracySettings.TryGetOverride(urlsum.Domain.RegistrableDomain, out overridenMethod))
                 return overridenMethod;
             return conf.MatcherConfigs.First(mc => mc.MatcherType == EntryMatcherType.Url).UrlMatchMethod ?? MatchAccuracyMethod.Domain;
         }

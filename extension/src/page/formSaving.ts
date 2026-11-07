@@ -7,7 +7,7 @@ import type { AddonMessage } from "../common/AddonMessage";
 import { Action } from "../common/Action";
 import { submittedCredentials } from "../common/submittedLogin";
 import { MatchedField } from "./MatchedField";
-import { Field } from "../common/model/Field";
+import { looksLikeLoginField } from "./loginFields";
 import punycode from "punycode/";
 
 // Klick auf den Absende-Knopf und "submit" kurz danach gehören zu einem Versuch
@@ -178,11 +178,10 @@ export class FormSaving {
             !this.matchResult.lastFilledOther ||
             this.hasFieldBeenModified(nonEmptyOtherFields, this.matchResult.lastFilledOther);
 
-        const fields = Field.combineDomFieldLists(
-            usernameIndex,
-            nonEmptyOtherFields.map(f => f.field),
-            nonEmptyPasswordFields.map(f => f.field)
-        );
+        // Nur Benutzername und Passwort: Adresse, Häkchen und Ähnliches einer Registrierung gehören nicht in den Eintrag.
+        // Ein weiteres Feld (z. B. PIN) fügt der Nutzer bei Bedarf selbst hinzu (Kontextmenü, selectionSave.ts)
+        const username = pickUsernameField(otherFields, usernameIndex);
+        const fields = [...(username ? [username.field] : []), ...nonEmptyPasswordFields.map(f => f.field)];
         // Ohne von uns eingetragenen Benutzernamen (z. B. zweiter Schritt einer mehrstufigen Anmeldung) entscheidet der
         // Hintergrund mit dem Benutzernamen der Vorseite, ob das Konto schon in KeePass ist
         if (differentPassword || differentOther || !this.matchResult?.lastFilledOther?.length) {
@@ -224,6 +223,16 @@ export class FormSaving {
             return false;
         });
     }
+}
+
+// Benutzerfeld eines abgeschickten Formulars. Die Erkennung nimmt ohne weitere Angaben das letzte Textfeld vor dem
+// Passwort; in einer Registrierung kann das z. B. der Ort sein, dann hat ein E-Mail- oder Anmeldefeld Vorrang
+export function pickUsernameField(others: MatchedField[], detectedIndex: number): MatchedField {
+    const usable = others.filter(f => f.field.type === "text" && f.field.value);
+    const detected = usable.includes(others[detectedIndex]) ? others[detectedIndex] : null;
+    const isLogin = (f: MatchedField) => looksLikeLoginField(f.DOMelement as HTMLInputElement);
+    if (detected && isLogin(detected)) return detected;
+    return usable.find(f => (f.DOMelement as HTMLInputElement).type === "email") ?? usable.find(isLogin) ?? detected ?? usable[0] ?? null;
 }
 
 // Titel für einen neuen Eintrag: der Name, den die Website selbst angibt (og:site_name, application-name),

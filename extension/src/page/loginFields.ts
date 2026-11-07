@@ -37,6 +37,12 @@ function hintsOf(el: HTMLInputElement): string {
         .replace(/[-_.:[\]]+/g, " ");
 }
 
+// Sagt das Feld selbst, dass es zur Anmeldung gehört (autocomplete, type="email", Name oder Beschriftung)?
+export function looksLikeLoginField(el: HTMLInputElement): boolean {
+    if (/\b(username|email|webauthn)\b/i.test(el.getAttribute("autocomplete") ?? "")) return true;
+    return el.type === "email" || LOGIN_NAME.test(hintsOf(el));
+}
+
 // Formular des Felds; ohne <form> der nächste umgebende Bereich mit Passwortfeld, sonst ein als Formular
 // dienender Bereich bzw. das Dokument
 function scopeOf(el: HTMLInputElement): ParentNode {

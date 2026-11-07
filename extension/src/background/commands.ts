@@ -3,7 +3,7 @@ import { Action } from "../common/Action";
 import { FerryLog } from "../common/Logger";
 import { ferry } from "./KF";
 import { Entry } from "../common/model/Entry";
-import { startSelectionSave } from "./selectionSave";
+import { startFieldSave, startSelectionSave } from "./selectionSave";
 
 /*
 Kontextmenü je passendem Eintrag: "Anmeldung ausfüllen" (wie bisher) und, bei Rechtsklick in ein Eingabefeld,
@@ -22,6 +22,7 @@ const ALL_CONTEXTS = ["editable", "frame", "image", "link", "page", "password", 
 const PAGES = ["http://*/*", "https://*/*"];
 const EXTRAS_REFRESH_MS = 10 * 1000;
 const ADD_SELECTION_ID = "kf-add-selection";
+const ADD_FIELD_ID = "kf-add-field";
 
 export class KFCommands {
     private contextMenuUpdateLock = false;
@@ -87,6 +88,9 @@ export class KFCommands {
                 case ADD_SELECTION_ID:
                     // Bewusster Klick: darf eine gesperrte Datenbank entsperren lassen
                     startSelectionSave(tab, info.frameId, info.selectionText);
+                    break;
+                case ADD_FIELD_ID:
+                    startFieldSave(tab, info.frameId);
                     break;
             }
             const menuAction = this.menuActions.get(id);
@@ -270,6 +274,13 @@ export class KFCommands {
                     id: ADD_SELECTION_ID,
                     title: $STR("ferry_menu_add_selection"),
                     contexts: ["selection"],
+                    documentUrlPatterns: PAGES
+                });
+                // Das Kontextmenü gibt es auch an Feldern, die KeePassFerry nicht erkannt hat (z. B. eine PIN)
+                this.createMenuItem({
+                    id: ADD_FIELD_ID,
+                    title: $STR("ferry_menu_add_field"),
+                    contexts: ["editable", "password"] as any,
                     documentUrlPatterns: PAGES
                 });
             }

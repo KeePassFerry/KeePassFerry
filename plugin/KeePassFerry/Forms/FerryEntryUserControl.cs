@@ -26,7 +26,6 @@ namespace KeePassFerry.Forms
         private ProtectedStringDictionary _strings;
         private StringDictionaryEx _cd;
         private EntryConfigv2 _conf;
-        private DatabaseConfig _dbConf;
 
         // Angezeigte Werte (übersetzt); Anzeige und Auswertung verwenden dieselben Texte
         private static readonly string TDefault = FerryText.L("Default");
@@ -51,8 +50,7 @@ namespace KeePassFerry.Forms
             _pwEntryForm = pwEntryForm;
             _strings = strings;
             _cd = customData;
-            _dbConf = FerryPlugin._host.Database.GetFerryConfig();
-            _conf = entry.GetFerryConfigNormalised(strings, _dbConf.DefaultMatchAccuracy);
+            _conf = entry.GetFerryConfigNormalised(strings, MatchAccuracySettings.Default);
         }
 
         // Erst nach dem Laden schreiben: Beim Füllen der Steuerelemente lösen deren Ereignisse aus, ohne dass der
@@ -62,7 +60,7 @@ namespace KeePassFerry.Forms
         private void UpdateFerryConfig(EntryConfigv2 conf)
         {
             if (!_loaded) return;
-            EntryConfigv2 defaultConf = (new EntryConfigv1(FerryPlugin._host.Database.GetFerryConfig().DefaultMatchAccuracy)).ConvertToV2(new GuidService());
+            EntryConfigv2 defaultConf = (new EntryConfigv1(MatchAccuracySettings.Default)).ConvertToV2(new GuidService());
             
             // Standard-Einstellungen nur speichern, wenn der Eintrag schon welche hat
             if (!conf.Equals(defaultConf) || _entry.HasFerryConfig(_cd))
@@ -141,7 +139,7 @@ namespace KeePassFerry.Forms
                 radioButton1.Checked = true;
             }
             RadioButton defaultRadioButton = null;
-            switch (_dbConf.DefaultMatchAccuracy)
+            switch (MatchAccuracySettings.Default)
             {
                 case MatchAccuracyMethod.Exact: defaultRadioButton = radioButton3; break;
                 case MatchAccuracyMethod.Hostname: defaultRadioButton = radioButton2; break;
@@ -151,7 +149,7 @@ namespace KeePassFerry.Forms
             if (defaultRadioButton != null)
             {
                 toolTipRealm.SetToolTip(defaultRadioButton,
-                    FerryText.L("This is the default behaviour for new entries. Change in the Database Settings dialog."));
+                    FerryText.L("This is the default behaviour for new entries. Change it in the KeePassFerry options."));
             }
 
             listNormalURLs = new List<string>();

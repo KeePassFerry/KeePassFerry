@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using KeePass.Plugins;
@@ -10,7 +11,8 @@ namespace KeePassFerry.Forms
 {
     /// <summary>
     /// Optionen des Plugins (Extras → KeePassFerry-Optionen, auch per Knopf aus der Erweiterung): alles, was in KeePass
-    /// wirkt und für alle Browser gilt – Speichern, Datenlecks-Prüfung, abgelaufene Einträge, gekoppelte Browser, Update.
+    /// wirkt und für alle Browser gilt – Speichern, Datenlecks-Prüfung, abgelaufene Einträge, Adressabgleich, gekoppelte
+    /// Browser, Update.
     /// Was nur auf Webseiten wirkt (Ausfüllen, Feldsymbole …), liegt in der Browser-Erweiterung.
     /// </summary>
     public sealed class OptionsForm : Form
@@ -28,6 +30,12 @@ namespace KeePassFerry.Forms
         private readonly ListView _clients;
         private readonly Button _unpair;
         private readonly CheckedListBox _hibpDbs;
+        private readonly RadioButton _accuracyDomain;
+        private readonly RadioButton _accuracyHostname;
+        private readonly RadioButton _accuracyExact;
+        private readonly ListView _accuracyOverrides;
+        private readonly Button _overrideEdit;
+        private readonly Button _overrideDelete;
 
         public OptionsForm(IPluginHost host, KeePassFerryExt plugin)
         {
@@ -43,7 +51,7 @@ namespace KeePassFerry.Forms
             StartPosition = FormStartPosition.CenterParent;
             AutoScaleMode = AutoScaleMode.Dpi;
             AutoScaleDimensions = new SizeF(96F, 96F);
-            ClientSize = new Size(560, 796);
+            ClientSize = new Size(560, 640);
             Font = new Font("Segoe UI", 9F);
 
             var hint = new Label
@@ -56,10 +64,16 @@ namespace KeePassFerry.Forms
                     "Settings that take effect in KeePass and apply to all browsers. Settings for websites (filling, field icons …) are in the browser extension.")
             };
 
+            var tabs = new TabControl { Location = new Point(8, 52), Size = new Size(544, 510) };
+            var tabGeneral = new TabPage(FerryText.T("Allgemein", "General")) { UseVisualStyleBackColor = true };
+            var tabAddresses = new TabPage(FerryText.T("Adressen und Browser", "Addresses and browsers")) { UseVisualStyleBackColor = true };
+            tabs.TabPages.Add(tabGeneral);
+            tabs.TabPages.Add(tabAddresses);
+
             var general = new GroupBox
             {
                 Text = FerryText.T("Allgemein", "General"),
-                Location = new Point(16, 52),
+                Location = new Point(4, 8),
                 Size = new Size(528, 104)
             };
             _autoSave = NewCheckBox(general, 24,
@@ -72,25 +86,25 @@ namespace KeePassFerry.Forms
             var breaches = new GroupBox
             {
                 Text = FerryText.T("Datenlecks", "Data breaches"),
-                Location = new Point(16, 166),
-                Size = new Size(528, 200)
+                Location = new Point(4, 122),
+                Size = new Size(528, 216)
             };
             _hibp = NewCheckBox(breaches, 24,
                 FerryText.T("Passwörter auf Datenlecks prüfen", "Check passwords for data breaches"));
             _hibp.Checked = _plugin.Hibp != null && _plugin.Hibp.Enabled;
             _hibp.Enabled = _plugin.Hibp != null;
-            breaches.Controls.Add(NewHint(48, 34, FerryText.T(
+            breaches.Controls.Add(NewHint(48, 50, FerryText.T(
                 "KeePass prüft neue und geänderte Passwörter bei „Have I Been Pwned“ und alle anderen gelegentlich erneut. Gesendet werden nur die ersten 5 Zeichen einer Prüfsumme, nie das Passwort.",
                 "KeePass checks new and changed passwords at \"Have I Been Pwned\" and re-checks all others from time to time. Only the first 5 characters of a checksum are sent, never the password.")));
-            breaches.Controls.Add(NewHint(86, 28, HibpProgressText()));
+            breaches.Controls.Add(NewHint(100, 30, HibpProgressText()));
             // Pro Datenbank: neue Datenbanken sind nicht eingeschaltet; schreibgeschützte lassen sich nicht prüfen
             breaches.Controls.Add(new Label
             {
                 Text = FerryText.T("Für diese Datenbanken (gilt für diesen PC):", "For these databases (on this PC):"),
                 AutoSize = true,
-                Location = new Point(30, 116)
+                Location = new Point(30, 132)
             });
-            _hibpDbs = new CheckedListBox { Location = new Point(30, 136), Size = new Size(486, 56), CheckOnClick = true, IntegralHeight = false };
+            _hibpDbs = new CheckedListBox { Location = new Point(30, 152), Size = new Size(486, 56), CheckOnClick = true, IntegralHeight = false };
             foreach (PwDocument doc in host.MainWindow.DocumentManager.Documents)
             {
                 PwDatabase db = doc.Database;
@@ -110,7 +124,7 @@ namespace KeePassFerry.Forms
             var expiry = new GroupBox
             {
                 Text = FerryText.T("Abgelaufene Einträge", "Expired entries"),
-                Location = new Point(16, 376),
+                Location = new Point(4, 346),
                 Size = new Size(528, 120)
             };
             expiry.Controls.Add(new Label { Text = FerryText.T("Verhalten:", "Behaviour:"), AutoSize = true, Location = new Point(12, 27) });
@@ -130,10 +144,60 @@ namespace KeePassFerry.Forms
                 "Gilt nur für Einträge mit Ablaufdatum („Gültig bis“). „Erinnern“ füllt weiter aus und weist auf einen Passwortwechsel hin; „Ausblenden“ schlägt sie im Browser nicht mehr vor.",
                 "Only applies to entries with an expiry date (\"Expires\"). \"Remind\" keeps filling them in and suggests changing the password; \"Hide\" no longer offers them in the browser.")));
 
+            var accuracy = new GroupBox
+            {
+                Text = FerryText.T("Adressen abgleichen", "Address matching"),
+                Location = new Point(4, 8),
+                Size = new Size(528, 262)
+            };
+            accuracy.Controls.Add(new Label { Text = FerryText.T("Standard für neue Einträge:", "Default for new entries:"), AutoSize = true, Location = new Point(12, 26) });
+            _accuracyDomain = new RadioButton { Text = FerryText.L("Domain"), AutoSize = true, Location = new Point(190, 24) };
+            _accuracyHostname = new RadioButton { Text = FerryText.L("Hostname"), AutoSize = true, Location = new Point(280, 24) };
+            _accuracyExact = new RadioButton { Text = FerryText.L("Exact"), AutoSize = true, Location = new Point(380, 24) };
+            accuracy.Controls.AddRange(new Control[] { _accuracyDomain, _accuracyHostname, _accuracyExact });
+            _accuracyDomain.Checked = MatchAccuracySettings.Default == MatchAccuracyMethod.Domain;
+            _accuracyHostname.Checked = MatchAccuracySettings.Default == MatchAccuracyMethod.Hostname;
+            _accuracyExact.Checked = MatchAccuracySettings.Default == MatchAccuracyMethod.Exact;
+            accuracy.Controls.Add(NewHint(50, 34, FerryText.T(
+                "Domain: Subdomains zählen mit (login.example.com passt auf www.example.com). Hostname: Die Subdomain muss stimmen. Exakt: Die ganze Adresse muss stimmen.",
+                "Domain: subdomains count too (login.example.com matches www.example.com). Hostname: the subdomain must match. Exact: the whole address must match.")));
+            accuracy.Controls.Add(new Label
+            {
+                Text = FerryText.T("Ausnahmen je Domain (haben Vorrang vor der Einstellung am Eintrag):", "Exceptions per domain (take priority over the entry's setting):"),
+                AutoSize = true,
+                Location = new Point(12, 92)
+            });
+            _accuracyOverrides = new ListView
+            {
+                View = View.Details,
+                FullRowSelect = true,
+                HideSelection = false,
+                MultiSelect = false,
+                HeaderStyle = ColumnHeaderStyle.Nonclickable,
+                Location = new Point(12, 112),
+                Size = new Size(410, 106)
+            };
+            _accuracyOverrides.Columns.Add(FerryText.T("Domain", "Domain"), 270);
+            _accuracyOverrides.Columns.Add(FerryText.T("Genauigkeit", "Accuracy"), 115);
+            foreach (KeyValuePair<string, MatchAccuracyMethod> item in MatchAccuracySettings.CopyOverrides())
+                AddOverrideRow(item.Key, item.Value);
+            _accuracyOverrides.SelectedIndexChanged += delegate { UpdateOverrideButtons(); };
+            _accuracyOverrides.DoubleClick += delegate { EditOverride(); };
+            var overrideAdd = new Button { Text = FerryText.T("Hinzufügen", "Add"), Location = new Point(430, 112), Size = new Size(88, 28) };
+            _overrideEdit = new Button { Text = FerryText.T("Bearbeiten", "Edit"), Location = new Point(430, 146), Size = new Size(88, 28), Enabled = false };
+            _overrideDelete = new Button { Text = FerryText.T("Entfernen", "Remove"), Location = new Point(430, 180), Size = new Size(88, 28), Enabled = false };
+            overrideAdd.Click += delegate { AddOverride(); };
+            _overrideEdit.Click += delegate { EditOverride(); };
+            _overrideDelete.Click += delegate { DeleteOverride(); };
+            accuracy.Controls.AddRange(new Control[] { _accuracyOverrides, overrideAdd, _overrideEdit, _overrideDelete });
+            accuracy.Controls.Add(NewHint(224, 32, FerryText.T(
+                "Gilt für alle Datenbanken auf diesem PC. Für einen einzelnen Eintrag stellst du die Genauigkeit im Eintrag ein (Reiter KeePassFerry).",
+                "Applies to all databases on this PC. For a single entry, set the accuracy in the entry (KeePassFerry tab).")));
+
             var paired = new GroupBox
             {
                 Text = FerryText.T("Gekoppelte Browser", "Paired browsers"),
-                Location = new Point(16, 506),
+                Location = new Point(4, 278),
                 Size = new Size(528, 196)
             };
             _clients = new ListView
@@ -172,28 +236,30 @@ namespace KeePassFerry.Forms
             var version = new Label
             {
                 AutoSize = true,
-                Location = new Point(16, 718),
+                Location = new Point(16, 576),
                 Text = "KeePassFerry " + FerryUpdater.InstalledVersion
             };
             var update = new Button
             {
                 Text = FerryText.T("Nach Updates suchen …", "Check for updates …"),
                 AutoSize = true,
-                Location = new Point(160, 712)
+                Location = new Point(160, 570)
             };
             update.Click += delegate { _plugin.OnCheckForUpdates(this, EventArgs.Empty); };
 
-            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(362, 756), Size = new Size(88, 28) };
+            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(362, 600), Size = new Size(88, 28) };
             var cancel = new Button
             {
                 Text = FerryText.T("Abbrechen", "Cancel"),
                 DialogResult = DialogResult.Cancel,
-                Location = new Point(456, 756),
+                Location = new Point(456, 600),
                 Size = new Size(88, 28)
             };
             ok.Click += OnOk;
 
-            Controls.AddRange(new Control[] { hint, general, breaches, expiry, paired, version, update, ok, cancel });
+            tabGeneral.Controls.AddRange(new Control[] { general, breaches, expiry });
+            tabAddresses.Controls.AddRange(new Control[] { accuracy, paired });
+            Controls.AddRange(new Control[] { hint, tabs, version, update, ok, cancel });
             AcceptButton = ok;
             CancelButton = cancel;
             ShowPairedClients();
@@ -246,6 +312,57 @@ namespace KeePassFerry.Forms
             return box;
         }
 
+        private static string AccuracyText(MatchAccuracyMethod method)
+        {
+            return FerryText.L(method == MatchAccuracyMethod.Exact ? "Exact" : method == MatchAccuracyMethod.Hostname ? "Hostname" : "Domain");
+        }
+
+        private void AddOverrideRow(string domain, MatchAccuracyMethod method)
+        {
+            _accuracyOverrides.Items.Add(new ListViewItem(new[] { domain, AccuracyText(method) }) { Tag = method });
+        }
+
+        private void UpdateOverrideButtons()
+        {
+            bool selected = _accuracyOverrides.SelectedItems.Count > 0;
+            _overrideEdit.Enabled = selected;
+            _overrideDelete.Enabled = selected;
+        }
+
+        private List<string> OverrideDomains(ListViewItem except)
+        {
+            var domains = new List<string>();
+            foreach (ListViewItem item in _accuracyOverrides.Items)
+                if (item != except) domains.Add(item.Text);
+            return domains;
+        }
+
+        private void AddOverride()
+        {
+            using (var form = new FerryMAMOverrideForm(null, null, OverrideDomains(null)))
+                if (form.ShowDialog(this) == DialogResult.OK) AddOverrideRow(form.Domain, form.MAM);
+        }
+
+        private void EditOverride()
+        {
+            if (_accuracyOverrides.SelectedItems.Count == 0) return;
+            ListViewItem item = _accuracyOverrides.SelectedItems[0];
+            using (var form = new FerryMAMOverrideForm(item.Text, (MatchAccuracyMethod)item.Tag, OverrideDomains(item)))
+            {
+                if (form.ShowDialog(this) != DialogResult.OK) return;
+                _accuracyOverrides.Items.Remove(item);
+                AddOverrideRow(form.Domain, form.MAM);
+            }
+            UpdateOverrideButtons();
+        }
+
+        private void DeleteOverride()
+        {
+            if (_accuracyOverrides.SelectedItems.Count == 0) return;
+            _accuracyOverrides.Items.Remove(_accuracyOverrides.SelectedItems[0]);
+            UpdateOverrideButtons();
+        }
+
         private void ShowPairedClients()
         {
             _clients.Items.Clear();
@@ -296,6 +413,11 @@ namespace KeePassFerry.Forms
                 }
             _host.CustomConfig.SetBool(FerryService.HideExpiredConfigKey, _expiryMode.SelectedIndex == 1);
             _host.CustomConfig.SetLong(FerryService.ExpiryWarnDaysConfigKey, FerryService.ExpiryWarnDaysChoices[Math.Max(0, _expiryWarn.SelectedIndex)]);
+            var overrides = new Dictionary<string, MatchAccuracyMethod>();
+            foreach (ListViewItem item in _accuracyOverrides.Items) overrides[item.Text] = (MatchAccuracyMethod)item.Tag;
+            MatchAccuracySettings.Save(
+                _accuracyExact.Checked ? MatchAccuracyMethod.Exact : _accuracyHostname.Checked ? MatchAccuracyMethod.Hostname : MatchAccuracyMethod.Domain,
+                overrides);
             _host.MainWindow.Invoke((MethodInvoker)delegate { _host.MainWindow.SaveConfig(); });
             // Verbundene Browser laden Einträge und Vorwarnung neu
             _plugin.SignalAllManagedRPCClients(KeePassFerry.Models.DataExchange.Signal.DATABASE_SELECTED);

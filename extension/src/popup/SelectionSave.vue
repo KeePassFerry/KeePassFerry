@@ -11,7 +11,7 @@
                 <header class="head">
                     <img src="/assets/images/48.png" alt="" class="logo" />
                     <div class="head-text">
-                        <div class="ferry-sheet-title">{{ $i18n("selSave_heading") }}</div>
+                        <div class="ferry-sheet-title">{{ $i18n(fieldMode ? "selSave_field_heading" : "selSave_heading") }}</div>
                         <div v-if="setup" class="subtitle">{{ setup.domain }}</div>
                     </div>
                 </header>
@@ -20,6 +20,10 @@
 
                 <v-alert v-else-if="!setup" type="info" variant="tonal" density="comfortable" class="mt-3">
                     {{ $i18n("selSave_nothing") }}
+                </v-alert>
+
+                <v-alert v-else-if="setup.problem" type="info" variant="tonal" density="comfortable" class="mt-3">
+                    {{ $i18n("selSave_field_" + setup.problem) }}
                 </v-alert>
 
                 <template v-else>
@@ -64,6 +68,7 @@
                         </button>
                         <div v-if="shownEntries.length === 0" class="empty">{{ $i18n("otpSetup_none") }}</div>
                         <button
+                            v-if="!fieldMode"
                             type="button"
                             class="item item-new"
                             :class="{ selected: newEntry }"
@@ -114,9 +119,12 @@ import { supplementEntryState } from "./supplementEntryState";
 import { requestAddition } from "./extras";
 import { SaveState } from "../common/SaveState";
 import { Entry } from "../common/model/Entry";
+import type { Field } from "../common/model/Field";
+import { addPageField } from "./addPageField";
 
 // Popup-Ansicht "„…“ zu Eintrag hinzufügen": Eintrag wählen (der im Tab zuletzt benutzte wird direkt geöffnet),
 // dann das bekannte Bearbeiten-Fenster mit aufgeklapptem "Hinzufügen" und der Markierung als Inhalt.
+// "Dieses Feld zum Eintrag hinzufügen": gleicher Weg, das Feld steht dann in der Feldliste des Bearbeiten-Fensters.
 interface Candidate {
     uuid: string;
     dbFileName: string;
@@ -129,7 +137,16 @@ export default {
     components: { Save1stParty },
     data: () => ({
         loading: true,
-        setup: null as { text: string; domain: string; pageTitle: string; origin: string; candidates: Candidate[]; lastFilledUuid: string },
+        setup: null as {
+            text: string;
+            field?: Field;
+            problem?: string;
+            domain: string;
+            pageTitle: string;
+            origin: string;
+            candidates: Candidate[];
+            lastFilledUuid: string;
+        },
         query: "",
         selected: null as Candidate,
         newEntry: false,
@@ -141,6 +158,9 @@ export default {
     }),
     computed: {
         ...mapState(useStore, ["KeePassDatabases", "ActiveKeePassDatabaseIndex", "saveState"]),
+        fieldMode: function (): boolean {
+            return !!this.setup?.field;
+        },
         shownEntries: function (): Candidate[] {
             const q = (this.query ?? "").trim();
             if (!q) return this.setup?.candidates ?? [];
@@ -245,11 +265,13 @@ export default {
         showEditor: function (entry: Entry) {
             const ss = this.saveState as SaveState;
             const updated = Object.assign({}, ss);
-            updated.newEntry = supplementEntryState(entry, { ...ss, submittedData: null }, entry.URLs);
+            const field: Field = this.setup.field;
+            const target = field ? new Entry({ ...entry, fields: addPageField(entry.fields, field) }) : entry;
+            updated.newEntry = supplementEntryState(target, { ...ss, submittedData: null }, entry.URLs);
             updated.showURLMismatchWarning = false;
             updated.titleResetValue = entry.title;
             updated.lastActiveAt = new Date();
-            requestAddition(entry.uuid, this.setup.text);
+            if (!field) requestAddition(entry.uuid, this.setup.text);
             this.updateSaveState(updated);
             this.editing = true;
         },

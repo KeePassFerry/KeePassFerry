@@ -123,8 +123,8 @@ namespace KeePassFerry
               "„Exakt“ ist sinnvoll, wenn nur auf bestimmten Seiten ausgefüllt werden soll, zum Beispiel zusammen mit zusätzlichen URLs." },
             { "When more than one entry matches, KeePassFerry prefers the more accurately matching entries. A stricter setting can exclude this entry from matching in some cases.",
               "Passen mehrere Einträge, bevorzugt KeePassFerry die genauer passenden. Eine strengere Einstellung kann diesen Eintrag in manchen Fällen ganz ausschließen." },
-            { "This is the default behaviour for new entries. Change in the Database Settings dialog.",
-              "Das ist die Voreinstellung für neue Einträge. Ändern kannst du sie in den Datenbankeinstellungen." },
+            { "This is the default behaviour for new entries. Change it in the KeePassFerry options.",
+              "Das ist die Vorgabe für neue Einträge. Ändern kannst du sie in den KeePassFerry-Optionen." },
 
             // URL-Regel
             { "Add URL", "URL hinzufügen" },
@@ -143,7 +143,6 @@ namespace KeePassFerry
             { "Toggle", "Schalter" },
             { "DOM selector", "DOM-Selektor" },
             { "DOM type", "DOM-Typ" },
-            { "Database default", "Datenbank-Standard" },
             { "To change the value of the username field, please use the main KeePass edit tab",
               "Den Benutzernamen änderst du im Hauptreiter des KeePass-Eintrags." },
             { "To change the value of the password field, please use the main KeePass edit tab",
@@ -158,11 +157,6 @@ namespace KeePassFerry
               "KeePass-Platzhalter wie {USERNAME} oder {S:Feld} in Formularfeldern vor dem Ausfüllen durch ihre Werte ersetzen." },
 
             // Datenbankeinstellungen
-            { "This affects new entries and entries without KeePassFerry settings.",
-              "Gilt für neue Einträge und für Einträge ohne eigene KeePassFerry-Einstellungen." },
-            { "Domain overrides", "Ausnahmen pro Domain" },
-            { "The match accuracy will be applied to all entries when a search URL matches the specified domain name.",
-              "Die Genauigkeit gilt für alle Einträge, wenn die aufgerufene Adresse zur angegebenen Domain gehört." },
             { "Domain", "Domain" },
             { "Hostname", "Hostname" },
             { "Exact", "Exakt" },

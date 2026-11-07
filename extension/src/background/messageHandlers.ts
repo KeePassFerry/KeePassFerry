@@ -22,6 +22,7 @@ import { ferry } from "./KF";
 import { pageStateOf } from "./pageState";
 import { commandManager } from "./commands";
 import { openEntryInPopup } from "./popupEdit";
+import { onContextField } from "./selectionSave";
 
 
 // callbacks for messaging / ports
@@ -500,6 +501,9 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         // Nur die vom Browser gemeldete Frame-URL zählt, nicht eine von der Seite behauptete
         // Nicht abwarten: eine gleich folgende Code-Anfrage der Seite wartet selbst auf das Ergebnis
         handleOtpSetupCandidate(this.sender.tab.id, this.sender.url ?? this.sender.tab.url, msg.otpSetup);
+    }
+    if (msg.contextField && msg.queryId) {
+        onContextField(msg.queryId, msg.contextField);
     }
     if (msg.fieldsAvailable && msg.queryId) {
         onFieldsAvailable(msg.queryId, msg.fieldsAvailable);

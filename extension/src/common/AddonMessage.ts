@@ -1,3 +1,4 @@
+import type { Field } from "./model/Field";
 import { Action } from "./Action";
 import { FrameState } from "./FrameState";
 import { FerryNotification } from "./FerryNotification";
@@ -82,11 +83,19 @@ export interface AddonMessage {
     // Popup: welche Feldarten die Seite hat, und einzelnes Feld aus dem Popup füllen
     queryId?: number;
     fieldsAvailable?: PageFieldKinds;
+    contextField?: ContextFieldResult;
     fillKind?: PageFieldKind;
     fillValue?: string;
     // Passwort-Generator per Rechtsklick in ein Eingabefeld geöffnet: "Einsetzen" anbieten bzw. ausführen
     canInsert?: boolean;
     insertGeneratedPassword?: string;
+}
+
+// Rechts angeklicktes Feld, das in einen Eintrag soll; problem: warum es sich dafür nicht eignet
+export type ContextFieldProblem = "noTarget" | "noIdentifier" | "otp";
+export interface ContextFieldResult {
+    field?: Field;
+    problem?: ContextFieldProblem;
 }
 
 export type PageFieldKind = "username" | "password" | "otp";

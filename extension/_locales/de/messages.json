@@ -1143,6 +1143,10 @@
         "message": "Aus: Am Codefeld erscheint nur das Symbol, ein Klick darauf trägt den Code ein.",
         "description": "KeePassFerry"
     },
+    "ferry_setting_matchAccuracy": {
+        "message": "Genauigkeit beim Adressabgleich",
+        "description": "KeePassFerry"
+    },
     "ferry_setting_detectOtpSetup": {
         "message": "Zwei-Faktor-Einrichtung erkennen",
         "description": "KeePassFerry"
@@ -1824,6 +1828,26 @@
         "message": "Zum Anzeigen klicken",
         "description": "KeePassFerry"
     },
+    "ferry_menu_add_field": {
+        "message": "Dieses Feld zum Eintrag hinzufügen …",
+        "description": "KeePassFerry"
+    },
+    "selSave_field_heading": {
+        "message": "Feld zu Eintrag hinzufügen",
+        "description": "KeePassFerry"
+    },
+    "selSave_field_noTarget": {
+        "message": "Dieses Feld lässt sich nicht hinzufügen. Bitte klicke mit der rechten Maustaste direkt in ein einzeiliges Eingabefeld, das du bearbeiten kannst.",
+        "description": "KeePassFerry"
+    },
+    "selSave_field_noIdentifier": {
+        "message": "Die Seite gibt diesem Feld keine Kennung („id“ oder „name“), deshalb kann KeePassFerry es später nicht wiederfinden. Du kannst den Wert als eigenes Feld speichern und über die Liste am Feld (⋯) eintragen.",
+        "description": "KeePassFerry"
+    },
+    "selSave_field_otp": {
+        "message": "Das ist ein Feld für Einmalcodes. KeePassFerry trägt den Code selbst ein, sobald der Eintrag einen Zwei-Faktor-Schlüssel hat.",
+        "description": "KeePassFerry"
+    },
     "ferry_menu_add_selection": {
         "message": "„%s“ zu Eintrag hinzufügen …",
         "description": "KeePassFerry"
@@ -1862,6 +1886,30 @@
     },
     "ferry_leaks_intro": {
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_22_1_title": {
+        "message": "Felder gezielt hinzufügen",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_22_1_text": {
+        "message": "Beim Speichern landen nur noch Benutzername und Passwort im Eintrag. Fehlt ein Feld wie eine PIN: Rechtsklick hinein → KeePassFerry → „Dieses Feld zum Eintrag hinzufügen“. Es wird dann jedes Mal mit ausgefüllt.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_22_2_title": {
+        "message": "Zwei-Faktor-Hinweis nur noch bei echtem Schlüssel",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_22_2_text": {
+        "message": "Der Hinweis erscheint nur noch bei einem QR-Code oder otpauth-Link mit gültigem Schlüssel. Unter Hinzufügen → Zwei-Faktor-Schlüssel kannst du auch einen Screenshot des QR-Codes einfügen.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_22_3_title": {
+        "message": "Genauigkeit beim Adressabgleich zentral einstellen",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_22_3_text": {
+        "message": "Die Einstellung liegt jetzt unter Extras → KeePassFerry → Optionen und gilt für alle Datenbanken auf diesem PC. Vorhandene Werte werden einmalig übernommen.",
         "description": "KeePassFerry"
     },
     "ferry_news_1_0_21_1_title": {

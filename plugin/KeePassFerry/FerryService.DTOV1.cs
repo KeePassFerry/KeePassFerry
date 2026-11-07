@@ -25,7 +25,7 @@ namespace KeePassFerry
         private LightEntry GetEntryFromPwEntry(PwEntry pwe, int matchAccuracy, bool fullDetails, PwDatabase db,
             bool abortIfHidden)
         {
-            EntryConfigv2 conf = pwe.GetFerryConfigNormalised(db.GetFerryConfig().DefaultMatchAccuracy);
+            EntryConfigv2 conf = pwe.GetFerryConfigNormalised(MatchAccuracySettings.Default);
             if (conf == null)
                 return null;
             return GetEntryFromPwEntry(pwe, conf, matchAccuracy, fullDetails, db, abortIfHidden);
@@ -318,7 +318,7 @@ namespace KeePassFerry
             IGuidService guidService = new GuidService();
             bool firstPasswordFound = false;
             EntryConfigv2 conf =
-                (new EntryConfigv1(_host.Database.GetFerryConfig().DefaultMatchAccuracy))
+                (new EntryConfigv1(MatchAccuracySettings.Default))
                 .ConvertToV2(new GuidService());
             List<Field> fields = new List<Field>();
 

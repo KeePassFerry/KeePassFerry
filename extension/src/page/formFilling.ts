@@ -4,6 +4,7 @@ import { FilledField } from "./FilledField";
 import { PanelStub, PanelStubOptions } from "./PanelStub";
 import { FormUtils } from "./formsUtils";
 import { FormSaving } from "./formSaving";
+import { sameFieldTarget } from "../common/fieldLocators";
 import { FerryFieldIcon } from "./ferryFieldIcon";
 import { MatchResult } from "./MatchResult";
 import type { FindMatchesBehaviour } from "./findMatchesBehaviour";
@@ -470,12 +471,11 @@ export class FormFilling {
 
         for (let i = 0; i < formFields.length; i++) {
             for (let j = 0; j < dataFields.length; j++) {
-                const score = this.calculateFieldMatchScore(
-                    formFields[i],
-                    dataFields[j],
-                    currentPage,
-                    scoreConfig
-                );
+                // Das erste Feld ist Benutzername bzw. Passwort; Zusatzfelder nur in ihr eigenes Eingabefeld (fieldLocators.ts)
+                const allowed = j === 0 || sameFieldTarget(formFields[i].field.locators[0], dataFields[j].locators[0]);
+                const score = allowed
+                    ? this.calculateFieldMatchScore(formFields[i], dataFields[j], currentPage, scoreConfig)
+                    : 0;
                 this.Logger.debug(
                     "Suitability of putting data field " +
                         j +

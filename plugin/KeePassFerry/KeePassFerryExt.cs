@@ -96,6 +96,7 @@ namespace KeePassFerry
                 if (host == null)
                     return false;
                 _host = host;
+                MatchAccuracySettings.Init(host.CustomConfig);
 
                 // KeePass-Update-Prüfung: version.txt ist mit dem Release-Schlüssel signiert (signing/sign-version.ps1);
                 // unsignierte oder veränderte Dateien zeigt KeePass als Fehler statt einer falschen Version
@@ -639,7 +640,12 @@ Technical detail: " + ex.Message);
             PwDatabase openedDb = e.Database;
             bool wasModified = openedDb.Modified;
             string importSummary;
-            if (Extensions.ImportKeeSettingsOnce(openedDb, out importSummary))
+            bool keeImported = Extensions.ImportKeeSettingsOnce(openedDb, out importSummary);
+            // Nach dem Kee-Import: auch von dort übernommene Genauigkeiten sollen in den Optionen landen
+            int accuracyChanges = MatchAccuracySettings.ImportOnce(openedDb);
+            if (accuracyChanges > 0 && RPCService != null)
+                RPCService.FerryDiagLog(new[] { "plugin genauigkeit übernommen {\"aenderungen\":" + accuracyChanges + "}" });
+            if (keeImported)
             {
                 if (RPCService != null) RPCService.FerryDiagLog(new[] { "plugin kee-import " + importSummary });
                 if (!wasModified)

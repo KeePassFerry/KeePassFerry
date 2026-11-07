@@ -805,7 +805,6 @@ namespace KeePassFerry
 
                 foreach (PwDatabase db in dbs)
                 {
-                    var dbConf = db.GetFerryConfig();
 
                     PwObjectList<PwEntry> output =
                         new PwObjectList<PwEntry>();
@@ -824,7 +823,7 @@ namespace KeePassFerry
                             continue; // ignore if it's in the recycle bin (or expired and hidden)
 
                         EntryConfigv2 conf =
-                            pwe.GetFerryConfigNormalised(null, ref configErrors, dbConf.DefaultMatchAccuracy);
+                            pwe.GetFerryConfigNormalised(null, ref configErrors, MatchAccuracySettings.Default);
 
                         if (conf == null || conf.MatcherConfigs.Any(mc => mc.MatcherType == EntryMatcherType.Hide))
                             continue;
@@ -874,7 +873,7 @@ namespace KeePassFerry
                         {
                             foreach (string URL in URLs)
                             {
-                                var mam = Extensions.GetMatchAccuracyMethod(conf, URLHostnameAndPorts[URL], dbConf);
+                                var mam = Extensions.GetMatchAccuracyMethod(conf, URLHostnameAndPorts[URL]);
                                 int accuracy =
                                     BestMatchAccuracyForAnyURL(pwe, conf, URL, URLHostnameAndPorts[URL], mam);
                                 if (accuracy > bestMatchAccuracy)
@@ -1267,7 +1266,6 @@ namespace KeePassFerry
 
                 foreach (PwDatabase db in dbs)
                 {
-                    var dbConf = db.GetFerryConfig();
 
                     PwObjectList<PwEntry> output =
                         new PwObjectList<PwEntry>();
@@ -1286,7 +1284,7 @@ namespace KeePassFerry
                             continue; // ignore if it's in the recycle bin (or expired and hidden)
 
                         EntryConfigv2 conf =
-                            pwe.GetFerryConfigNormalised(null, ref configErrors, dbConf.DefaultMatchAccuracy);
+                            pwe.GetFerryConfigNormalised(null, ref configErrors, MatchAccuracySettings.Default);
 
                         if (conf == null || conf.MatcherConfigs.Any(mc => mc.MatcherType == EntryMatcherType.Hide))
                             continue;
@@ -1335,7 +1333,7 @@ namespace KeePassFerry
                         {
                             foreach (string url in urls)
                             {
-                                var mam = Extensions.GetMatchAccuracyMethod(conf, urlHostnameAndPorts[url], dbConf);
+                                var mam = Extensions.GetMatchAccuracyMethod(conf, urlHostnameAndPorts[url]);
                                 int accuracy =
                                     BestMatchAccuracyForAnyURL(pwe, conf, url, urlHostnameAndPorts[url], mam);
                                 if (accuracy > bestMatchAccuracy)

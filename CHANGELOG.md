@@ -2,8 +2,19 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.22 – 2026-11-07
 
+- The URL match accuracy (default for new entries and exceptions per domain) moved from the database settings to Tools →
+  KeePassFerry options, tab "Addresses and browsers" (issue #20). It applies to all databases on this PC and no longer
+  requires saving a database. Existing values are taken over once per database; if they differ, the stricter one wins. The
+  setting no longer travels with the database, so set it again on another PC.
+- Saving a new entry only takes the username and password from the form. Address data, checkboxes and similar fields of a
+  registration no longer end up in the entry. If an email field exists, it is preferred over any other text field as the
+  username.
+- New in the context menu of input fields: "Add this field to the entry" for fields KeePassFerry doesn't recognise, such
+  as a PIN. The field then appears in the entry's edit window and is filled in from then on, with the KeePassFerry icon.
+- Additional fields of an entry are only filled into their own input field (same "id" or "name"), no longer into any other
+  field of the same type.
 - Two-factor setup detection: a key shown as plain text no longer triggers the notice (issue #19). Only a QR code or an
   otpauth link whose content is a valid key does. A QR code is first read directly from the page; a picture of the
   visible tab is only taken if that finds no key.
@@ -466,8 +477,21 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.22 – 2026-11-07
 
+- Die Genauigkeit beim Adressabgleich (Standard für neue Einträge und Ausnahmen je Domain) liegt nicht mehr in den
+  Datenbank-Einstellungen, sondern unter Extras → KeePassFerry-Optionen, Reiter „Adressen und Browser“ (Issue #20). Sie gilt
+  für alle Datenbanken auf diesem PC, und keine Datenbank muss dafür gespeichert werden. Vorhandene Werte werden je Datenbank
+  einmal übernommen; weichen sie ab, gewinnt der strengere. Die Einstellung reist nicht mehr mit der Datenbank mit und muss
+  auf einem anderen PC neu gesetzt werden.
+- Beim Speichern eines neuen Eintrags übernimmt KeePassFerry aus dem Formular nur noch Benutzername und Passwort. Adresse,
+  Häkchen und ähnliche Felder einer Registrierung landen nicht mehr im Eintrag. Ein E-Mail-Feld hat als Benutzername
+  Vorrang vor anderen Textfeldern.
+- Neu im Kontextmenü von Eingabefeldern: „Dieses Feld zum Eintrag hinzufügen“ für Felder, die KeePassFerry nicht erkennt,
+  zum Beispiel eine PIN. Das Feld erscheint im Bearbeiten-Fenster des Eintrags und wird ab dann mit ausgefüllt, samt
+  KeePassFerry-Symbol.
+- Zusatzfelder eines Eintrags werden nur noch in ihr eigenes Eingabefeld eingetragen (gleiche „id“ oder gleicher „name“),
+  nicht mehr in ein beliebiges anderes Feld desselben Typs.
 - Erkennung der Zwei-Faktor-Einrichtung: Ein als Text angezeigter Schlüssel löst keinen Hinweis mehr aus (Issue #19). Das
   tun nur noch ein QR-Code oder ein otpauth-Link, deren Inhalt ein gültiger Schlüssel ist. Ein QR-Code wird zuerst direkt
   von der Seite gelesen; ein Bild des sichtbaren Tabs entsteht nur, wenn das keinen Schlüssel ergibt.

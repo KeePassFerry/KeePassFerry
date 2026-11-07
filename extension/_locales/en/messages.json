@@ -1143,6 +1143,10 @@
     "message": "Off: the code field only shows the icon; clicking it fills the code.",
     "description": "KeePassFerry"
   },
+  "ferry_setting_matchAccuracy": {
+    "message": "Address matching accuracy",
+    "description": "KeePassFerry"
+  },
   "ferry_setting_detectOtpSetup": {
     "message": "Detect two-factor setup",
     "description": "KeePassFerry"
@@ -1824,6 +1828,26 @@
     "message": "Click to open",
     "description": "KeePassFerry"
   },
+  "ferry_menu_add_field": {
+    "message": "Add this field to the entry …",
+    "description": "KeePassFerry"
+  },
+  "selSave_field_heading": {
+    "message": "Add field to entry",
+    "description": "KeePassFerry"
+  },
+  "selSave_field_noTarget": {
+    "message": "This field can't be added. Please right-click directly into a single-line input field that you can edit.",
+    "description": "KeePassFerry"
+  },
+  "selSave_field_noIdentifier": {
+    "message": "The page gives this field no identifier (\"id\" or \"name\"), so KeePassFerry can't find it again later. You can save the value as a custom field and fill it in from the list at the field (⋯).",
+    "description": "KeePassFerry"
+  },
+  "selSave_field_otp": {
+    "message": "This is a field for one-time codes. KeePassFerry fills in the code itself once the entry has a two-factor key.",
+    "description": "KeePassFerry"
+  },
   "ferry_menu_add_selection": {
     "message": "Add \"%s\" to entry …",
     "description": "KeePassFerry"
@@ -1862,6 +1886,30 @@
   },
   "ferry_leaks_intro": {
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_22_1_title": {
+    "message": "Add exactly the fields you need",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_22_1_text": {
+    "message": "Saving now only stores the username and password. If a field such as a PIN is missing, right-click it → KeePassFerry → \"Add this field to the entry\". It is then filled in every time.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_22_2_title": {
+    "message": "Two-factor notice only for a real key",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_22_2_text": {
+    "message": "The notice now only appears for a QR code or otpauth link with a valid key. Under Add → Two-factor key you can also paste a screenshot of the QR code.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_22_3_title": {
+    "message": "Set the URL match accuracy in one place",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_22_3_text": {
+    "message": "The setting is now under Tools → KeePassFerry → Options and applies to all databases on this PC. Existing values are taken over once.",
     "description": "KeePassFerry"
   },
   "ferry_news_1_0_21_1_title": {

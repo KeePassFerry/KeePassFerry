@@ -12,7 +12,7 @@ import { Port } from "../common/port";
 import { showSaveNotice, hideSaveNotice } from "./SaveNotice";
 import { offerPasswordUpdateNotice, cancelPasswordUpdateNotice, withdrawSaveNotice } from "./passwordUpdateNotice";
 import { OtpFields } from "./OtpFields";
-import { availableFieldKinds, fillContextTarget, fillFieldKind, trackContextTarget } from "./fieldFill";
+import { availableFieldKinds, describeContextTarget, fillContextTarget, fillFieldKind, trackContextTarget } from "./fieldFill";
 import { pageDiag } from "./ferryDiagPage";
 import { capturePageAnalysis } from "./pageAnalysis";
 import NonReactiveStore from "../store/NonReactiveStore";
@@ -400,6 +400,9 @@ if (document.body) {
             }
             if (m.action == Action.CapturePageAnalysis) {
                 capturePageAnalysis(formFilling?.analysisSummary() ?? {}, el => formFilling?.analysisFieldRole(el));
+            }
+            if (m.action == Action.DescribeContextTarget) {
+                Port.postMessage({ queryId: m.queryId, contextField: describeContextTarget() } as AddonMessage);
             }
             if (m.action == Action.FillContextTarget) {
                 fillContextTarget(m.fillValue);

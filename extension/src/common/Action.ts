@@ -28,6 +28,8 @@ export const enum Action {
     QueryFields = "queryFields",
     FillField = "fillField",
     FillContextTarget = "fillContextTarget",
+    // Kontextmenü "Dieses Feld zum Eintrag hinzufügen": Merkmale und Wert des angeklickten Felds holen
+    DescribeContextTarget = "describeContextTarget",
     // Popup (Diagnoseprotokoll an): Aufbau der Anmeldefelder jedes Frames ins Protokoll schreiben
     CapturePageAnalysis = "capturePageAnalysis",
     // Liste am Feld: Wert in das Feld eintragen, an dem die Liste hängt; Höhe der Liste ändern (Aktionsansicht)

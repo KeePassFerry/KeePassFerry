@@ -544,11 +544,11 @@ namespace KeePassFerry
         private void MergeEntries(PwEntry destination, PwEntry source, int urlMergeMode, PwDatabase db)
         {
             // We're updating the entry so can always convert the entry to v2 config format
-            EntryConfigv2 destConfig = destination.GetFerryConfigNormalised(db.GetFerryConfig().DefaultMatchAccuracy);
+            EntryConfigv2 destConfig = destination.GetFerryConfigNormalised(MatchAccuracySettings.Default);
             if (destConfig == null)
                 return;
 
-            EntryConfigv2 sourceConfig = source.GetFerryConfigNormalised(db.GetFerryConfig().DefaultMatchAccuracy);
+            EntryConfigv2 sourceConfig = source.GetFerryConfigNormalised(MatchAccuracySettings.Default);
             if (sourceConfig == null)
                 return;
 

@@ -3,6 +3,9 @@ import { FerryURL } from "../common/FerryURL";
 import { FerryLog } from "../common/Logger";
 import { Entry } from "../common/model/Entry";
 import { sameSite } from "../common/relatedDomains";
+import { Action } from "../common/Action";
+import type { AddonMessage, ContextFieldProblem, ContextFieldResult } from "../common/AddonMessage";
+import type { Field } from "../common/model/Field";
 
 /*
 Rechtsklick auf markierten Text → "„…“ zu Eintrag hinzufügen": Die Markierung wird vollständig aus dem angeklickten
@@ -10,6 +13,10 @@ Frame gelesen (das Menü-Ereignis fasst Zeilenumbrüche zusammen) und bis zum Sp
 gehalten. Das Popup (?selection=1) öffnet für den gewählten Eintrag das bekannte Bearbeiten-Fenster mit aufgeklapptem
 "Hinzufügen" und der Markierung als Inhalt; die Art wählt der Nutzer dort. Bei gesperrter Datenbank stößt der bewusste
 Klick das Entsperren an; das Popup öffnet sich danach.
+
+Rechtsklick in ein Eingabefeld → "Dieses Feld zum Eintrag hinzufügen": gleicher Weg, das Popup nimmt das Feld mit seiner
+Kennung und seinem Wert in die Feldliste des Eintrags auf, damit es künftig mit ausgefüllt wird. Der Wert liegt nur bis
+zum Öffnen des Popups hier.
 */
 
 const MAX_AGE_MS = 10 * 60 * 1000;
@@ -18,6 +25,8 @@ const MAX_TEXT_LENGTH = 64 * 1024;
 
 interface PendingSelection {
     text: string;
+    field?: Field;
+    problem?: ContextFieldProblem;
     url: string;
     pageTitle: string;
     domain: string;
@@ -63,8 +72,46 @@ export async function startSelectionSave(tab: chrome.tabs.Tab, frameId: number, 
     if (tab?.id == null || !ferry.store.state.connected || !/^https?:/.test(tab.url ?? "")) return;
     const text = (await readSelection(tab.id, frameId, selectionText)).trim();
     if (!text) return;
+    await openSavePopup(tab, { text: text.slice(0, MAX_TEXT_LENGTH) });
+}
+
+let nextFieldQueryId = 1;
+const fieldQueries = new Map<number, (result: ContextFieldResult) => void>();
+
+// Antwort des Frames auf Action.DescribeContextTarget (aus messageHandlers)
+export function onContextField(queryId: number, result: ContextFieldResult) {
+    fieldQueries.get(queryId)?.(result);
+}
+
+async function readContextField(tabId: number, frameId: number): Promise<ContextFieldResult> {
+    const port = ferry.tabStates.get(tabId)?.framePorts?.get(frameId ?? 0);
+    if (!port) return { problem: "noTarget" };
+    const queryId = nextFieldQueryId++;
+    try {
+        return await new Promise<ContextFieldResult>(resolve => {
+            const timer = self.setTimeout(() => resolve({ problem: "noTarget" }), 400);
+            fieldQueries.set(queryId, result => {
+                clearTimeout(timer);
+                resolve(result);
+            });
+            port.postMessage({ action: Action.DescribeContextTarget, queryId } as AddonMessage);
+        });
+    } catch (e) {
+        return { problem: "noTarget" };
+    } finally {
+        fieldQueries.delete(queryId);
+    }
+}
+
+export async function startFieldSave(tab: chrome.tabs.Tab, frameId: number) {
+    if (tab?.id == null || !ferry.store.state.connected || !/^https?:/.test(tab.url ?? "")) return;
+    const { field, problem } = await readContextField(tab.id, frameId);
+    await openSavePopup(tab, { text: field?.name ?? "", field, problem });
+}
+
+async function openSavePopup(tab: chrome.tabs.Tab, content: Pick<PendingSelection, "text" | "field" | "problem">) {
     pending.set(tab.id, {
-        text: text.slice(0, MAX_TEXT_LENGTH),
+        ...content,
         url: tab.url,
         pageTitle: tab.title ?? "",
         domain: FerryURL.fromString(tab.url)?.domainOrIPAddress ?? "",
@@ -72,7 +119,8 @@ export async function startSelectionSave(tab: chrome.tabs.Tab, frameId: number, 
     });
     ferry.foregroundTabId = tab.id;
 
-    if (ferry.store.state.KeePassDatabases.length === 0) {
+    // Für den Hinweis, warum das Feld nicht geht, braucht es keine offene Datenbank
+    if (!content.problem && ferry.store.state.KeePassDatabases.length === 0) {
         const result = await ferry.requestBackgroundUnlock(tab.id, tab.url, true);
         if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) ferry.openKeePass();
         if (!(await waitForUnlock())) return;
@@ -94,6 +142,12 @@ export async function startSelectionSave(tab: chrome.tabs.Tab, frameId: number, 
 export async function getSelectionSaveForPopup(tabId: number) {
     const s = pending.get(tabId);
     if (!s || Date.now() - s.at > MAX_AGE_MS) return null;
+    if (s.problem) {
+        pending.delete(tabId);
+        return { text: "", problem: s.problem, domain: s.domain, pageTitle: s.pageTitle, origin: originOf(s.url), candidates: [] as unknown[], lastFilledUuid: null as string };
+    }
+    // Feldwert nur so lange wie nötig halten: ab hier verwaltet ihn das Bearbeiten-Fenster
+    if (s.field) pending.delete(tabId);
     const last = ferry.persistentTabStates.get(tabId)?.lastFilledEntry;
     const lastUuid = last && sameSite(last.domain, s.domain) ? last.uuid : null;
     const found: Entry[] = (await ferry.rpc.findLogins(s.url, null, null, null, null, null)) ?? [];
@@ -113,7 +167,7 @@ export async function getSelectionSaveForPopup(tabId: number) {
         });
         if (candidates.length >= 8) break;
     }
-    return { text: s.text, domain: s.domain, pageTitle: s.pageTitle, origin: originOf(s.url), candidates, lastFilledUuid: lastUuid };
+    return { text: s.text, field: s.field, domain: s.domain, pageTitle: s.pageTitle, origin: originOf(s.url), candidates, lastFilledUuid: lastUuid };
 }
 
 function originOf(url: string): string {

@@ -49,6 +49,18 @@ function filledLoginForm(benutzer: string, passwort: string) {
     return { button, pass, port, submit };
 }
 
+// Registrierung: Felder wie auf der Seite, abgeschickt ohne vorheriges Ausfüllen durch KeePassFerry
+function submitRegistration(html: string) {
+    document.body.innerHTML = `<form>${html}<button type="submit">Registrieren</button></form>`;
+    const form = document.forms[0];
+    form.addEventListener("submit", e => e.preventDefault());
+    const port = { postMessage: vi.fn() };
+    const saving = new FormSaving(port as any, logger, new FormUtils(logger));
+    saving.addSubmitHandler(form.querySelector("button"), form);
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    return port.postMessage.mock.calls[0][0].submittedData.fields.map((f: any) => [f.type, f.value]);
+}
+
 const sentPassword = (msg: any) => msg.submittedData?.fields.find((f: any) => f.type === "password").value;
 
 describe("FormSaving beim Absenden", () => {
@@ -67,6 +79,42 @@ describe("FormSaving beim Absenden", () => {
         const msg = port.postMessage.mock.calls[0][0];
         expect(msg.action).toBeUndefined();
         expect(sentPassword(msg)).toBe("test6");
+    });
+
+    it("übernimmt aus einer Registrierung nur Benutzername und Passwort", () => {
+        const fields = submitRegistration(`
+            <input name="strasse" value="Musterweg 1">
+            <input name="plz" value="94469">
+            <input type="checkbox" name="agb" checked>
+            <select name="land"><option value="de" selected>DE</option></select>
+            <input name="email" type="email" autocomplete="email" value="max@example.com">
+            <input name="pw" type="password" value="geheim">
+            <input name="pw2" type="password" value="geheim">`);
+        expect(fields).toEqual([["text", "max@example.com"], ["password", "geheim"]]);
+    });
+
+    it("nimmt das E-Mail-Feld, wenn direkt vor dem Passwort ein anderes Textfeld steht", () => {
+        const fields = submitRegistration(`
+            <input name="mail" type="email" value="max@example.com">
+            <input name="ort" value="Grafling">
+            <input name="pw" type="password" value="geheim">`);
+        expect(fields).toEqual([["text", "max@example.com"], ["password", "geheim"]]);
+    });
+
+    it("nimmt das Feld vor dem Passwort, wenn nichts auf ein anderes Anmeldefeld hinweist", () => {
+        const fields = submitRegistration(`
+            <input name="firma" value="Muster GmbH">
+            <input name="kdnr" value="123456">
+            <input name="pw" type="password" value="geheim">`);
+        expect(fields).toEqual([["text", "123456"], ["password", "geheim"]]);
+    });
+
+    it("findet den Benutzernamen auch, wenn davor ein leeres Feld steht", () => {
+        const fields = submitRegistration(`
+            <input name="titel" value="">
+            <input name="benutzer" value="max">
+            <input name="pw" type="password" value="geheim">`);
+        expect(fields).toEqual([["text", "max"], ["password", "geheim"]]);
     });
 
     it("wertet Klick auf den Absende-Knopf und das folgende Absenden nur einmal aus", () => {

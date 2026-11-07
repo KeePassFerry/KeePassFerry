@@ -97,23 +97,6 @@ export class Field {
         }
     }
 
-    // By convention the first non-password item will be the username and the password will be either 1st or 2nd in the list
-    static combineDomFieldLists(usernameIndex: number, otherFields: Field[], passwords: Field[]) {
-        const fields: Field[] = [];
-        if (usernameIndex >= 0 && otherFields[usernameIndex]) {
-            fields.push(otherFields[usernameIndex]);
-        }
-        passwords.forEach(f => {
-            fields.push(f);
-        });
-        otherFields.forEach((f, index) => {
-            if (index !== usernameIndex) {
-                fields.push(f);
-            }
-        });
-        return fields;
-    }
-
     static fromDOM(element: any, domType: string, value: string) {
         const labels = collectLabels(element);
         return new Field({

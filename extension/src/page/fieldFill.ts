@@ -1,6 +1,7 @@
-import { markKpfFilled, setValue } from "./OtpFields";
+import { isOtpField, markKpfFilled, setValue } from "./OtpFields";
+import { Field } from "../common/model/Field";
 import { findPasswordField, findUsernameField } from "./loginFields";
-import type { PageFieldKind, PageFieldKinds } from "../common/AddonMessage";
+import type { ContextFieldResult, PageFieldKind, PageFieldKinds } from "../common/AddonMessage";
 
 /*
 fieldFill.ts: Einzelnes Feld aus dem Popup füllen (Knopf "In die Seite eintragen" neben Kopieren).
@@ -43,6 +44,17 @@ export function fillContextTarget(value: string): boolean {
     el.dispatchEvent(new Event("input", { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
     return true;
+}
+
+// Kontextmenü "Dieses Feld zum Eintrag hinzufügen": Feld und Wert für das Bearbeiten-Fenster. Ohne "id" und "name" ließe
+// es sich später nicht wiederfinden; Codefelder füllt KeePassFerry über den Zwei-Faktor-Schlüssel des Eintrags
+export function describeContextTarget(): ContextFieldResult {
+    const el = contextTarget;
+    if (!(el instanceof HTMLInputElement) || !el.isConnected) return { problem: "noTarget" };
+    if (!el.id && !el.name) return { problem: "noIdentifier" };
+    if (isOtpField(el)) return { problem: "otp" };
+    const field = Field.fromDOM(el, el.type.toLowerCase(), el.value);
+    return { field: new Field({ ...field, name: (field.name || el.placeholder || el.id).trim().slice(0, 60) }) };
 }
 
 // Benutzername oder Passwort eintragen; true, wenn ein Feld gefüllt wurde
