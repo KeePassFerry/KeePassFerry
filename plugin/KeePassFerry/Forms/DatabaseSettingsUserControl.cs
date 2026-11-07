@@ -21,8 +21,11 @@ namespace KeePassFerry.Forms
             FerryText.Localize(this);
             // Erklärung statt Link (früher Kee-Forum)
             linkLabel1.LinkArea = new LinkArea(0, 0);
-            label8.Text = FerryText.T("Platzhalter können Informationen aus deiner Datenbank an Websites weitergeben, etwa an eine manipulierte Seite. Schalte das nur ein, wenn du Platzhalter in Formularfeldern wirklich brauchst.",
-                "Placeholders can pass information from your database to websites, for example to a manipulated page. Only enable this if you really need placeholders in form fields.");
+            linkLabel1.AutoSize = false;
+            linkLabel1.Text = FerryText.T("Steht in einem Feld ein Platzhalter wie {USERNAME}, {S:Feld} oder ein Verweis auf einen anderen Eintrag, entscheidet diese Einstellung, was der Browser bekommt:\n\nDeaktiviert: den Text genau so, wie er im Feld steht.\nAktiviert: den echten Wert, zum Beispiel das Passwort aus dem anderen Eintrag.",
+                "If a field contains a placeholder such as {USERNAME}, {S:Field} or a reference to another entry, this setting decides what the browser gets:\n\nDisabled: the text exactly as it is in the field.\nEnabled: the real value, for example the password from the other entry.");
+            label8.Text = FerryText.T("Lass die Einstellung deaktiviert, wenn du keine Platzhalter verwendest. Aktiviert kann eine manipulierte Seite mehr Daten aus deiner Datenbank erhalten. Für ein einzelnes Feld stellst du das im Eintrag ein (Reiter KeePassFerry).",
+                "Leave this disabled if you don't use placeholders. When enabled, a manipulated page can get more data from your database. To set this for a single field, use the entry's KeePassFerry tab.");
             PresentDefaultPlaceholderHandling();
         }
 
@@ -33,6 +36,7 @@ namespace KeePassFerry.Forms
             FerryLayout.Row(radioButton7.Height, radioButton8, radioButton7);
             // Erst die Erklärung, darunter der Warnhinweis
             linkLabel1.Top = label8.Top;
+            linkLabel1.Height = linkLabel1.GetPreferredSize(new System.Drawing.Size(linkLabel1.Width, 0)).Height;
             label8.Top = linkLabel1.Bottom + linkLabel1.Font.Height;
             if (ParentForm != null)
             {

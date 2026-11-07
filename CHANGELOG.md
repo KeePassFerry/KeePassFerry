@@ -2,6 +2,10 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.27 – 2026-11-07
+
+- Database settings, tab "KeePass placeholders": the text now explains what the option does (issue #26).
+
 ## 1.0.26 – 2026-11-07
 
 - Entry icons are sharper (issue #23). KeePassFerry received every custom icon from KeePass at 16 x 16 and enlarged it. The plugin now
@@ -513,6 +517,10 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.27 – 2026-11-07
+
+- Datenbank-Einstellungen, Reiter „KeePass-Platzhalter“: Der Text erklärt jetzt, was die Einstellung bewirkt (Issue #26).
 
 ## 1.0.26 – 2026-11-07
 
