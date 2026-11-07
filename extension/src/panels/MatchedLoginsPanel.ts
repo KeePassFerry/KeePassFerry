@@ -1,3 +1,4 @@
+import { iconNeedsLightTile } from "../common/iconTile";
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
 import { FerryLog } from "../common/Logger";
 import { Action } from "../common/Action";
@@ -68,6 +69,7 @@ export class MatchedLoginsPanel {
             icon.className = "ferry-login-icon";
             icon.alt = "";
             icon.src = "data:image/png;base64," + entry.icon.iconImageData;
+            iconNeedsLightTile(icon.src).then(light => icon.classList.toggle("tile-light", light));
             const text = document.createElement("div");
             text.className = "ferry-login-text";
             const user = document.createElement("div");
@@ -242,6 +244,7 @@ export class MatchedLoginsPanel {
         siteIcon.className = "ferry-login-icon";
         siteIcon.alt = "";
         siteIcon.src = "data:image/png;base64," + entry.icon.iconImageData;
+        iconNeedsLightTile(siteIcon.src).then(light => siteIcon.classList.toggle("tile-light", light));
         head.append(back, siteIcon, name);
 
         const heading = document.createElement("div");

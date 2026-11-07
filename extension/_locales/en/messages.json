@@ -1167,6 +1167,18 @@
     "message": "Change password",
     "description": "KeePassFerry"
   },
+  "ferry_action_website": {
+    "message": "Website",
+    "description": "KeePassFerry"
+  },
+  "ferry_action_edit": {
+    "message": "Edit",
+    "description": "KeePassFerry"
+  },
+  "ferry_open_website": {
+    "message": "Open website in a new tab",
+    "description": "KeePassFerry"
+  },
   "ferry_change_password_on_site": {
     "message": "Change password on the website",
     "description": "KeePassFerry"
@@ -1568,6 +1580,10 @@
     "message": "Found in data breaches",
     "description": "KeePassFerry"
   },
+  "ferry_leaks_row_hint": {
+    "message": "Click to show the entry",
+    "description": "KeePassFerry"
+  },
   "ferry_leaks_show_all": {
     "message": "Show all affected entries",
     "description": "KeePassFerry"
@@ -1844,6 +1860,10 @@
     "message": "The page gives this field no identifier (\"id\" or \"name\"), so KeePassFerry can't find it again later. You can save the value as a custom field and fill it in from the list at the field (⋯).",
     "description": "KeePassFerry"
   },
+  "selSave_field_masked": {
+    "message": "The page only shows asterisks or dots in this field. The real value is not in the field, so KeePassFerry cannot take it over. Enter it in KeePass yourself.",
+    "description": "KeePassFerry"
+  },
   "selSave_field_otp": {
     "message": "This is a field for one-time codes. KeePassFerry fills in the code itself once the entry has a two-factor key.",
     "description": "KeePassFerry"
@@ -1886,6 +1906,22 @@
   },
   "ferry_leaks_intro": {
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_25_1_title": {
+    "message": "Added fields now live in KeePass",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_25_1_text": {
+    "message": "Fields from \"Add this field to the entry\" are stored under Advanced → String fields. Password fields are protected, and everything stays usable without KeePassFerry.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_25_2_title": {
+    "message": "Search results expand",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_25_2_text": {
+    "message": "A click expands a search result instead of changing the page. Open the website with \"Website\" in the expanded entry or with Ctrl+click in a new tab.",
     "description": "KeePassFerry"
   },
   "ferry_news_1_0_24_1_title": {

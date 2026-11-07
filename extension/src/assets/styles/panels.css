@@ -114,6 +114,8 @@ body {
     border-radius: 9px;
     background: var(--tile);
 }
+/* Dunkles Design: helle Kachel nur für dunkle Symbole (siehe common/iconTile.ts) */
+:root[data-theme="dark"] .ferry-login-icon.tile-light { background: #e8eaed; }
 .ferry-login-text { flex: 1; min-width: 0; }
 .ferry-login-user, .ferry-login-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ferry-login-user { font-weight: 600; }

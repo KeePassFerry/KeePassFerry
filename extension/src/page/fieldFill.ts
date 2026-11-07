@@ -1,3 +1,4 @@
+import { isMasked } from "../common/submittedLogin";
 import { isOtpField, markKpfFilled, setValue } from "./OtpFields";
 import { Field } from "../common/model/Field";
 import { findPasswordField, findUsernameField } from "./loginFields";
@@ -53,6 +54,8 @@ export function describeContextTarget(): ContextFieldResult {
     if (!(el instanceof HTMLInputElement) || !el.isConnected) return { problem: "noTarget" };
     if (!el.id && !el.name) return { problem: "noIdentifier" };
     if (isOtpField(el)) return { problem: "otp" };
+    // Die Seite zeigt nur Sternchen oder Punkte als Inhalt: Der echte Wert steht nicht im Feld
+    if (isMasked(el.value)) return { problem: "masked" };
     const field = Field.fromDOM(el, el.type.toLowerCase(), el.value);
     return { field: new Field({ ...field, name: (field.name || el.placeholder || el.id).trim().slice(0, 60) }) };
 }

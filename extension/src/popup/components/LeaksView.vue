@@ -1,21 +1,25 @@
 <template>
     <!-- In Datenlecks gefundene Passwörter: eigene Ansicht über dem Popup (wie Neuigkeiten), zuerst die neu gefundenen.
-         Eine Zeile je Eintrag wie in der Eintragsliste; Klick auf die Zeile öffnet das Bearbeiten-Fenster. -->
-    <v-dialog :model-value="true" fullscreen persistent :scrim="false" transition="dialog-transition" @keydown.esc="close()">
+         Eine Zeile je Eintrag; Klick auf die Zeile zeigt den Eintrag hier aufgeklappt, der Pfeil führt zurück zur Liste. -->
+    <v-dialog :model-value="true" fullscreen persistent :scrim="false" transition="dialog-transition" @keydown.esc="back()">
         <v-card class="ferry-news">
             <div class="ferry-news-head">
-                <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_back')" @click="close()">
+                <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_back')" @click="back()">
                     <tabler-arrow-left class="ferry-ico" />
                 </button>
                 <span class="ferry-news-title">{{ $i18n("ferry_leaks_heading") }}</span>
-                <span v-if="shown.length" class="ferry-leaklist-total">{{ shown.length }}</span>
+                <span v-if="shown.length && !detail" class="ferry-leaklist-total">{{ shown.length }}</span>
             </div>
-            <div ref="body" class="ferry-news-body">
+            <div v-if="detail" class="ferry-news-body">
+                <Entry :key="detail.uuid" :entry-summary="detail" :start-expanded="true" :no-navigate="true" @editing="close()" />
+            </div>
+            <div v-show="!detail" ref="body" class="ferry-news-body">
                 <p v-if="shown.length" class="ferry-leaklist-intro">{{ $i18n("ferry_leaks_intro") }}</p>
                 <div class="ferry-leaklist-list">
                     <div
                         v-for="leak of shown" :key="leak.dbFileName + leak.uuid" class="ferry-leaklist-row" role="button" tabindex="0"
-                        @click="edit(leak)" @keydown.enter.prevent="edit(leak)">
+                        @click="show(leak)" @keydown.enter.prevent="show(leak)">
+                        <v-tooltip activator="parent" location="top">{{ $i18n("ferry_leaks_row_hint") }}</v-tooltip>
                         <span class="ferry-leaklist-tile">
                             <tabler-alert-triangle class="ferry-ico" />
                         </span>
@@ -27,16 +31,6 @@
                             {{ countShort(leak.count) }}
                             <v-tooltip activator="parent" location="top">{{ countText(leak.count) }}</v-tooltip>
                         </span>
-                        <button
-                            v-if="isWeb(leak.url)" type="button" class="ferry-ib" :aria-label="$i18n('ferry_change_password')"
-                            @click.stop="changePassword(leak.url)">
-                            <tabler-external-link class="ferry-ico" />
-                            <v-tooltip activator="parent" location="top">{{ $i18n("ferry_change_password") }}</v-tooltip>
-                        </button>
-                        <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_edit_entry')" @click.stop="edit(leak)">
-                            <tabler-pencil class="ferry-ico" />
-                            <v-tooltip activator="parent" location="top">{{ $i18n("ferry_edit_entry") }}</v-tooltip>
-                        </button>
                     </div>
                 </div>
                 <v-progress-linear v-if="!loaded" indeterminate color="primary" class="mx-4 my-3" />
@@ -50,6 +44,9 @@
 </template>
 
 <script lang="ts">
+import Entry from "./Entry.vue";
+import { Entry as EntryModel } from "../../common/model/Entry";
+import { EntrySummary } from "../../common/model/EntrySummary";
 import { isWebUrl } from "../../common/webUrl";
 import { FerryURL } from "../../common/FerryURL";
 
@@ -63,6 +60,7 @@ export interface Leak {
 }
 
 export default {
+    components: { Entry },
     // leaks: die neu gefundenen (aus der Karte im Popup); "Alle anzeigen" lädt alle geleakten Einträge.
     // startWithAll: über das Symbol in der Fußleiste geöffnet – gleich alle zeigen.
     // restoreScroll: Scroll-Position beim letzten Verlassen (Bearbeiten oder zurück) – wieder an dieselbe Stelle
@@ -71,12 +69,13 @@ export default {
         startWithAll: { type: Boolean, default: false },
         restoreScroll: { type: Number, default: 0 }
     },
-    // close: (scrollTop), edit: (leak, scrollTop) – die Position gibt der Aufrufer beim nächsten Öffnen als restoreScroll mit
-    emits: ["close", "edit"],
+    // close: (scrollTop) – die Position gibt der Aufrufer beim nächsten Öffnen als restoreScroll mit
+    emits: ["close"],
     data: () => ({
         all: null as Leak[],
         loaded: true,
-        showAll: false
+        showAll: false,
+        detail: null as EntrySummary
     }),
     computed: {
         shown: function (): Leak[] {
@@ -88,8 +87,19 @@ export default {
         this.scrollBack();
     },
     methods: {
-        edit(leak: Leak) {
-            this.$emit("edit", leak, (this.$refs.body as HTMLElement)?.scrollTop ?? 0);
+        // Direkt über die Kennung holen: Die Suche findet Einträge ohne Adresse nicht zuverlässig
+        async show(leak: Leak) {
+            let raw: EntryModel = null;
+            try {
+                raw = await chrome.runtime.sendMessage({ keepassferry: "findEntryForEdit", uuid: leak.uuid, dbFileName: leak.dbFileName });
+            } catch (e) {
+                raw = null;
+            }
+            if (raw) this.detail = EntrySummary.fromEntry(new EntryModel(raw));
+        },
+        back() {
+            if (this.detail) this.detail = null;
+            else this.close();
         },
         close() {
             this.$emit("close", (this.$refs.body as HTMLElement)?.scrollTop ?? 0);
@@ -135,17 +145,6 @@ export default {
                 this.all = [];
             }
             this.loaded = true;
-        },
-        // Wie am Eintrag: Änderungsseite der Website, sonst die Website selbst
-        async changePassword(url: string) {
-            let target: string = null;
-            try {
-                target = await chrome.runtime.sendMessage({ keepassferry: "changePasswordUrl", url, quick: false });
-            } catch (e) {
-                target = null;
-            }
-            chrome.tabs.create({ url: target || url });
-            window.close();
         }
     }
 };

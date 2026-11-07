@@ -563,7 +563,9 @@ namespace KeePassFerry
                 _host.Database.MemoryProtection.ProtectUserName, source.Strings.ReadSafe("UserName")));
             destination.Strings.Set("Password", new ProtectedString(
                 _host.Database.MemoryProtection.ProtectPassword, source.Strings.ReadSafe("Password")));
+            Field[] previousFields = destConfig.Fields;
             destConfig.Fields = sourceConfig.Fields;
+            MoveExtraFieldsToStrings(destination, destConfig.Fields, previousFields);
 
             // This algorithm could probably be made more efficient (lots of O(n) operations
             // but we're dealing with pretty small n so I've gone with the conceptually

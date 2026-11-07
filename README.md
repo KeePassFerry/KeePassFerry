@@ -47,7 +47,7 @@
   password, one-time code or your own KeePass fields such as a PIN or customer number.
 - **Save without clutter.** A new entry only takes the username and password of a form, not the address or checkboxes
   of a registration page. If a site really needs another field, right-click it → **KeePassFerry → Add this field to the
-  entry**. It gets the icon and is filled in from then on.
+  entry**. It is stored as a KeePass string field, gets the icon and is filled in from then on.
 - **Changed passwords.** After a successful login with a new password, KeePassFerry offers to update the existing
   entry. The old password stays in the entry's KeePass history.
 - **Search and edit from the popup:** search the whole database, view notes, custom fields and attachments, or open
@@ -64,7 +64,7 @@
 ### Security checks
 
 - **Leaked passwords:** optional check against "Have I Been Pwned", switched on per database. Only the first 5
-  characters of a checksum leave your PC. Affected entries get a warning and a direct "Change password" link.
+  characters of a checksum leave your PC. Affected entries get a warning and, where known, a direct "Change password" link.
 - **Expiry dates:** entries with an expiry date can remind you to change the password or be hidden in the browser.
 - **Password generator** that follows the password rules of many websites.
 - **Related websites:** logins are also offered on other domains of the same provider, based on Apple's open
@@ -78,7 +78,7 @@
   all databases on the PC.
 - **Several databases:** the popup shows which are open; read-only databases are not offered for saving.
 - **Several browsers:** each browser is paired on its own and can be given a name of your choice.
-- Modern UI, German and English.
+- Modern UI with light and dark theme, German and English.
 
 ## How it works
 
@@ -191,7 +191,8 @@ folgt dem Browser, das Plugin der Sprache von KeePass.
   ihn: Benutzername, Passwort, Einmalcode oder eigene KeePass-Felder wie PIN oder Kundennummer.
 - **Speichern ohne Ballast.** Ein neuer Eintrag übernimmt nur Benutzername und Passwort, nicht Anschrift oder
   Häkchen einer Registrierung. Braucht eine Seite wirklich ein weiteres Feld: Rechtsklick hinein → **KeePassFerry →
-  Dieses Feld zum Eintrag hinzufügen**. Es bekommt dann das Symbol und wird künftig mit ausgefüllt.
+  Dieses Feld zum Eintrag hinzufügen**. Es liegt dann als Zeichenfolge im KeePass-Eintrag, bekommt das Symbol und wird künftig mit
+  ausgefüllt.
 - **Geänderte Passwörter.** Nach einer erfolgreichen Anmeldung mit neuem Passwort bietet KeePassFerry an, den
   vorhandenen Eintrag zu aktualisieren. Das alte Passwort bleibt in der Chronik des Eintrags erhalten.
 - **Suchen und Nachsehen im Popup.** Du kannst die ganze Datenbank durchsuchen, Notizen, eigene Felder und Anhänge
@@ -209,8 +210,8 @@ folgt dem Browser, das Plugin der Sprache von KeePass.
 **Sicherheit**
 
 - **Datenlecks.** Die Prüfung über „Have I Been Pwned“ ist freiwillig und wird je Datenbank eingeschaltet. Dein PC
-  verlässt dabei nur die ersten 5 Zeichen einer Prüfsumme. Betroffene Einträge bekommen eine Warnung und einen direkten
-  Link „Passwort ändern“.
+  verlässt dabei nur die ersten 5 Zeichen einer Prüfsumme. Betroffene Einträge bekommen eine Warnung und, wenn bekannt, einen
+  direkten Link „Passwort ändern“.
 - **Ablaufdaten.** Einträge mit Ablaufdatum können an den Passwortwechsel erinnern oder im Browser ausgeblendet werden.
 - **Passwortgenerator**, der die Passwortregeln vieler Websites beachtet.
 - **Zugehörige Websites.** Anmeldedaten werden auch auf anderen Domains desselben Anbieters angeboten. Die Grundlage
@@ -225,7 +226,7 @@ folgt dem Browser, das Plugin der Sprache von KeePass.
   gültig für alle Datenbanken auf dem PC.
 - **Mehrere Datenbanken.** Das Popup zeigt, welche offen sind; schreibgeschützte werden zum Speichern nicht angeboten.
 - **Mehrere Browser.** Jeder Browser wird einzeln gekoppelt und kann einen eigenen Namen bekommen.
-- Moderne Oberfläche auf Deutsch und Englisch.
+- Moderne Oberfläche mit hellem und dunklem Design, auf Deutsch und Englisch.
 
 ### So funktioniert es technisch
 

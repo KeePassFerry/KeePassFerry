@@ -2,6 +2,23 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.25 – 2026-11-07
+
+- Fields added with "Add this field to the entry" are now stored under Advanced → String fields of the KeePass entry, so they
+  stay usable without KeePassFerry (issue #25). Password fields are protected; you can change that in KeePass at any time.
+  Older added fields move there the next time the entry is saved from the browser. A field that only shows asterisks or dots
+  is not taken over, because its real value is not in the field.
+- Popup: a click on a search result now expands it and no longer leaves the current page. An expanded entry has "Website"
+  (new tab), "Change password" and "Edit" in a row of their own, so the title and icons have more room (issue #24).
+  Ctrl+click and the middle mouse button still open a new tab.
+- Popup: the line below the title is the same when collapsed and expanded: username, group and, with several databases open,
+  the database. An empty username is no longer shown.
+- Dark theme: dark entry icons with a transparent background get a light tile and stay visible (issue #23).
+- Data breaches: entries of a database with the check turned off no longer show a warning.
+- Data breach list: a click shows the entry right there, with an arrow back to the list. "Change password" only appears where a
+  change-password page is known, in the entry's action row.
+- Settings: the headings of the two form lists are no longer cut off by their frame.
+
 ## 1.0.24 – 2026-11-07
 
 - Data breaches: results from databases with the check turned off no longer appear in the list.
@@ -491,6 +508,23 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.25 – 2026-11-07
+
+- Felder aus „Dieses Feld zum Eintrag hinzufügen“ liegen jetzt unter Erweitert → Zeichenfolgen des KeePass-Eintrags und bleiben
+  so auch ohne KeePassFerry nutzbar (Issue #25). Passwortfelder sind geschützt; das lässt sich in KeePass jederzeit ändern.
+  Früher hinzugefügte Felder wandern beim nächsten Speichern aus dem Browser dorthin. Ein Feld, das nur Sternchen oder Punkte
+  zeigt, wird nicht übernommen, weil der echte Wert nicht darin steht.
+- Popup: Ein Klick auf einen Suchtreffer klappt ihn jetzt auf und verlässt die aktuelle Seite nicht mehr. Ein aufgeklappter Eintrag
+  hat „Website“ (neuer Tab), „Passwort ändern“ und „Bearbeiten“ in einer eigenen Zeile, Titel und Symbole haben so mehr Platz
+  (Issue #24). Strg+Klick und die mittlere Maustaste öffnen weiterhin einen neuen Tab.
+- Popup: Die Zeile unter dem Titel ist zu- und aufgeklappt gleich: Benutzername, Gruppe und, bei mehreren offenen Datenbanken, die
+  Datenbank. Ein leerer Benutzername wird nicht mehr angezeigt.
+- Dunkles Design: Dunkle Eintragssymbole mit transparentem Hintergrund bekommen eine helle Kachel und bleiben sichtbar (Issue #23).
+- Datenlecks: Einträge einer Datenbank mit ausgeschalteter Prüfung zeigen keine Warnung mehr.
+- Datenleck-Liste: Ein Klick zeigt den Eintrag direkt dort, mit Pfeil zurück zur Liste. „Passwort ändern“ erscheint nur, wenn eine
+  Änderungsseite bekannt ist, in der Aktionszeile des Eintrags.
+- Einstellungen: Die Überschriften der beiden Formularlisten werden nicht mehr vom Rahmen abgeschnitten.
 
 ## 1.0.24 – 2026-11-07
 

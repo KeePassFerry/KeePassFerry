@@ -386,6 +386,7 @@ namespace KeePassFerry
             PwEntry newLogin = new PwEntry(true, true);
 
             setPwEntryFromEntry(newLogin, login);
+            MoveNewEntryFieldsToStrings(newLogin);
             ApplyNewExpiry(newLogin, login.NewExpiryTime);
 
             // find the database
@@ -971,6 +972,7 @@ namespace KeePassFerry
             PwEntry newLogin = new PwEntry(true, true);
 
             setPwEntryFromEntry2(newLogin, entry);
+            MoveNewEntryFieldsToStrings(newLogin);
 
             // find the database
             PwDatabase chosenDb = SelectDatabase(dbFileName);

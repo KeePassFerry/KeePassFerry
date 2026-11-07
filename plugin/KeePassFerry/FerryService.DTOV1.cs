@@ -193,7 +193,7 @@ namespace KeePassFerry
                     alwaysAutoFill, neverAutoFill, alwaysAutoSubmit, neverAutoSubmit, priority,
                     GetGroupFromPwGroup(pwe.ParentGroup), imageData,
                     GetDatabaseFromPwDatabase(db, false, true), matchAccuracy);
-                SetExtrasSummary(kpe, pwe);
+                SetExtrasSummary(kpe, pwe, db);
                 return kpe;
             }
 
@@ -201,18 +201,20 @@ namespace KeePassFerry
                 pwe.Strings.ReadSafe(PwDefs.TitleField),
                 MemUtil.ByteArrayToHexString(pwe.Uuid.UuidBytes),
                 imageData, "username", usernameValue);
-            SetExtrasSummary(light, pwe);
+            SetExtrasSummary(light, pwe, db);
             return light;
         }
 
-        private static void SetExtrasSummary(LightEntry target, PwEntry pwe)
+        private void SetExtrasSummary(LightEntry target, PwEntry pwe, PwDatabase db)
         {
             target.HasNotes = !string.IsNullOrEmpty(pwe.Strings.ReadSafe(PwDefs.NotesField).Trim());
             target.AttachmentCount = (int)pwe.Binaries.UCount;
             target.HasPasskey = !string.IsNullOrEmpty(pwe.Strings.ReadSafe(FieldCredentialId));
             target.HasOtp = Totp.HasTotp(pwe);
             int leakCount = 0;
-            target.PasswordLeaked = HibpStatus.ShowResults && HibpStatus.IsLeaked(pwe, out leakCount);
+            HibpChecker hibp = _keePassRpcPlugin.Hibp;
+            target.PasswordLeaked = HibpStatus.ShowResults && hibp != null && hibp.IsDatabaseEnabled(db, false)
+                                    && HibpStatus.IsLeaked(pwe, out leakCount);
             target.PasswordLeakCount = leakCount;
             if (pwe.Expires)
             {

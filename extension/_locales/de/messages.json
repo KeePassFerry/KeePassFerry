@@ -1167,6 +1167,18 @@
         "message": "Passwort ändern",
         "description": "KeePassFerry"
     },
+    "ferry_action_website": {
+        "message": "Website",
+        "description": "KeePassFerry"
+    },
+    "ferry_action_edit": {
+        "message": "Bearbeiten",
+        "description": "KeePassFerry"
+    },
+    "ferry_open_website": {
+        "message": "Website in neuem Tab öffnen",
+        "description": "KeePassFerry"
+    },
     "ferry_change_password_on_site": {
         "message": "Passwort auf der Website ändern",
         "description": "KeePassFerry"
@@ -1568,6 +1580,10 @@
         "message": "In Datenlecks gefunden",
         "description": "KeePassFerry"
     },
+    "ferry_leaks_row_hint": {
+        "message": "Klicken, um den Eintrag anzuzeigen",
+        "description": "KeePassFerry"
+    },
     "ferry_leaks_show_all": {
         "message": "Alle betroffenen Einträge anzeigen",
         "description": "KeePassFerry"
@@ -1844,6 +1860,10 @@
         "message": "Die Seite gibt diesem Feld keine Kennung („id“ oder „name“), deshalb kann KeePassFerry es später nicht wiederfinden. Du kannst den Wert als eigenes Feld speichern und über die Liste am Feld (⋯) eintragen.",
         "description": "KeePassFerry"
     },
+    "selSave_field_masked": {
+        "message": "Die Seite zeigt in diesem Feld nur Sternchen oder Punkte. Der echte Wert steht nicht im Feld, deshalb kann KeePassFerry ihn nicht übernehmen. Trage ihn in KeePass selbst ein.",
+        "description": "KeePassFerry"
+    },
     "selSave_field_otp": {
         "message": "Das ist ein Feld für Einmalcodes. KeePassFerry trägt den Code selbst ein, sobald der Eintrag einen Zwei-Faktor-Schlüssel hat.",
         "description": "KeePassFerry"
@@ -1886,6 +1906,22 @@
     },
     "ferry_leaks_intro": {
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_25_1_title": {
+        "message": "Hinzugefügte Felder liegen jetzt in KeePass",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_25_1_text": {
+        "message": "Felder aus „Dieses Feld zum Eintrag hinzufügen“ stehen unter Erweitert → Zeichenfolgen. Passwortfelder sind geschützt, und alles bleibt auch ohne KeePassFerry nutzbar.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_25_2_title": {
+        "message": "Suchtreffer klappen auf",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_25_2_text": {
+        "message": "Ein Klick klappt einen Suchtreffer auf, statt die Seite zu wechseln. Die Website öffnest du über „Website“ im aufgeklappten Eintrag oder mit Strg+Klick in einem neuen Tab.",
         "description": "KeePassFerry"
     },
     "ferry_news_1_0_24_1_title": {

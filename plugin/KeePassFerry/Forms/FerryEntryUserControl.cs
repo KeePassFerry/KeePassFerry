@@ -183,6 +183,10 @@ namespace KeePassFerry.Forms
                     {
                         value = TPassword;
                     }
+                    if (field.ValuePath != "." && field.ValuePath != PwDefs.UserNameField && field.ValuePath != PwDefs.PasswordField)
+                    {
+                        value = FerryText.T("Zeichenfolge: ", "String field: ") + field.ValuePath;
+                    }
                     if (field.Type == FieldType.Toggle)
                     {
                         value = field.Value == "KEEPASSFERRY_CHECKED_TRUE" ? TEnabled : TDisabled;

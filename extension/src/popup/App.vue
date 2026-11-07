@@ -79,7 +79,8 @@ v-if="news && !newLeaks.length && !otpPending && !showSaveRecovery" class="ferry
                     <Notification v-for="n of notifications" :key="n.id" :notification="n" />
                 </div>
                 <SearchResults
-v-show="showSearchPanel" :matched-entries-in="cachedMatchedEntries" :site-entries-in="siteEntries" :frame-id="frameId"
+                    v-show="showSearchPanel"
+:matched-entries-in="cachedMatchedEntries" :site-entries-in="siteEntries" :frame-id="frameId"
                     @pref-entry-toggle="prefEntryToggle" />
                 <Save1stParty
 v-if="showSaveStart && !showSaveWhere" @save-where-clicked="saveWhere"
@@ -162,7 +163,7 @@ v-if="allLeakCount > 0" type="button" class="ferry-ib ferry-leaks-btn"
         <NewsView v-if="showNews" @close="showNews = false; refreshOpenTips()" @tips-changed="refreshOpenTips" />
         <LeaksView
 v-if="leaksShown" :leaks="leaksShown" :start-with-all="leaksShowAll" :restore-scroll="leaksScroll"
-            @close="leaksShown = null; leaksScroll = $event ?? 0" @edit="editLeak" />
+            @close="leaksShown = null; leaksScroll = $event ?? 0" />
         <PasswordGenerator
 v-if="showPasswordGenerator" :standalone="true" @dialog-closed="passwordGeneratorClosed"
             @copy-to-clipboard="copyToClipboard" />
@@ -255,7 +256,6 @@ export default {
             // Noch nicht ausgeblendete Tipps (✨ in der Fußleiste pulsiert)
             openTips: 0,
             // Bearbeiten-Fenster wurde aus der Leak-Liste geöffnet: Abbrechen führt dorthin zurück, an dieselbe Stelle
-            returnToLeaks: false,
             leaksScroll: 0
         };
     },
@@ -438,13 +438,6 @@ export default {
             this.leaksShown = [];
         },
         // Aus der Leak-Liste: Bearbeiten-Fenster des Eintrags wie über den Stift (ohne abgeschickte Anmeldedaten)
-        editLeak: async function (leak: Leak, scrollTop = 0) {
-            // Beim Zurückkommen an dieselbe Stelle der Liste
-            this.leaksScroll = scrollTop;
-            if (!(await this.openEntryEditor(leak.uuid, leak.dbFileName))) return;
-            this.leaksShown = null;
-            this.returnToLeaks = true;
-        },
         // Bearbeiten-Fenster für einen Eintrag (uuid, Datenbank); false, wenn er nicht gefunden wurde
         openEntryEditor: async function (uuid: string, dbFileName: string): Promise<boolean> {
             let raw: Entry = null;
@@ -464,13 +457,8 @@ export default {
             this.updateSaveState(updatedSaveState);
             return true;
         },
-        // Pfeil/Abbrechen im Bearbeiten-Fenster: kam es aus der Leak-Liste, dorthin zurück (alle geleakten Einträge)
         saveCanceled: function () {
             this.saveDiscard();
-            if (this.returnToLeaks) {
-                this.returnToLeaks = false;
-                this.openAllLeaks();
-            }
         },
         // Gesehen bis zum neuesten Fund (nicht "jetzt": ein Fund aus dem laufenden Durchlauf soll nicht verloren gehen)
         acknowledgeLeaks: async function () {

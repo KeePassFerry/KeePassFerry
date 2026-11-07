@@ -4,7 +4,7 @@
         @focusin="focusin" @focusout="focusout" @keyup="onKeyup">
         <div
             class="ferry-entry-head" @click="onHeadClick" @mouseup="onHeadMouseup" @contextmenu.stop.prevent="showFullDetails">
-            <span class="ferry-tile">
+            <span class="ferry-tile" :class="{ 'ferry-tile-light': tileLight }">
                 <img v-if="iconSrc" :src="iconSrc" alt="" />
                 <tabler-key v-else class="ferry-ico" />
             </span>
@@ -39,32 +39,11 @@
                         </v-tooltip>
                     </span>
                 </span>
-                <span class="ferry-entry-sub">
-                    {{ expanded && entrySummary.fullDetails ? metaLine : collapsedLine }}
-                    <v-tooltip v-if="expanded && entrySummary.fullDetails" location="bottom" activator="parent">
-                        {{ fullEntryPath }} · {{ entrySummary.url }}
-                    </v-tooltip>
-                </span>
+                <span class="ferry-entry-sub">{{ subLine }}</span>
                 <span v-if="entrySummary.relatedDomain" class="ferry-entry-related">
                     {{ $i18n("ferry_related_domain", [entrySummary.relatedDomain]) }}
                 </span>
             </span>
-            <button
-                v-if="expanded && changeUrl" type="button" class="ferry-ib"
-                :aria-label="$i18n('ferry_change_password')" @click.stop="openChangePassword">
-                <tabler-key class="ferry-ico" />
-                <v-tooltip location="top" activator="parent">{{ $i18n("ferry_change_password_on_site") }}</v-tooltip>
-            </button>
-            <button
-                v-if="expanded && entrySummary.fullDetails" type="button" class="ferry-ib"
-                :class="{ 'ferry-ib-off': readOnly }" :aria-disabled="readOnly"
-                :aria-label="readOnly ? $i18n('ferry_edit_read_only') : $i18n('ferry_edit_entry')"
-                @click.stop="readOnly || editEntry()">
-                <tabler-pencil class="ferry-ico" />
-                <v-tooltip location="top" activator="parent">
-                    {{ readOnly ? $i18n("ferry_edit_read_only") : $i18n("ferry_edit_entry") }}
-                </v-tooltip>
-            </button>
             <button
                 type="button" class="ferry-ib" :aria-label="expanded ? $i18n('ferry_hide_details') : $i18n('ferry_show_details')"
                 @click.stop="toggleFullDetails">
@@ -74,18 +53,33 @@
             </button>
         </div>
         <div v-if="expanded && entrySummary.fullDetails" class="ferry-entry-details">
+            <div class="ferry-entry-actions">
+                <button v-if="hasWebsite" type="button" class="ferry-entry-action" @click.stop="loadInNewTab">
+                    <tabler-external-link class="ferry-ico" />
+                    {{ $i18n("ferry_action_website") }}
+                    <v-tooltip location="top" activator="parent">{{ $i18n("ferry_open_website") }} ({{ entryDomain }})</v-tooltip>
+                </button>
+                <button v-if="changeUrl" type="button" class="ferry-entry-action" @click.stop="openChangePassword">
+                    <tabler-key class="ferry-ico" />
+                    {{ $i18n("ferry_change_password") }}
+                    <v-tooltip location="top" activator="parent">{{ $i18n("ferry_change_password_on_site") }}</v-tooltip>
+                </button>
+                <button
+                    type="button" class="ferry-entry-action" :class="{ 'ferry-ib-off': readOnly }" :aria-disabled="readOnly"
+                    @click.stop="readOnly || editEntry()">
+                    <tabler-pencil class="ferry-ico" />
+                    {{ $i18n("ferry_action_edit") }}
+                    <v-tooltip location="top" activator="parent">
+                        {{ readOnly ? $i18n("ferry_edit_read_only") : $i18n("ferry_edit_entry") }}
+                    </v-tooltip>
+                </button>
+            </div>
             <!-- Ergebnis der Passwortprüfung des Plugins bzw. von "HIBP Offline Check" in KeePass -->
             <div v-if="entrySummary.passwordLeaked" class="ferry-note danger ferry-leak-note">
                 <tabler-alert-triangle class="ferry-ico" />
                 <div class="ferry-note-text">
                     <p class="ferry-leak-title">{{ leakTitle }}</p>
                     <p class="ferry-leak-hint">{{ $i18n("ferry_password_leaked_hint") }}</p>
-                    <v-btn
-v-if="hasWebsite" variant="outlined" size="small" rounded="lg" class="ferry-leak-btn"
-                        @click.stop="openChangePassword">
-                        <tabler-external-link class="ferry-ico" />
-                        {{ $i18n("ferry_change_password") }}
-                    </v-btn>
                 </div>
             </div>
             <!-- Option "Ablaufdaten prüfen": KeePass "Gültig bis" bald erreicht bzw. überschritten -->
@@ -95,12 +89,6 @@ v-if="hasWebsite" variant="outlined" size="small" rounded="lg" class="ferry-leak
                 <div class="ferry-note-text">
                     <p class="ferry-leak-title">{{ expiryTitle }}</p>
                     <p class="ferry-leak-hint">{{ expiryHint }}</p>
-                    <v-btn
-v-if="hasWebsite" variant="outlined" size="small" rounded="lg" class="ferry-leak-btn"
-                        @click.stop="openChangePassword">
-                        <tabler-external-link class="ferry-ico" />
-                        {{ $i18n("ferry_change_password") }}
-                    </v-btn>
                 </div>
             </div>
             <Field
@@ -141,17 +129,19 @@ import { $STR, $STRF } from "~/common/DollarPolyfills";
 import { configManager } from "../../common/ConfigManager";
 import { expiryState, expirySoonTitle, formatExpiryDate } from "../../common/expiry";
 import { isWebUrl } from "../../common/webUrl";
+import { iconNeedsLightTile } from "../../common/iconTile";
 
 export default {
     components: { Field, OtpRow, EntryExtras },
     props: ["entrySummary", "isFirstInAList", "entryIndex", "frameId", "dataIndex", "startExpanded", "noNavigate"],
-    emits: ["move-next-in-list", "move-prev-in-list", "move-out-of-list", "pref-entry-toggle"],
+    emits: ["move-next-in-list", "move-prev-in-list", "move-out-of-list", "pref-entry-toggle", "editing"],
     setup() {
         const { updateSaveState } = useStore();
         return { updateSaveState };
     },
     data: (vm: any) => ({
         expanded: !!vm.startExpanded,
+        tileLight: false,
         focussed: false,
         tooltipDelay: tooltipDelay,
         // Adresse zum Passwortändern auf der Website (Apples Liste oder /.well-known/change-password)
@@ -174,23 +164,16 @@ export default {
             const dbs = this.KeePassDatabases as Database[];
             return !!dbs?.find(db => db.fileName === this.entrySummary?.dbFileName)?.readOnly;
         },
-        collapsedLine: function (): string {
-            return [this.usernameDisplayValue, this.databaseLabel].filter(Boolean).join(" · ");
+        // Benutzername und Gruppe, auf- und zugeklappt gleich; die Datenbank nur, wenn mehrere offen sind
+        subLine: function (): string {
+            const e = this.entrySummary as EntrySummary;
+            const group = (e.fullDetails as Entry)?.parentGroup?.path ?? (e.path === "UNKNOWN PATH" ? "" : e.path);
+            const username = e.usernameValue === "<no username>" ? "" : e.usernameValue;
+            return [username, group, this.databaseLabel].filter(Boolean).join(" · ");
         },
         iconSrc: function () {
             const data = (this.entrySummary as EntrySummary)?.icon?.iconImageData;
             return data ? "data:image/png;base64," + data : null;
-        },
-        // Aufgeklappt: Gruppe und Domain in einer Zeile statt zwei eigener Zeilen
-        metaLine: function () {
-            const group = (this.entrySummary.fullDetails as Entry)?.parentGroup?.path ?? "";
-            return [this.databaseLabel, group, this.entryDomain].filter(Boolean).join(" · ");
-        },
-        usernameDisplayValue: function () {
-            const e = this.entrySummary as EntrySummary;
-            return e && e.usernameValue
-                ? e.usernameValue
-                : "[" + $STR("noUsername_partial_tip") + "]";
         },
         tabindex: function () {
             return "0"; //this.isFirstInAList ? "0" : "-1"; // new treeview component needs this to be 0 for everything
@@ -246,6 +229,14 @@ export default {
         isMatchedEntry: function () {
             const e = this.entrySummary as EntrySummary;
             return typeof e.isPreferredMatch === "boolean";
+        }
+    },
+    watch: {
+        iconSrc: {
+            immediate: true,
+            handler: async function (src: string) {
+                this.tileLight = await iconNeedsLightTile(src);
+            }
         }
     },
     mounted() {
@@ -324,6 +315,7 @@ export default {
             //TODO: Confirm that we don't have to roundtrip JSON here too
 //            this.updateSaveState(JSON.parse(JSON.stringify(updatedSaveState)));
             this.updateSaveState(updatedSaveState);
+            this.$emit("editing");
         },
         // Stift in der Vorschau: Bearbeiten-Fenster öffnen, dort gleich diesen Zusatz zum Bearbeiten
         editExtra: async function (key: string) {
@@ -345,23 +337,15 @@ export default {
             (this.$refs.card as HTMLElement)?.focus();
         },
         async primaryClickAction() {
-            // Einträge der aktuellen Seite ohne Formular: nur auf-/zuklappen (Kopieren, Einmalcode), nicht wegnavigieren
-            if (this.noNavigate) {
-                this.toggleFullDetails();
-                return;
-            }
-            if (this.entryIndex !== undefined) {
-                // We are expected to fill an already discovered entry
+            // Ein Eintrag der aktuellen Seite mit Formular wird ausgefüllt; sonst nur auf- und zuklappen, nie die Seite wechseln
+            if (!this.noNavigate && this.entryIndex !== undefined) {
                 this.manualFill();
             } else {
-                this.loadInSameTab();
+                this.toggleFullDetails();
             }
         },
-        loadInSameTab() {
-            chrome.tabs.update({ url: this.entrySummary.url });
-            window.close();
-        },
         loadInNewTab() {
+            if (!this.hasWebsite) return;
             chrome.tabs.create({ url: this.entrySummary.url });
             window.close();
         },
@@ -448,6 +432,34 @@ export default {
 .ferry-entry.open .ferry-tile {
     background: rgb(var(--v-theme-surface));
 }
+.ferry-entry-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    padding: 0 8px 8px 44px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--ferry-line);
+}
+.ferry-entry-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+    border: 0;
+    background: none;
+    color: var(--ferry-muted);
+    font: inherit;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.ferry-entry-action:hover {
+    color: rgb(var(--v-theme-on-surface));
+}
+/* Symbolspalte wie .ferry-row-icon (22 px), damit der erste Text bündig über den Feldwerten steht */
+.ferry-entry-action:first-child .ferry-ico {
+    margin-right: 4px;
+}
 .ferry-entry-text {
     display: flex;
     flex-direction: column;
@@ -503,9 +515,10 @@ export default {
 .ferry-expiry-soon .ferry-leak-title {
     color: rgb(var(--v-theme-warning));
 }
+/* Symbol und Text auf einer Linie mit den Feldzeilen (Innenabstand 12 px + Außenabstand 32 px = 44 px) */
 .ferry-leak-note {
     align-items: flex-start;
-    margin: 0 0 8px;
+    margin: 0 0 8px 32px;
 }
 .ferry-leak-note > .ferry-ico {
     margin-top: 1px;

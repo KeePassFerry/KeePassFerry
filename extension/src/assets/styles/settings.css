@@ -254,8 +254,9 @@ input[type="number"].form-control { text-align: right; }
 
 /* Formularerkennung */
 .list-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 12px 0 6px; }
-fieldset.fix-border { border: 1px solid var(--border); border-radius: 12px; padding: 6px 16px 16px; margin: 0; background: var(--surface-2); }
-legend.fix-border { padding: 0 8px; font-weight: 700; font-size: 13px; }
+fieldset.fix-border { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px 16px; margin: 0; background: var(--surface-2); }
+legend.fix-border { float: left; width: 100%; padding: 0; margin-bottom: 10px; font-weight: 700; font-size: 13px; }
+legend.fix-border + * { clear: both; }
 .grid { display: grid; grid-template-columns: max-content 1fr; gap: 10px 12px; align-items: center; }
 .grid > label { font-weight: 500; color: var(--muted); }
 .input-group { display: flex; align-items: center; gap: 8px; }

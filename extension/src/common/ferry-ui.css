@@ -103,6 +103,11 @@ Eine Fläche, Zeilen mit feinen Trennlinien, Symbole einheitlich 18 px (Tabler),
     width: 22px;
     height: 22px;
 }
+/* Dunkles Design: helle Kachel nur für dunkle Symbole (siehe common/iconTile.ts) */
+.v-theme--dark .ferry-tile.ferry-tile-light,
+.v-theme--dark .ferry-entry.open .ferry-tile.ferry-tile-light {
+    background: #e8eaed;
+}
 
 /* Gefüllte Eingabefelder: ruhiger Hintergrund, Fokus mit Primärfarbe */
 .v-field--variant-solo-filled {

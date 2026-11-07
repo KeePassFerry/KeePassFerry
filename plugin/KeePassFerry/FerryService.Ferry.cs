@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Jayrock.JsonRpc;
+using System.Linq;
+using KeePassFerry.Models.Persistent;
+using KeePassFerry.Models.Shared;
 using KeePassLib;
 using KeePassLib.Security;
 using KeePassLib.Utility;
@@ -558,6 +561,73 @@ namespace KeePassFerry
                 || name.StartsWith("KPRPC", StringComparison.OrdinalIgnoreCase) // Altfeld aus Kee: nie als Formularfeld
                 || name.StartsWith("KPEX_", StringComparison.OrdinalIgnoreCase)
                 || HibpStatus.IsStatusField(name);
+        }
+
+        /// <summary>
+        /// Zusatzfelder (Text oder Passwort) gehören in die Zeichenfolgen des Eintrags (Erweitert) und sind auch ohne
+        /// KeePassFerry nutzbar. Die Erweiterung liefert sie als Wert; ein Feld mit gleicher id oder gleichem name aus
+        /// "previous" behält seine Zeichenfolge samt Schutz, eine neue ist nur bei Passwortfeldern geschützt. Im Feld bleibt
+        /// nur der Verweis.
+        /// </summary>
+        internal static void MoveExtraFieldsToStrings(PwEntry entry, Field[] fields, Field[] previous)
+        {
+            if (fields == null) return;
+            foreach (Field field in fields)
+            {
+                if (field.ValuePath != "." || string.IsNullOrEmpty(field.Value)) continue;
+                if (field.Type != FieldType.Text && field.Type != FieldType.Password) continue;
+
+                string known = KnownStringOfField(field, previous, entry);
+                string name = known ?? UniqueStringName(entry, SafeFieldName(field.Name));
+                if (name == null) continue;
+                bool protect = known == null ? field.Type == FieldType.Password : entry.Strings.Get(known).IsProtected;
+                if (known == null || entry.Strings.ReadSafe(known) != field.Value)
+                    entry.Strings.Set(name, new ProtectedString(protect, field.Value));
+                field.ValuePath = name;
+                field.Value = null;
+            }
+        }
+
+        private static void MoveNewEntryFieldsToStrings(PwEntry entry)
+        {
+            EntryConfigv2 conf = entry.GetFerryConfigNormalised(MatchAccuracySettings.Default);
+            if (conf == null) return;
+            MoveExtraFieldsToStrings(entry, conf.Fields, null);
+            entry.SetFerryConfig(conf);
+        }
+
+        private static string KnownStringOfField(Field field, Field[] previous, PwEntry entry)
+        {
+            if (previous == null) return null;
+            foreach (Field old in previous)
+            {
+                if (old.ValuePath == "." || PwDefs.IsStandardField(old.ValuePath) || IsReservedStringName(old.ValuePath)) continue;
+                if (!entry.Strings.Exists(old.ValuePath) || !SameFieldTarget(field, old)) continue;
+                return old.ValuePath;
+            }
+            return null;
+        }
+
+        private static bool SameFieldTarget(Field a, Field b)
+        {
+            string aId, aName, bId, bName;
+            FieldTarget(a, out aId, out aName);
+            FieldTarget(b, out bId, out bName);
+            return (!string.IsNullOrEmpty(aId) && aId == bId) || (!string.IsNullOrEmpty(aName) && aName == bName);
+        }
+
+        private static void FieldTarget(Field field, out string id, out string name)
+        {
+            id = null;
+            name = null;
+            if (field.MatcherConfigs == null) return;
+            foreach (FieldMatcherConfig config in field.MatcherConfigs)
+            {
+                if (config == null || config.CustomMatcher == null) continue;
+                if (config.CustomMatcher.Ids != null) id = config.CustomMatcher.Ids.FirstOrDefault();
+                if (config.CustomMatcher.Names != null) name = config.CustomMatcher.Names.FirstOrDefault();
+                return;
+            }
         }
 
         private static string UniqueStringName(PwEntry entry, string name)

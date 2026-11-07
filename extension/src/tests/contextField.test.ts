@@ -15,6 +15,11 @@ function rightClick(html: string) {
 }
 
 describe("describeContextTarget", () => {
+    it("lehnt Felder ab, deren Inhalt nur aus Sternchen oder Punkten besteht", () => {
+        expect(rightClick("<input id=\"pin\" value=\"****\">").problem).toBe("masked");
+        expect(rightClick("<input id=\"pin\" type=\"password\" value=\"••••\">").problem).toBe("masked");
+    });
+
     it("liefert Kennung, Beschriftung und Wert eines nicht erkannten Felds", () => {
         const { field, problem } = rightClick("<input id=\"pin\" name=\"kunden_pin\" aria-label=\"Ihre PIN\" value=\"1234\">");
         expect(problem).toBeUndefined();

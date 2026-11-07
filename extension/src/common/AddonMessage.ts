@@ -92,7 +92,7 @@ export interface AddonMessage {
 }
 
 // Rechts angeklicktes Feld, das in einen Eintrag soll; problem: warum es sich dafür nicht eignet
-export type ContextFieldProblem = "noTarget" | "noIdentifier" | "otp";
+export type ContextFieldProblem = "noTarget" | "noIdentifier" | "otp" | "masked";
 export interface ContextFieldResult {
     field?: Field;
     problem?: ContextFieldProblem;

@@ -31,7 +31,7 @@ export function submittedCredentials(fields: { type: string; value: string }[]):
     return { username, password };
 }
 
-function isMasked(value: string): boolean {
+export function isMasked(value: string): boolean {
     return /^[*•●∙·]+$/.test(value);
 }
 
