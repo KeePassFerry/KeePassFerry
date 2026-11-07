@@ -1908,6 +1908,14 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_27_1_title": {
+    "message": "Placeholders explained",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_27_1_text": {
+    "message": "The database settings in KeePass now explain exactly what the placeholder setting does. This needs the current plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_26_1_title": {
     "message": "Sharper icons",
     "description": "KeePassFerry"
