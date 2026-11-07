@@ -2,6 +2,14 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.23 – 2026-11-07
+
+- KeePassFerry options and the pairing window now grow with the Windows display scaling of the main screen. Above 100 %
+  texts and buttons were cut off (issue #21).
+- Options: the same distance below the last group on both tabs.
+- Name of a pairing: you can enter it in the pairing window and change it later under Tools → KeePassFerry options →
+  "Addresses and browsers" → "Rename" (issue #22).
+
 ## 1.0.22 – 2026-11-07
 
 - The URL match accuracy (default for new entries and exceptions per domain) moved from the database settings to Tools →
@@ -476,6 +484,14 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.23 – 2026-11-07
+
+- Die KeePassFerry-Optionen und das Kopplungsfenster wachsen jetzt mit der Windows-Anzeigeskalierung des Hauptbildschirms.
+  Über 100 % wurden Texte und Knöpfe abgeschnitten (Issue #21).
+- Optionen: auf beiden Reitern derselbe Abstand unter der letzten Gruppe.
+- Name einer Kopplung: Du kannst ihn im Kopplungsfenster eingeben und später unter Extras → KeePassFerry-Optionen →
+  „Adressen und Browser“ → „Umbenennen“ ändern (Issue #22).
 
 ## 1.0.22 – 2026-11-07
 
