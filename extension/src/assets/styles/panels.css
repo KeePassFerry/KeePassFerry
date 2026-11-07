@@ -107,9 +107,9 @@ body {
     padding: 7px 8px;
 }
 .ferry-login-icon {
-    width: 20px;
-    height: 20px;
-    padding: 6px;
+    width: 16px;
+    height: 16px;
+    padding: 8px;
     flex: none;
     border-radius: 9px;
     background: var(--tile);

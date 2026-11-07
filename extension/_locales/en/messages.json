@@ -1908,6 +1908,14 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_26_1_title": {
+    "message": "Sharper icons",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_26_1_text": {
+    "message": "Entry icons now come from KeePass in full size and are shown at 16 px, as in KeePass. This also needs the current plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_25_1_title": {
     "message": "Added fields now live in KeePass",
     "description": "KeePassFerry"

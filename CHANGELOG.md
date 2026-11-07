@@ -2,6 +2,11 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.26 – 2026-11-07
+
+- Entry icons are sharper (issue #23). KeePassFerry received every custom icon from KeePass at 16 x 16 and enlarged it. The plugin now
+  provides icons in their stored size, up to 32 x 32, and the extension shows them at 16 px, like KeePass and browser tabs do.
+
 ## 1.0.25 – 2026-11-07
 
 - Fields added with "Add this field to the entry" are now stored under Advanced → String fields of the KeePass entry, so they
@@ -508,6 +513,12 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.26 – 2026-11-07
+
+- Eintragssymbole sind schärfer (Issue #23). KeePassFerry bekam jedes eigene Symbol von KeePass als 16 x 16 und vergrößerte es. Das Plugin
+  liefert Symbole jetzt in ihrer gespeicherten Größe, höchstens 32 x 32, und die Erweiterung zeigt sie mit 16 Pixeln an, wie KeePass und
+  Browser-Tabs.
 
 ## 1.0.25 – 2026-11-07
 

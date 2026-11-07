@@ -1908,6 +1908,14 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_26_1_title": {
+        "message": "Schärfere Symbole",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_26_1_text": {
+        "message": "Eintragssymbole werden jetzt in voller Größe aus KeePass geholt und wie dort mit 16 Pixeln angezeigt. Dafür braucht es auch das aktuelle Plugin.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_25_1_title": {
         "message": "Hinzugefügte Felder liegen jetzt in KeePass",
         "description": "KeePassFerry"

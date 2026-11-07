@@ -99,9 +99,10 @@ Eine Fläche, Zeilen mit feinen Trennlinien, Symbole einheitlich 18 px (Tabler),
     color: var(--ferry-muted);
     overflow: hidden;
 }
+/* 16 px wie KeePass und Browser-Tabs: Symbole sind meist 16 oder 32 px groß und bleiben so scharf */
 .ferry-tile img {
-    width: 22px;
-    height: 22px;
+    width: 16px;
+    height: 16px;
 }
 /* Dunkles Design: helle Kachel nur für dunkle Symbole (siehe common/iconTile.ts) */
 .v-theme--dark .ferry-tile.ferry-tile-light,

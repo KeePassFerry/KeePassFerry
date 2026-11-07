@@ -495,9 +495,12 @@ Technical detail: " + ex.Message);
         public delegate object GetCustomIconDelegate(PwUuid uuid);
 
 
+        // Größe wie gespeichert, höchstens 32 x 32. Die Anzeige skaliert die Erweiterung; ohne Größenangabe liefert KeePass 16 x 16.
         public Image GetCustomIcon(PwUuid uuid)
         {
-            return _host.Database.GetCustomIcon(uuid);
+            Image original = _host.Database.GetCustomIcon(uuid, -1, -1);
+            if (original == null || (original.Width <= 32 && original.Height <= 32)) return original;
+            return _host.Database.GetCustomIcon(uuid, 32, 32);
         }
 
         private void EnsureDBIconIsInIconCache()

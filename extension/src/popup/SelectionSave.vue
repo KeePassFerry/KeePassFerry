@@ -405,8 +405,8 @@ export default {
     font-size: 17px;
 }
 .tile img {
-    width: 22px;
-    height: 22px;
+    width: 16px;
+    height: 16px;
 }
 .tile-fallback {
     opacity: 0.55;
