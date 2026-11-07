@@ -345,6 +345,7 @@ namespace KeePassFerry
             {
                 PwDatabase db = doc.Database;
                 if (db == null || !db.IsOpen || _host.MainWindow.IsFileLocked(doc)) continue;
+                if (!IsDatabaseEnabled(db, false)) continue;
                 PwGroup bin = db.RecycleBinEnabled ? db.RootGroup.FindGroup(db.RecycleBinUuid, true) : null;
                 foreach (PwEntry e in db.RootGroup.GetEntries(true))
                 {
@@ -360,13 +361,21 @@ namespace KeePassFerry
                         { "uuid", KeePassLib.Utility.MemUtil.ByteArrayToHexString(e.Uuid.UuidBytes) },
                         { "dbFileName", db.IOConnectionInfo.Path },
                         { "title", e.Strings.ReadSafe(PwDefs.TitleField) },
-                        { "url", e.Strings.ReadSafe(PwDefs.UrlField) },
+                        { "url", WebUrl(e.Strings.ReadSafe(PwDefs.UrlField)) },
                         { "count", count },
                         { "leakedAt", hasLeakedAt ? leakedAt.ToString("o", CultureInfo.InvariantCulture) : "" }
                     });
                 }
             }
             return result;
+        }
+
+        /// <summary>Adresse einer Website; andere Adressen (z. B. der Dateipfad eines AutoOpen-Eintrags) ergeben ""</summary>
+        internal static string WebUrl(string url)
+        {
+            string value = (url ?? "").Trim();
+            return value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                   value.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? value : "";
         }
 
         private static string DbKey(PwDatabase db)

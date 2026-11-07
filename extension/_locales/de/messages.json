@@ -1888,6 +1888,22 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_24_1_title": {
+        "message": "Kopplungen benennen, Dialoge richtig skaliert",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_24_1_text": {
+        "message": "Du kannst jeder Kopplung einen eigenen Namen geben und ihn in den KeePassFerry-Optionen ändern. Die Fenster des Plugins passen sich jetzt der Windows-Anzeigeskalierung an.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_24_2_title": {
+        "message": "Datenlecks: klarere Liste",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_24_2_text": {
+        "message": "Datenbanken mit ausgeschalteter Prüfung erscheinen nicht mehr in der Liste. Einträge ohne Website, etwa ein AutoOpen-Eintrag, zeigen keinen Pfad und keinen Knopf „Passwort ändern“ mehr.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_22_1_title": {
         "message": "Felder gezielt hinzufügen",
         "description": "KeePassFerry"

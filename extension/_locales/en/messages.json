@@ -1888,6 +1888,22 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_24_1_title": {
+    "message": "Name your pairings, dialogs scale correctly",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_24_1_text": {
+    "message": "You can give each pairing its own name and change it in the KeePassFerry options. The plugin windows now follow the Windows display scaling.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_24_2_title": {
+    "message": "Data breaches: a clearer list",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_24_2_text": {
+    "message": "Databases with the check turned off no longer appear in the list. Entries without a website, such as an AutoOpen entry, no longer show a path or a \"Change password\" button.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_22_1_title": {
     "message": "Add exactly the fields you need",
     "description": "KeePassFerry"

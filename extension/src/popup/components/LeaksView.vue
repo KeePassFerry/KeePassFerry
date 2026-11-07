@@ -20,15 +20,15 @@
                             <tabler-alert-triangle class="ferry-ico" />
                         </span>
                         <span class="ferry-leaklist-text">
-                            <span class="ferry-leaklist-title">{{ leak.title || domainOf(leak.url) || "—" }}</span>
-                            <span v-if="leak.url" class="ferry-leaklist-domain">{{ domainOf(leak.url) }}</span>
+                            <span class="ferry-leaklist-title">{{ leak.title || (isWeb(leak.url) ? domainOf(leak.url) : "") || "—" }}</span>
+                            <span v-if="isWeb(leak.url)" class="ferry-leaklist-domain">{{ domainOf(leak.url) }}</span>
                         </span>
                         <span class="ferry-leaklist-count">
                             {{ countShort(leak.count) }}
                             <v-tooltip activator="parent" location="top">{{ countText(leak.count) }}</v-tooltip>
                         </span>
                         <button
-                            v-if="leak.url" type="button" class="ferry-ib" :aria-label="$i18n('ferry_change_password')"
+                            v-if="isWeb(leak.url)" type="button" class="ferry-ib" :aria-label="$i18n('ferry_change_password')"
                             @click.stop="changePassword(leak.url)">
                             <tabler-external-link class="ferry-ico" />
                             <v-tooltip activator="parent" location="top">{{ $i18n("ferry_change_password") }}</v-tooltip>
@@ -50,6 +50,7 @@
 </template>
 
 <script lang="ts">
+import { isWebUrl } from "../../common/webUrl";
 import { FerryURL } from "../../common/FerryURL";
 
 export interface Leak {
@@ -109,6 +110,9 @@ export default {
                     body.scrollTop = this.restoreScroll;
                 }
             }
+        },
+        isWeb(url: string) {
+            return isWebUrl(url);
         },
         domainOf(url: string) {
             return FerryURL.fromString(url ?? "")?.domainOrIPAddress ?? url ?? "";

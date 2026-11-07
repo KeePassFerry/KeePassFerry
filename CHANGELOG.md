@@ -2,6 +2,13 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.24 – 2026-11-07
+
+- Data breaches: results from databases with the check turned off no longer appear in the list.
+- Data breaches: for entries without a website address, such as a KeeAutoExec AutoOpen entry, the list no longer shows a
+  file path or a "Change password" button. The warning itself stays.
+- Entry view: "Change password" only appears for entries with a website address; before, a file path led to an error page.
+
 ## 1.0.23 – 2026-11-07
 
 - KeePassFerry options and the pairing window now grow with the Windows display scaling of the main screen. Above 100 %
@@ -484,6 +491,13 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.24 – 2026-11-07
+
+- Datenlecks: Treffer aus Datenbanken, für die die Prüfung ausgeschaltet ist, erscheinen nicht mehr in der Liste.
+- Datenlecks: Bei Einträgen ohne Website-Adresse, etwa einem AutoOpen-Eintrag von KeeAutoExec, zeigt die Liste keinen Dateipfad
+  und keinen Knopf „Passwort ändern“ mehr. Die Warnung selbst bleibt.
+- Eintragsansicht: „Passwort ändern“ erscheint nur noch bei Einträgen mit Website-Adresse; ein Dateipfad führte vorher auf eine Fehlerseite.
 
 ## 1.0.23 – 2026-11-07
 

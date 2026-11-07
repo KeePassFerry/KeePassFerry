@@ -80,7 +80,9 @@
                 <div class="ferry-note-text">
                     <p class="ferry-leak-title">{{ leakTitle }}</p>
                     <p class="ferry-leak-hint">{{ $i18n("ferry_password_leaked_hint") }}</p>
-                    <v-btn variant="outlined" size="small" rounded="lg" class="ferry-leak-btn" @click.stop="openChangePassword">
+                    <v-btn
+v-if="hasWebsite" variant="outlined" size="small" rounded="lg" class="ferry-leak-btn"
+                        @click.stop="openChangePassword">
                         <tabler-external-link class="ferry-ico" />
                         {{ $i18n("ferry_change_password") }}
                     </v-btn>
@@ -93,7 +95,9 @@
                 <div class="ferry-note-text">
                     <p class="ferry-leak-title">{{ expiryTitle }}</p>
                     <p class="ferry-leak-hint">{{ expiryHint }}</p>
-                    <v-btn variant="outlined" size="small" rounded="lg" class="ferry-leak-btn" @click.stop="openChangePassword">
+                    <v-btn
+v-if="hasWebsite" variant="outlined" size="small" rounded="lg" class="ferry-leak-btn"
+                        @click.stop="openChangePassword">
                         <tabler-external-link class="ferry-ico" />
                         {{ $i18n("ferry_change_password") }}
                     </v-btn>
@@ -136,6 +140,7 @@ import { mapState } from "pinia";
 import { $STR, $STRF } from "~/common/DollarPolyfills";
 import { configManager } from "../../common/ConfigManager";
 import { expiryState, expirySoonTitle, formatExpiryDate } from "../../common/expiry";
+import { isWebUrl } from "../../common/webUrl";
 
 export default {
     components: { Field, OtpRow, EntryExtras },
@@ -154,6 +159,9 @@ export default {
         changeUrlChecked: false
     }),
     computed: {
+        hasWebsite: function (): boolean {
+            return isWebUrl((this.entrySummary as EntrySummary).url);
+        },
         ...mapState(useStore, ["saveState", "KeePassDatabases"]),
         // Mehrere Datenbanken offen: in welcher der Eintrag liegt
         databaseLabel: function (): string {
@@ -277,7 +285,7 @@ export default {
         async lookupChangeUrl(quick = false) {
             if (this.changeUrl || (!quick && this.changeUrlChecked)) return;
             const url = (this.entrySummary as EntrySummary).url;
-            if (!url) return;
+            if (!isWebUrl(url)) return;
             try {
                 const found = await chrome.runtime.sendMessage({ keepassferry: "changePasswordUrl", url, quick });
                 if (found) this.changeUrl = found;
@@ -290,7 +298,7 @@ export default {
             if (!this.changeUrl && !this.changeUrlChecked) await this.lookupChangeUrl();
             // Ohne bekannte Adresse: die Website des Eintrags
             const target = this.changeUrl || (this.entrySummary as EntrySummary).url;
-            if (!target) return;
+            if (!isWebUrl(target)) return;
             chrome.tabs.create({ url: target });
             window.close();
         },

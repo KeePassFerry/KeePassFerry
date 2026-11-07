@@ -113,6 +113,12 @@ Browser extension ──native messaging──▶ KeePassFerryHost.exe ──nam
 
 KeePassFerry does not need Kee or KeePassRPC and can be installed alongside them.
 
+> **Tip for Microsoft Edge:** New versions usually reach the Chrome Web Store sooner than Edge Add-ons, and the Chrome
+> version also runs in Edge. On `edge://extensions`, turn on *Allow extensions from other stores*, install KeePassFerry
+> from the [Chrome Web Store](https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga) and turn off the
+> Edge Add-ons version. This counts as a separate installation, so you confirm the pairing code again and set the
+> extension's settings anew.
+
 ## Settings
 
 - **In KeePass:** *Tools → KeePassFerry options* holds everything that takes effect in KeePass and applies to all
@@ -253,6 +259,12 @@ Browser-Erweiterung ──Native Messaging──▶ KeePassFerryHost.exe ──N
    Namen und klicke in KeePass nur dann auf **Verbinden**, wenn beide Codes übereinstimmen.
 
 KeePassFerry braucht weder Kee noch KeePassRPC und kann daneben installiert sein.
+
+> **Tipp für Microsoft Edge:** Neue Versionen erscheinen im Chrome Web Store meist früher als bei Edge Add-ons, und die
+> Chrome-Version läuft auch in Edge. Schalte unter `edge://extensions` *Erweiterungen aus anderen Stores zulassen* ein,
+> installiere KeePassFerry aus dem [Chrome Web Store](https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga)
+> und schalte die Version aus Edge Add-ons aus. Das ist eine eigene Installation: Du bestätigst den Prüfcode noch einmal
+> und stellst die Einstellungen der Erweiterung neu ein.
 
 ### Einstellungen
 
