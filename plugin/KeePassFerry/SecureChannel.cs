@@ -55,10 +55,10 @@ namespace KeePassFerry
 
         /// <summary>
         /// Führt den Handshake als Server aus. Gibt null zurück, wenn er scheitert oder die Kopplung abgelehnt wird.
-        /// confirmPairing(clientName, code) zeigt den Prüfcode in KeePass an und liefert die Entscheidung.
+        /// confirmPairing(clientName, code) zeigt den Prüfcode in KeePass an und liefert den gewählten Namen, bei Ablehnung null.
         /// </summary>
         public static SecureChannel Accept(PipeClientTransport raw, FerryIdentity identity, string[] serverFeatures,
-            Func<string, string, bool> confirmPairing)
+            Func<string, string, string> confirmPairing)
         {
             var channel = new SecureChannel(raw);
             try
@@ -135,13 +135,14 @@ namespace KeePassFerry
                     raw.Send(JsonConvert.ExportToString(pairing));
 
                     string code = sasNonce != null ? PairingCodeV2(th, sasNonce) : PairingCode(th);
-                    if (!identity.TryBeginPairing(clientId) || !ConfirmAndEnd(identity, clientId, name, code, confirmPairing))
+                    if (!identity.TryBeginPairing(clientId) || !ConfirmAndEnd(identity, clientId, ref name, code, confirmPairing))
                     {
                         var denied = new JsonObject();
                         denied["ferry"] = "denied";
                         raw.Send(JsonConvert.ExportToString(denied));
                         return null;
                     }
+                    channel.ClientName = name;
                     identity.StoreClient(clientId, clientPub, name);
                 }
                 identity.MarkClientSeen(clientId);
@@ -158,12 +159,14 @@ namespace KeePassFerry
             }
         }
 
-        private static bool ConfirmAndEnd(FerryIdentity identity, string clientId, string name, string code, Func<string, string, bool> confirmPairing)
+        private static bool ConfirmAndEnd(FerryIdentity identity, string clientId, ref string name, string code, Func<string, string, string> confirmPairing)
         {
             bool accepted = false;
             try
             {
-                accepted = confirmPairing(name, code);
+                string chosen = confirmPairing(name, code);
+                accepted = chosen != null;
+                if (accepted) name = chosen;
                 return accepted;
             }
             finally
@@ -395,6 +398,34 @@ namespace KeePassFerry
         {
             string value = Convert.ToBase64String(clientPub) + "|" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name ?? "")) + "|" + DateTime.UtcNow.ToString("o");
             _host.CustomConfig.SetString(KeyClientPrefix + clientId, value);
+        }
+
+        /// <summary>Name für die Anzeige: ohne Steuerzeichen und Rand-Leerzeichen, höchstens 80 Zeichen</summary>
+        internal static string CleanClientName(string name)
+        {
+            var clean = new StringBuilder();
+            foreach (char c in name ?? "")
+                if (!char.IsControl(c)) clean.Append(c);
+            string result = clean.ToString().Trim();
+            return result.Length > 80 ? result.Substring(0, 80).TrimEnd() : result;
+        }
+
+        /// <summary>Gespeicherter Eintrag mit neuem Namen; Schlüssel und Kopplungsdatum bleiben unverändert</summary>
+        internal static string WithClientName(string stored, string name)
+        {
+            string[] parts = stored.Split('|');
+            if (parts.Length < 2) return stored;
+            parts[1] = Convert.ToBase64String(Encoding.UTF8.GetBytes(name));
+            return string.Join("|", parts);
+        }
+
+        /// <summary>Benennt einen gekoppelten Browser um. Der Name wird nur bei der Kopplung und hier gesetzt.</summary>
+        public void RenameClient(string clientId, string name)
+        {
+            string stored = _host.CustomConfig.GetString(KeyClientPrefix + clientId, "");
+            string clean = CleanClientName(name);
+            if (string.IsNullOrEmpty(stored) || clean.Length == 0) return;
+            _host.CustomConfig.SetString(KeyClientPrefix + clientId, WithClientName(stored, clean));
         }
 
         /// <summary>Zuletzt verbunden (Tagesgenau, damit die Konfiguration nicht bei jeder Verbindung geändert wird)</summary>

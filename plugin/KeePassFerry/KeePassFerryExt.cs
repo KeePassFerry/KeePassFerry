@@ -801,25 +801,26 @@ Technical detail: " + ex.Message);
         /// <summary>
         /// Fragt im KeePass-Fenster, ob ein neuer Browser gekoppelt werden soll (Prüfcode vergleichen).
         /// Läuft auf dem UI-Thread; der aufrufende Pipe-Thread wartet auf die Entscheidung.
+        /// Liefert den gewählten Namen der Kopplung, bei Ablehnung null.
         /// </summary>
-        internal bool ConfirmFerryPairing(string clientName, string code)
+        internal string ConfirmFerryPairing(string clientName, string code)
         {
-            bool accepted = false;
+            string chosen = null;
             try
             {
                 _host.MainWindow.Invoke((MethodInvoker)delegate
                 {
                     using (var form = new Forms.FerryPairingForm(clientName, code))
-                        accepted = form.ShowDialog(_host.MainWindow) == DialogResult.OK;
+                        if (form.ShowDialog(_host.MainWindow) == DialogResult.OK) chosen = form.ChosenName;
                 });
             }
             catch (Exception ex)
             {
                 if (logger != null) logger.WriteLine("Pairing dialog failed: " + ex.Message);
-                return false;
+                return null;
             }
-            if (accepted) SaveConfigSoon();
-            return accepted;
+            if (chosen != null) SaveConfigSoon();
+            return chosen;
         }
 
         public void InvokeMainThread(Delegate method, params object[] args)

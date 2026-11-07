@@ -29,6 +29,7 @@ namespace KeePassFerry.Forms
         private readonly ComboBox _expiryWarn;
         private readonly ListView _clients;
         private readonly Button _unpair;
+        private readonly Button _rename;
         private readonly CheckedListBox _hibpDbs;
         private readonly RadioButton _accuracyDomain;
         private readonly RadioButton _accuracyHostname;
@@ -49,8 +50,7 @@ namespace KeePassFerry.Forms
             MinimizeBox = false;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            AutoScaleMode = AutoScaleMode.Dpi;
-            AutoScaleDimensions = new SizeF(96F, 96F);
+            AutoScaleMode = AutoScaleMode.None;
             ClientSize = new Size(560, 640);
             Font = new Font("Segoe UI", 9F);
 
@@ -58,7 +58,7 @@ namespace KeePassFerry.Forms
             {
                 AutoSize = false,
                 Location = new Point(16, 14),
-                Size = new Size(528, 34),
+                Size = new Size(528, 36),
                 ForeColor = Color.DimGray,
                 Text = FerryText.T("Hier stellst du ein, was in KeePass wirkt und für alle Browser gilt. Einstellungen für Webseiten (Ausfüllen, Feldsymbole …) findest du in der Browser-Erweiterung.",
                     "Settings that take effect in KeePass and apply to all browsers. Settings for websites (filling, field icons …) are in the browser extension.")
@@ -93,10 +93,10 @@ namespace KeePassFerry.Forms
                 FerryText.T("Passwörter auf Datenlecks prüfen", "Check passwords for data breaches"));
             _hibp.Checked = _plugin.Hibp != null && _plugin.Hibp.Enabled;
             _hibp.Enabled = _plugin.Hibp != null;
-            breaches.Controls.Add(NewHint(48, 50, FerryText.T(
+            breaches.Controls.Add(NewHint(48, 54, FerryText.T(
                 "KeePass prüft neue und geänderte Passwörter bei „Have I Been Pwned“ und alle anderen gelegentlich erneut. Gesendet werden nur die ersten 5 Zeichen einer Prüfsumme, nie das Passwort.",
                 "KeePass checks new and changed passwords at \"Have I Been Pwned\" and re-checks all others from time to time. Only the first 5 characters of a checksum are sent, never the password.")));
-            breaches.Controls.Add(NewHint(100, 30, HibpProgressText()));
+            breaches.Controls.Add(NewHint(102, 30, HibpProgressText()));
             // Pro Datenbank: neue Datenbanken sind nicht eingeschaltet; schreibgeschützte lassen sich nicht prüfen
             breaches.Controls.Add(new Label
             {
@@ -125,7 +125,7 @@ namespace KeePassFerry.Forms
             {
                 Text = FerryText.T("Abgelaufene Einträge", "Expired entries"),
                 Location = new Point(4, 346),
-                Size = new Size(528, 120)
+                Size = new Size(528, 128)
             };
             expiry.Controls.Add(new Label { Text = FerryText.T("Verhalten:", "Behaviour:"), AutoSize = true, Location = new Point(12, 27) });
             _expiryMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(150, 24), Width = 250 };
@@ -140,7 +140,7 @@ namespace KeePassFerry.Forms
                     : FerryText.T(days + " Tage vorher", days + " days before"));
             _expiryWarn.SelectedIndex = Array.IndexOf(FerryService.ExpiryWarnDaysChoices, FerryService.ExpiryWarnDays);
             expiry.Controls.AddRange(new Control[] { _expiryMode, _expiryWarn });
-            expiry.Controls.Add(NewHint(84, 32, FerryText.T(
+            expiry.Controls.Add(NewHint(84, 36, FerryText.T(
                 "Gilt nur für Einträge mit Ablaufdatum („Gültig bis“). „Erinnern“ füllt weiter aus und weist auf einen Passwortwechsel hin; „Ausblenden“ schlägt sie im Browser nicht mehr vor.",
                 "Only applies to entries with an expiry date (\"Expires\"). \"Remind\" keeps filling them in and suggests changing the password; \"Hide\" no longer offers them in the browser.")));
 
@@ -158,7 +158,7 @@ namespace KeePassFerry.Forms
             _accuracyDomain.Checked = MatchAccuracySettings.Default == MatchAccuracyMethod.Domain;
             _accuracyHostname.Checked = MatchAccuracySettings.Default == MatchAccuracyMethod.Hostname;
             _accuracyExact.Checked = MatchAccuracySettings.Default == MatchAccuracyMethod.Exact;
-            accuracy.Controls.Add(NewHint(50, 34, FerryText.T(
+            accuracy.Controls.Add(NewHint(50, 36, FerryText.T(
                 "Domain: Subdomains zählen mit (login.example.com passt auf www.example.com). Hostname: Die Subdomain muss stimmen. Exakt: Die ganze Adresse muss stimmen.",
                 "Domain: subdomains count too (login.example.com matches www.example.com). Hostname: the subdomain must match. Exact: the whole address must match.")));
             accuracy.Controls.Add(new Label
@@ -190,7 +190,7 @@ namespace KeePassFerry.Forms
             _overrideEdit.Click += delegate { EditOverride(); };
             _overrideDelete.Click += delegate { DeleteOverride(); };
             accuracy.Controls.AddRange(new Control[] { _accuracyOverrides, overrideAdd, _overrideEdit, _overrideDelete });
-            accuracy.Controls.Add(NewHint(224, 32, FerryText.T(
+            accuracy.Controls.Add(NewHint(222, 36, FerryText.T(
                 "Gilt für alle Datenbanken auf diesem PC. Für einen einzelnen Eintrag stellst du die Genauigkeit im Eintrag ein (Reiter KeePassFerry).",
                 "Applies to all databases on this PC. For a single entry, set the accuracy in the entry (KeePassFerry tab).")));
 
@@ -213,25 +213,37 @@ namespace KeePassFerry.Forms
             _clients.Columns.Add(FerryText.T("Browser", "Browser"), 220);
             _clients.Columns.Add(FerryText.T("Gekoppelt am", "Paired on"), 130);
             _clients.Columns.Add(FerryText.T("Zuletzt verbunden", "Last connected"), 130);
-            _clients.SelectedIndexChanged += delegate { _unpair.Enabled = _clients.SelectedItems.Count > 0; };
+            _clients.SelectedIndexChanged += delegate
+            {
+                _rename.Enabled = _unpair.Enabled = _clients.SelectedItems.Count > 0;
+            };
+            _clients.DoubleClick += delegate { OnRename(); };
+            _rename = new Button
+            {
+                Text = FerryText.T("Umbenennen", "Rename"),
+                Location = new Point(12, 156),
+                Size = new Size(100, 28),
+                Enabled = false
+            };
+            _rename.Click += delegate { OnRename(); };
             _unpair = new Button
             {
                 Text = FerryText.T("Kopplung aufheben", "Remove pairing"),
-                Location = new Point(12, 156),
-                AutoSize = true,
+                Location = new Point(118, 156),
+                Size = new Size(130, 28),
                 Enabled = false
             };
             _unpair.Click += OnUnpair;
             var pairedHint = new Label
             {
                 AutoSize = false,
-                Location = new Point(160, 152),
-                Size = new Size(356, 36),
+                Location = new Point(256, 152),
+                Size = new Size(260, 40),
                 ForeColor = Color.DimGray,
-                Text = FerryText.T("Der Browser muss sich danach neu koppeln und den Prüfcode bestätigen.",
-                    "The browser then has to pair again and confirm the verification code.")
+                Text = FerryText.T("Nach dem Aufheben muss sich der Browser neu koppeln und den Prüfcode bestätigen.",
+                    "After removing, the browser has to pair again and confirm the verification code.")
             };
-            paired.Controls.AddRange(new Control[] { _clients, _unpair, pairedHint });
+            paired.Controls.AddRange(new Control[] { _clients, _rename, _unpair, pairedHint });
 
             var version = new Label
             {
@@ -263,6 +275,48 @@ namespace KeePassFerry.Forms
             AcceptButton = ok;
             CancelButton = cancel;
             ShowPairedClients();
+            FormScaling.Apply(this, _accuracyOverrides, _clients);
+        }
+
+        private sealed class RenameForm : Form
+        {
+            private readonly TextBox _text;
+
+            public string NewName { get { return FerryIdentity.CleanClientName(_text.Text); } }
+
+            public RenameForm(string current)
+            {
+                Text = FerryText.T("Kopplung umbenennen", "Rename pairing");
+                FormBorderStyle = FormBorderStyle.FixedDialog;
+                MaximizeBox = false;
+                MinimizeBox = false;
+                ShowInTaskbar = false;
+                StartPosition = FormStartPosition.CenterParent;
+                AutoScaleMode = AutoScaleMode.None;
+                ClientSize = new Size(380, 112);
+                Font = new Font("Segoe UI", 9F);
+                var label = new Label
+                {
+                    AutoSize = false,
+                    Location = new Point(12, 12),
+                    Size = new Size(356, 22),
+                    Text = FerryText.T("Name dieser Kopplung (z. B. Chrome Laptop):", "Name of this pairing (e.g. Chrome laptop):")
+                };
+                _text = new TextBox { Location = new Point(12, 36), Width = 356, MaxLength = 80, Text = current };
+                var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(186, 72), Size = new Size(88, 28) };
+                var cancel = new Button
+                {
+                    Text = FerryText.T("Abbrechen", "Cancel"),
+                    DialogResult = DialogResult.Cancel,
+                    Location = new Point(280, 72),
+                    Size = new Size(88, 28)
+                };
+                _text.TextChanged += delegate { ok.Enabled = NewName.Length > 0; };
+                Controls.AddRange(new Control[] { label, _text, ok, cancel });
+                AcceptButton = ok;
+                CancelButton = cancel;
+                FormScaling.Apply(this);
+            }
         }
 
         private sealed class HibpDbItem
@@ -375,7 +429,20 @@ namespace KeePassFerry.Forms
                 var item = new ListViewItem(new[] { name, pairedAt, lastSeen }) { Tag = client.Id };
                 _clients.Items.Add(item);
             }
-            _unpair.Enabled = false;
+            _rename.Enabled = _unpair.Enabled = false;
+        }
+
+        private void OnRename()
+        {
+            if (_clients.SelectedItems.Count == 0) return;
+            var clientId = (string)_clients.SelectedItems[0].Tag;
+            using (var form = new RenameForm(_clients.SelectedItems[0].Text))
+            {
+                if (form.ShowDialog(this) != DialogResult.OK) return;
+                _plugin.FerryIdentity.RenameClient(clientId, form.NewName);
+            }
+            _host.MainWindow.Invoke((MethodInvoker)delegate { _host.MainWindow.SaveConfig(); });
+            ShowPairedClients();
         }
 
         private void OnUnpair(object sender, EventArgs e)

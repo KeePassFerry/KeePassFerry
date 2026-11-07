@@ -186,6 +186,7 @@
     <Compile Include="FerryUpdater.cs" />
     <Compile Include="HibpStatus.cs" />
     <Compile Include="HibpChecker.cs" />
+    <Compile Include="Forms\FormScaling.cs" />
     <Compile Include="MatchAccuracySettings.cs" />
     <Compile Include="FerryReleaseKey.cs" />
     <Compile Include="MatchAccuracyMethod.cs" />
