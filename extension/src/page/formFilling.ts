@@ -3,6 +3,7 @@ import { findLoginFields } from "./loginFields";
 import { FilledField } from "./FilledField";
 import { PanelStub, PanelStubOptions } from "./PanelStub";
 import { FormUtils } from "./formsUtils";
+import { isOffPage } from "./visibility";
 import { FormSaving } from "./formSaving";
 import { sameFieldTarget } from "../common/fieldLocators";
 import { FerryFieldIcon } from "./ferryFieldIcon";
@@ -921,7 +922,18 @@ export class FormFilling {
     // ohne diese Prüfung gewann ein unsichtbares Formular und das sichtbare bekam weder Symbol noch Ausfüllen
     private isShownForScoring(element: HTMLElement): boolean {
         if (!this.formUtils.isDOMElementVisible(element)) return false;
-        return !(element instanceof Element) || getComputedStyle(element).visibility !== "hidden";
+        if (!(element instanceof Element)) return true;
+        // Aus dem Bild geschoben (left: -9999px, Zalando): wie unsichtbar
+        if (isOffPage(element)) return false;
+        return getComputedStyle(element).visibility !== "hidden";
+    }
+
+    private isFormOffPage(i: number): boolean {
+        const m = this.matchResult;
+        const elements = [...(m.otherFieldsArray?.[i] ?? []), ...(m.passwordFieldsArray?.[i] ?? [])]
+            .map(f => f.DOMelement)
+            .filter(e => e instanceof Element);
+        return elements.length > 0 && elements.every(e => isOffPage(e));
     }
 
     getMostRelevantForm(formIndex?: number) {
@@ -940,9 +952,15 @@ export class FormFilling {
 
         if (formIndex >= 0) mostRelevantFormIndex = formIndex;
         else {
-            findMatchesResult.formRelevanceScores.forEach((c, index) => {
+            // Formulare, deren Felder alle aus dem Bild geschoben sind (left: -9999px, Zalando: weitere Anmeldestufen),
+            // kann der Nutzer nie erreichen: nur wählen, wenn es kein anderes gibt
+            const scores = findMatchesResult.formRelevanceScores;
+            const reachable = scores.map((_, i) => !this.isFormOffPage(i));
+            if (!reachable.some(r => r)) reachable.fill(true);
+            mostRelevantFormIndex = reachable.indexOf(true);
+            scores.forEach((c, index) => {
                 this.Logger.debug("Relevance of form is " + c);
-                if (c > findMatchesResult.formRelevanceScores[mostRelevantFormIndex]) {
+                if (reachable[index] && c > scores[mostRelevantFormIndex]) {
                     mostRelevantFormIndex = index;
                 }
             });

@@ -11,7 +11,15 @@ export function isVisible(el: HTMLElement): boolean {
     const style = getComputedStyle(el);
     if (style.visibility === "hidden" || style.display === "none") return false;
     if (isClippedByStyle(style)) return false;
+    if (isOffPage(el)) return false;
     return !isClippedAway(el);
+}
+
+// Ganz links bzw. oberhalb des Seitenanfangs (z. B. left: -9999px): dorthin kann man nicht scrollen. Zalando legt so
+// die weiteren Anmeldestufen ab; ohne diese Prüfung gewann ein solches Formular und das sichtbare bekam kein Symbol
+export function isOffPage(el: Element): boolean {
+    const r = el.getBoundingClientRect();
+    return r.right + window.scrollX <= 0 || r.bottom + window.scrollY <= 0;
 }
 
 // Nur für Screenreader sichtbar ("sr-only"/"visually-hidden"): clip: rect(0 0 0 0) bzw. clip-path auf nichts
