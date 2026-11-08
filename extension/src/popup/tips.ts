@@ -102,6 +102,18 @@ export async function loadTips(reload: () => void = () => undefined): Promise<{ 
     } catch (e) {
         // ohne Tipp
     }
+    // "Aus Zwischenablage einfügen" braucht die optionale Erlaubnis clipboardRead; erteilt wird sie in den Einstellungen
+    // (im Popup würde die Abfrage das Popup schließen)
+    try {
+        if (!(await chrome.permissions.contains({ permissions: ["clipboardRead"] }))) {
+            tips.push({ id: "clipboard", icon: "clipboard", tone: "plain", action: "ferry_tip_clipboard_action", run: () => {
+                chrome.tabs.create({ url: chrome.runtime.getURL("dist/settings/index.html#clipboard") });
+                window.close();
+            } });
+        }
+    } catch (e) {
+        // ohne Tipp
+    }
     if (browserSaving) {
         tips.push({ id: "browsersaving", icon: "browser", tone: "plain", action: "ferry_tip_disable", primary: true, run: async () => {
             configManager.setASAP({ ferryDisableBrowserPasswordSaving: true } as any);

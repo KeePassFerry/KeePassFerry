@@ -1444,6 +1444,18 @@
         "message": "Beim Einrichten der Zwei-Faktor-Anmeldung erkennt KeePassFerry den QR-Code und speichert ihn im Eintrag. Danach füllt es die Codes selbst aus.",
         "description": "KeePassFerry"
     },
+    "ferry_tip_clipboard_title": {
+        "message": "Einfügen aus der Zwischenablage per Knopf",
+        "description": "KeePassFerry"
+    },
+    "ferry_tip_clipboard_text": {
+        "message": "Beim Bearbeiten eines Eintrags fügt ein Knopf den Inhalt der Zwischenablage ein, etwa einen kopierten Code. Dafür braucht KeePassFerry deine Erlaubnis; gelesen wird nur, wenn du klickst.",
+        "description": "KeePassFerry"
+    },
+    "ferry_tip_clipboard_action": {
+        "message": "Einschalten",
+        "description": "KeePassFerry"
+    },
     "ferry_tip_browsersaving_title": {
         "message": "Passwortspeicher des Browsers ausschalten",
         "description": "KeePassFerry"

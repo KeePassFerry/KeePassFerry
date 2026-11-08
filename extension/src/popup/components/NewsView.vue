@@ -87,6 +87,7 @@ import IconPin from "~icons/tabler/pin";
 import IconKeyboard from "~icons/tabler/keyboard";
 import IconBug from "~icons/tabler/bug";
 import IconDatabase from "~icons/tabler/database";
+import IconClipboard from "~icons/tabler/clipboard";
 
 // Symbole fest eingebunden (dynamische Namen löst das Icon-Plugin nicht auf)
 const ICONS: Record<string, unknown> = {
@@ -106,7 +107,8 @@ const ICONS: Record<string, unknown> = {
     pin: IconPin,
     keyboard: IconKeyboard,
     bug: IconBug,
-    database: IconDatabase
+    database: IconDatabase,
+    clipboard: IconClipboard
 };
 
 export default {

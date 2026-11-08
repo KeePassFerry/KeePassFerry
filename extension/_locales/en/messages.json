@@ -1444,6 +1444,18 @@
     "message": "When you set up two-factor sign-in, KeePassFerry recognises the QR code and saves it in the entry. After that it fills in the codes itself.",
     "description": "KeePassFerry"
   },
+  "ferry_tip_clipboard_title": {
+    "message": "Paste from the clipboard with a button",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_clipboard_text": {
+    "message": "When you edit an entry, a button pastes the clipboard, for example a copied code. KeePassFerry needs your permission for this; it only reads when you click.",
+    "description": "KeePassFerry"
+  },
+  "ferry_tip_clipboard_action": {
+    "message": "Turn on",
+    "description": "KeePassFerry"
+  },
   "ferry_tip_browsersaving_title": {
     "message": "Turn off the browser's password saving",
     "description": "KeePassFerry"
