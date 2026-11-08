@@ -4,7 +4,7 @@
 
 Please do not report security problems in public issues.
 
-Use GitHub's private reporting instead: open the [Security tab](https://github.com/KeePassFerry/KeePassFerry/security) and choose **Report a vulnerability**. Only you and the maintainers can see the report.
+Use GitHub's private reporting instead: open the [Security tab](https://github.com/KeePassFerry/KeePassFerry/security) and choose **Report a vulnerability**. Only you and the maintainers can see the report. If you have no GitHub account, write to KeePassFerry@gmail.com. E-mail is not encrypted, so please describe the problem only briefly at first.
 
 Helpful details are the affected version, the browser, the steps to reproduce and what an attacker could achieve.
 
