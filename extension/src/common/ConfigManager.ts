@@ -65,7 +65,6 @@ defaultConfig.notifyWhenEntryUpdated = true;
 defaultConfig.notifyWhenLateDiscovery = false;
 defaultConfig.notifyWhenLoggedOut = false;
 defaultConfig.overWriteFieldsAutomatically = false;
-defaultConfig.rememberMRUDB = true;
 // Neue Einträge: standardmäßig nach der Gruppe fragen (nur für neue Installationen; gespeicherte Werte bleiben)
 defaultConfig.rememberMRUGroup = false;
 defaultConfig.saveFavicons = true;
@@ -204,6 +203,11 @@ export class ConfigManager {
                 (this.current as any)[key] = value;
                 saveNeeded = true;
             }
+        }
+        // Bis 1.0.29 merkte sich die Erweiterung den Pfad der letzten Datenbank selbst: gespeicherten Wert entfernen
+        if (this.current.keePassMRUDB) {
+            this.current.keePassMRUDB = "";
+            saveNeeded = true;
         }
         if (saveNeeded) this.save();
     }

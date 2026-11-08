@@ -66,7 +66,6 @@ export class Config {
     notifyWhenLateDiscovery: boolean;
     notifyWhenLoggedOut: boolean;
     overWriteFieldsAutomatically: boolean; // deprecated
-    rememberMRUDB: boolean;
     rememberMRUGroup: boolean;
     saveFavicons: boolean;
     searchAllOpenDBs: boolean;

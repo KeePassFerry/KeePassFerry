@@ -761,12 +761,6 @@ class Ferry {
 
         this.configureBrowserActionIcon();
 
-        if (configManager.current.rememberMRUDB) {
-            const MRUFN = this.getDatabaseFileName();
-            if (MRUFN != null && MRUFN != undefined) configManager.current.keePassMRUDB = MRUFN;
-            configManager.save();
-        }
-
         try {
             this.refreshFormStatus(Action.DetectForms);
         } catch (e) {
@@ -850,7 +844,8 @@ class Ferry {
     // if the MRU database is known, open that but otherwise send empty string which will cause user
     // to be prompted to choose a DB to open
     getKeePassFileNameToOpen() {
-        return configManager.current.keePassDBToOpen || configManager.current.keePassMRUDB || "";
+        // Keine eigene Liste zuletzt benutzter Dateien: Ob eine Datei gemerkt wird, entscheidet KeePass (#30)
+        return configManager.current.keePassDBToOpen || "";
     }
 
     openKeePass() {
@@ -915,16 +910,6 @@ class Ferry {
         } else return null;
     }
 
-    getDatabaseFileName(index?) {
-        if (index == undefined) index = this.store.state.ActiveKeePassDatabaseIndex;
-        if (
-            this.store.state.KeePassDatabases.length > 0 &&
-            this.store.state.KeePassDatabases[index] != null &&
-            this.store.state.KeePassDatabases[index].root != null
-        ) {
-            return this.store.state.KeePassDatabases[index].fileName;
-        } else return null;
-    }
 
     selectDatabase(fileName, requestReturnFocus, sessionType?: SessionType) {
         try {
