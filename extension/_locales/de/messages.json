@@ -1920,6 +1920,14 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_28_1_title": {
+        "message": "Anmeldefenster von Router und NAS",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_28_1_text": {
+        "message": "KeePassFerry entsperrt dafür jetzt die Datenbank, fragt bei neuen Geräten Benutzername und Passwort ab und bietet das Speichern an. Einschalten in den Einstellungen unter „Anmeldefenster des Browsers ausfüllen“. Dafür braucht es das aktuelle Plugin.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_27_1_title": {
         "message": "Platzhalter verständlich erklärt",
         "description": "KeePassFerry"

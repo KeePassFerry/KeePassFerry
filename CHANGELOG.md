@@ -2,6 +2,18 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.28 – 2026-11-08
+
+- Browser sign-in windows (HTTP authentication, e.g. router, NAS) with the option "Fill the browser's sign-in dialogs":
+  - A locked database is unlocked first (for the page itself, not for embedded content from other servers).
+  - If KeePass has no entry yet, KeePassFerry asks for username and password. With "Save in KeePass" the save
+    popup opens once the server has accepted the sign-in. The realm is stored with the entry.
+  - The window looks like the passkey dialog and opens centred over the browser window. "Enter manually" is now
+    "Cancel"; the browser then shows its own window.
+  - Basic and Digest only; Windows sign-in (NTLM, Kerberos) and proxies stay with the browser.
+  - A rejected automatic sign-in shows the window instead of trying again and again.
+- If you cancel the unlock prompt in KeePass, the browser no longer waits up to 45 seconds (passkeys too).
+
 ## 1.0.27 – 2026-11-07
 
 - Database settings, tab "KeePass placeholders": the text now explains what the option does (issue #26).
@@ -517,6 +529,18 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.28 – 2026-11-08
+
+- Anmeldefenster des Browsers (HTTP-Anmeldung, z. B. Router, NAS) mit der Option „Anmeldefenster des Browsers ausfüllen“:
+  - Eine gesperrte Datenbank wird zuerst entsperrt (für die Seite selbst, nicht für eingebettete Inhalte fremder Server).
+  - Hat KeePass noch keinen Eintrag, fragt KeePassFerry Benutzername und Passwort ab. Mit „In KeePass speichern“ öffnet
+    sich das Speichern-Popup, sobald der Server die Anmeldung angenommen hat. Der Bereich wird im Eintrag gespeichert.
+  - Das Fenster sieht aus wie der Passkey-Dialog und erscheint mittig über dem Browserfenster. „Selbst eingeben“ heißt
+    jetzt „Abbrechen“; danach zeigt der Browser sein eigenes Fenster.
+  - Nur Basic und Digest; Windows-Anmeldung (NTLM, Kerberos) und Proxys bleiben beim Browser.
+  - Eine abgelehnte automatische Anmeldung zeigt das Fenster, statt es immer wieder zu versuchen.
+- Bricht man die Entsperrabfrage in KeePass ab, wartet der Browser nicht mehr bis zu 45 Sekunden (auch bei Passkeys).
 
 ## 1.0.27 – 2026-11-07
 

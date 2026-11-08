@@ -1920,6 +1920,14 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_28_1_title": {
+    "message": "Sign-in windows of routers and NAS",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_28_1_text": {
+    "message": "KeePassFerry now unlocks the database for them, asks for username and password on new devices and offers to save them. Turn it on in the settings under \"Fill the browser's sign-in dialogs\". This needs the current plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_27_1_title": {
     "message": "Placeholders explained",
     "description": "KeePassFerry"
