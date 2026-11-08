@@ -2,6 +2,16 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.30 – 2026-11-08
+
+- The toolbar icon and the field icons tell apart "locked" (lock), "no database loaded" (dash) and "KeePass not running"
+  (OFF, no field icon).
+- The toolbar icon always opens the popup. It offers "Unlock", "Open KeePass" or, if KeePass is not running, "Start KeePass".
+- The extension no longer keeps its own record of the last-used database; the stored path is removed on update (issue #30).
+  Whether a file is remembered is up to KeePass.
+- Forms moved off the page (for example left: -9999px) are ignored when choosing the login form (Zalando).
+- KeePass stays in front when opened with no database, and its close button keeps working after being brought back from the tray.
+
 ## 1.0.29 – 2026-11-08
 
 - New defaults for new installations (saved settings stay as they are): KeePassFerry asks for the group of a new
@@ -538,6 +548,16 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.30 – 2026-11-08
+
+- Das Symbol in der Leiste und die Feldsymbole unterscheiden „gesperrt“ (Schloss), „keine Datenbank geladen“ (Strich) und
+  „KeePass läuft nicht“ (OFF, kein Feldsymbol).
+- Das Symbol in der Leiste öffnet immer das Popup. Es bietet „Entsperren“, „KeePass öffnen“ oder, wenn KeePass nicht läuft, „KeePass starten“.
+- Die Erweiterung merkt sich die zuletzt benutzte Datenbank nicht mehr selbst; der gespeicherte Pfad wird beim Update entfernt (Issue #30).
+  Ob eine Datei gemerkt wird, entscheidet KeePass.
+- Aus dem Bild geschobene Formulare (z. B. left: -9999px) zählen bei der Wahl des Anmeldeformulars nicht mehr (Zalando).
+- KeePass bleibt vorne, wenn es ohne Datenbank geöffnet wird, und sein Schließen-Knopf wirkt auch nach dem Holen aus dem Infobereich.
 
 ## 1.0.29 – 2026-11-08
 

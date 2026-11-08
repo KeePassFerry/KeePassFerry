@@ -1968,6 +1968,14 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_30_1_title": {
+        "message": "KeePass starten und klare Anzeige",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_30_1_text": {
+        "message": "Das Popup kann KeePass jetzt starten oder öffnen, und die Symbole zeigen, ob KeePass gesperrt ist, keine Datenbank geladen hat oder nicht läuft. Dafür braucht es das aktuelle Plugin.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_29_1_title": {
         "message": "Feinschliff",
         "description": "KeePassFerry"

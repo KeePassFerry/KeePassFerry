@@ -1968,6 +1968,14 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_30_1_title": {
+    "message": "Start KeePass and clearer status",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_30_1_text": {
+    "message": "The popup can now start or open KeePass, and the icons show whether KeePass is locked, has no database loaded or is not running. This needs the current plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_29_1_title": {
     "message": "Polish",
     "description": "KeePassFerry"
