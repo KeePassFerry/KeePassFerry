@@ -18,6 +18,8 @@ export interface FerryState {
     notifications: FerryNotification[];
     connected: boolean;
     connectedNative: boolean;
+    // Verbunden, aber in KeePass ist keine Datenbank geladen (nicht: gesperrt)
+    noDatabaseLoaded: boolean;
     currentSearchTerm: string;
     loginsFound: boolean;
     searchResults: EntrySummary[];
@@ -36,6 +38,7 @@ export const defaults = {
     notifications: [],
     connected: false,
     connectedNative: false,
+    noDatabaseLoaded: false,
     currentSearchTerm: null,
     loginsFound: false,
     searchResults: null,

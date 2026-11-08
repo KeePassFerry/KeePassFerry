@@ -65,13 +65,21 @@ v-if="news && !newLeaks.length && !otpPending && !showSaveRecovery" class="ferry
                 <path d="M20 108 q 8.8 -7 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0" fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linecap="round" />
             </svg>
                     <div class="ferry-empty-title">
-                        {{ connected ? $i18n("ferry_status_locked") : $i18n("ferry_status_not_running") }}
+                        {{ !connected ? $i18n("ferry_status_not_running") : noDatabaseLoaded ? $i18n("ferry_status_no_database") : $i18n("ferry_status_locked") }}
                     </div>
                     <div class="ferry-empty-text">
-                        {{ connected ? $i18n("ferry_popup_locked_hint") : $i18n("ferry_status_not_running_hint") }}
+                        {{ !connected ? $i18n("ferry_status_not_running_hint") : noDatabaseLoaded ? $i18n("ferry_popup_no_database_hint") : $i18n("ferry_popup_locked_hint") }}
                     </div>
-                    <v-btn v-if="connected" color="primary" variant="flat" class="mt-5" @click="requestUnlock">
-                        <tabler-lock-open class="ferry-ico mr-2" />
+                    <v-btn v-if="showStartKeePass" color="primary" variant="flat" class="mt-5" @click="startKeePass">
+                        <template #prepend><tabler-app-window class="ferry-ico" /></template>
+                        {{ $i18n("ferry_popup_start_keepass") }}
+                    </v-btn>
+                    <v-btn v-if="connected && noDatabaseLoaded" color="primary" variant="flat" class="mt-5" @click="openKeePass">
+                        <template #prepend><tabler-app-window class="ferry-ico" /></template>
+                        {{ $i18n("Menu_Button_open_keepass_label") }}
+                    </v-btn>
+                    <v-btn v-if="connected && !noDatabaseLoaded" color="primary" variant="flat" class="mt-5" @click="requestUnlock">
+                        <template #prepend><tabler-lock-open class="ferry-ico" /></template>
                         {{ $i18n("ferry_popup_unlock") }}
                     </v-btn>
                 </div>
@@ -233,6 +241,7 @@ export default {
             // variable in a new Date(...) call before comparing against other Dates
             saveLastActiveAt: null,
             showSaveWhere: false,
+            canStartKeePass: false,
             displayWhereReason: null,
             preferredGroupUuid: "",
 
@@ -279,7 +288,8 @@ export default {
             "connectedNative",
             "saveEntryResult",
             "KeePassDatabases",
-            "ActiveKeePassDatabaseIndex"
+            "ActiveKeePassDatabaseIndex",
+            "noDatabaseLoaded"
         ]),
         statusTone: function () {
             if (this.connected && this.databaseIsOpen) return "ok";
@@ -302,6 +312,10 @@ export default {
         hasStatusMenu: function (): boolean {
             return this.openDatabases.length > 0 || this.showOpenKeePassButton;
         },
+        // KeePass läuft nicht, der Helfer kann es aber starten: Knopf in der Mitte
+        showStartKeePass: function (): boolean {
+            return !this.connected && this.canStartKeePass;
+        },
         openDatabases: function () {
             if (!this.connected || !this.databaseIsOpen) return [];
             return (this.KeePassDatabases as Database[]).map((db, i) => ({
@@ -316,7 +330,7 @@ export default {
                 const dbs = this.openDatabases;
                 return dbs.length > 1 ? this.$i18n("ferry_footer_databases", [String(dbs.length)]) : dbs[0]?.label ?? this.connectionStatus;
             }
-            if (this.connected) return this.$i18n("ferry_footer_locked");
+            if (this.connected) return this.$i18n(this.noDatabaseLoaded ? "ferry_footer_no_database" : "ferry_footer_locked");
             return this.$i18n("ferry_footer_offline");
         },
         showEmptyState: function () {
@@ -372,6 +386,9 @@ export default {
         this.refreshOpenTips();
 
         // Wurde die Schlüssel-Auswahl ohne Speichern geschlossen, hier erneut anbieten
+        chrome.runtime.sendMessage({ keepassferry: "connectionStatus" })
+            .then(s => (this.canStartKeePass = !!s?.canStartKeePass))
+            .catch(() => undefined);
         chrome.runtime.sendMessage({ keepassferry: "getOtpSetupSummary" })
             .then(s => (this.otpPending = s ?? null))
             .catch(() => undefined);
@@ -584,6 +601,10 @@ export default {
             this.displayWhereReason = displayWhereReason;
             this.preferredGroupUuid = preferredGroupUuid;
             this.showSaveWhere = true;
+        },
+        startKeePass: async function () {
+            await chrome.runtime.sendMessage({ keepassferry: "startKeePass" }).catch(() => undefined);
+            window.close();
         },
         requestUnlock: async function () {
             try {
@@ -867,11 +888,11 @@ button.ferry-status:disabled { cursor: default; }
     text-align: center;
     padding: 96px 28px 0;
 }
-.ferry-empty svg {
+.ferry-empty > svg {
     border-radius: 16px;
     margin-bottom: 20px;
 }
-.ferry-empty svg.ferry-empty-off {
+.ferry-empty > svg.ferry-empty-off {
     filter: grayscale(1);
     opacity: 0.5;
 }

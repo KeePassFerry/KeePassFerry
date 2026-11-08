@@ -342,6 +342,8 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         // Klick auf ein gesperrtes Feldsymbol: bewusste Aktion, ohne Bremsen entsperren
         const result = await ferry.requestBackgroundUnlock(this.sender.tab.id, this.sender.url ?? "", true);
         diag("hintergrund", "feldsymbol geklickt (gesperrt)", { ergebnis: result });
+        // Nichts zu entsperren (keine Datenbank geladen): KeePass holen, wie beim Klick auf das Symbol in der Leiste
+        if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) ferry.openKeePass();
     }
     if (msg.ferryDiag) {
         let host = "";

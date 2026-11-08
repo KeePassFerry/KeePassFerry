@@ -632,7 +632,7 @@
         "description": "KeePassFerry toolbar button tooltip"
     },
     "action_unlock_keepass": {
-        "message": "KeePass ist gesperrt – klicken, um zu entsperren",
+        "message": "KeePass ist gesperrt",
         "description": "KeePassFerry toolbar button tooltip"
     },
     "attachment_paste_hint": {
@@ -774,6 +774,30 @@
     "ferry_status_connected": {
         "message": "Mit KeePass verbunden",
         "description": "KeePassFerry settings"
+    },
+    "action_open_keepass": {
+        "message": "In KeePass ist keine Datenbank geladen",
+        "description": "KeePassFerry"
+    },
+    "ferry_status_no_database": {
+        "message": "Keine Datenbank geladen",
+        "description": "KeePassFerry"
+    },
+    "ferry_popup_no_database_hint": {
+        "message": "Öffne in KeePass eine Datenbank, damit KeePassFerry Zugangsdaten vorschlagen kann.",
+        "description": "KeePassFerry"
+    },
+    "ferry_footer_no_database": {
+        "message": "Keine Datenbank",
+        "description": "KeePassFerry"
+    },
+    "ferry_popup_start_keepass": {
+        "message": "KeePass starten",
+        "description": "KeePassFerry"
+    },
+    "ferry_field_icon_no_database": {
+        "message": "In KeePass ist keine Datenbank geladen – klicken, um KeePass zu öffnen",
+        "description": "KeePassFerry"
     },
     "ferry_status_locked": {
         "message": "KeePass ist gesperrt",

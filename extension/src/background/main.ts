@@ -290,6 +290,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 };
             });
             break;
+        case "startKeePass":
+            ferry.rpc.pluginClient.nativeSessionManager.startKeePass();
+            work = Promise.resolve(true);
+            break;
         case "requestUnlock":
             work = chrome.tabs.query({ active: true, lastFocusedWindow: true }).then(async ([tab]) => {
                 const result = await ferry.requestBackgroundUnlock(tab?.id ?? -1, tab?.url ?? "", true);
@@ -419,25 +423,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 // Klick aufs Icon ohne Popup (nur im Zustand "verbunden, aber gesperrt"): KeePass zum Entsperren nach vorne holen
-chrome.action.onClicked.addListener(async () => {
-    if (!ferry) return;
-    diag("hintergrund", "symbol geklickt (gesperrt-modus)", { verbunden: ferry.store.state.connected });
-    if (ferry.store.state.connected) {
-        // Bewusster Klick: ohne Bremsen im Hintergrund entsperren (Windows Hello), sonst wie bisher KeePass holen
-        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        const result = await ferry.requestBackgroundUnlock(tab?.id ?? -1, tab?.url ?? "", true);
-        if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) ferry.openKeePass();
-        return;
-    }
-    // Zustand hat sich inzwischen geändert: normales Popup zeigen
-    await chrome.action.setPopup({ popup: "dist/popup/index.html" });
-    try {
-        await chrome.action.openPopup();
-    } catch (e) {
-        FerryLog.warn("Could not open popup: " + e);
-    }
-});
-
 // Klick auf die Windows-Benachrichtigung zu einem Hinweis: Browserfenster nach vorne und Popup mit dem Hinweis öffnen
 chrome.notifications.onClicked.addListener(async id => {
     if (!id.startsWith(OPEN_POPUP_NOTIFICATION_PREFIX)) return;

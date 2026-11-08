@@ -833,6 +833,26 @@ namespace KeePassFerry
         }
 
         /// <summary>
+        /// Zustand für die Anzeige in der Erweiterung: "open" (mindestens eine Datenbank offen),
+        /// "locked" (gesperrt) oder "closed" (keine Datenbank geladen)
+        /// </summary>
+        [JsonRpcMethod]
+        public string GetWorkspaceState()
+        {
+            var mw = _host.MainWindow;
+            string state = "closed";
+            mw.Invoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                foreach (KeePass.UI.PwDocument doc in mw.DocumentManager.Documents)
+                {
+                    if (doc.Database.IsOpen) { state = "open"; return; }
+                    if (mw.IsFileLocked(doc)) state = "locked";
+                }
+            });
+            return state;
+        }
+
+        /// <summary>
         /// Entsperrt eine gesperrte Datenbank im Hintergrund über KeePass' eigene Entsperr-Routine
         /// (wie "Arbeitsbereich entsperren" im Tray-Menü): Es erscheint nur die Schlüsselabfrage, die z. B.
         /// KeePassWinHello durch die Windows-Hello-Abfrage ersetzt. Das Hauptfenster wird nicht nach vorne geholt.

@@ -45,6 +45,8 @@ export class NativeSessionManager {
     private channel: FerryChannelClient = null;
     private readonly store = new BrowserFerryChannelStore();
     private keePassConnected = false;
+    // Host hat KeePass.exe gefunden und kann es starten (ältere Hosts melden das nicht)
+    private hostCanStartKeePass = false;
     private reconnectTimer: number = null;
     private chunks = new Map<number, string[]>();
     private _features: string[] = [];
@@ -147,6 +149,9 @@ export class NativeSessionManager {
                 break;
             case "chunk":
                 this.receiveChunk(msg);
+                break;
+            case "canStartKeePass":
+                this.hostCanStartKeePass = true;
                 break;
             default:
                 FerryLog.warn("Unknown native host status: " + hostStatus);
@@ -263,6 +268,15 @@ export class NativeSessionManager {
         }
     }
 
+    // Host bitten, KeePass zu starten (nur auf Klick im Popup)
+    startKeePass() {
+        try {
+            this.port?.postMessage({ keepassferryHost: "startKeePass" });
+        } catch (ex) {
+            FerryLog.debug("startKeePass failed: " + ex);
+        }
+    }
+
     // JSON-RPC-Text über den verschlüsselten Kanal senden
     sendMessage(data: string) {
         if (!this.port || !this.channel?.isReady) {
@@ -276,6 +290,7 @@ export class NativeSessionManager {
     async status() {
         return {
             hostRunning: this.port !== null,
+            canStartKeePass: this.port !== null && this.hostCanStartKeePass,
             connected: this.isActive(),
             paired: await this.store.isPaired(),
             pairingCode: this.isActive() ? null : this.pendingPairingCode,

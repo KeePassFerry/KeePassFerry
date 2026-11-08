@@ -360,6 +360,14 @@ export class jsonrpcClient {
         return !!responses?.[0]?.resultWrapper?.result;
     }
 
+    // "open", "locked" oder "closed"; Plugins vor 1.0.30 kennen die Abfrage nicht (dann wie bisher "locked")
+    async getWorkspaceState(): Promise<string> {
+        const sessionManager = this.pluginClient.getPrimarySessionManager();
+        if (!sessionManager) return "locked";
+        const responses = await this.pluginClient.request([sessionManager], "GetWorkspaceState", []);
+        return responses?.[0]?.resultWrapper?.result ?? "locked";
+    }
+
     // Gesperrte Datenbank im Hintergrund entsperren lassen (Schlüsselabfrage/Windows Hello, ohne KeePass-Fenster)
     async requestUnlock(): Promise<string> {
         const sessionManager = this.pluginClient.getPrimarySessionManager();

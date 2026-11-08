@@ -106,6 +106,11 @@ namespace KeePassFerry
                 trayed = false;
             }
 
+            // Das Minimieren/Wiederherstellen oben löst bei "In den Infobereich minimieren" KeePass' eigene Logik aus: Das Fenster
+            // ist zu sehen, gilt aber als versteckt (Form.Visible=false), und das X bleibt wirkungslos (#16)
+            if (!trayed && !Program.MainForm.Visible)
+                _host.MainWindow.EnsureVisibleForegroundWindow(true, false);
+
             Program.MainForm.WindowState = minimised ? FormWindowState.Minimized : FormWindowState.Normal;
 
             if (trayed)

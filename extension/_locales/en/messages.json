@@ -632,7 +632,7 @@
     "description": "KeePassFerry toolbar button tooltip"
   },
   "action_unlock_keepass": {
-    "message": "KeePass is locked – click to unlock",
+    "message": "KeePass is locked",
     "description": "KeePassFerry toolbar button tooltip"
   },
   "attachment_paste_hint": {
@@ -774,6 +774,30 @@
   "ferry_status_connected": {
     "message": "Connected to KeePass",
     "description": "KeePassFerry settings"
+  },
+  "action_open_keepass": {
+    "message": "No database loaded in KeePass",
+    "description": "KeePassFerry"
+  },
+  "ferry_status_no_database": {
+    "message": "No database loaded",
+    "description": "KeePassFerry"
+  },
+  "ferry_popup_no_database_hint": {
+    "message": "Open a database in KeePass so KeePassFerry can suggest logins.",
+    "description": "KeePassFerry"
+  },
+  "ferry_footer_no_database": {
+    "message": "No database",
+    "description": "KeePassFerry"
+  },
+  "ferry_popup_start_keepass": {
+    "message": "Start KeePass",
+    "description": "KeePassFerry"
+  },
+  "ferry_field_icon_no_database": {
+    "message": "No database loaded in KeePass – click to open KeePass",
+    "description": "KeePassFerry"
   },
   "ferry_status_locked": {
     "message": "KeePass is locked",

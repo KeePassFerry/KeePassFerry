@@ -1036,11 +1036,14 @@ export class FormFilling {
             });
 
             // Give the user a way to choose an entry interactively
-            this.fieldIcon.addFieldIconToFields(
-                passwordFields,
-                otherFields,
-                orderedEntriesWithPreference
-            );
+            // Nur mit offener Datenbank: Eine Antwort von vorher darf nach Sperren oder Beenden kein Treffer-Symbol setzen
+            if (this.store.state.connected && this.store.state.KeePassDatabases.length > 0) {
+                this.fieldIcon.addFieldIconToFields(
+                    passwordFields,
+                    otherFields,
+                    orderedEntriesWithPreference
+                );
+            }
         }
 
         // this records the entry that we eventually choose as the one to fill the chosen form with
@@ -2017,6 +2020,6 @@ export class FormFilling {
     // Datenbank gesperrt: Gesperrt-Symbol an erkannten Anmeldefeldern, Klick entsperrt
     public lockFieldIcons(onUnlockRequested: () => void) {
         this.fieldIcon.onUnlockRequested = onUnlockRequested;
-        this.fieldIcon.lockFieldIcons(findLoginFields());
+        this.fieldIcon.lockFieldIcons(findLoginFields(), this.store.state.noDatabaseLoaded);
     }
 }

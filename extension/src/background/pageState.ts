@@ -30,6 +30,7 @@ export function pageStateOf(state: FerryState): FerryState {
         notifications: [],
         connected: state.connected,
         connectedNative: state.connectedNative,
+        noDatabaseLoaded: state.noDatabaseLoaded,
         currentSearchTerm: null,
         loginsFound: false,
         searchResults: null,
@@ -45,6 +46,7 @@ export function pageMutationOf(mutation: Mutation): Mutation {
     switch (mutation.type) {
         case types.updateConnected:
         case types.updateConnectedNative:
+        case types.updateNoDatabaseLoaded:
         case types.updateActiveKeePassDatabaseIndex:
         case types.updateEntryUpdateStartedAtTimestamp:
             return mutation;

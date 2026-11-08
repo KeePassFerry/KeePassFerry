@@ -112,10 +112,19 @@ describe("pageMutationOf", () => {
     });
 });
 
+// Wächter: Eine neue Änderungsart muss in beiden Stores übernommen werden, sonst bleibt der Stand in Seite bzw. Popup alt
+describe("Stores", () => {
+    it.each(["NonReactiveStore.ts", "index.ts"])("%s übernimmt alle verteilten Änderungen", file => {
+        const text = readFileSync(join(__dirname, "../store", file), "utf8");
+        const fehlend = Object.keys(types).filter(t => !text.includes("mutation.type === types." + t));
+        expect(fehlend).toEqual([]);
+    });
+});
+
 // Wächter: Seiten-Code darf nur Zustand lesen, den pageStateOf mitschickt
 describe("Seiten-Skripte", () => {
     it("lesen nur Felder, die an Seiten verteilt werden", () => {
-        const allowed = new Set(["connected", "connectedNative", "ActiveKeePassDatabaseIndex", "KeePassDatabases", "entryUpdateStartedAtTimestamp"]);
+        const allowed = new Set(["connected", "connectedNative", "noDatabaseLoaded", "ActiveKeePassDatabaseIndex", "KeePassDatabases", "entryUpdateStartedAtTimestamp"]);
         const dir = join(__dirname, "../page");
         const used = new Set<string>();
         for (const file of readdirSync(dir).filter(f => f.endsWith(".ts"))) {

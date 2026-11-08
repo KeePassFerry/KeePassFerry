@@ -112,6 +112,8 @@ const useStore = defineStore("ferry", {
                 this.updateConnected(mutation.payload, false);
             } else if (mutation.type === types.updateConnectedNative) {
                 this.updateConnectedNative(mutation.payload, false);
+            } else if (mutation.type === types.updateNoDatabaseLoaded) {
+                this.updateNoDatabaseLoaded(mutation.payload, false);
             } else if (mutation.type === types.updateCurrentSearchTerm) {
                 this.updateCurrentSearchTerm(mutation.payload, false);
             } else if (mutation.type === types.updateEntryUpdateStartedAtTimestamp) {
@@ -157,6 +159,10 @@ const useStore = defineStore("ferry", {
         updateCurrentSearchTerm(payload: string, distribute: boolean = true) {
             this.currentSearchTerm = payload;
             if (distribute) this.distributeAction?.(new Mutation(types.updateCurrentSearchTerm, payload));
+        },
+        updateNoDatabaseLoaded(payload: boolean, distribute: boolean = true) {
+            this.noDatabaseLoaded = payload;
+            if (distribute) this.distributeAction?.(new Mutation(types.updateNoDatabaseLoaded, payload));
         },
         updateKeePassDatabases(payload: Database[], distribute: boolean = true) {
             this.KeePassDatabases = payload;

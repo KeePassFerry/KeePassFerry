@@ -30,6 +30,7 @@ export class FerryFieldIcon {
 
     // Gesperrt: Symbole bleiben stehen, ein Klick entsperrt (Windows Hello) statt die Auswahl zu öffnen
     private locked = false;
+    private lockGlyph: "lock" | "dash" = "lock";
     public onUnlockRequested: () => void = () => undefined;
 
     public removeFieldIconFromAllFields() {
@@ -42,24 +43,30 @@ export class FerryFieldIcon {
 
     // Datenbank gesperrt: vorhandene Symbole auf "gesperrt" stellen und erkannte Anmeldefelder (Passwort,
     // Benutzer nach loginFields.ts) mit dem Gesperrt-Symbol versehen. Ein Klick entsperrt, nichts geschieht von selbst.
-    public lockFieldIcons(loginFields: HTMLElement[] = []) {
+    // noDatabase: In KeePass ist keine Datenbank geladen: Plakette mit Strich statt Schloss, Klick holt KeePass
+    public lockFieldIcons(loginFields: HTMLElement[] = [], noDatabase = false) {
         if (configManager.current.ferryShowFieldIcons === false) return;
         const elements = [...this.icons.elements(), ...loginFields.filter(el => !this.icons.has(el) && el.offsetWidth >= 50)];
         pageDiag("gesperrt-symbole", { vorhanden: this.icons.elements().length, anmeldefelder: loginFields.length, gesetzt: elements.length });
         if (elements.length === 0) return;
         this.locked = true;
-        this.iconWidth = FerryFieldIcon.LOCKED_ICON_WIDTH;
-        FerryFieldIcon.lockedIcon().then(image => {
-            if (!this.locked) return;
+        const width = FerryFieldIcon.LOCKED_ICON_WIDTH;
+        const label = $STR(noDatabase ? "ferry_field_icon_no_database" : "ferry_field_icon_locked");
+        const glyph = noDatabase ? "dash" : "lock";
+        this.lockGlyph = glyph;
+        this.iconWidth = width;
+        FerryFieldIcon.lockedIcon(glyph).then(image => {
+            // Zustand kann inzwischen gewechselt haben (das Bild wird beim ersten Mal erst erzeugt)
+            if (!this.locked || this.lockGlyph !== glyph) return;
             for (const el of elements) {
                 if (this.icons.has(el)) {
-                    this.icons.setImage(el, image, FerryFieldIcon.LOCKED_ICON_WIDTH);
-                    this.icons.setLabel(el, $STR("ferry_field_icon_locked"));
+                    this.icons.setImage(el, image, width);
+                    this.icons.setLabel(el, label);
                 } else if (el.isConnected) {
                     this.icons.add(el, {
                         image,
-                        width: FerryFieldIcon.LOCKED_ICON_WIDTH,
-                        label: $STR("ferry_field_icon_locked"),
+                        width,
+                        label,
                         onClick: () => this.onIconClick(el)
                     });
                 }
@@ -70,10 +77,10 @@ export class FerryFieldIcon {
     // Gesperrt-Symbol: KeePassFerry-Symbol mit oranger Plakette und weißem Schloss daneben (wie die Trefferzahl).
     // Angezeigt 29 × 16 px (Leinwand doppelt so groß für scharfe Darstellung).
     static readonly LOCKED_ICON_WIDTH = 29;
-    private static lockedIconPromise: Promise<string> = null;
-    public static lockedIcon(): Promise<string> {
-        if (!FerryFieldIcon.lockedIconPromise) {
-            FerryFieldIcon.lockedIconPromise = new Promise(resolve => {
+    private static lockedIconPromises = new Map<string, Promise<string>>();
+    public static lockedIcon(glyph: "lock" | "dash" = "lock"): Promise<string> {
+        if (!FerryFieldIcon.lockedIconPromises.has(glyph)) {
+            FerryFieldIcon.lockedIconPromises.set(glyph, new Promise(resolve => {
                 const img = new Image();
                 img.onload = () => {
                     const pillWidth = 24;
@@ -93,14 +100,19 @@ export class FerryFieldIcon {
                     ctx.closePath();
                     ctx.fillStyle = LOCK_COLOR;
                     ctx.fill();
-                    drawLockGlyph(ctx, x + pillWidth / 2, 16, 16);
+                    if (glyph === "lock") {
+                        drawLockGlyph(ctx, x + pillWidth / 2, 16, 16);
+                    } else {
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fillRect(x + 6, 14, pillWidth - 12, 4);
+                    }
                     resolve(canvas.toDataURL());
                 };
                 img.onerror = () => resolve(FerryFieldIcon.FERRY_ICON_32);
                 img.src = FerryFieldIcon.FERRY_ICON_32;
-            });
+            }));
         }
-        return FerryFieldIcon.lockedIconPromise;
+        return FerryFieldIcon.lockedIconPromises.get(glyph);
     }
 
     private onIconClick(element: HTMLElement) {

@@ -392,18 +392,19 @@ class Ferry {
         const text = !actionConfig.connectionAvailable ? "OFF" : !actionConfig.dbAvailable ? "" : showSave ? "+" : (actionConfig.matchedEntries > 0 ? actionConfig.matchedEntries.toString() : "");
         const color = !actionConfig.connectionAvailable ? "red" : !actionConfig.dbAvailable ? "orange" : showSave ? SAVE_BADGE_COLOR : "blue";
         const notRunning = !actionConfig.connectionAvailable;
-        const locked = actionConfig.connectionAvailable && !actionConfig.dbAvailable;
+        const noDatabase = actionConfig.connectionAvailable && !actionConfig.dbAvailable && this.store.state.noDatabaseLoaded;
+        const locked = actionConfig.connectionAvailable && !actionConfig.dbAvailable && !noDatabase;
         const title = notRunning
             ? $STR("action_keepass_not_running")
+            : noDatabase
+                ? $STR("action_open_keepass")
             : locked
                 ? $STR("action_unlock_keepass")
                 : showSave
                     ? $STR("saveNotice_title")
                     : "KeePassFerry";
-        // Gesperrt: Klick aufs Icon entsperrt direkt (kein Popup dazwischen)
-        chrome.action.setPopup({ popup: locked ? "" : "dist/popup/index.html" });
-        if (locked) {
-            this.lockedActionIcon()
+        if (locked || noDatabase) {
+            this.statusActionIcon(locked ? "lock" : "dash")
                 .then(imageData => chrome.action.setIcon({ imageData }))
                 .catch(() => chrome.action.setIcon({ path: iconPath }));
         } else {
@@ -414,11 +415,12 @@ class Ferry {
         chrome.action.setTitle({title: title});
     }
 
-    // Symbol der Symbolleiste für "gesperrt": KeePassFerry-Symbol mit oranger Plakette und weißem Schloss unten rechts
-    private lockedActionIconPromise: Promise<Record<string, ImageData>> = null;
-    private lockedActionIcon(): Promise<Record<string, ImageData>> {
-        if (!this.lockedActionIconPromise) {
-            this.lockedActionIconPromise = (async () => {
+    // Symbol der Symbolleiste: KeePassFerry-Symbol mit oranger Plakette unten rechts,
+    // weißes Schloss für "gesperrt", weißer Strich für "keine Datenbank geladen"
+    private statusActionIcons = new Map<string, Promise<Record<string, ImageData>>>();
+    private statusActionIcon(glyph: "lock" | "dash"): Promise<Record<string, ImageData>> {
+        if (!this.statusActionIcons.has(glyph)) {
+            const promise = (async () => {
                 const blob = await (await fetch(chrome.runtime.getURL("/assets/images/48.png"))).blob();
                 const bitmap = await createImageBitmap(blob);
                 const result: Record<string, ImageData> = {};
@@ -437,15 +439,21 @@ class Ferry {
                     ctx.beginPath();
                     ctx.arc(cx, cy, r, 0, Math.PI * 2);
                     ctx.fill();
-                    drawLockGlyph(ctx, cx, cy, r * 1.25);
+                    if (glyph === "lock") {
+                        drawLockGlyph(ctx, cx, cy, r * 1.25);
+                    } else {
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fillRect(cx - r * 0.6, cy - Math.max(1, r * 0.17), r * 1.2, Math.max(2, r * 0.34));
+                    }
                     result[String(size)] = ctx.getImageData(0, 0, size, size);
                 }
                 bitmap.close();
                 return result;
             })();
-            this.lockedActionIconPromise.catch(() => (this.lockedActionIconPromise = null));
+            promise.catch(() => this.statusActionIcons.delete(glyph));
+            this.statusActionIcons.set(glyph, promise);
         }
-        return this.lockedActionIconPromise;
+        return this.statusActionIcons.get(glyph);
     }
 
     private unlockGlobalPauseUntil = 0;
@@ -605,6 +613,8 @@ class Ferry {
     }
 
     resetBrowserActionColor() {
+        // Plakette (keine Datenbank) bleibt, solange der Zustand gilt
+        if (this.store.state.connected && this.store.state.KeePassDatabases.length === 0) return;
         chrome.action.setIcon({ path: "/assets/images/48.png" });
     }
 
@@ -710,7 +720,22 @@ class Ferry {
         }
     }
 
+    // Keine offene Datenbank: erst klären, ob gesperrt oder gar keine geladen (Seiten bekommen den Zustand vor der Liste)
     updateKeePassDatabases(newDatabases: Database[]) {
+        if (newDatabases.length > 0) {
+            this.store.updateNoDatabaseLoaded(false);
+            this.applyKeePassDatabases(newDatabases);
+            return;
+        }
+        this.rpc.getWorkspaceState()
+            .catch(() => "locked")
+            .then(state => {
+                this.store.updateNoDatabaseLoaded(state === "closed");
+                this.applyKeePassDatabases(newDatabases);
+            });
+    }
+
+    private applyKeePassDatabases(newDatabases: Database[]) {
         //TODO:5: To improve performance we might need to determine if anything
         // has actually changed before doing the dispatches and poking the
         // current tab frames to find entries
@@ -867,7 +892,8 @@ class Ferry {
 
         this.selectDatabase(
             this.getKeePassFileNameToOpen(),
-            !hasNativeDBs,
+            // Keine Datenbank geladen: Der Nutzer will in KeePass eine wählen, KeePass bleibt vorne
+            !hasNativeDBs && !this.store.state.noDatabaseLoaded,
             SessionType.Native
         );
     }

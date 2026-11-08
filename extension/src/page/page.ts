@@ -262,6 +262,14 @@ if (document.body) {
             }
             if (m.mutation) {
                 store.onRemoteMessage(Port.raw, m.mutation);
+                // KeePass beendet: Das Signal zum Zurücksetzen geht nur an den Vordergrund-Tab, die Verbindung erreicht jeden Tab
+                if (m.mutation.type === "updateConnected" && !m.mutation.payload) {
+                    formFilling.removeFieldIconFromAllFields();
+                }
+                // Gesperrt oder keine Datenbank geladen: Feldsymbole sofort dem Zustand anpassen
+                if (m.mutation.type === "updateNoDatabaseLoaded" && store.state.connected && store.state.KeePassDatabases.length === 0) {
+                    formFilling.lockFieldIcons(startUnlockWaitIfLocked);
+                }
                 return;
             }
             if (m.webauthn) {
@@ -291,6 +299,9 @@ if (document.body) {
                     formFilling.removeFieldIconFromAllFields();
                     otpFields.observe();
                     otpFields.rescan();
+                } else if (!store.state.connected) {
+                    // KeePass läuft nicht: Hier gibt es nichts zu entsperren (Symbol in der Leiste zeigt "OFF")
+                    formFilling.removeFieldIconFromAllFields();
                 } else {
                     // Gesperrt: Symbole bleiben (Zustand "gesperrt"), Klick entsperrt per Windows Hello
                     formFilling.lockFieldIcons(startUnlockWaitIfLocked);

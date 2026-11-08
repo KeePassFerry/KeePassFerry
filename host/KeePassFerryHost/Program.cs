@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
@@ -56,10 +57,52 @@ namespace KeePassFerryHost
             return text == "{\"keepassferryHost\":\"" + command + "\"}";
         }
 
+        // KeePass.exe im eigenen Ordner oder bis zu drei Ebenen darüber (Host liegt im Plugins-Ordner von KeePass).
+        // Der Pfad kommt nie von außen: Die Erweiterung kann nur "startKeePass" sagen, nicht was gestartet wird.
+        private static string FindKeePassExe()
+        {
+            try
+            {
+                var dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+                for (int i = 0; i < 4 && dir != null; i++, dir = dir.Parent)
+                {
+                    string candidate = Path.Combine(dir.FullName, "KeePass.exe");
+                    if (File.Exists(candidate)) return candidate;
+                }
+            }
+            catch (Exception)
+            {
+            }
+            return null;
+        }
+
+        private static DateTime _lastStart = DateTime.MinValue;
+
+        // Nur wenn KeePass nicht verbunden ist; nicht mehrfach kurz hintereinander (Doppelklick, langsamer Start)
+        private static void StartKeePass()
+        {
+            lock (PipeLock)
+            {
+                if (_pipe != null) return;
+            }
+            if (DateTime.UtcNow - _lastStart < TimeSpan.FromSeconds(15)) return;
+            string exe = FindKeePassExe();
+            if (exe == null) return;
+            _lastStart = DateTime.UtcNow;
+            try
+            {
+                Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(exe) });
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         private static int Main()
         {
             _browserOut = Console.OpenStandardOutput();
             Stream browserIn = Console.OpenStandardInput();
+            if (FindKeePassExe() != null) SendStatus("canStartKeePass");
 
             var browserReader = new Thread(() => ReadFromBrowser(browserIn));
             browserReader.IsBackground = true;
@@ -118,6 +161,11 @@ namespace KeePassFerryHost
                     if (IsHostCommand(message, "allowForeground"))
                     {
                         AllowKeePassForeground();
+                        continue;
+                    }
+                    if (IsHostCommand(message, "startKeePass"))
+                    {
+                        StartKeePass();
                         continue;
                     }
                     lock (PipeLock)

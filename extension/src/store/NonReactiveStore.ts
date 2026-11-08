@@ -44,6 +44,8 @@ export default class NonReactiveStore {
             this.updateConnected(mutation.payload, false);
         } else if (mutation.type === types.updateConnectedNative) {
             this.updateConnectedNative(mutation.payload, false);
+        } else if (mutation.type === types.updateNoDatabaseLoaded) {
+            this.updateNoDatabaseLoaded(mutation.payload, false);
         } else if (mutation.type === types.updateCurrentSearchTerm) {
             this.updateCurrentSearchTerm(mutation.payload, false);
         } else if (mutation.type === types.updateEntryUpdateStartedAtTimestamp) {
@@ -98,6 +100,11 @@ export default class NonReactiveStore {
         undefAbort(payload);
         this.state.currentSearchTerm = payload;
         if (distribute) this.distributeAction?.(new Mutation(types.updateCurrentSearchTerm, payload));
+    }
+    public updateNoDatabaseLoaded(payload: boolean, distribute: boolean = true) {
+        undefAbort(payload);
+        this.state.noDatabaseLoaded = payload;
+        if (distribute) this.distributeAction?.(new Mutation(types.updateNoDatabaseLoaded, payload));
     }
     public updateKeePassDatabases(payload: Database[], distribute: boolean = true) {
         undefAbort(payload);

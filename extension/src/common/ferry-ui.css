@@ -39,6 +39,11 @@ Eine Fläche, Zeilen mit feinen Trennlinien, Symbole einheitlich 18 px (Tabler),
     flex: none;
 }
 
+/* Symbol vor dem Knopftext: als Inline-Element säße es auf der Textgrundlinie und zu hoch */
+.v-btn__prepend .ferry-ico {
+    display: block;
+}
+
 /* Symbolknopf 32 px, ruhig, mit Hover-Fläche */
 .ferry-ib {
     width: 32px;

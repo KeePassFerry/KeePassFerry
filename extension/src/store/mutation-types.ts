@@ -1,6 +1,7 @@
 export const updateActiveKeePassDatabaseIndex = "updateActiveKeePassDatabaseIndex";
 export const updateConnected = "updateConnected";
 export const updateConnectedNative = "updateConnectedNative";
+export const updateNoDatabaseLoaded = "updateNoDatabaseLoaded";
 export const updateCurrentSearchTerm = "updateCurrentSearchTerm";
 export const updateLatestConnectionError = "updateLatestConnectionError";
 export const updateLastRpcRefresh = "updateLastRpcRefresh";
