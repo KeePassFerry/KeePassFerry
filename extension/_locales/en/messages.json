@@ -1824,6 +1824,22 @@
     "message": "Which entry from KeePass do you want to sign in with?",
     "description": "KeePassFerry"
   },
+  "ferry_netauth_question_new": {
+    "message": "KeePass has no entry for this yet. Enter your sign-in details:",
+    "description": "KeePassFerry"
+  },
+  "ferry_netauth_username": {
+    "message": "Username",
+    "description": "KeePassFerry"
+  },
+  "ferry_netauth_password": {
+    "message": "Password",
+    "description": "KeePassFerry"
+  },
+  "ferry_netauth_save": {
+    "message": "Save in KeePass",
+    "description": "KeePassFerry"
+  },
   "ferry_netauth_site": {
     "message": "$1 requires you to sign in",
     "description": "KeePassFerry"

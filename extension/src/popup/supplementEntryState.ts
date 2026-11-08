@@ -13,7 +13,8 @@ export function supplementEntryState(entry: Entry, saveState: SaveState, urls?: 
         ? {
               URLs: [sd.url],
               fields: newFields,
-              title: sd.title
+              title: sd.title,
+              ...(sd.httpRealm ? { httpRealm: sd.httpRealm } : {})
           }
         : {}) as Entry;
     const overwriteWithURLs = (urls

@@ -1824,6 +1824,22 @@
         "message": "Mit welchem Eintrag aus KeePass anmelden?",
         "description": "KeePassFerry"
     },
+    "ferry_netauth_question_new": {
+        "message": "In KeePass gibt es dafür noch keinen Eintrag. Anmeldedaten eingeben:",
+        "description": "KeePassFerry"
+    },
+    "ferry_netauth_username": {
+        "message": "Benutzername",
+        "description": "KeePassFerry"
+    },
+    "ferry_netauth_password": {
+        "message": "Passwort",
+        "description": "KeePassFerry"
+    },
+    "ferry_netauth_save": {
+        "message": "In KeePass speichern",
+        "description": "KeePassFerry"
+    },
     "ferry_netauth_site": {
         "message": "$1 verlangt eine Anmeldung",
         "description": "KeePassFerry"

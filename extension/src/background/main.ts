@@ -14,7 +14,7 @@ import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import { Action } from "../common/Action";
 import type { AddonMessage } from "../common/AddonMessage";
-import { NetworkAuth } from "./NetworkAuth";
+import { NetworkAuth, onNetworkRequestCompleted, onNetworkRequestFailed } from "./NetworkAuth";
 import { pageStateOf } from "./pageState";
 import { appleChangePasswordUrl, changePasswordUrl } from "./changePassword";
 import { forgetExpiryNotice } from "./expiryNotice";
@@ -566,6 +566,10 @@ if (isFirefox()) {
         ["asyncBlocking"]
     );
 }
+
+// Netzwerkanmeldung mit "In KeePass speichern": erst nach angenommener Anmeldung das Speichern-Popup
+chrome.webRequest.onCompleted.addListener(details => onNetworkRequestCompleted(details), { urls: ["<all_urls>"] });
+chrome.webRequest.onErrorOccurred.addListener(details => onNetworkRequestFailed(details), { urls: ["<all_urls>"] });
 
 // This can be used instead once Chrome either supports Promises in "blocking" mode
 // or, more likely, a new flag, which then Firefox would have to support too but we
