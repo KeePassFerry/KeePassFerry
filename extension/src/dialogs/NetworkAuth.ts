@@ -1,10 +1,14 @@
 import { FerryLog } from "../common/Logger";
 import { configManager } from "../common/ConfigManager";
 import { Entry } from "../common/model/Entry";
-import {setup as i18nSetup } from "../common/i18n";
+import { setup as i18nSetup } from "../common/i18n";
 
+// Auswahl wie im Passkey-Dialog: Eintrag markieren, mit "Anmelden" bestätigen (Doppelklick und Enter direkt).
+// "Abbrechen" schließt das Fenster, der Browser zeigt dann sein eigenes Anmeldefenster.
 class NetworkAuth {
-    // Kopf: nur der Hostname (statt der ganzen Adresse) und darunter der Bereich, den die Seite meldet
+    private selected = 0;
+    private items: HTMLButtonElement[] = [];
+
     public setupPage(entries: Entry[], realm: string, url: string, isProxy: boolean) {
         let host = url;
         try {
@@ -17,129 +21,74 @@ class NetworkAuth {
             [host]
         );
         document.getElementById("network_auth_realm").textContent = realm ? $STRF("ferry_netauth_realm", [realm]) : "";
-        this.createNearNode(document.getElementById("network_auth_choose"), entries);
+        document.getElementById("network_auth_question").textContent = $STR(
+            entries.length === 1 ? "ferry_netauth_question_one" : "ferry_netauth_question_many"
+        );
+        const list = document.getElementById("network_auth_list");
+        if (entries.length === 1) list.classList.add("single");
+        FerryLog.debug("setting " + entries.length + " matched entries");
+        entries.forEach((entry, i) => list.append(this.createItem(entry, i)));
+        this.select(0);
     }
 
-    async supplyNetworkAuth(entryIndex: number) {
+    private createItem(entry: Entry, index: number) {
+        const username = Entry.getUsernameField(entry)?.value || "[" + $STR("noUsername_partial_tip") + "]";
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "item";
+        b.setAttribute("role", "radio");
+        const radio = document.createElement("span");
+        radio.className = "radio";
+        const text = document.createElement("span");
+        text.className = "text";
+        const title = document.createElement("span");
+        title.className = "title";
+        title.textContent = username;
+        const sub = document.createElement("span");
+        sub.className = "subtitle";
+        sub.textContent = entry.title + " · " + entry.parentGroup.path;
+        text.append(title, sub);
+        b.append(radio, text);
+        b.title = $STRF("matchedLogin_tip", [entry.title, entry.database.name + "/" + entry.parentGroup.path, username]);
+        b.addEventListener("click", () => this.select(index));
+        b.addEventListener("dblclick", () => this.submit(index));
+        this.items.push(b);
+        return b;
+    }
+
+    private select(index: number) {
+        if (index < 0 || index >= this.items.length) return;
+        this.selected = index;
+        this.items.forEach((b, i) => {
+            b.classList.toggle("selected", i === index);
+            b.setAttribute("aria-checked", i === index ? "true" : "false");
+            b.tabIndex = i === index ? 0 : -1;
+        });
+        this.items[index].focus();
+    }
+
+    async submit(index = this.selected) {
+        if (!this.items[index]) return;
         const tab = await chrome.tabs.getCurrent();
         await chrome.runtime.sendMessage({
             action: "NetworkAuth_ok",
-            selectedEntryIndex: entryIndex
+            selectedEntryIndex: index
         });
         await chrome.tabs.remove(tab.id);
     }
 
-    public createNearNode(node: HTMLElement, entries: Entry[]) {
-        const container = document.createElement("div");
-        container.id = "Ferry-MatchedLoginsList";
-        const list = document.createElement("ul");
-        this.setLogins(entries, list);
-        container.appendChild(list);
-        node.parentNode.insertBefore(container, node.nextSibling);
-        (list.firstChild as HTMLElement).focus();
-    }
-
-    private setLogins(entries: Entry[], container) {
-        FerryLog.debug("setting " + entries.length + " matched entries");
-
-        // add every matched entry to the container(s)
-        for (let i = 0; i < entries.length; i++) {
-            const entry = entries[i];
-            let usernameDisplayValue = "[" + $STR("noUsername_partial_tip") + "]";
-            const displayGroupPath = entry.database.name + "/" + entry.parentGroup.path;
-
-            const usernameField = Entry.getUsernameField(entry);
-            if (usernameField && usernameField.value) {
-                usernameDisplayValue = usernameField.value;
-            }
-
-            const loginItem = document.createElement("li");
-            loginItem.dataset.filename = entry.database.fileName;
-            loginItem.dataset.formIndex = entry.formIndex != null ? entry.formIndex.toString() : "";
-            loginItem.dataset.entryIndex = i.toString();
-            loginItem.dataset.uuid = entry.uuid;
-            loginItem.title = $STRF("matchedLogin_tip", [
-                entry.title,
-                displayGroupPath,
-                usernameDisplayValue
-            ]);
-            loginItem.tabIndex = i == 0 ? 0 : -1;
-
-            // Zeile wie im Popup: Symbolkachel, Titel, darunter Benutzername und Gruppe
-            const tile = document.createElement("span");
-            tile.className = "tile";
-            if (entry.icon?.iconImageData) {
-                const img = document.createElement("img");
-                img.alt = "";
-                img.src = "data:image/png;base64," + entry.icon.iconImageData;
-                tile.appendChild(img);
-            }
-            const text = document.createElement("span");
-            text.className = "text";
-            const title = document.createElement("span");
-            title.className = "title";
-            title.textContent = entry.title;
-            const sub = document.createElement("span");
-            sub.className = "sub";
-            sub.textContent = usernameDisplayValue + " · " + entry.parentGroup.path;
-            text.append(title, sub);
-            const arrow = document.createElement("span");
-            arrow.className = "arrow";
-            arrow.setAttribute("aria-hidden", "true");
-            arrow.textContent = "›";
-            loginItem.append(tile, text, arrow);
-
-            loginItem.addEventListener("keydown", this.keyboardNavHandler, false);
-            loginItem.addEventListener(
-                "click",
-                function (event) {
-                    event.stopPropagation();
-                    if (event.button == 0 || event.button == 1) {
-                        this.dispatchEvent(new Event("ferryCommand"));
-                    }
-                },
-                false
-            );
-            loginItem.addEventListener(
-                "ferryCommand",
-                function (this: HTMLElement) {
-                    networkAuth.supplyNetworkAuth(parseInt(this.dataset.entryIndex));
-                },
-                false
-            );
-
-            container.appendChild(loginItem);
-        }
-    }
-
-    private keyboardNavHandler(event: KeyboardEvent) {
-        const target = event.target as HTMLLIElement;
-
-        switch (event.keyCode) {
-            case 13: // enter
-                event.preventDefault();
-                event.stopPropagation();
-                target.dispatchEvent(new Event("ferryCommand"));
-                break;
-            case 40: // down
-                event.preventDefault();
-                event.stopPropagation();
-                if (target.nextElementSibling) {
-                    (target.nextElementSibling as HTMLLIElement).focus();
-                }
-                break;
-            case 38: // up
-                event.preventDefault();
-                event.stopPropagation();
-                if (target.previousElementSibling) {
-                    (target.previousElementSibling as HTMLLIElement).focus();
-                }
-                break;
-            case 27: // esc
-                event.preventDefault();
-                event.stopPropagation();
-                window.close();
-                break;
+    public onKey(event: KeyboardEvent) {
+        if (event.key === "Enter") {
+            // Enter auf "Abbrechen" bleibt Abbrechen
+            if ((event.target as HTMLElement)?.id === "network_auth_cancel") return;
+            event.preventDefault();
+            this.submit();
+        } else if (event.key === "Escape") {
+            event.preventDefault();
+            window.close();
+        } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            this.select(this.selected + (event.key === "ArrowDown" ? 1 : -1));
         }
     }
 }
@@ -158,8 +107,9 @@ async function setupNetworkAuthDialog() {
         }
     });
     chrome.runtime.sendMessage({ action: "NetworkAuth_load" });
-    // "Selbst eingeben": Fenster schließen, der Browser zeigt dann sein eigenes Anmeldefenster
-    document.getElementById("network_auth_manual").addEventListener("click", () => window.close());
+    document.getElementById("network_auth_cancel").addEventListener("click", () => window.close());
+    document.getElementById("network_auth_ok").addEventListener("click", () => networkAuth.submit());
+    document.addEventListener("keydown", e => networkAuth.onKey(e), true);
     document.getElementById("i18n_root").style.display = "flex";
 }
 

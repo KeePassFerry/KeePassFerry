@@ -1816,6 +1816,14 @@
         "message": "Zugehörige Domain: $1",
         "description": "KeePassFerry"
     },
+    "ferry_netauth_question_one": {
+        "message": "Mit diesem Eintrag aus KeePass anmelden:",
+        "description": "KeePassFerry"
+    },
+    "ferry_netauth_question_many": {
+        "message": "Mit welchem Eintrag aus KeePass anmelden?",
+        "description": "KeePassFerry"
+    },
     "ferry_netauth_site": {
         "message": "$1 verlangt eine Anmeldung",
         "description": "KeePassFerry"
@@ -1826,18 +1834,6 @@
     },
     "ferry_netauth_realm": {
         "message": "Bereich: $1",
-        "description": "KeePassFerry"
-    },
-    "ferry_netauth_choose": {
-        "message": "Anmeldedaten auswählen",
-        "description": "KeePassFerry"
-    },
-    "ferry_netauth_manual": {
-        "message": "Selbst eingeben",
-        "description": "KeePassFerry"
-    },
-    "ferry_netauth_manual_hint": {
-        "message": "Ohne Auswahl zeigt der Browser sein eigenes Anmeldefenster.",
         "description": "KeePassFerry"
     },
     "ferry_notification_click_to_open": {

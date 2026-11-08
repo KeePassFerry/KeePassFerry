@@ -496,6 +496,33 @@ class Ferry {
         return result;
     }
 
+    private unlockCancelListeners = new Set<() => void>();
+
+    // Entsperren anstoßen und warten, bis eine Datenbank offen ist. false nach Abbruch in KeePass
+    // (Plugin meldet ihn ab 1.0.28 sofort, ältere Plugins erst nach timeoutMs)
+    async unlockAndWait(tabId: number, url: string, timeoutMs = 45000): Promise<boolean> {
+        if (!this.store.state.connected) return false;
+        if (this.store.state.KeePassDatabases.length > 0) return true;
+        let cancelled = false;
+        const onCancel = () => (cancelled = true);
+        this.unlockCancelListeners.add(onCancel);
+        try {
+            const result = await this.requestBackgroundUnlock(tabId, url, true);
+            if (result !== "started" && !result?.startsWith("busy") && !result?.startsWith("focused")) {
+                return this.store.state.KeePassDatabases.length > 0;
+            }
+            const until = Date.now() + timeoutMs;
+            while (Date.now() < until) {
+                if (this.store.state.KeePassDatabases.length > 0) return true;
+                if (cancelled) return false;
+                await new Promise(r => setTimeout(r, 250));
+            }
+            return this.store.state.KeePassDatabases.length > 0;
+        } finally {
+            this.unlockCancelListeners.delete(onCancel);
+        }
+    }
+
     // Schickt den Speichern-Hinweis an den obersten Frame des Tabs, falls noch nicht weggeklickt
     offerSaveNotice(tabId: number) {
         const item = this.persistentTabStates
@@ -1108,6 +1135,10 @@ class Ferry {
                 FerryLog.info(
                     "KeePass is shutting down. [deprecated: Now inferred from connection loss]"
                 );
+                break;
+            case "13":
+                FerryLog.info("KeePass unlock prompt was cancelled.");
+                this.unlockCancelListeners.forEach(listener => listener());
                 break;
             default:
                 FerryLog.error("Invalid signal received by FerryListener (" + sig + ")");

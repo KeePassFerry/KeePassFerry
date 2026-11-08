@@ -24,6 +24,10 @@ namespace KeePassFerry.Models.DataExchange
         DATABASE_DELETING = 9,
         DATABASE_DELETED = 10,
         DATABASE_SELECTED = 11,
-        EXITING = 12
+        EXITING = 12,
+        /// <summary>
+        /// Von RequestUnlock angestoßene Schlüsselabfrage geschlossen, Datenbank weiter gesperrt
+        /// </summary>
+        UNLOCK_CANCELLED = 13
     }
 }

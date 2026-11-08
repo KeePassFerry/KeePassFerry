@@ -918,6 +918,13 @@ namespace KeePassFerry
                     finally
                     {
                         _ferryUnlockInProgress = false;
+                        // OpenDatabase kehrt erst nach geschlossener Schlüsselabfrage zurück: weiter zu = abgebrochen
+                        bool open = locked != null ? locked.Database.IsOpen : false;
+                        if (locked == null)
+                            foreach (KeePass.UI.PwDocument doc in mw.DocumentManager.Documents)
+                                if (doc.Database.IsOpen) open = true;
+                        if (!open)
+                            _keePassRpcPlugin.SignalAllManagedRPCClients(KeePassFerry.Models.DataExchange.Signal.UNLOCK_CANCELLED);
                     }
                 });
             });

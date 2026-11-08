@@ -130,15 +130,8 @@ export async function rpIdPermitted(frameUrl: string, rpId: string): Promise<boo
 }
 
 async function ensureUnlocked(tabId: number, url: string): Promise<boolean> {
-    if (!ferry.store.state.connected) return false;
-    if (ferry.store.state.KeePassDatabases.length > 0) return true;
-    // Die Seite wartet auf einen Passkey: ohne Bremsen entsperren lassen (Windows Hello), max. 45 s warten
-    await ferry.requestBackgroundUnlock(tabId, url, true);
-    for (let i = 0; i < 90; i++) {
-        if (ferry.store.state.KeePassDatabases.length > 0) return true;
-        await new Promise(r => setTimeout(r, 500));
-    }
-    return false;
+    // Die Seite wartet auf einen Passkey: ohne Bremsen entsperren lassen (Windows Hello)
+    return ferry.unlockAndWait(tabId, url);
 }
 
 export async function preparePasskey(sender: chrome.runtime.MessageSender, kind: "create" | "get", payload: any) {

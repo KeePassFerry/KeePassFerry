@@ -4,6 +4,18 @@ import { Entry } from "../common/model/Entry";
 import punycode from "punycode/";
 import { ferry } from "./KF";
 
+export function isPageRequest(details: any): boolean {
+    if (details.isProxy || details.tabId < 0) return false;
+    if (details.type === "main_frame") return true;
+    // Chrome: initiator (Origin), Firefox: originUrl (URL)
+    const from = details.initiator ?? details.originUrl;
+    try {
+        return !!from && new URL(from).origin === new URL(details.url).origin;
+    } catch (e) {
+        return false;
+    }
+}
+
 export class NetworkAuth {
     constructor() { }
 
@@ -26,8 +38,13 @@ export class NetworkAuth {
 
         // Anmeldefenster können auch eingebettete Fremdinhalte auslösen: nur auf ausdrücklichen Wunsch bedienen
         if (!configManager.current.ferryNetworkAuth) return { cancel: false };
-        if (!ferry.store.state.connected || ferry.store.state.ActiveKeePassDatabaseIndex < 0) {
-            return { cancel: false };
+        if (!ferry.store.state.connected) return { cancel: false };
+        if (ferry.store.state.ActiveKeePassDatabaseIndex < 0) {
+            // Gesperrt: entsperren lassen, aber nur für die aufgerufene Seite selbst (wie Bitwarden:
+            // Seitenaufruf oder Anfrage vom selben Server), nicht für eingebettete Inhalte fremder Server
+            if (!isPageRequest(requestDetails)) return { cancel: false };
+            if (!(await ferry.unlockAndWait(requestDetails.tabId, requestDetails.url))) return { cancel: false };
+            if (ferry.store.state.ActiveKeePassDatabaseIndex < 0) return { cancel: false };
         }
 
         FerryLog.info("Finding credentials for request ID: " + requestDetails.requestId);
@@ -118,13 +135,23 @@ export class NetworkAuth {
                 chrome.runtime.onMessage.removeListener(handleMessage);
                 chrome.windows.onRemoved.removeListener(declineHandling);
             }
+            // Höhe für Kopf, bis zu drei Einträge und Knöpfe (weitere scrollen); mittig über dem Browserfenster wie der Passkey-Dialog
+            const width = 480;
+            const height = 250 + 66 * Math.min(matchedEntries.length, 3);
             const createData = {
                 type: "popup",
                 url: "/dist/dialogs/NetworkAuth.html",
-                // Platz für Kopf, drei Einträge und Fußzeile ohne Scrollen (weitere Einträge scrollen in der Liste)
-                width: 480,
-                height: 470
+                width,
+                height
             } as chrome.windows.CreateData;
+            try {
+                const tab = await chrome.tabs.get(requestDetails.tabId);
+                const parent = await chrome.windows.get(tab.windowId);
+                createData.left = Math.round(parent.left + (parent.width - width) / 2);
+                createData.top = Math.round(parent.top + (parent.height - height) / 2);
+            } catch (e) {
+                // kein Tab (z. B. Proxy-Anmeldung): Browser wählt die Position
+            }
             try {
                 wind = await chrome.windows.create(createData);
                 chrome.windows.onRemoved.addListener(declineHandling);
