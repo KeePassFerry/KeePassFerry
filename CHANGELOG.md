@@ -2,6 +2,15 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.29 – 2026-11-08
+
+- New defaults for new installations (saved settings stay as they are): KeePassFerry asks for the group of a new
+  entry, shows no confirmation after saving and fills the browser's sign-in dialogs (automatic sign-in stays off).
+- Settings name the browser in use (Edge, Chrome, Brave, Opera, Vivaldi) instead of always "Edge"; the pairing name
+  in KeePass does too.
+- Tips: "Paste from the clipboard with a button" appears while the permission is missing and opens the setting.
+- KeePass options: the list of paired browsers updates as soon as a browser pairs or connects.
+
 ## 1.0.28 – 2026-11-08
 
 - Browser sign-in windows (HTTP authentication, e.g. router, NAS) with the option "Fill the browser's sign-in dialogs":
@@ -529,6 +538,16 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.29 – 2026-11-08
+
+- Neue Standardwerte für neue Installationen (gespeicherte Einstellungen bleiben): KeePassFerry fragt nach der Gruppe
+  eines neuen Eintrags, zeigt nach dem Speichern keine Bestätigung und füllt Anmeldefenster des Browsers aus
+  (automatisch anmelden bleibt aus).
+- Die Einstellungen nennen den verwendeten Browser (Edge, Chrome, Brave, Opera, Vivaldi) statt immer „Edge“; der
+  Kopplungsname in KeePass ebenso.
+- Tipps: „Einfügen aus der Zwischenablage per Knopf“ erscheint, solange die Erlaubnis fehlt, und öffnet die Einstellung.
+- KeePass-Optionen: Die Liste der gekoppelten Browser aktualisiert sich, sobald sich ein Browser koppelt oder verbindet.
 
 ## 1.0.28 – 2026-11-08
 

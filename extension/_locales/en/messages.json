@@ -1944,6 +1944,14 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_29_1_title": {
+    "message": "Polish",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_29_1_text": {
+    "message": "Settings now name your browser instead of always \"Edge\", and the list of paired browsers in KeePass updates right away. This needs the current plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_28_1_title": {
     "message": "Sign-in windows of routers and NAS",
     "description": "KeePassFerry"
