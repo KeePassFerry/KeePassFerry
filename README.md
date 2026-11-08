@@ -5,6 +5,10 @@
 <h1 align="center">KeePassFerry</h1>
 
 <p align="center">
+  <a href="https://github.com/KeePassFerry/KeePassFerry/actions/workflows/codeql.yml"><img src="https://github.com/KeePassFerry/KeePassFerry/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
+</p>
+
+<p align="center">
   Secure browser integration for <a href="https://keepass.info">KeePass Password Safe 2</a> on Windows:<br>
   logins, one-time codes and passkeys from your own KeePass database — no open ports, no cloud.
 </p>
