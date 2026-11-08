@@ -11,7 +11,7 @@ The browser extension in [`extension/`](extension/) is based on **Kee** by Kee V
 The KeePass plugin in [`plugin/`](plugin/) is based on **KeePassRPC** by Chris Tomlinson and contributors
 (<https://github.com/kee-org/keepassrpc>), licensed under the **GNU General Public License v2**
 (see [`plugin/LICENSE`](plugin/LICENSE)). The fork point is commit `17d1728`.
-It bundles **Jayrock** (JSON-RPC, MIT licence) as in the original.
+It bundles **Jayrock** (JSON-RPC, LGPL v3 or later) as in the original.
 
 ## Password Manager Resources (Apple)
 The password rules, change-password addresses and groups of domains sharing one login in
