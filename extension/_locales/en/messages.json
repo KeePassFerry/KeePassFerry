@@ -1628,8 +1628,12 @@
     "message": "Passkeys with KeePassFerry",
     "description": "KeePassFerry"
   },
+  "ferry_setting_passkeys_hint_generic": {
+    "message": "Off: passkey requests from websites go to the browser or Windows.",
+    "description": "KeePassFerry"
+  },
   "ferry_setting_passkeys_hint": {
-    "message": "Off: passkey requests from websites go to Edge or Windows.",
+    "message": "Off: passkey requests from websites go to $1 or Windows.",
     "description": "KeePassFerry"
   },
   "ferry_setting_fieldIcons": {
@@ -1640,12 +1644,20 @@
     "message": "Off: choose entries only via the KeePassFerry toolbar icon.",
     "description": "KeePassFerry"
   },
+  "ferry_setting_browserSaving_generic": {
+    "message": "Turn off the browser's password saving",
+    "description": "KeePassFerry"
+  },
   "ferry_setting_browserSaving": {
-    "message": "Turn off Edge's password saving",
+    "message": "Turn off $1's password saving",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_browserSaving_hint_generic": {
+    "message": "Avoids duplicate save prompts from the browser and KeePassFerry.",
     "description": "KeePassFerry"
   },
   "ferry_setting_browserSaving_hint": {
-    "message": "Avoids duplicate save prompts from Edge and KeePassFerry.",
+    "message": "Avoids duplicate save prompts from $1 and KeePassFerry.",
     "description": "KeePassFerry"
   },
   "ferry_welcome_download": {

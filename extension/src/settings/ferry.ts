@@ -5,6 +5,7 @@ ferry.ts: Ergänzungen der Einstellungsseite
 - Seitennavigation: aktiver Abschnitt beim Scrollen
 */
 import { CONFIG_PREFIX, configManager } from "../common/ConfigManager";
+import { browserName } from "../common/browserName";
 
 type Status = {
     hostRunning: boolean;
@@ -246,6 +247,16 @@ function setupNav() {
     }, { passive: true });
 }
 
+// Texte mit dem Namen des Browsers (Edge, Chrome, Brave …); unbekannter Browser: allgemeine Fassung (Schlüssel + "_generic")
+function applyBrowserName() {
+    const name = browserName();
+    document.querySelectorAll<HTMLElement>("[data-i18n-browser]").forEach(el => {
+        const key = el.dataset.i18nBrowser;
+        el.textContent = name ? $STRF(key, [name]) : $STR(key + "_generic");
+    });
+}
+
+applyBrowserName();
 setupTheme();
 setupClipboardPermission();
 setupResetPairing();

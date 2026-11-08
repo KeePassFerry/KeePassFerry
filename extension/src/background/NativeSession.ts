@@ -1,5 +1,6 @@
 import type { ResultWrapper } from "./pluginClient";
 import { FerryLog } from "../common/Logger";
+import { browserName } from "../common/browserName";
 import { FerryChannelClient, BrowserFerryChannelStore } from "./FerryChannel";
 
 /*
@@ -28,13 +29,6 @@ export interface NativeSessionCallbacks {
     clientFeatures: () => string[];
 }
 
-function browserName(): string {
-    const brands: { brand: string }[] = (navigator as any).userAgentData?.brands ?? [];
-    if (brands.some(b => b.brand === "Microsoft Edge")) return "Edge";
-    if (brands.some(b => b.brand === "Google Chrome")) return "Chrome";
-    if (/Firefox\//.test(navigator.userAgent)) return "Firefox";
-    return "Browser";
-}
 
 // Entpackt geladene Entwicklerversion im Namen kennzeichnen (Optionen in KeePass: welche Kopplung ist welche)
 let installVariant: Promise<string> = null;
@@ -43,7 +37,7 @@ function clientName(): Promise<string> {
         .then(() => chrome.management.getSelf())
         .then(self => (self.installType === "development" ? ", dev" : ""))
         .catch(() => "");
-    return installVariant.then(variant => "KeePassFerry (" + browserName() + variant + ")");
+    return installVariant.then(variant => "KeePassFerry (" + (browserName() ?? "Browser") + variant + ")");
 }
 
 export class NativeSessionManager {

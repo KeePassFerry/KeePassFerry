@@ -1628,8 +1628,12 @@
         "message": "Passkeys mit KeePassFerry",
         "description": "KeePassFerry"
     },
+    "ferry_setting_passkeys_hint_generic": {
+        "message": "Aus: Passkey-Anfragen der Websites gehen an den Browser bzw. Windows.",
+        "description": "KeePassFerry"
+    },
     "ferry_setting_passkeys_hint": {
-        "message": "Aus: Passkey-Anfragen der Websites gehen an Edge bzw. Windows.",
+        "message": "Aus: Passkey-Anfragen der Websites gehen an $1 bzw. Windows.",
         "description": "KeePassFerry"
     },
     "ferry_setting_fieldIcons": {
@@ -1640,12 +1644,20 @@
         "message": "Aus: Einträge wählst du nur über das KeePassFerry-Symbol in der Symbolleiste.",
         "description": "KeePassFerry"
     },
+    "ferry_setting_browserSaving_generic": {
+        "message": "Passwortspeicherung des Browsers abschalten",
+        "description": "KeePassFerry"
+    },
     "ferry_setting_browserSaving": {
-        "message": "Passwortspeicherung von Edge abschalten",
+        "message": "Passwortspeicherung von $1 abschalten",
+        "description": "KeePassFerry"
+    },
+    "ferry_setting_browserSaving_hint_generic": {
+        "message": "Verhindert doppelte Speichern-Abfragen von Browser und KeePassFerry.",
         "description": "KeePassFerry"
     },
     "ferry_setting_browserSaving_hint": {
-        "message": "Verhindert doppelte Speichern-Abfragen von Edge und KeePassFerry.",
+        "message": "Verhindert doppelte Speichern-Abfragen von $1 und KeePassFerry.",
         "description": "KeePassFerry"
     },
     "ferry_welcome_download": {
