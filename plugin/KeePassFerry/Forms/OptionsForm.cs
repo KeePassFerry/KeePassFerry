@@ -493,13 +493,32 @@ namespace KeePassFerry.Forms
         protected override void OnLoad(EventArgs e)
         {
             GlobalWindowManager.AddWindow(this);
+            // Neue Kopplung bzw. Verbindung, während das Fenster offen ist: Liste sofort aktualisieren
+            _plugin.FerryIdentity.ClientsChanged += OnClientsChanged;
             base.OnLoad(e);
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
+            _plugin.FerryIdentity.ClientsChanged -= OnClientsChanged;
             GlobalWindowManager.RemoveWindow(this);
             base.OnFormClosed(e);
+        }
+
+        private void OnClientsChanged(object sender, EventArgs e)
+        {
+            if (IsDisposed || !IsHandleCreated) return;
+            try
+            {
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    if (!IsDisposed) ShowPairedClients();
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                // Fenster wird gerade geschlossen
+            }
         }
     }
 }

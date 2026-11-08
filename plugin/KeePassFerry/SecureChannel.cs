@@ -303,6 +303,21 @@ namespace KeePassFerry
         public string ServerId { get; private set; }
         public byte[] ServerPublicKey { get; private set; }
 
+        /// <summary>Gekoppelte Browser geändert (neue Kopplung, zuletzt verbunden); kommt nicht im UI-Thread</summary>
+        public event EventHandler ClientsChanged;
+
+        private void RaiseClientsChanged()
+        {
+            try
+            {
+                EventHandler handler = ClientsChanged;
+                if (handler != null) handler(this, EventArgs.Empty);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         public FerryIdentity(IPluginHost host)
         {
             _host = host;
@@ -398,6 +413,7 @@ namespace KeePassFerry
         {
             string value = Convert.ToBase64String(clientPub) + "|" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name ?? "")) + "|" + DateTime.UtcNow.ToString("o");
             _host.CustomConfig.SetString(KeyClientPrefix + clientId, value);
+            RaiseClientsChanged();
         }
 
         /// <summary>Name für die Anzeige: ohne Steuerzeichen und Rand-Leerzeichen, höchstens 80 Zeichen</summary>
@@ -437,6 +453,7 @@ namespace KeePassFerry
                 last.ToLocalTime().Date == DateTime.Now.Date)
                 return;
             _host.CustomConfig.SetString(KeyClientSeenPrefix + clientId, DateTime.UtcNow.ToString("o"));
+            RaiseClientsChanged();
         }
 
         /// <summary>Gekoppelter Browser (für die Anzeige in den Optionen)</summary>
