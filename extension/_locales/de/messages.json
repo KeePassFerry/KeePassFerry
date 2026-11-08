@@ -1605,7 +1605,7 @@
         "description": "KeePassFerry"
     },
     "ferry_setting_networkAuth_hint": {
-        "message": "Bietet bei Anmeldefenstern des Browsers (z. B. Router, NAS, Proxy) passende Einträge an. Aus, weil solche Fenster auch von eingebetteten fremden Inhalten ausgelöst werden können.",
+        "message": "Bietet bei Anmeldefenstern des Browsers (z. B. Router, NAS, Proxy) passende Einträge an. Für die aufgerufene Seite entsperrt KeePassFerry dafür auch KeePass und fragt bei neuen Geräten Benutzername und Passwort ab.",
         "description": "KeePassFerry"
     },
     "ferry_setting_detectOtpSetup_hint": {

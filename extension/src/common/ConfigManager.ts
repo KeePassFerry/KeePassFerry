@@ -93,7 +93,8 @@ defaultConfig.ferryPasskeys = true;
 defaultConfig.ferryShowFieldIcons = true;
 defaultConfig.ferryExpiryWarnDays = 7;
 defaultConfig.ferryDisableBrowserPasswordSaving = true;
-defaultConfig.ferryNetworkAuth = false;
+// Anmeldefenster des Browsers ausfüllen: an (nur für die Seite selbst, siehe NetworkAuth.ts); automatisch anmelden bleibt aus
+defaultConfig.ferryNetworkAuth = true;
 defaultConfig.autoFillFieldsWithExistingValue = false;
 
 export class ConfigManager {
@@ -196,7 +197,7 @@ export class ConfigManager {
             ferryShowFieldIcons: true,
             ferryExpiryWarnDays: 7,
             ferryDisableBrowserPasswordSaving: true,
-            ferryNetworkAuth: false
+            ferryNetworkAuth: true
         };
         for (const [key, value] of Object.entries(ferryDefaults)) {
             if ((this.current as any)[key] === undefined) {

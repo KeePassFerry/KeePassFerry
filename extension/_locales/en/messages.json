@@ -1605,7 +1605,7 @@
     "description": "KeePassFerry"
   },
   "ferry_setting_networkAuth_hint": {
-    "message": "Offers matching entries for the browser's own sign-in dialogs (e.g. router, NAS, proxy). Off by default because such dialogs can also be triggered by embedded third-party content.",
+    "message": "Offers matching entries for the browser's own sign-in dialogs (e.g. router, NAS, proxy). For the page you open, KeePassFerry also unlocks KeePass and asks for username and password on new devices.",
     "description": "KeePassFerry"
   },
   "ferry_setting_detectOtpSetup_hint": {
