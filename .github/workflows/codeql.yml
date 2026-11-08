@@ -4,8 +4,18 @@ name: CodeQL
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE*"
+      - "docs/**"
+      - "branding/**"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE*"
+      - "docs/**"
+      - "branding/**"
   schedule:
     - cron: "37 3 * * 1"
 
