@@ -2,6 +2,13 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.31 – 2026-11-09
+
+- The diagnostic log moved from the Documents folder, which is often synced to the cloud, to %LOCALAPPDATA%\KeePassFerry (issue #31).
+  An existing log in the old place is left there; you can delete it.
+- Settings: "Open log folder" opens that folder in Explorer.
+- Updated the Public Suffix List and the list of related websites.
+
 ## 1.0.30 – 2026-11-08
 
 - The toolbar icon and the field icons tell apart "locked" (lock), "no database loaded" (dash) and "KeePass not running"
@@ -548,6 +555,13 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.31 – 2026-11-09
+
+- Das Diagnoseprotokoll liegt jetzt nicht mehr im oft mit der Cloud synchronisierten Dokumente-Ordner, sondern unter %LOCALAPPDATA%\KeePassFerry (Issue #31).
+  Ein vorhandenes Protokoll am alten Ort bleibt dort liegen und kann gelöscht werden.
+- Einstellungen: „Protokollordner öffnen“ zeigt den Ordner im Explorer.
+- Public Suffix List und Liste zusammengehöriger Websites aktualisiert.
 
 ## 1.0.30 – 2026-11-08
 

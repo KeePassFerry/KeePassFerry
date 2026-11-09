@@ -1972,6 +1972,14 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_31_1_title": {
+    "message": "Log no longer in the cloud",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_31_1_text": {
+    "message": "The diagnostic log is now kept in a local folder instead of Documents. A button in the settings opens that folder. This needs the current plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_30_1_title": {
     "message": "Start KeePass and clearer status",
     "description": "KeePassFerry"

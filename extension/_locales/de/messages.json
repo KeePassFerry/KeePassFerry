@@ -1972,6 +1972,14 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_31_1_title": {
+        "message": "Protokoll nicht mehr in der Cloud",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_31_1_text": {
+        "message": "Das Diagnoseprotokoll liegt jetzt in einem lokalen Ordner statt unter Dokumente. In den Einstellungen öffnet ein Knopf diesen Ordner. Dafür braucht es das aktuelle Plugin.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_30_1_title": {
         "message": "KeePass starten und klare Anzeige",
         "description": "KeePassFerry"
