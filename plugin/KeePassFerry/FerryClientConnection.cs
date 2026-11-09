@@ -63,7 +63,10 @@ namespace KeePassFerry
             "KEEPASSFERRY_EXPIRY",
 
             // KeePassFerry: eigene Kopplung entfernen (RemoveOwnPairing, vor "Kopplung zurücksetzen")
-            "KEEPASSFERRY_REMOVE_OWN_PAIRING"
+            "KEEPASSFERRY_REMOVE_OWN_PAIRING",
+
+            // KeePassFerry: Ordner des Diagnoseprotokolls öffnen (OpenDiagnosticLogFolder)
+            "KEEPASSFERRY_DIAG_FOLDER"
         };
 
         // Zusätzlich die Produktversion des Plugins ("KEEPASSFERRY_VERSION_1.2.3"): Die Erweiterung erkennt daran ein

@@ -23,6 +23,7 @@ export const HIBP_CHECK_FEATURE = "KEEPASSFERRY_HIBP_CHECK";
 export const HIBP_LEAKS_FEATURE = "KEEPASSFERRY_HIBP_LEAKS";
 // Einstellungen zu KeePass im KeePassFerry-Optionsdialog (OpenOptions), Vorwarnung von dort (GetExpiryWarnDays)
 export const OPTIONS_DIALOG_FEATURE = "KEEPASSFERRY_OPTIONS_DIALOG";
+export const DIAG_FOLDER_FEATURE = "KEEPASSFERRY_DIAG_FOLDER";
 // Ablaufdatum der Einträge (expiryTime) und neues Ablaufdatum beim Speichern (newExpiryTime)
 export const EXPIRY_FEATURE = "KEEPASSFERRY_EXPIRY";
 

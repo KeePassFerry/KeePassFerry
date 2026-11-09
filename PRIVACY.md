@@ -24,7 +24,7 @@ computer**. It does not have servers and does not send any data to the KeePassFe
 **What is stored by the extension**
 - Settings, a pairing key (as a non-exportable browser key) and the public key of your KeePass, in the
   browser's local extension storage.
-- Optional, only if you enable it: a diagnostic log written by the plugin to your Documents folder. It contains
+- Optional, only if you enable it: a diagnostic log written by the plugin to your local application data folder. It contains
   events and field properties, never passwords, codes or field contents.
 
 **No tracking.** KeePassFerry contains no analytics, advertising or telemetry. Its own network requests are limited
@@ -65,7 +65,7 @@ Computer** verbindet. Es gibt keine Server; es werden keine Daten an die Entwick
   Passwörter, OTP-Schlüssel und private Passkey-Schlüssel bleiben in deiner KeePass-Datenbank.
 - **Gespeichert in der Erweiterung:** Einstellungen, ein nicht exportierbarer Kopplungsschlüssel und der
   öffentliche Schlüssel deines KeePass. Optional (nur wenn eingeschaltet) ein Diagnoseprotokoll im
-  Dokumente-Ordner, ohne Passwörter, Codes oder Feldinhalte.
+  lokalen Anwendungsdaten-Ordner, ohne Passwörter, Codes oder Feldinhalte.
 - **Kein Tracking**, keine Werbung, keine Telemetrie. Eigene Netzwerkzugriffe nur für Folgendes, nie mit
   Passwörtern oder anderen Inhalten deiner KeePass-Datenbank: das Website-Symbol (Favicon), wenn du es mit einem
   Eintrag speicherst; bei der Zwei-Faktor-Einrichtung ggf. erneutes Laden des QR-Bilds der aktuellen Seite (Bilder von

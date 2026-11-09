@@ -232,7 +232,7 @@ namespace KeePassFerry
         {
             try
             {
-                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "KeePassFerry", "diagnose.log");
+                string path = FerryService.DefaultDiagnosticLogPath();
                 if (!File.Exists(path)) return;
                 lock (LogLock)
                     File.AppendAllText(path, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " plugin update " + message + "\r\n",

@@ -935,12 +935,16 @@
     "message": "KeePassFerry: fill in the current one-time code",
     "description": "KeePassFerry"
   },
+  "ferry_diag_open_folder": {
+    "message": "Open log folder",
+    "description": "KeePassFerry"
+  },
   "ferry_diag_label": {
     "message": "Write diagnostic log",
     "description": "KeePassFerry"
   },
   "ferry_diag_hint": {
-    "message": "For troubleshooting: KeePassFerry logs its steps (detected fields, decisions) to Documents\\KeePassFerry\\diagnose.log. Passwords, codes and field contents are never logged.",
+    "message": "For troubleshooting: KeePassFerry logs its steps (detected fields, decisions) to %LOCALAPPDATA%\\KeePassFerry\\diagnose.log. Passwords, codes and field contents are never logged.",
     "description": "KeePassFerry"
   },
   "ferry_otp_icon_remaining": {

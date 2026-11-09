@@ -18,6 +18,7 @@ type Status = {
     pluginVersion?: string;
     pluginOutdated?: boolean;
     optionsDialog?: boolean;
+    diagFolder?: boolean;
 };
 
 // Eigene Passwortspeicherung von Edge: abschalten (KeePassFerry übernimmt) oder wieder freigeben
@@ -68,6 +69,9 @@ async function setupTheme() {
     if (diag) {
         diag.checked = !!configManager.current.ferryDiagnostics;
         diag.addEventListener("change", () => configManager.setASAP({ ferryDiagnostics: diag.checked }));
+        document.getElementById("ferryDiagFolder")?.addEventListener("click", () => {
+            chrome.runtime.sendMessage({ keepassferry: "openDiagnosticLogFolder" }).catch(() => undefined);
+        });
     }
 }
 
@@ -180,6 +184,9 @@ async function refreshStatus() {
     // KeePass gerade verbunden und entsperrt (z. B. nach dem Neuladen der Erweiterung): Plugin-Einstellungen neu lesen
     const ready = !!s?.connected && !s?.pluginOutdated && (s?.databases?.length ?? 0) > 0;
     updateKeePassOptionButtons(!!s?.optionsDialog);
+    // Braucht laufendes KeePass mit aktuellem Plugin
+    const diagFolderRow = document.getElementById("ferryDiagFolderRow");
+    if (diagFolderRow) diagFolderRow.hidden = !s?.diagFolder;
     const update = document.getElementById("ferryPluginUpdate");
     if (update) update.hidden = !(s?.connected && s?.pluginOutdated);
     dot.className = "status-dot " + tone;

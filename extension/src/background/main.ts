@@ -5,7 +5,7 @@ import { forgetAutoFill } from "./otpRepeat";
 import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
 import { takePendingEdit } from "./popupEdit";
 import { queryPageFields, fillPageField } from "./pageFields";
-import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, HIBP_LEAKS_FEATURE, EXPIRY_FEATURE, OPTIONS_DIALOG_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
+import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, HIBP_LEAKS_FEATURE, EXPIRY_FEATURE, DIAG_FOLDER_FEATURE, OPTIONS_DIALOG_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
 import { markNewsSeen } from "../common/whatsNew";
 import { isFirefox } from "webext-detect-page";
 import { ferry, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
@@ -286,7 +286,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     entryRecycle: usable && (features ?? []).includes(ENTRY_RECYCLE_FEATURE),
                     hibpCheck: usable && (features ?? []).includes(HIBP_CHECK_FEATURE),
                     expiry: usable && (features ?? []).includes(EXPIRY_FEATURE),
-                    optionsDialog: usable && (features ?? []).includes(OPTIONS_DIALOG_FEATURE)
+                    optionsDialog: usable && (features ?? []).includes(OPTIONS_DIALOG_FEATURE),
+                    diagFolder: usable && (features ?? []).includes(DIAG_FOLDER_FEATURE)
                 };
             });
             break;
@@ -383,6 +384,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             work = Promise.resolve(!!ports?.size);
             break;
         }
+        case "openDiagnosticLogFolder":
+            work = ferry.rpc.openDiagnosticLogFolder();
+            break;
         case "openKeePassOptions":
             work = ferry.rpc.openOptions();
             break;

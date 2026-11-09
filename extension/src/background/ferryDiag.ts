@@ -4,7 +4,7 @@ import { ferry } from "./KF";
 /*
 ferryDiag.ts: Diagnoseprotokoll für die Entwicklung (Einstellung "Diagnoseprotokoll", standardmäßig aus).
 Meldungen gehen gesammelt über den verschlüsselten Kanal an das Plugin, das sie in eine Datei schreibt
-(Dokumente\KeePassFerry\diagnose.log). Nur Ereignisse und Merkmale, nie Passwörter, Codes oder Feldinhalte.
+(%LOCALAPPDATA%\KeePassFerry\diagnose.log). Nur Ereignisse und Merkmale, nie Passwörter, Codes oder Feldinhalte.
 */
 
 const queue: string[] = [];

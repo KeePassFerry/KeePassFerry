@@ -794,9 +794,42 @@ namespace KeePassFerry
         private static readonly object _diagLock = new object();
         private const long DiagMaxBytes = 2 * 1024 * 1024;
 
+        // Nicht unter Dokumente: Dieser Ordner wird oft mit OneDrive synchronisiert (#31)
+        internal static string DefaultDiagnosticLogPath()
+        {
+            return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KeePassFerry", "diagnose.log");
+        }
+
+        private string DiagnosticLogPath()
+        {
+            string path = _host.CustomConfig.GetString("KeePassFerry.DiagnosticLogPath", "");
+            return string.IsNullOrEmpty(path) ? DefaultDiagnosticLogPath() : path;
+        }
+
+        /// <summary>
+        /// Ordner des Diagnoseprotokolls im Explorer öffnen, die Datei markiert, falls vorhanden.
+        /// Der Pfad kommt nur aus der eigenen Konfiguration, nie von der Erweiterung.
+        /// </summary>
+        [JsonRpcMethod]
+        public bool OpenDiagnosticLogFolder()
+        {
+            try
+            {
+                string path = DiagnosticLogPath();
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
+                string arguments = System.IO.File.Exists(path) ? "/select,\"" + path + "\"" : "\"" + System.IO.Path.GetDirectoryName(path) + "\"";
+                System.Diagnostics.Process.Start("explorer.exe", arguments);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         /// <summary>
         /// Diagnoseprotokoll der Erweiterung (nur wenn dort eingeschaltet): hängt Zeilen mit Zeitstempel an
-        /// Dokumente\KeePassFerry\diagnose.log an (anderer Pfad: KeePassFerry.DiagnosticLogPath in der Konfiguration).
+        /// %LOCALAPPDATA%\KeePassFerry\diagnose.log an (anderer Pfad: KeePassFerry.DiagnosticLogPath in der Konfiguration).
         /// Über 2 MB wird die Datei nach diagnose.old.log verschoben.
         /// </summary>
         [JsonRpcMethod]
@@ -805,9 +838,7 @@ namespace KeePassFerry
             if (lines == null || lines.Length == 0) return true;
             try
             {
-                string path = _host.CustomConfig.GetString("KeePassFerry.DiagnosticLogPath", "");
-                if (string.IsNullOrEmpty(path))
-                    path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "KeePassFerry", "diagnose.log");
+                string path = DiagnosticLogPath();
                 lock (_diagLock)
                 {
                     System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));

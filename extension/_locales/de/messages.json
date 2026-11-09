@@ -935,12 +935,16 @@
         "message": "KeePassFerry: aktuellen Einmalcode eintragen",
         "description": "KeePassFerry"
     },
+    "ferry_diag_open_folder": {
+        "message": "Protokollordner öffnen",
+        "description": "KeePassFerry"
+    },
     "ferry_diag_label": {
         "message": "Diagnoseprotokoll schreiben",
         "description": "KeePassFerry"
     },
     "ferry_diag_hint": {
-        "message": "Für die Fehlersuche: KeePassFerry protokolliert Abläufe (erkannte Felder, Entscheidungen) in Dokumente\\KeePassFerry\\diagnose.log. Passwörter, Codes und Feldinhalte werden nie protokolliert.",
+        "message": "Für die Fehlersuche: KeePassFerry protokolliert Abläufe (erkannte Felder, Entscheidungen) in %LOCALAPPDATA%\\KeePassFerry\\diagnose.log. Passwörter, Codes und Feldinhalte werden nie protokolliert.",
         "description": "KeePassFerry"
     },
     "ferry_otp_icon_remaining": {

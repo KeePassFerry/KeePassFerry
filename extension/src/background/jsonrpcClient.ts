@@ -303,6 +303,13 @@ export class jsonrpcClient {
         return responses?.[0]?.resultWrapper?.result === true;
     }
 
+    async openDiagnosticLogFolder(): Promise<boolean> {
+        const sessionManager = this.pluginClient.getPrimarySessionManager();
+        if (!sessionManager) return false;
+        const responses = await this.pluginClient.request([sessionManager], "OpenDiagnosticLogFolder", []);
+        return responses?.[0]?.resultWrapper?.result === true;
+    }
+
     async getHideExpired(): Promise<boolean> {
         const sessionManager = this.pluginClient.getPrimarySessionManager();
         if (!sessionManager) return null;
