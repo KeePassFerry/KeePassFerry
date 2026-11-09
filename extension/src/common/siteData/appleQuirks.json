@@ -1,6 +1,6 @@
 {
  "source": "https://github.com/apple/password-manager-resources",
- "commit": "2d6868e87a0bec602e78c9dc6f51507e144237ca",
+ "commit": "7d0a52338b4c60c224970bf46bf5a7af31e2aec5",
  "license": "MIT, Copyright (c) Apple Inc.",
  "passwordRules": {
   "163.com": "minlength: 6; maxlength: 16;",
@@ -2540,6 +2540,14 @@
    ],
    "to": [
     "monidentifiant.sncf"
+   ]
+  },
+  {
+   "from": [
+    "solitairesocial.com"
+   ],
+   "to": [
+    "kosmos.games"
    ]
   },
   {
