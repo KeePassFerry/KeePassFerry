@@ -2,7 +2,7 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.32 – 2026-11-10
 
 - Firefox: own build with the fixed add-on ID keepassferry@keepassferry (Firefox 128 or later). Pairing failed before because
   Firefox rejects notifications with the option requireInteraction; the pairing code was never shown and the connection
@@ -571,7 +571,7 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.32 – 2026-11-10
 
 - Firefox: eigener Build mit der festen Add-on-ID keepassferry@keepassferry (ab Firefox 128). Bisher scheiterte die
   Kopplung, weil Firefox Benachrichtigungen mit der Option requireInteraction ablehnt; der Kopplungscode erschien nicht

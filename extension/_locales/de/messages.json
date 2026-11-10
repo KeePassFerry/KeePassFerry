@@ -1980,6 +1980,22 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_32_1_title": {
+        "message": "KeePassFerry für Firefox",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_32_1_text": {
+        "message": "Es gibt jetzt einen eigenen Build für Firefox (ab Version 128). Er koppelt sich mit dem vorhandenen Plugin, ein Plugin-Update ist nicht nötig. Neue Option: internationale Domains (xn--…) lesbar anzeigen, nur die Anzeige, standardmäßig aus.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_32_2_title": {
+        "message": "Aufgeräumte Werkzeuge",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_32_2_text": {
+        "message": "Die Werkzeuge, mit denen KeePassFerry gebaut und getestet wird, sind auf dem neuesten Stand; unbenutzte Pakete sind entfernt. Die gemeldeten Sicherheitshinweise betrafen nur diese Werkzeuge, nicht die Erweiterung selbst.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_31_1_title": {
         "message": "Protokoll nicht mehr in der Cloud",
         "description": "KeePassFerry"

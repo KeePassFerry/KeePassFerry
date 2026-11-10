@@ -1980,6 +1980,22 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_32_1_title": {
+    "message": "KeePassFerry for Firefox",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_32_1_text": {
+    "message": "There is now a dedicated build for Firefox (version 128 or later). It pairs with the existing plugin, no plugin update needed. New option: show international domains (xn--…) readably – display only, off by default.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_32_2_title": {
+    "message": "Tidied-up tooling",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_32_2_text": {
+    "message": "The tools used to build and test KeePassFerry are up to date and unused packages are removed. The reported security advisories only concerned these tools, not the extension itself.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_31_1_title": {
     "message": "Log no longer in the cloud",
     "description": "KeePassFerry"
