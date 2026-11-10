@@ -63,3 +63,30 @@ describe("supplementExistingEntry", () => {
         expect(edited.fields.find(f => f.type === "password").value).toBe("geheim");
     });
 });
+
+describe("Standardfelder im Bearbeiten-Fenster", () => {
+    // KeePass liefert leere Felder nicht mit; das Bearbeiten-Fenster muss sie trotzdem anbieten
+    it("ergänzt ein fehlendes Passwortfeld hinter dem Benutzernamen", () => {
+        const e = entry();
+        e.fields.splice(1, 1);
+        const edited = supplementEntryState(e, { submittedData: null } as SaveState, e.URLs);
+        expect(edited.fields.map(f => f.name)).toEqual(["KeePass username", "KeePass password"]);
+        expect(edited.fields[1].type).toBe("password");
+        expect(edited.fields[1].value).toBe("");
+        expect(e.fields.length).toBe(1);
+    });
+
+    it("ergänzt einen fehlenden Benutzernamen an erster Stelle", () => {
+        const e = entry();
+        e.fields.splice(0, 1);
+        const edited = supplementEntryState(e, { submittedData: null } as SaveState, e.URLs);
+        expect(edited.fields.map(f => f.name)).toEqual(["KeePass username", "KeePass password"]);
+        expect(edited.fields[1].value).toBe("geheim");
+    });
+
+    it("lässt vollständige Einträge unverändert", () => {
+        const e = entry();
+        const edited = supplementEntryState(e, { submittedData: null } as SaveState, e.URLs);
+        expect(edited.fields.map(f => f.uuid)).toEqual(e.fields.map(f => f.uuid));
+    });
+});
