@@ -106,6 +106,22 @@ jobs:
           New-Item -ItemType Directory -Force "$out/store" | Out-Null
           Compress-Archive -Path "$ext/*" -DestinationPath "$out/store/KeePassFerry-Store-$env:VERSION.zip"
 
+      # Eigener Build für Firefox (Gecko-ID, Event-Page statt Service Worker); nur für addons.mozilla.org,
+      # denn Firefox installiert nur von Mozilla signierte Add-ons dauerhaft
+      - name: Firefox-Paket
+        shell: pwsh
+        run: |
+          Push-Location extension
+          npm run build-firefox:prod
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Pop-Location
+          $manifest = Get-Content extension/extension/manifest.json -Raw | ConvertFrom-Json
+          if (-not $manifest.browser_specific_settings.gecko.id) { throw "Firefox-Build ohne Gecko-ID" }
+          $ff = "release/firefox"
+          Copy-Item extension/extension $ff -Recurse
+          Get-ChildItem $ff -Recurse -Filter *.map | Remove-Item
+          Compress-Archive -Path "$ff/*" -DestinationPath "release/store/KeePassFerry-Firefox-$env:VERSION.zip"
+
       - name: Setup bauen (Inno Setup)
         shell: pwsh
         run: |

@@ -4,6 +4,9 @@ English · [Deutsch](#deutsch)
 
 ## Unreleased
 
+- Firefox: own build with the fixed add-on ID keepassferry@keepassferry (Firefox 128 or later). Pairing failed before because
+  Firefox rejects notifications with the option requireInteraction; the pairing code was never shown and the connection
+  paused (issue #34). The KeePassFerry plugin already registers the host for this ID, no plugin update is needed.
 - Build and test tooling updated, unused packaging and test packages removed (about 1,100 → 400 packages);
   `npm audit` reports no findings (#35, #37). The previous findings were all in build/test tools, not in the
   shipped extension.
@@ -570,6 +573,10 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 ## Unveröffentlicht
 
+- Firefox: eigener Build mit der festen Add-on-ID keepassferry@keepassferry (ab Firefox 128). Bisher scheiterte die
+  Kopplung, weil Firefox Benachrichtigungen mit der Option requireInteraction ablehnt; der Kopplungscode erschien nicht
+  und die Verbindung wurde pausiert (Issue #34). Das KeePassFerry-Plugin registriert den Host schon für diese ID, ein
+  Plugin-Update ist nicht nötig.
 - Bau- und Testwerkzeuge aktualisiert, unbenutzte Paket- und Testpakete entfernt (etwa 1.100 → 400 Pakete);
   `npm audit` meldet nichts mehr (#35, #37). Die bisherigen Meldungen betrafen nur Bau-/Testwerkzeuge, nicht die
   ausgelieferte Erweiterung.
