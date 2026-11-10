@@ -202,7 +202,14 @@ if (document.body) {
 
     }
 
+    // Erweiterung neu geladen, deaktiviert oder aktualisiert: Dieses Skript läuft im Tab weiter, hat aber
+    // keine Erweiterung mehr (chrome.runtime fehlt). Dann nichts mehr versuchen und nichts melden.
+    function extensionGone() {
+        return !chrome.runtime?.id;
+    }
+
     function startup() {
+        if (extensionGone()) return;
         FerryLog.debug("content page starting");
 
         try {
@@ -218,6 +225,10 @@ if (document.body) {
         }
 
         messagingPortConnectionRetryTimer = window.setInterval(() => {
+            if (extensionGone()) {
+                clearInterval(messagingPortConnectionRetryTimer);
+                return;
+            }
             if (Port.raw == null) {
                 FerryLog.info("Messaging port was not established at page startup. Retrying now...");
                 try {

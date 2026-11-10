@@ -27,7 +27,9 @@ class ContentPortManager {
         this.port = chrome.runtime.connect({ name });
         this.port.onDisconnect.addListener(() => {
             this.disconnectReason = chrome.runtime.lastError?.message ?? "by the background";
-            if (FerryLog && FerryLog.warn) FerryLog.warn("Port " + name + " disconnected: " + this.disconnectReason);
+            // Normaler Vorgang (Seite verlassen, Erweiterung neu geladen, Hintergrund neu gestartet): nur als Info.
+            // Der Grund steht in der Warnung, falls danach noch eine Nachricht verschickt werden soll.
+            if (FerryLog && FerryLog.info) FerryLog.info("Port " + name + " disconnected: " + this.disconnectReason);
         });
     }
 
