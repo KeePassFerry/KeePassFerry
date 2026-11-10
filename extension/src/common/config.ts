@@ -100,4 +100,6 @@ export class Config {
     ferryDisableBrowserPasswordSaving: boolean;
     // Anmeldefenster des Browsers (HTTP-Basic-Auth, Proxy) ausfüllen; aus Sicherheitsgründen nur auf Wunsch
     ferryNetworkAuth: boolean;
+    // Internationale Domains (xn--) in Listen lesbar anzeigen (nur Anzeige, Issue #33)
+    ferryUnicodeDomains: boolean;
 }

@@ -4,6 +4,7 @@ import { FerryLog } from "../common/Logger";
 import { Action } from "../common/Action";
 import { AddonMessage } from "../common/AddonMessage";
 import { Entry } from "../common/model/Entry";
+import { displayDomains, punycodeHint } from "../common/displayDomain";
 import {setup as i18nSetup } from "../common/i18n";
 
 const QUICK_ICON_USER = "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 8a7 7 0 0 1 14 0";
@@ -77,10 +78,10 @@ export class MatchedLoginsPanel {
             user.textContent = usernameDisplayValue;
             const title = document.createElement("div");
             title.className = "ferry-login-title";
-            title.textContent = entry.title;
+            title.textContent = displayDomains(entry.title);
             text.append(user, title);
             // Nur über eine zugehörige Domain gefunden (z. B. outlook.com auf login.live.com): Grund dazuschreiben
-            const related = entry.relatedDomain ? $STRF("ferry_related_domain", [entry.relatedDomain]) : "";
+            const related = entry.relatedDomain ? $STRF("ferry_related_domain", [displayDomains(entry.relatedDomain)]) : "";
             if (related) {
                 const via = document.createElement("div");
                 via.className = "ferry-login-related";
@@ -88,7 +89,10 @@ export class MatchedLoginsPanel {
                 text.append(via);
             }
             // Voller Text als Tooltip, falls die Zeile trotz breiterer Liste abgeschnitten wird
-            text.title = [usernameDisplayValue, entry.title, related].filter(Boolean).join("\n");
+            // Bei lesbar angezeigten internationalen Domains steht die echte Schreibweise (xn--) im Tooltip
+            text.title = [usernameDisplayValue, displayDomains(entry.title), punycodeHint(entry.title), related, punycodeHint(entry.relatedDomain)]
+                .filter(Boolean)
+                .join("\n");
             row.append(icon, text);
             // Ein Aktionsknopf statt einer Knopfreihe: einzelne Werte in dieses Feld eintragen oder kopieren, bearbeiten
             const more = this.quickButton(ICON_MORE, $STR("ferry_panel_more"), () => this.showActions(entry, usernameDisplayValue));
@@ -237,7 +241,8 @@ export class MatchedLoginsPanel {
         nameUser.textContent = usernameDisplayValue;
         const nameTitle = document.createElement("div");
         nameTitle.className = "ferry-login-title";
-        nameTitle.textContent = entry.title;
+        nameTitle.textContent = displayDomains(entry.title);
+        nameTitle.title = punycodeHint(entry.title);
         name.append(nameUser, nameTitle);
         // Symbol des Eintrags wie in der Liste
         const siteIcon = document.createElement("img");

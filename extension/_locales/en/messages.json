@@ -1,4 +1,12 @@
 {
+  "ferry_setting_unicodeDomains": {
+    "message": "Show international domains readably",
+    "description": "KeePassFerry"
+  },
+  "ferry_setting_unicodeDomains_hint": {
+    "message": "Shows e.g. \"xn--e1afmkfd.xn--p1ai\" as \"пример.рф\". Display only: filling still uses the saved address, and the real spelling is shown in the tooltip.",
+    "description": "KeePassFerry"
+  },
   "ferry_panel_open_keepass": {
     "message": "Open in KeePass",
     "description": "KeePassFerry"

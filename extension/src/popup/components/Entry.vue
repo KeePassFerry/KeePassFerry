@@ -10,7 +10,7 @@
             </span>
             <span class="ferry-entry-text">
                 <span class="ferry-entry-line">
-                    <span class="ferry-entry-title">{{ entrySummary.title }}</span>
+                    <span class="ferry-entry-title" :title="titleHint">{{ displayTitle }}</span>
                     <span v-if="entrySummary.hasNotes" class="ferry-entry-mark">
                         <tabler-note class="ferry-ico" />
                         <v-tooltip location="top" activator="parent">{{ $i18n("ferry_extras_has_notes") }}</v-tooltip>
@@ -122,6 +122,7 @@ import { SaveState } from "../../common/SaveState";
 import { Entry } from "../../common/model/Entry";
 import type { Database } from "../../common/model/Database";
 import { databaseLabel } from "../../common/databaseLabel";
+import { displayDomains, punycodeHint } from "../../common/displayDomain";
 import { EntrySummary } from "../../common/model/EntrySummary";
 import { tooltipDelay } from "../../common/Timings";
 import { mapState } from "pinia";
@@ -182,6 +183,13 @@ export default {
             const e = this.entrySummary.fullDetails as Entry;
             return e.fields;
         },
+        // Internationale Domains lesbar (Option, Issue #33); die echte Schreibweise im Tooltip
+        displayTitle: function (): string {
+            return displayDomains(this.entrySummary.title);
+        },
+        titleHint: function (): string {
+            return punycodeHint(this.entrySummary.title) || undefined;
+        },
         entryDomain: function () {
             const urlStr = this.entrySummary.url;
             if (!urlStr || urlStr.length < 4) return "<unknown>";
@@ -189,7 +197,9 @@ export default {
             if (!kurl) {
                 return "<error>";
             }
-            return kurl.domainWithPort || kurl.url.host;
+            const host = kurl.domainWithPort || kurl.url.host;
+            const shown = displayDomains(host);
+            return shown === host ? host : shown + " – " + host;
         },
         entryPath: function () {
             if (!this.entryPathIsLong) {

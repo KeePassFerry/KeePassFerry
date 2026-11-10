@@ -2,6 +2,18 @@
 
 English · [Deutsch](#deutsch)
 
+## Unreleased
+
+- Build and test tooling updated, unused packaging and test packages removed (about 1,100 → 400 packages);
+  `npm audit` reports no findings (#35, #37). The previous findings were all in build/test tools, not in the
+  shipped extension.
+- Pages no longer report errors after the extension was reloaded, disabled or updated; a closed connection is only
+  logged as info.
+- Edit window: entries without a password show empty username and password fields again.
+- Option "Show international domains readably" (off by default, #33): shows e.g. `xn--e1afmkfd.xn--p1ai` as
+  `пример.рф` in the field list and the popup; the real spelling is always in the tooltip, filling still uses the
+  address saved in the entry.
+
 ## 1.0.31 – 2026-11-09
 
 - The diagnostic log moved from the Documents folder, which is often synced to the cloud, to %LOCALAPPDATA%\KeePassFerry (issue #31).
@@ -555,6 +567,18 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## Unveröffentlicht
+
+- Bau- und Testwerkzeuge aktualisiert, unbenutzte Paket- und Testpakete entfernt (etwa 1.100 → 400 Pakete);
+  `npm audit` meldet nichts mehr (#35, #37). Die bisherigen Meldungen betrafen nur Bau-/Testwerkzeuge, nicht die
+  ausgelieferte Erweiterung.
+- Seiten melden keine Fehler mehr, nachdem die Erweiterung neu geladen, deaktiviert oder aktualisiert wurde; eine
+  geschlossene Verbindung wird nur noch als Info protokolliert.
+- Bearbeiten-Fenster: Einträge ohne Passwort zeigen wieder leere Felder für Benutzername und Passwort.
+- Option „Internationale Domains lesbar anzeigen“ (standardmäßig aus, #33): zeigt z. B. `xn--e1afmkfd.xn--p1ai` als
+  `пример.рф` in der Feldliste und im Popup; die echte Schreibweise steht immer im Tooltip, ausgefüllt wird weiter nur
+  auf der gespeicherten Adresse.
 
 ## 1.0.31 – 2026-11-09
 
