@@ -2,6 +2,12 @@
 
 English · [Deutsch](#deutsch)
 
+## Unreleased
+
+- Firefox: own build with the fixed add-on ID keepassferry@keepassferry (Firefox 128 or later). Pairing failed before because
+  Firefox rejects notifications with the option requireInteraction; the pairing code was never shown and the connection
+  paused (issue #34). The KeePassFerry plugin already registers the host for this ID, no plugin update is needed.
+
 ## 1.0.31 – 2026-11-09
 
 - The diagnostic log moved from the Documents folder, which is often synced to the cloud, to %LOCALAPPDATA%\KeePassFerry (issue #31).
@@ -555,6 +561,13 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## Unveröffentlicht
+
+- Firefox: eigener Build mit der festen Add-on-ID keepassferry@keepassferry (ab Firefox 128). Bisher scheiterte die
+  Kopplung, weil Firefox Benachrichtigungen mit der Option requireInteraction ablehnt; der Kopplungscode erschien nicht
+  und die Verbindung wurde pausiert (Issue #34). Das KeePassFerry-Plugin registriert den Host schon für diese ID, ein
+  Plugin-Update ist nicht nötig.
 
 ## 1.0.31 – 2026-11-09
 

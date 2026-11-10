@@ -13,6 +13,7 @@ import { checkExpiryAfterFill, openChangePasswordFromNotice, snoozeExpiryNotice 
 import { FerryURL } from "../common/FerryURL";
 import type { AddonMessage } from "../common/AddonMessage";
 import { FerryLog } from "../common/Logger";
+import { createOsNotification } from "../common/osNotification";
 import { FerryNotification } from "../common/FerryNotification";
 import { Action } from "../common/Action";
 import { configManager } from "../common/ConfigManager";
@@ -42,7 +43,7 @@ export async function startPluginUpdate(): Promise<string> {
     diag("hintergrund", "plugin-update", { ergebnis: result });
     if (result === "signature_invalid" || result === "checksum_mismatch") {
         // Release nicht korrekt signiert: nicht zum Download schicken, sondern warnen
-        chrome.notifications.create("keepassferry-update-unsafe", {
+        createOsNotification("keepassferry-update-unsafe", {
             type: "basic",
             iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
             title: $STR("security_warning_title"),
@@ -53,7 +54,7 @@ export async function startPluginUpdate(): Promise<string> {
     } else if (result === "uptodate") {
         // Installiertes Plugin ist das neueste Release (Erweiterung neuer als jedes veröffentlichte Plugin)
         // Eigene ID je Meldung: bei gleicher ID ersetzt der Browser die alte still, ohne erneut anzuzeigen
-        chrome.notifications.create("keepassferry-update-none-" + Date.now(), {
+        createOsNotification("keepassferry-update-none-" + Date.now(), {
             type: "basic",
             iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
             title: "KeePassFerry",

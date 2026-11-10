@@ -143,8 +143,10 @@ export async function getManifest() {
         "browser_specific_settings": {
             "gecko": {
                 "id": "keepassferry@keepassferry",
-                "strict_min_version": "126.0"
-            }
+                "strict_min_version": "128.0", // content_scripts world: "MAIN" (Passkeys) ab Firefox 128
+                // Erklärung für addons.mozilla.org: keine Daten an den Entwickler (Anfragen gehen nur an besuchte Seiten)
+                "data_collection_permissions": { "required": ["none"] }
+            } as any
         },
         minimum_chrome_version: "123"
     };

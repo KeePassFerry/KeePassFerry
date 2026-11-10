@@ -7,6 +7,7 @@ import { FerryNotification } from "../common/FerryNotification";
 import { utils } from "../common/utils";
 import BackgroundStore from "~/store/BackgroundStore";
 import { ferry } from "./KF";
+import { createOsNotification } from "../common/osNotification";
 
 /*
 pluginClient.ts: JSON-RPC zum KeePassFerry-Plugin über Native Messaging.
@@ -200,7 +201,7 @@ export class pluginClient {
     // Erstkopplung: Prüfcode anzeigen, Bestätigung erfolgt in KeePass
     showPairingCode(code: string) {
         const display = code.slice(0, 3) + " " + code.slice(3);
-        chrome.notifications.create("keepassferry-pairing", {
+        createOsNotification("keepassferry-pairing", {
             type: "basic",
             iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
             title: $STR("pairing_title"),
@@ -216,7 +217,7 @@ export class pluginClient {
         if (kind === "denied") {
             this.showConnectionMessage($STR("pairing_denied"));
         } else if (kind === "serverKeyChanged") {
-            chrome.notifications.create("keepassferry-security", {
+            createOsNotification("keepassferry-security", {
                 type: "basic",
                 iconUrl: chrome.runtime.getURL("/assets/images/128.png"),
                 title: $STR("security_warning_title"),

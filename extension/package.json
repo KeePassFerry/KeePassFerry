@@ -69,6 +69,8 @@
     "build:beta": "npm run clean && mkdir extension && cross-env NODE_ENV=production VITE_KEE_CHANNEL=beta run-s build:web build:prepare build:background build:page build:webauthn",
     "build-chrome:prod": "npm run clean && mkdir extension && cross-env NODE_ENV=production BROWSER_TARGET=chrome run-s build:web build:prepare build:background build:page build:webauthn",
     "build-chrome:beta": "npm run clean && mkdir extension && cross-env NODE_ENV=production BROWSER_TARGET=chrome VITE_KEE_CHANNEL=beta run-s build:background build:web build:prepare build:page build:webauthn",
+    "build-firefox:prod": "npm run build:prod",
+    "build-firefox:beta": "npm run build:beta",
     "build:prepare": "esno scripts/prepare.ts",
     "build:background": "vite build --config vite.config.background.ts",
     "build:web": "vite build",
