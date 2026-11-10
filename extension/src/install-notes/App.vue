@@ -82,7 +82,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import "../styles";
-import { isFirefox } from "webext-detect-page";
+import { isFirefox } from "webext-detect";
 
 type Status = {
     hostRunning: boolean;

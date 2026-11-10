@@ -70,7 +70,7 @@ function persistPending() {
 const restored: Promise<void> = (async () => {
     try {
         const r = await chrome.storage.session?.get(SESSION_KEY);
-        const data = r?.[SESSION_KEY] ?? {};
+        const data = (r?.[SESSION_KEY] ?? {}) as Record<string, PendingOtpSetup>;
         for (const [tabId, setup] of Object.entries<PendingOtpSetup>(data)) {
             if (!pending.has(Number(tabId)) && Date.now() - setup.at <= MAX_AGE_MS) pending.set(Number(tabId), setup);
         }

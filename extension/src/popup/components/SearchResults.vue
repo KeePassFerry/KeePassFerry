@@ -5,9 +5,9 @@
 v-for="(match, index) of filteredMatches" :key="match.entry.uuid" :ref="setNodesA"
             :entrySummary="match.entry" :isFirstInAList="index === 0" :frame-id="frameId"
             :entry-index="match.originalIndex" :dataIndex="index" @move-next-in-list="
-                nextInList(index, 'listAarray', filteredMatches.length)
+                nextInList(Number(index), 'listAarray', filteredMatches.length)
             " @move-prev-in-list="
-    prevInList(index, 'listAarray')
+    prevInList(Number(index), 'listAarray')
 " @move-out-of-list="exitList"
 @pref-entry-toggle="onPreferredEntryClick"  />
 

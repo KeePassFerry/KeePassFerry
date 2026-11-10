@@ -7,7 +7,7 @@ Die App-Erwähnung hat Vorrang: SMS-Seiten nennen selten eine App, App-Seiten bi
 const APP_CHANNEL =
     /(authenticator|authentifizierungs[-\s]?app|auth[-\s]?app|\btotp\b|code (aus|in) (der|ihrer|deiner) app|code from (your|the|an) (authenticator )?app|app[-\s]?code)/i;
 const OTHER_CHANNEL =
-    // eslint-disable-next-line max-len
+    // eslint-disable-next-line @stylistic/max-len
     /(\bsms\b|textnachricht|text message|telefonnummer|handynummer|mobilnummer|rufnummer|phone number|whatsapp|per e-?mail|an (ihre|deine) e-?mail|sent (a code )?to (your )?(phone|mobile|e-?mail|number)|an (eine|ihre|deine|die) (telefon|handy|mobil)|gesendet an)/i;
 
 export type CodeChannel = "app" | "other" | "unknown";

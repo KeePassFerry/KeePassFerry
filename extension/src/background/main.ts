@@ -7,7 +7,7 @@ import { takePendingEdit } from "./popupEdit";
 import { queryPageFields, fillPageField } from "./pageFields";
 import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, HIBP_LEAKS_FEATURE, EXPIRY_FEATURE, DIAG_FOLDER_FEATURE, OPTIONS_DIALOG_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
 import { markNewsSeen } from "../common/whatsNew";
-import { isFirefox } from "webext-detect-page";
+import { isFirefox } from "webext-detect";
 import { ferry, OPEN_POPUP_NOTIFICATION_PREFIX } from "./KF";
 import { commandManager } from "./commands";
 import { FerryLog } from "../common/Logger";
@@ -527,20 +527,21 @@ chrome.runtime.onConnect.addListener(async port => {
 // based on whether we have already initialised the pinia store, got connected to the plugin, have open DBs, etc.
 if (isFirefox()) {
     chrome.webRequest.onAuthRequired.addListener(
-        async (requestDetails): Promise<chrome.webRequest.BlockingResponse> => {
+        // Firefox nimmt hier ein Promise an; die Chrome-Typen kennen nur die Callback-Form
+        (async (requestDetails: chrome.webRequest.OnAuthRequiredDetails): Promise<chrome.webRequest.BlockingResponse> => {
             if (FerryLog?.debug) FerryLog.debug("onAuthRequired request started");
             // We may crash at startup / session restore if we're not initialised yet
             await Promise.race([initialised, new Promise(resolve => self.setTimeout(resolve, 20000))]);
             if (FerryLog?.debug) FerryLog.debug("onAuthRequired request ongoing");
             const result = await networkAuth.provideCredentialsAsync(requestDetails);
             return result;
-        },
+        }) as any,
         { urls: ["<all_urls>"] },
         ["blocking"]
     );
 } else {
     chrome.webRequest.onAuthRequired.addListener(
-        (requestDetails, callback) => {
+        ((requestDetails: chrome.webRequest.OnAuthRequiredDetails, callback: (response: chrome.webRequest.BlockingResponse) => void) => {
             if (FerryLog?.debug) FerryLog.debug("onAuthRequired request started");
             Promise.race([
                 initialised,
@@ -550,7 +551,7 @@ if (isFirefox()) {
                 if (FerryLog?.debug) FerryLog.debug("onAuthRequired request ongoing");
                 networkAuth.provideCredentialsAsyncBlockingCallback(requestDetails, callback);
             });
-        },
+        }) as any,
         { urls: ["<all_urls>"] },
         ["asyncBlocking"]
     );

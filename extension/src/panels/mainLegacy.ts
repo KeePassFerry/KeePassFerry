@@ -82,7 +82,7 @@ async function start() {
 
     if (params["autoCloseTime"]) {
         const autoCloseTime = parseInt(params["autoCloseTime"]);
-        // eslint-disable-next-line id-blacklist
+        // eslint-disable-next-line id-denylist
         if (!Number.isNaN(autoCloseTime) && autoCloseTime > 0) {
             cancelAutoClose = () => {
                 clearInterval(autoCloseInterval);

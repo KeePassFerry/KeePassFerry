@@ -71,8 +71,7 @@ export const sharedConfig: UserConfig = {
     ],
     // Only used in development (esbuild)
     optimizeDeps: {
-        include: ["vue", "@vueuse/core"],
-        exclude: ["vue-demi"]
+        include: ["vue"]
     }
 };
 

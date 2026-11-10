@@ -7,7 +7,7 @@ type Manifest = chrome.runtime.Manifest;
 
 // Öffentlicher Schlüssel der Entwicklungs-ID pjafpdemjepcjioimoicjogcmkijighm
 const DEV_EXTENSION_PUBLIC_KEY =
-    // eslint-disable-next-line max-len
+    // eslint-disable-next-line @stylistic/max-len
     "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoR6uwJUTSigMLasfk42bUmKx/7P+Oj4NgBFWnDYkO8J2PCGrO3Gqj7A5TxkCFrnbShPEUSsyJlFz+S4cWs/UX1ip2bw8zkNiej5MJlo3aBt36qFE52RYTvgXQZW+DWo7/2kLaOM2EKq5Ev6IewwndHHLYNrDF/mbwZOXVwupBxaWkIY7s+1COfv1KV1lv6SEYPlSH7EEYVZc4aS+RfJydZxoWN65TQhZgrHRZOYVIM1mNec6Aa44nBj+SjNBEegFV+r/O7SKBzCe7WXtzWh9M8NU2XUc+GPGA+5E73caMB6HzpFghUywDUslOwDiH6b/j6ThGomzfgtRaJ9IzLLc1wIDAQAB";
 
 export async function getManifest() {

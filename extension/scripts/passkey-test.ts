@@ -46,7 +46,7 @@ const b64url = (b: Uint8Array) => Buffer.from(b).toString("base64").replace(/=+$
 const unb64url = (s: string) => new Uint8Array(Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64"));
 
 // DER-Signatur (SEQUENCE{INTEGER r, INTEGER s}) → r||s für WebCrypto
-function derToRaw(der: Uint8Array): Uint8Array {
+function derToRaw(der: Uint8Array): Uint8Array<ArrayBuffer> {
     let o = 2;
     const read = () => {
         if (der[o] !== 0x02) throw new Error("DER: INTEGER erwartet");

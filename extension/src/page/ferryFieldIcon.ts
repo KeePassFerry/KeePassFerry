@@ -254,6 +254,6 @@ export class FerryFieldIcon {
 
     // KeePassFerry-Feld-Icon 32 px (branding/keepassferry-field.svg → branding/png/field-32.png)
     static readonly FERRY_ICON_32 =
-        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @stylistic/max-len
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACrElEQVR4nMRXS2gTURQ9M0mqbUUU20LdKKGCixYEXbRFsK5MwYUgfqBqFy6qi+4UQbDGBtzYXanURRdVlKJ0V8zoQmOx1k3AzyaLEFwEhSaiVBNjazPOefGFSTL5qJnJgZn3u8k57869d96oaDDcVpMdvmt9WSjDiqIcNobecnY14JdxxXRdf65Cn13RAsvFBkrxRJtvbNogHoENMITcSWrjF8oKaB/0a4bZEdgK5Uki6PfJkUt2cjvHKdiPrpauQ53p6IsFIYc3PnNdUV/BQSh6tp8xoXLAgIPDkJwiuv9Eu6OQnDK9vHAeXrOAqnnesX2LaFe+fEed4M7fKpGOnjiI4wM9aNvWKuaSX1OYD73H5KOXdRGjllvo696F0NRFjBzrzZMT7HOOa7SxRQB3PnP1ZAExd2veMddoIx9NXQXQ7ZKcpOfG59A9NCEu9qUQ2tD2f2AZA3zmEpcmF6C9juTHsn937LRoz/r2YzWVQTWEI3E8C0erC6BLzbs3k5tFrK1voMnjQstmDy4PDaAWDAfmEFyOVBZQKxQFf43mTZ6SuRIB3DVTjV6gN3y9e0u8wDmPO/ceS2fWMTW/VLBu9kjqxxpam5vw6fMqFt/EUFUAwTxnqhETo0dFK0WQXM4R97Qwbt0PlReQyQno3LEVLlWtTQCLjCw+9AIDTka+Oe3oKdpWQjSeFL/5lv5p2JcWLss0JNn5mw8FgQT/pJicNlbVkKSyvXL7MfwzT3HG/wAbWb3EVoRS++B13UrIv5bifXt2or9nN5befcDb6EeUQyJ4Q6kooFgMUceXkRAgY4Cn14opWU9iE2c+BmJwHrG8AJ7b4TAkp5q76bNwGJJTlLNUdDHOo7JxTjsAB8APlIQWmGa/4R8mBYWIC1QHmyB2biIXcqwMG/px6jR+AwAA///9DnKbAAAABklEQVQDAJnrLCNIy+DdAAAAAElFTkSuQmCC";
 }

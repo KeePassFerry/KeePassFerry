@@ -318,7 +318,7 @@ const DECLINE_DAYS = 90;
 async function declinedIds(): Promise<Record<string, number>> {
     try {
         const stored = await chrome.storage.local.get(DECLINED_KEY);
-        const all: Record<string, number> = stored?.[DECLINED_KEY] ?? {};
+        const all = (stored?.[DECLINED_KEY] ?? {}) as Record<string, number>;
         const limit = Date.now() - DECLINE_DAYS * 24 * 3600 * 1000;
         for (const k of Object.keys(all)) if (all[k] < limit) delete all[k];
         return all;

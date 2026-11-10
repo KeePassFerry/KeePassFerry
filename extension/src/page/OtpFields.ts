@@ -20,7 +20,7 @@ Felder, deren Beschriftung auf SMS oder E-Mail hindeutet, werden ausgelassen (do
 */
 
 const OTP_HINT =
-    // eslint-disable-next-line max-len
+    // eslint-disable-next-line @stylistic/max-len
     /(one[-_ ]?time|\botp\b|\botc\b|totp|\b2fa\b|\bmfa\b|two[-_ ]?factor|2[-_ ]?step|zwei[-_ ]?faktor|verification[-_ ]?code|verify[-_ ]?code|bestätigungscode|bestaetigungscode|sicherheitscode|security[-_ ]?code|auth(entication|enticator)?[-_ ]?code|authenticator|einmal[-_ ]?(code|passwort|kennwort)|totp[-_ ]?code|otp[-_ ]?code|mfa[-_ ]?code|app[-_ ]?code)/i;
 // Kein TOTP: SMS/E-Mail/Telefon, Captcha, Wiederherstellungs- und Backup-Codes
 const NOT_TOTP_HINT =

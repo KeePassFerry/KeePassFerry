@@ -6,14 +6,14 @@ Dient nur dem Vergleich mit dem vom Plugin gelieferten Code; das Secret verläss
 export type TotpAlgorithm = "SHA-1" | "SHA-256" | "SHA-512";
 
 export interface TotpParams {
-    key: Uint8Array;
+    key: Uint8Array<ArrayBuffer>;
     period: number;
     digits: number;
     algorithm: TotpAlgorithm;
 }
 
 // Base32 (RFC 4648) ohne Füllzeichen, Leerzeichen und Groß-/Kleinschreibung egal; null bei ungültigen Zeichen
-export function base32Decode(text: string): Uint8Array {
+export function base32Decode(text: string): Uint8Array<ArrayBuffer> {
     const clean = (text ?? "").replace(/[\s-]/g, "").replace(/=+$/, "").toUpperCase();
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
     const out: number[] = [];
@@ -51,7 +51,7 @@ export function parseTotpParams(uri: string): TotpParams {
 }
 
 // HOTP-Wert (RFC 4226) für einen Zähler, mit führenden Nullen
-export async function hotp(key: Uint8Array, counter: number, digits: number, algorithm: TotpAlgorithm): Promise<string> {
+export async function hotp(key: Uint8Array<ArrayBuffer>, counter: number, digits: number, algorithm: TotpAlgorithm): Promise<string> {
     const message = new Uint8Array(8);
     let rest = counter;
     for (let i = 7; i >= 0; i--) {

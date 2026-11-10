@@ -36,20 +36,20 @@ const enc = new TextEncoder();
 const dec = new TextDecoder();
 const AAD = enc.encode("KeePassFerry v1");
 
-function b64(bytes: Uint8Array): string {
+function b64(bytes: Uint8Array<ArrayBuffer>): string {
     let s = "";
     for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
     return btoa(s);
 }
 
-function unb64(text: string, expectedLength?: number): Uint8Array {
+function unb64(text: string, expectedLength?: number): Uint8Array<ArrayBuffer> {
     const s = atob(text ?? "");
     const bytes = Uint8Array.from(s, c => c.charCodeAt(0));
     if (expectedLength !== undefined && bytes.length !== expectedLength) throw new Error("Unexpected field length");
     return bytes;
 }
 
-function concat(...parts: Uint8Array[]): Uint8Array {
+function concat(...parts: Uint8Array<ArrayBuffer>[]): Uint8Array<ArrayBuffer> {
     const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
     let o = 0;
     for (const p of parts) {
@@ -59,11 +59,11 @@ function concat(...parts: Uint8Array[]): Uint8Array {
     return out;
 }
 
-async function sha256(...parts: Uint8Array[]): Promise<Uint8Array> {
+async function sha256(...parts: Uint8Array<ArrayBuffer>[]): Promise<Uint8Array<ArrayBuffer>> {
     return new Uint8Array(await crypto.subtle.digest("SHA-256", concat(...parts)));
 }
 
-function counterNonce(n: number): Uint8Array {
+function counterNonce(n: number): Uint8Array<ArrayBuffer> {
     const nonce = new Uint8Array(12);
     let v = BigInt(n);
     for (let i = 11; i >= 4; i--) {
@@ -75,7 +75,7 @@ function counterNonce(n: number): Uint8Array {
 
 export const PAIRING_COMMIT_FEATURE = "KEEPASSFERRY_PAIRING_COMMIT";
 
-export function pairingCodeFromHash(h: Uint8Array): string {
+export function pairingCodeFromHash(h: Uint8Array<ArrayBuffer>): string {
     const v = ((h[0] << 24) >>> 0) + (h[1] << 16) + (h[2] << 8) + h[3];
     return (v % 1000000).toString().padStart(6, "0");
 }
@@ -85,8 +85,8 @@ type State = "idle" | "awaitHello" | "awaitReady" | "ready" | "closed";
 export class FerryChannelClient {
     private state: State = "idle";
     private eph: CryptoKeyPair;
-    private clientNonce: Uint8Array;
-    private clientPub: Uint8Array;
+    private clientNonce: Uint8Array<ArrayBuffer>;
+    private clientPub: Uint8Array<ArrayBuffer>;
     private clientId: string;
     private sendKey: CryptoKey;
     private receiveKey: CryptoKey;
@@ -96,7 +96,7 @@ export class FerryChannelClient {
     private serverPubB64: string;
     private serverIsNew = false;
     private pairingSeen = false;
-    private sasNonce: Uint8Array;
+    private sasNonce: Uint8Array<ArrayBuffer>;
     private legacyPairing = false;
     private sendChain: Promise<void> = Promise.resolve();
     private receiveChain: Promise<void> = Promise.resolve();
@@ -283,7 +283,7 @@ export class BrowserFerryChannelStore implements FerryChannelStore {
 
     async getClientId(): Promise<string> {
         const r = await chrome.storage.local.get("ferryClientId");
-        if (r.ferryClientId) return r.ferryClientId;
+        if (r.ferryClientId) return r.ferryClientId as string;
         const id = crypto.randomUUID();
         await chrome.storage.local.set({ ferryClientId: id });
         return id;

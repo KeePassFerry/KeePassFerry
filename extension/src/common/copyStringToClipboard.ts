@@ -1,5 +1,5 @@
 import { FerryLog } from "./Logger";
-import { isChrome, isExtensionContext } from "webext-detect-page";
+import { isChrome, isExtensionContext } from "webext-detect";
 
 // https://issues.chromium.org/issues/40738001
 // https://developer.chrome.com/docs/extensions/reference/api/offscreen

@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
-        "baseUrl": ".",
+        // TypeScript 6 schaltet "strict" standardmäßig ein; der Bestand ist ohne geschrieben
+        "strict": false,
         "noImplicitAny": false,
         "removeComments": false,
         "preserveConstEnums": true,
@@ -25,7 +26,7 @@
         ],
         "module": "ESNext",
         "paths": {
-        "~/*": ["src/*"]
+        "~/*": ["./src/*"]
         }
     },
     // "include": [
