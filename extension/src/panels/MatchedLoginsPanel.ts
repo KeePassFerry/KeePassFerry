@@ -4,7 +4,7 @@ import { FerryLog } from "../common/Logger";
 import { Action } from "../common/Action";
 import { AddonMessage } from "../common/AddonMessage";
 import { Entry } from "../common/model/Entry";
-import { displayDomains, punycodeHint } from "../common/displayDomain";
+import { displayDomains } from "../common/displayDomain";
 import {setup as i18nSetup } from "../common/i18n";
 
 const QUICK_ICON_USER = "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 8a7 7 0 0 1 14 0";
@@ -89,8 +89,7 @@ export class MatchedLoginsPanel {
                 text.append(via);
             }
             // Voller Text als Tooltip, falls die Zeile trotz breiterer Liste abgeschnitten wird
-            // Bei lesbar angezeigten internationalen Domains steht die echte Schreibweise (xn--) im Tooltip
-            text.title = [usernameDisplayValue, displayDomains(entry.title), punycodeHint(entry.title), related, punycodeHint(entry.relatedDomain)]
+            text.title = [usernameDisplayValue, displayDomains(entry.title), related]
                 .filter(Boolean)
                 .join("\n");
             row.append(icon, text);
@@ -242,7 +241,6 @@ export class MatchedLoginsPanel {
         const nameTitle = document.createElement("div");
         nameTitle.className = "ferry-login-title";
         nameTitle.textContent = displayDomains(entry.title);
-        nameTitle.title = punycodeHint(entry.title);
         name.append(nameUser, nameTitle);
         // Symbol des Eintrags wie in der Liste
         const siteIcon = document.createElement("img");

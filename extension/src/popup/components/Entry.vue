@@ -10,7 +10,7 @@
             </span>
             <span class="ferry-entry-text">
                 <span class="ferry-entry-line">
-                    <span class="ferry-entry-title" :title="titleHint">{{ displayTitle }}</span>
+                    <span class="ferry-entry-title">{{ displayTitle }}</span>
                     <span v-if="entrySummary.hasNotes" class="ferry-entry-mark">
                         <tabler-note class="ferry-ico" />
                         <v-tooltip location="top" activator="parent">{{ $i18n("ferry_extras_has_notes") }}</v-tooltip>
@@ -57,7 +57,10 @@
                 <button v-if="hasWebsite" type="button" class="ferry-entry-action" @click.stop="loadInNewTab">
                     <tabler-external-link class="ferry-ico" />
                     {{ $i18n("ferry_action_website") }}
-                    <v-tooltip location="top" activator="parent">{{ $i18n("ferry_open_website") }} ({{ entryDomain }})</v-tooltip>
+                    <v-tooltip location="top" activator="parent">
+                        <div>{{ $i18n("ferry_open_website") }}</div>
+                        <div style="overflow-wrap: anywhere">{{ entryAddress }}</div>
+                    </v-tooltip>
                 </button>
                 <button v-if="changeUrl" type="button" class="ferry-entry-action" @click.stop="openChangePassword">
                     <tabler-key class="ferry-ico" />
@@ -122,7 +125,7 @@ import { SaveState } from "../../common/SaveState";
 import { Entry } from "../../common/model/Entry";
 import type { Database } from "../../common/model/Database";
 import { databaseLabel } from "../../common/databaseLabel";
-import { displayDomains, punycodeHint } from "../../common/displayDomain";
+import { displayDomains, displayUrl } from "../../common/displayDomain";
 import { EntrySummary } from "../../common/model/EntrySummary";
 import { tooltipDelay } from "../../common/Timings";
 import { mapState } from "pinia";
@@ -183,23 +186,13 @@ export default {
             const e = this.entrySummary.fullDetails as Entry;
             return e.fields;
         },
-        // Internationale Domains lesbar (Option, Issue #33); die echte Schreibweise im Tooltip
+        // Internationale Domains lesbar (Option, Issue #33)
         displayTitle: function (): string {
             return displayDomains(this.entrySummary.title);
         },
-        titleHint: function (): string {
-            return punycodeHint(this.entrySummary.title) || undefined;
-        },
-        entryDomain: function () {
-            const urlStr = this.entrySummary.url;
-            if (!urlStr || urlStr.length < 4) return "<unknown>";
-            const kurl = FerryURL.fromString(urlStr);
-            if (!kurl) {
-                return "<error>";
-            }
-            const host = kurl.domainWithPort || kurl.url.host;
-            const shown = displayDomains(host);
-            return shown === host ? host : shown + " – " + host;
+        // Adresse für den Tooltip am Knopf "Website": Domain ganz, Pfad gekürzt, Parameter nur angedeutet
+        entryAddress: function (): string {
+            return displayUrl(this.entrySummary.url);
         },
         entryPath: function () {
             if (!this.entryPathIsLong) {

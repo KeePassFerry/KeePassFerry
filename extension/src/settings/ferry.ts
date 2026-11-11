@@ -269,6 +269,9 @@ setupClipboardPermission();
 setupResetPairing();
 setupPluginUpdate();
 setupNav();
+// Version neben dem Namen (Issue #38)
+const versionLabel = document.getElementById("ferryVersion");
+if (versionLabel) versionLabel.textContent = chrome.runtime.getManifest().version;
 refreshStatus();
 setupPluginSettings();
 // Im Popup geänderte Einstellungen (z. B. "Neue Einträge immer hier speichern"): beim Zurückkehren neu laden, damit

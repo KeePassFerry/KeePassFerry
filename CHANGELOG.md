@@ -2,6 +2,14 @@
 
 English · [Deutsch](#deutsch)
 
+## Unreleased
+
+- Popup: the tooltip of the "Website" button shows the address of the entry on its own line: the full domain, the path
+  (shortened if long), parameters only hinted at as "?…" (#33).
+- "Show international domains readably": with the option on, the xn-- spelling is no longer shown next to the readable
+  one, neither in tooltips nor in the lists; the path is shown readably too (#33).
+- Settings: the version is shown next to the name (#38).
+
 ## 1.0.32 – 2026-11-10
 
 - Firefox: own build with the fixed add-on ID keepassferry@keepassferry (Firefox 128 or later). Pairing failed before because
@@ -570,6 +578,14 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## Unveröffentlicht
+
+- Popup: Der Tooltip am Knopf „Website“ zeigt die Adresse des Eintrags in einer eigenen Zeile: die Domain ganz, den Pfad
+  (bei Überlänge gekürzt), Parameter nur angedeutet als „?…“ (#33).
+- „Internationale Domains lesbar anzeigen“: Bei eingeschalteter Option steht die xn--Schreibweise nicht mehr neben der
+  lesbaren, weder in Tooltips noch in den Listen; auch der Pfad wird lesbar gezeigt (#33).
+- Einstellungen: Die Version steht neben dem Namen (#38).
 
 ## 1.0.32 – 2026-11-10
 
