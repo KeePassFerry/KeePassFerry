@@ -2,7 +2,7 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.33 – 2026-11-11
 
 - Popup: the tooltip of the "Website" button shows the address of the entry on its own line: the full domain, the path
   (shortened if long), parameters only hinted at as "?…" (#33).
@@ -579,7 +579,7 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.33 – 2026-11-11
 
 - Popup: Der Tooltip am Knopf „Website“ zeigt die Adresse des Eintrags in einer eigenen Zeile: die Domain ganz, den Pfad
   (bei Überlänge gekürzt), Parameter nur angedeutet als „?…“ (#33).

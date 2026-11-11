@@ -1980,6 +1980,14 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_33_1_title": {
+    "message": "Address at the \"Website\" button",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_33_1_text": {
+    "message": "In an expanded entry, the tooltip of the \"Website\" button now shows the entry's address on its own line. With the option \"Show international domains readably\" only the readable spelling appears. The settings show the version next to the name.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_32_1_title": {
     "message": "KeePassFerry for Firefox",
     "description": "KeePassFerry"

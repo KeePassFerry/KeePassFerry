@@ -1980,6 +1980,14 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_33_1_title": {
+        "message": "Adresse am Knopf „Website“",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_33_1_text": {
+        "message": "Im aufgeklappten Eintrag zeigt der Tooltip am Knopf „Website“ jetzt die Adresse des Eintrags in einer eigenen Zeile. Mit der Option „Internationale Domains lesbar anzeigen“ erscheint nur noch die lesbare Schreibweise. In den Einstellungen steht die Version neben dem Namen.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_32_1_title": {
         "message": "KeePassFerry für Firefox",
         "description": "KeePassFerry"
