@@ -107,13 +107,21 @@ namespace KeePassFerry.Forms
             if (_conf == null)
                 return;
 
-            // Schlanke Oberfläche: Genauigkeit der Adresse läuft mit dem Standard der Datenbank; Realm nur bei Einträgen
-            // für Browser-Anmeldefenster; Formularfelder nur, wenn der Eintrag mehr als Benutzername und Passwort hat
+            // Schlanke Oberfläche: Realm nur bei Einträgen für Browser-Anmeldefenster; Formularfelder nur, wenn der
+            // Eintrag mehr als Benutzername und Passwort hat
             labelRealm.Visible = textBoxRealm.Visible = !string.IsNullOrEmpty(_conf.HttpRealm);
-            groupBox4.Visible = label2.Visible = label5.Visible = false;
-            // Zusätzliche URLs rücken nach oben und nutzen die ganze Höhe des Reiters
-            int urlGrow = (groupBox3.Top - groupBox4.Top) + (tabPage2.ClientSize.Height - groupBox3.Bottom - groupBox4.Top);
-            groupBox3.Top = groupBox4.Top;
+            // Genauigkeit der Adresse für diesen Eintrag (Issue #39): nur die drei Wahlknöpfe, ohne die Erklärtexte.
+            // Eine Ausnahme für die Domain in den KeePassFerry-Optionen geht weiter vor (GetMatchAccuracyMethod).
+            label2.Visible = label5.Visible = false;
+            int rowGap = radioButton2.Top - radioButton1.Top;
+            radioButton1.Top = label5.Top + 2;
+            radioButton2.Top = radioButton1.Top + rowGap;
+            radioButton3.Top = radioButton2.Top + rowGap;
+            groupBox4.Height = radioButton3.Bottom + radioButton1.Top / 2;
+            // Zusätzliche URLs rücken darunter und nutzen den Rest des Reiters
+            int urlTop = groupBox4.Bottom + groupBox4.Top;
+            int urlGrow = (groupBox3.Top - urlTop) + (tabPage2.ClientSize.Height - groupBox3.Bottom - groupBox4.Top);
+            groupBox3.Top = urlTop;
             if (urlGrow > 0)
             {
                 groupBox3.Height += urlGrow;
