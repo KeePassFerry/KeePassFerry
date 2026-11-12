@@ -1980,6 +1980,14 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_34_1_title": {
+    "message": "Match accuracy per entry",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_34_1_text": {
+    "message": "In KeePass you can again choose per entry how exactly the address has to match: Domain, Hostname or Exact (edit the entry → tab \"KeePassFerry\" → \"URLs\"). This needs the new plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_33_1_title": {
     "message": "Address at the \"Website\" button",
     "description": "KeePassFerry"

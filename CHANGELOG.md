@@ -2,7 +2,7 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.34 – 2026-11-12
 
 - KeePass, entry dialog, tab "KeePassFerry" → "URLs": the choice Domain / Hostname / Exact for this entry is back (#39).
   An exception for the domain in the KeePassFerry options still takes precedence. Needs the new plugin.
@@ -584,7 +584,7 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.34 – 2026-11-12
 
 - KeePass, Eintragsdialog, Reiter „KeePassFerry“ → „URLs“: Die Wahl Domain / Hostname / Exakt für diesen Eintrag ist
   wieder da (#39). Eine Ausnahme für die Domain in den KeePassFerry-Optionen geht weiter vor. Braucht das neue Plugin.
