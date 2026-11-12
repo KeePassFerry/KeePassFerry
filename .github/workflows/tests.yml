@@ -1,0 +1,78 @@
+# Tests bei jedem Push auf main und jedem Pull Request (dieselben Schritte laufen auch vor jedem Release in release.yml):
+# - Erweiterung: Vitest
+# - Plugin und Host (tests/KeePassFerry.Tests): Kryptobausteine gegen Testvektoren, Nachrichtenrahmen, Handshake und
+#   Kopplung über eine echte Named Pipe, Passkey-Daten und -Signaturen, Wegwerf-Datenbank; dazu der echte TypeScript-Client
+#   der Erweiterung gegen den echten Plugin-Server. Ohne KeePass-Oberfläche, nur mit erzeugten Schlüsseln und Testdaten.
+# Was hier nicht abgedeckt ist, steht in tests/README.md.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE*"
+      - "docs/**"
+      - "branding/**"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE*"
+      - "docs/**"
+      - "branding/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  KEEPASS_VERSION: "2.61.1"
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: KeePass als Build-Referenz laden
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:USERPROFILE "KeePassDEV"
+          $url = "https://downloads.sourceforge.net/project/keepass/KeePass%202.x/$env:KEEPASS_VERSION/KeePass-$env:KEEPASS_VERSION.zip"
+          curl.exe -L --fail --retry 3 -A "Wget/1.21" -o keepass.zip $url
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Expand-Archive keepass.zip -DestinationPath $dir -Force
+          New-Item -ItemType Directory -Force (Join-Path $dir "Plugins") | Out-Null
+          if (-not (Test-Path (Join-Path $dir "KeePass.exe"))) { throw "KeePass.exe fehlt" }
+
+      - uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3
+
+      - name: Plugin bauen
+        shell: pwsh
+        run: |
+          msbuild plugin/KeePassFerry/KeePassFerry.csproj -t:Build -p:Configuration=Release -p:TargetFrameworkVersion=v4.8 -v:minimal -nologo
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Erweiterung testen
+        working-directory: extension
+        shell: pwsh
+        run: |
+          npm ci --no-audit --no-fund
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npx vitest run
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: Plugin und Host testen
+        shell: pwsh
+        env:
+          KPF_REQUIRE_INTEROP: "1"
+        run: |
+          dotnet test tests/KeePassFerry.Tests -c Release --nologo --logger "console;verbosity=normal"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }

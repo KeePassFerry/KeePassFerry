@@ -143,8 +143,8 @@ namespace KeePassFerry
             byte[] rawPub = FerryCrypto.RawFromCngPublicBlob(key.Export(CngKeyBlobFormat.EccPublicBlob));
             key.Dispose();
 
-            byte[] authData = BuildAuthData(rpId, 0x5D, credentialId, CoseKeyEs256(rawPub)); // UP|UV|BE|BS|AT
-            byte[] attestationObject = AttestationObjectNone(authData);
+            byte[] authData = PasskeyCrypto.BuildAuthData(rpId, 0x5D, credentialId, PasskeyCrypto.CoseKeyEs256(rawPub)); // UP|UV|BE|BS|AT
+            byte[] attestationObject = PasskeyCrypto.AttestationObjectNone(authData);
 
             if (entry == null)
             {
@@ -166,7 +166,7 @@ namespace KeePassFerry
             }
 
             entry.Strings.Set(FieldCredentialId, new ProtectedString(true, B64Url(credentialId)));
-            entry.Strings.Set(FieldPrivateKey, new ProtectedString(true, ToPem(pkcs8)));
+            entry.Strings.Set(FieldPrivateKey, new ProtectedString(true, PasskeyCrypto.ToPem(pkcs8)));
             entry.Strings.Set(FieldRelyingParty, new ProtectedString(false, rpId));
             entry.Strings.Set(FieldUserHandle, new ProtectedString(true, NormalizeB64Url(userIdB64Url)));
             entry.Strings.Set(FieldPasskeyUsername, new ProtectedString(false, userName ?? ""));
@@ -182,7 +182,7 @@ namespace KeePassFerry
                 credentialId = B64Url(credentialId),
                 attestationObject = B64Url(attestationObject),
                 authenticatorData = B64Url(authData),
-                publicKey = B64Url(SpkiP256(rawPub)),
+                publicKey = B64Url(PasskeyCrypto.SpkiP256(rawPub)),
                 entryUuid = entry.Uuid.ToHexString()
             };
         }
@@ -205,17 +205,12 @@ namespace KeePassFerry
             bool be = entry.Strings.ReadSafe(FieldFlagBe) != "0";
             bool bs = be && entry.Strings.ReadSafe(FieldFlagBs) != "0";
             byte flags = (byte)(0x01 | 0x04 | (be ? 0x08 : 0) | (bs ? 0x10 : 0)); // UP|UV|BE|BS
-            byte[] authData = BuildAuthData(rpId, flags, null, null);
+            byte[] authData = PasskeyCrypto.BuildAuthData(rpId, flags, null, null);
 
             byte[] signature;
             try
             {
-                using (CngKey key = ImportPrivateKey(entry.Strings.ReadSafe(FieldPrivateKey)))
-                using (var ecdsa = new ECDsaCng(key))
-                {
-                    ecdsa.HashAlgorithm = CngAlgorithm.Sha256;
-                    signature = P1363ToDer(ecdsa.SignData(Concat(authData, clientDataHash)));
-                }
+                signature = PasskeyCrypto.Sign(entry.Strings.ReadSafe(FieldPrivateKey), authData, clientDataHash);
             }
             catch (Exception)
             {
@@ -386,134 +381,6 @@ namespace KeePassFerry
             return g;
         }
 
-        private static byte[] BuildAuthData(string rpId, byte flags, byte[] credentialId, byte[] coseKey)
-        {
-            using (var ms = new MemoryStream())
-            {
-                byte[] rpIdHash = FerryCrypto.Sha256(Encoding.UTF8.GetBytes(rpId));
-                ms.Write(rpIdHash, 0, 32);
-                ms.WriteByte(flags);
-                ms.Write(new byte[4], 0, 4); // Zähler 0 (wie KeePassXC; passt zu synchronisierten Passkeys)
-                if (credentialId != null)
-                {
-                    ms.Write(new byte[16], 0, 16); // AAGUID (keine Attestation)
-                    ms.WriteByte((byte)(credentialId.Length >> 8));
-                    ms.WriteByte((byte)credentialId.Length);
-                    ms.Write(credentialId, 0, credentialId.Length);
-                    ms.Write(coseKey, 0, coseKey.Length);
-                }
-                return ms.ToArray();
-            }
-        }
-
-        // COSE_Key ES256: {1: 2, 3: -7, -1: 1, -2: x, -3: y}
-        private static byte[] CoseKeyEs256(byte[] rawPub)
-        {
-            using (var ms = new MemoryStream())
-            {
-                ms.Write(new byte[] { 0xA5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x21, 0x58, 0x20 }, 0, 10);
-                ms.Write(rawPub, 1, 32);
-                ms.Write(new byte[] { 0x22, 0x58, 0x20 }, 0, 3);
-                ms.Write(rawPub, 33, 32);
-                return ms.ToArray();
-            }
-        }
-
-        // {"fmt": "none", "attStmt": {}, "authData": bytes}
-        private static byte[] AttestationObjectNone(byte[] authData)
-        {
-            using (var ms = new MemoryStream())
-            {
-                ms.WriteByte(0xA3);
-                WriteCborText(ms, "fmt");
-                WriteCborText(ms, "none");
-                WriteCborText(ms, "attStmt");
-                ms.WriteByte(0xA0);
-                WriteCborText(ms, "authData");
-                WriteCborHead(ms, 2, authData.Length);
-                ms.Write(authData, 0, authData.Length);
-                return ms.ToArray();
-            }
-        }
-
-        private static void WriteCborText(Stream s, string text)
-        {
-            byte[] b = Encoding.UTF8.GetBytes(text);
-            WriteCborHead(s, 3, b.Length);
-            s.Write(b, 0, b.Length);
-        }
-
-        private static void WriteCborHead(Stream s, int majorType, int length)
-        {
-            int mt = majorType << 5;
-            if (length < 24) s.WriteByte((byte)(mt | length));
-            else if (length < 256) { s.WriteByte((byte)(mt | 24)); s.WriteByte((byte)length); }
-            else { s.WriteByte((byte)(mt | 25)); s.WriteByte((byte)(length >> 8)); s.WriteByte((byte)length); }
-        }
-
-        // SubjectPublicKeyInfo für P-256 (für getPublicKey() der Seite)
-        private static byte[] SpkiP256(byte[] rawPub)
-        {
-            byte[] prefix =
-            {
-                0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 0x01,
-                0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07, 0x03, 0x42, 0x00
-            };
-            return Concat(prefix, rawPub);
-        }
-
-        // ECDSA-Signatur r||s (P1363) → ASN.1 DER, wie WebAuthn es für ES256 verlangt
-        internal static byte[] P1363ToDer(byte[] sig)
-        {
-            int half = sig.Length / 2;
-            byte[] r = DerInteger(sig, 0, half);
-            byte[] s = DerInteger(sig, half, half);
-            var result = new byte[2 + r.Length + s.Length];
-            result[0] = 0x30;
-            result[1] = (byte)(r.Length + s.Length);
-            Buffer.BlockCopy(r, 0, result, 2, r.Length);
-            Buffer.BlockCopy(s, 0, result, 2 + r.Length, s.Length);
-            return result;
-        }
-
-        private static byte[] DerInteger(byte[] src, int offset, int length)
-        {
-            int start = offset;
-            while (start < offset + length - 1 && src[start] == 0) start++;
-            int len = offset + length - start;
-            bool pad = (src[start] & 0x80) != 0;
-            var r = new byte[2 + len + (pad ? 1 : 0)];
-            r[0] = 0x02;
-            r[1] = (byte)(len + (pad ? 1 : 0));
-            Buffer.BlockCopy(src, start, r, 2 + (pad ? 1 : 0), len);
-            return r;
-        }
-
-        private static string ToPem(byte[] pkcs8)
-        {
-            string b64 = Convert.ToBase64String(pkcs8);
-            var sb = new StringBuilder("-----BEGIN PRIVATE KEY-----\n");
-            for (int i = 0; i < b64.Length; i += 64) sb.Append(b64, i, Math.Min(64, b64.Length - i)).Append('\n');
-            sb.Append("-----END PRIVATE KEY-----\n");
-            return sb.ToString();
-        }
-
-        private static CngKey ImportPrivateKey(string pem)
-        {
-            var sb = new StringBuilder();
-            foreach (string line in pem.Replace("\r", "").Split('\n'))
-                if (!line.StartsWith("-----")) sb.Append(line.Trim());
-            byte[] der = Convert.FromBase64String(sb.ToString());
-            try
-            {
-                return CngKey.Import(der, CngKeyBlobFormat.Pkcs8PrivateBlob);
-            }
-            finally
-            {
-                Array.Clear(der, 0, der.Length);
-            }
-        }
-
         private static string B64Url(byte[] b)
         {
             return Convert.ToBase64String(b).TrimEnd('=').Replace('+', '-').Replace('/', '_');
@@ -538,14 +405,6 @@ namespace KeePassFerry
             {
                 return s.Trim();
             }
-        }
-
-        private static byte[] Concat(byte[] a, byte[] b)
-        {
-            var r = new byte[a.Length + b.Length];
-            Buffer.BlockCopy(a, 0, r, 0, a.Length);
-            Buffer.BlockCopy(b, 0, r, a.Length, b.Length);
-            return r;
         }
     }
 }

@@ -2,6 +2,13 @@
 
 English · [Deutsch](#deutsch)
 
+## Unreleased
+
+- Automated tests for the KeePass plugin, the host and the encrypted channel, run on every push, pull request and
+  release (#36): cryptography against published test vectors, handshake and pairing over a real pipe, rejection of
+  tampered, replayed and malformed messages, passkey data and signatures, and the extension's channel client against
+  the plugin. Details and what is not covered: `tests/README.md`. No change for users.
+
 ## 1.0.34 – 2026-11-12
 
 - KeePass, entry dialog, tab "KeePassFerry" → "URLs": the choice Domain / Hostname / Exact for this entry is back (#39).
@@ -583,6 +590,13 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## Unveröffentlicht
+
+- Automatische Tests für das KeePass-Plugin, den Host und den verschlüsselten Kanal, bei jedem Push, Pull Request und
+  Release (#36): Kryptografie gegen veröffentlichte Testvektoren, Handshake und Kopplung über eine echte Pipe, Abweisen
+  manipulierter, wiederholter und fehlerhafter Nachrichten, Passkey-Daten und -Signaturen sowie der Kanal-Client der
+  Erweiterung gegen das Plugin. Einzelheiten und was nicht abgedeckt ist: `tests/README.md`. Für Nutzer ändert sich nichts.
 
 ## 1.0.34 – 2026-11-12
 

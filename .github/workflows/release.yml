@@ -81,6 +81,15 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           if (-not (Test-Path extension/manifest.json)) { throw "Erweiterung nicht gebaut" }
 
+      # Plugin und Host (tests/KeePassFerry.Tests, wie in tests.yml); braucht das gebaute Plugin und extension/node_modules
+      - name: Plugin und Host testen
+        shell: pwsh
+        env:
+          KPF_REQUIRE_INTEROP: "1"
+        run: |
+          dotnet test tests/KeePassFerry.Tests -c Release --nologo
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
       - name: Pakete schnüren
         shell: pwsh
         run: |

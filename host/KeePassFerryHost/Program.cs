@@ -18,11 +18,6 @@ namespace KeePassFerryHost
     internal static class Program
     {
         private const string PipeBaseName = "keepassferry";
-        private const int MaxMessageBytes = 64 * 1024 * 1024;
-
-        // Browser nimmt vom Host höchstens 1 MB pro Nachricht an; größere Nachrichten gehen in Stücken (Base64)
-        private const int MaxDirectBytes = 900 * 1024;
-        private const int ChunkRawBytes = 600 * 1024;
 
         private static readonly object BrowserWriteLock = new object();
         private static readonly object PipeLock = new object();
@@ -47,14 +42,6 @@ namespace KeePassFerryHost
                 if (GetNamedPipeServerProcessId(_pipe.SafePipeHandle.DangerousGetHandle(), out pid) && pid != 0)
                     AllowSetForegroundWindow(pid);
             }
-        }
-
-        // Steuerbefehl der Erweiterung an den Host selbst: {"keepassferryHost":"<befehl>"}
-        private static bool IsHostCommand(byte[] message, string command)
-        {
-            if (message.Length > 100) return false;
-            string text = Encoding.UTF8.GetString(message).Replace(" ", "");
-            return text == "{\"keepassferryHost\":\"" + command + "\"}";
         }
 
         // KeePass.exe im eigenen Ordner oder bis zu drei Ebenen darüber (Host liegt im Plugins-Ordner von KeePass).
@@ -137,7 +124,7 @@ namespace KeePassFerryHost
                 try
                 {
                     byte[] message;
-                    while ((message = ReadFrame(pipe)) != null)
+                    while ((message = Framing.ReadFrame(pipe)) != null)
                         SendToBrowser(message);
                 }
                 catch (Exception)
@@ -156,14 +143,14 @@ namespace KeePassFerryHost
             try
             {
                 byte[] message;
-                while ((message = ReadFrame(browserIn)) != null)
+                while ((message = Framing.ReadFrame(browserIn)) != null)
                 {
-                    if (IsHostCommand(message, "allowForeground"))
+                    if (Framing.IsHostCommand(message, "allowForeground"))
                     {
                         AllowKeePassForeground();
                         continue;
                     }
-                    if (IsHostCommand(message, "startKeePass"))
+                    if (Framing.IsHostCommand(message, "startKeePass"))
                     {
                         StartKeePass();
                         continue;
@@ -173,7 +160,7 @@ namespace KeePassFerryHost
                         if (_pipe == null) continue; // KeePass nicht verbunden: verwerfen, die Erweiterung kennt den Status
                         try
                         {
-                            WriteFrame(_pipe, message);
+                            Framing.WriteFrame(_pipe, message);
                         }
                         catch (Exception)
                         {
@@ -197,59 +184,10 @@ namespace KeePassFerryHost
         {
             lock (BrowserWriteLock)
             {
-                if (message.Length <= MaxDirectBytes)
-                {
-                    WriteFrame(_browserOut, message);
-                    return;
-                }
-
-                int id = ++_nextChunkId;
-                int count = (message.Length + ChunkRawBytes - 1) / ChunkRawBytes;
-                for (int i = 0; i < count; i++)
-                {
-                    int offset = i * ChunkRawBytes;
-                    string data = Convert.ToBase64String(message, offset, Math.Min(ChunkRawBytes, message.Length - offset));
-                    string chunk = "{\"keepassferryHost\":\"chunk\",\"id\":" + id + ",\"index\":" + i +
-                                   ",\"count\":" + count + ",\"data\":\"" + data + "\"}";
-                    WriteFrame(_browserOut, Encoding.UTF8.GetBytes(chunk));
-                }
+                int chunkId = message.Length > Framing.MaxDirectBytes ? ++_nextChunkId : 0;
+                foreach (byte[] frame in Framing.ForBrowser(message, chunkId))
+                    Framing.WriteFrame(_browserOut, frame);
             }
-        }
-
-        private static byte[] ReadFrame(Stream stream)
-        {
-            var header = new byte[4];
-            if (!ReadExactly(stream, header, true))
-                return null;
-            int length = BitConverter.ToInt32(header, 0);
-            if (length < 0 || length > MaxMessageBytes)
-                throw new InvalidDataException("Invalid message length " + length);
-            var body = new byte[length];
-            ReadExactly(stream, body, false);
-            return body;
-        }
-
-        private static bool ReadExactly(Stream stream, byte[] buffer, bool allowEof)
-        {
-            int read = 0;
-            while (read < buffer.Length)
-            {
-                int n = stream.Read(buffer, read, buffer.Length - read);
-                if (n == 0)
-                {
-                    if (allowEof && read == 0) return false;
-                    throw new EndOfStreamException();
-                }
-                read += n;
-            }
-            return true;
-        }
-
-        private static void WriteFrame(Stream stream, byte[] message)
-        {
-            stream.Write(BitConverter.GetBytes(message.Length), 0, 4);
-            stream.Write(message, 0, message.Length);
-            stream.Flush();
         }
     }
 }

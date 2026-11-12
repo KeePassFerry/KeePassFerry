@@ -14,6 +14,9 @@ using System.Runtime.InteropServices;
 // COM settings
 [assembly: ComVisible(false)]
 
+// Tests (tests/KeePassFerry.Tests) prüfen auch interne Bausteine
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("KeePassFerry.Tests")]
+
 // Assembly GUID
 [assembly: Guid("5D1C7E3A-9B42-4F6E-8A1D-3C7B2E9F4A61")]
 

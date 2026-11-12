@@ -147,6 +147,9 @@ For manual testing without real accounts, `testsite/` contains a local test webs
 multi-step login, two-factor setup and codes): `node testsite/server.mjs`, then open `http://127.0.0.1:8080/`
 (see `testsite/README.md`).
 
+Automated tests for the extension, the plugin, the host and the encrypted channel run on every push and pull request;
+see [`tests/README.md`](tests/README.md) for what they cover and what is still tested by hand.
+
 ## Privacy
 
 KeePassFerry has no servers, no telemetry and no tracking. It does not transfer any information to other networked

@@ -180,6 +180,7 @@
     <Compile Include="FerryService.JSONRPC.cs" />
     <Compile Include="FerryService.Ferry.cs" />
     <Compile Include="FerryService.Passkeys.cs" />
+    <Compile Include="PasskeyCrypto.cs" />
     <Compile Include="Totp.cs" />
     <Compile Include="FerryText.cs" />
     <Compile Include="FerryForeground.cs" />
