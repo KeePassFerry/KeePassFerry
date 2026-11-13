@@ -2,6 +2,16 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.36 – 2026-11-13
+
+- Updating an entry no longer replaces its icon (#43). An icon you chose yourself, or the one set when the entry was
+  created, stays. Only entries that still have the default key icon get the website's icon, and only from the
+  entry's own website; before, an entry could get the icon of the page that happened to be open. This applies to the
+  edit window, "Add this field to the entry …" and "Update" in the "New password detected" notice. Needs the new
+  plugin. In Chrome and Edge, "Update" in the notice cannot use SVG-only website icons; the edit window can.
+- Automatic filling no longer fails on forms with hidden fields (#45): fields that are not visible no longer count when
+  deciding whether a form matches an entry well enough.
+
 ## 1.0.35 – 2026-11-13
 
 - Additional addresses of an entry are now stored in string fields of the entry, as other KeePass apps do (#41):
@@ -602,6 +612,17 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.36 – 2026-11-13
+
+- Beim Aktualisieren eines Eintrags bleibt sein Symbol erhalten (#43). Ein selbst gewähltes Symbol oder das beim
+  Anlegen gesetzte bleibt. Das Website-Symbol bekommen nur Einträge mit dem Standard-Schlüssel, und nur von ihrer
+  eigenen Website; bisher konnte ein Eintrag das Symbol der gerade offenen Seite bekommen. Das gilt für das
+  Bearbeiten-Fenster, „Dieses Feld zum Eintrag hinzufügen …“ und „Aktualisieren“ im Hinweis „Neues Passwort erkannt“.
+  Dafür ist das neue Plugin nötig. In Chrome und Edge kann „Aktualisieren“ im Hinweis reine SVG-Website-Symbole nicht
+  verwenden, das Bearbeiten-Fenster schon.
+- Automatisches Ausfüllen scheitert nicht mehr an Formularen mit versteckten Feldern (#45): Nicht sichtbare Felder
+  zählen nicht mehr mit, wenn geprüft wird, ob ein Formular gut genug zu einem Eintrag passt.
 
 ## 1.0.35 – 2026-11-13
 

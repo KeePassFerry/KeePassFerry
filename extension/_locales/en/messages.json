@@ -1980,6 +1980,14 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_36_1_title": {
+    "message": "Your own icons stay",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_36_1_text": {
+    "message": "Updating an entry now keeps an icon you chose yourself. Only entries with the default key icon get the website's icon, and only from their own website. Needs the new plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_35_1_title": {
     "message": "Update a password with one click",
     "description": "KeePassFerry"
