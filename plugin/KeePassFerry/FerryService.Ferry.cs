@@ -560,6 +560,7 @@ namespace KeePassFerry
                 || name.StartsWith("HmacOtp-", StringComparison.OrdinalIgnoreCase)
                 || name.StartsWith("KPRPC", StringComparison.OrdinalIgnoreCase) // Altfeld aus Kee: nie als Formularfeld
                 || name.StartsWith("KPEX_", StringComparison.OrdinalIgnoreCase)
+                || name.StartsWith(Extensions.AdditionalUrlFieldPrefix, StringComparison.OrdinalIgnoreCase) // zusätzliche Adressen
                 || HibpStatus.IsStatusField(name);
         }
 

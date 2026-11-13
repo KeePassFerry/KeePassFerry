@@ -4,9 +4,12 @@ English · [Deutsch](#deutsch)
 
 ## Unreleased
 
-- Additional addresses of an entry are also read from string fields, as other KeePass apps store them (#41):
-  `KP2A_URL`, `KP2A_URL_1` … (Keepass2Android, KeePassXC) and fields whose name starts with `URL` (KeePassNatMsg,
-  e.g. `URL2`). Databases used with these apps work without entering the addresses again. Needs the new plugin.
+- Additional addresses of an entry are now stored in string fields of the entry, as other KeePass apps do (#41):
+  `KP2A_URL_1`, `KP2A_URL_2` … (Keepass2Android, KeePassXC). They are visible on the "Advanced" tab of the entry and
+  to those apps. Also read: `KP2A_URL` and fields whose name starts with `URL` (KeePassNatMsg, e.g. `URL2`), so
+  databases used with these apps work without entering the addresses again. Existing additional addresses keep
+  working and move to the fields the next time the entry is saved through KeePassFerry. Blocked addresses and
+  patterns (RegEx) stay in the KeePassFerry settings of the entry. Needs the new plugin.
 - Automated tests for the KeePass plugin, the host and the encrypted channel, run on every push, pull request and
   release (#36): cryptography against published test vectors, handshake and pairing over a real pipe, rejection of
   tampered, replayed and malformed messages, passkey data and signatures, and the extension's channel client against
@@ -596,10 +599,13 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 ## Unveröffentlicht
 
-- Zusätzliche Adressen eines Eintrags werden auch aus Zeichenfolgenfeldern gelesen, wie andere KeePass-Programme sie
-  ablegen (#41): `KP2A_URL`, `KP2A_URL_1` … (Keepass2Android, KeePassXC) und Felder, deren Name mit `URL` beginnt
-  (KeePassNatMsg, z. B. `URL2`). Datenbanken, die mit diesen Programmen genutzt werden, funktionieren ohne erneutes
-  Eintragen der Adressen. Braucht das neue Plugin.
+- Zusätzliche Adressen eines Eintrags stehen jetzt in Zeichenfolgenfeldern des Eintrags, wie bei anderen
+  KeePass-Programmen (#41): `KP2A_URL_1`, `KP2A_URL_2` … (Keepass2Android, KeePassXC). Sie sind im Reiter „Erweitert“
+  des Eintrags und für diese Programme sichtbar. Gelesen werden auch `KP2A_URL` und Felder, deren Name mit `URL`
+  beginnt (KeePassNatMsg, z. B. `URL2`); Datenbanken, die mit diesen Programmen genutzt werden, funktionieren ohne
+  erneutes Eintragen. Vorhandene zusätzliche Adressen gelten weiter und ziehen in die Felder um, sobald der Eintrag das
+  nächste Mal über KeePassFerry gespeichert wird. Gesperrte Adressen und Muster (RegEx) bleiben in den
+  KeePassFerry-Einstellungen des Eintrags. Braucht das neue Plugin.
 - Automatische Tests für das KeePass-Plugin, den Host und den verschlüsselten Kanal, bei jedem Push, Pull Request und
   Release (#36): Kryptografie gegen veröffentlichte Testvektoren, Handshake und Kopplung über eine echte Pipe, Abweisen
   manipulierter, wiederholter und fehlerhafter Nachrichten, Passkey-Daten und -Signaturen sowie der Kanal-Client der

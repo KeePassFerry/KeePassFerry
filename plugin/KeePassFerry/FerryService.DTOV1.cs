@@ -52,10 +52,8 @@ namespace KeePassFerry
             if (abortIfHidden && conf.MatcherConfigs.Any(mc => mc.MatcherType == EntryMatcherType.Hide))
                 return null;
 
-            if (conf.AltUrls != null)
-                URLs.AddRange(conf.AltUrls);
-            foreach (string fieldUrl in pwe.AdditionalUrlStrings())
-                if (!URLs.Contains(fieldUrl)) URLs.Add(fieldUrl);
+            foreach (string additionalUrl in Extensions.AllAdditionalUrls(pwe.Strings, conf))
+                if (!URLs.Contains(additionalUrl)) URLs.Add(additionalUrl);
 
             bool dbDefaultPlaceholderHandlingEnabled =
                 db.GetFerryConfig().DefaultPlaceholderHandling == PlaceholderHandling.Enabled;
@@ -409,7 +407,8 @@ namespace KeePassFerry
                     altURLs.Add(url);
             }
 
-            conf.AltUrls = altURLs.ToArray();
+            Extensions.SetAdditionalUrls(pwe.Strings, altURLs);
+            conf.AltUrls = new string[0];
             conf.HttpRealm = string.IsNullOrEmpty(login.HTTPRealm) ? null : login.HTTPRealm;
             conf.Version = 2;
 

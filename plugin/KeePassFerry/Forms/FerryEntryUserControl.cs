@@ -165,7 +165,7 @@ namespace KeePassFerry.Forms
             listRegExURLs = new List<string>();
             listRegExBlockedURLs = new List<string>();
 
-            if (_conf.AltUrls != null) listNormalURLs.AddRange(_conf.AltUrls);
+            listNormalURLs.AddRange(Extensions.AllAdditionalUrls(_strings, _conf));
             if (_conf.BlockedUrls != null) listNormalBlockedURLs.AddRange(_conf.BlockedUrls);
             if (_conf.RegExUrls != null) listRegExURLs.AddRange(_conf.RegExUrls);
             if (_conf.RegExBlockedUrls != null) listRegExBlockedURLs.AddRange(_conf.RegExBlockedUrls);
@@ -495,7 +495,15 @@ namespace KeePassFerry.Forms
 
         private void UpdateURLStrings()
         {
-            _conf.AltUrls = listNormalURLs.ToArray();
+            // Zusätzliche Adressen in die Felder KP2A_URL_n des Eintrags (für andere KeePass-Programme lesbar);
+            // die Liste "Erweitert" des Dialogs zeigt sie danach an
+            if (_loaded)
+            {
+                _pwEntryForm.UpdateEntryStrings(true, false);
+                if (Extensions.SetAdditionalUrls(_strings, listNormalURLs))
+                    _pwEntryForm.UpdateEntryStrings(false, false);
+                _conf.AltUrls = new string[0];
+            }
             _conf.BlockedUrls = listNormalBlockedURLs.ToArray();
             _conf.RegExUrls = listRegExURLs.ToArray();
             _conf.RegExBlockedUrls = listRegExBlockedURLs.ToArray();

@@ -14,25 +14,100 @@ namespace KeePassFerry
     public static class Extensions
     {
         /// <summary>
-        /// Zusätzliche Adressen aus Zeichenfolgenfeldern des Eintrags (Issue #41), wie andere KeePass-Programme sie
-        /// ablegen: "KP2A_URL", "KP2A_URL_1" … (Keepass2Android, KeePassXC) und Felder, deren Name mit "URL" beginnt
-        /// (KeePassNatMsg, z. B. "URL2"). Das Standardfeld "URL" selbst zählt nicht dazu. Nur Werte ohne Leerraum.
+        /// Zusätzliche Adressen eines Eintrags stehen in Zeichenfolgenfeldern, wie andere KeePass-Programme sie ablegen
+        /// (Issue #41): "KP2A_URL", "KP2A_URL_1" … (Keepass2Android, KeePassXC); gelesen werden auch Felder, deren Name
+        /// mit "URL" beginnt (KeePassNatMsg, z. B. "URL2"). Das Standardfeld "URL" selbst zählt nicht dazu.
+        /// KeePassFerry schreibt "KP2A_URL_n". Gesperrte Adressen und Muster bleiben in den eigenen Einstellungen.
         /// </summary>
-        public static List<string> AdditionalUrlStrings(this PwEntry entry)
+        public const string AdditionalUrlFieldPrefix = "KP2A_URL";
+
+        internal static bool IsAdditionalUrlFieldName(string name)
+        {
+            if (name == PwDefs.UrlField) return false;
+            return name.StartsWith(AdditionalUrlFieldPrefix, StringComparison.OrdinalIgnoreCase)
+                || name.StartsWith("URL", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Adresse ohne Leerraum; alles andere in solchen Feldern (Notizen) ist keine Adresse
+        private static string AsAdditionalUrl(string value)
+        {
+            string url = (value ?? "").Trim();
+            return url.Length == 0 || url.Any(char.IsWhiteSpace) ? null : url;
+        }
+
+        public static List<string> AdditionalUrlStrings(ProtectedStringDictionary strings)
         {
             var result = new List<string>();
-            foreach (KeyValuePair<string, KeePassLib.Security.ProtectedString> field in entry.Strings)
+            foreach (KeyValuePair<string, KeePassLib.Security.ProtectedString> field in strings)
             {
-                string name = field.Key;
-                if (name == PwDefs.UrlField) continue;
-                if (!name.StartsWith("KP2A_URL", StringComparison.OrdinalIgnoreCase)
-                    && !name.StartsWith("URL", StringComparison.OrdinalIgnoreCase))
-                    continue;
-                string value = field.Value.ReadString().Trim();
-                if (value.Length == 0 || value.Any(char.IsWhiteSpace)) continue;
-                if (!result.Contains(value)) result.Add(value);
+                if (!IsAdditionalUrlFieldName(field.Key)) continue;
+                string url = AsAdditionalUrl(field.Value.ReadString());
+                if (url != null && !result.Contains(url)) result.Add(url);
             }
             return result;
+        }
+
+        public static List<string> AdditionalUrlStrings(this PwEntry entry)
+        {
+            return AdditionalUrlStrings(entry.Strings);
+        }
+
+        /// <summary>
+        /// Alle zusätzlichen Adressen: die frühere Liste aus den eigenen Einstellungen (bis 1.0.34), dann die Felder
+        /// </summary>
+        public static List<string> AllAdditionalUrls(ProtectedStringDictionary strings, EntryConfigv2 conf)
+        {
+            var result = new List<string>();
+            if (conf != null && conf.AltUrls != null)
+                foreach (string legacy in conf.AltUrls)
+                {
+                    string url = AsAdditionalUrl(legacy);
+                    if (url != null && !result.Contains(url)) result.Add(url);
+                }
+            foreach (string url in AdditionalUrlStrings(strings))
+                if (!result.Contains(url)) result.Add(url);
+            return result;
+        }
+
+        /// <summary>
+        /// Legt die vollständige Liste zusätzlicher Adressen in den Feldern ab: Felder mit weiter gültiger Adresse
+        /// bleiben unverändert (auch fremd benannte wie "URL2"), Felder mit entfernter Adresse werden gelöscht,
+        /// neue Adressen kommen als "KP2A_URL_n" hinzu. Rückgabe: true, wenn sich Felder geändert haben.
+        /// </summary>
+        public static bool SetAdditionalUrls(ProtectedStringDictionary strings, IEnumerable<string> urls)
+        {
+            var wanted = new List<string>();
+            foreach (string u in urls ?? new string[0])
+            {
+                string url = AsAdditionalUrl(u);
+                if (url != null && !wanted.Contains(url)) wanted.Add(url);
+            }
+
+            bool changed = false;
+            var kept = new List<string>();
+            foreach (string name in strings.GetKeys())
+            {
+                if (!IsAdditionalUrlFieldName(name)) continue;
+                string url = AsAdditionalUrl(strings.ReadSafe(name));
+                if (url == null) continue; // kein Adressfeld (z. B. Notiz): nicht anfassen
+                if (wanted.Contains(url) && !kept.Contains(url))
+                {
+                    kept.Add(url);
+                    continue;
+                }
+                strings.Remove(name);
+                changed = true;
+            }
+
+            int n = 1;
+            foreach (string url in wanted)
+            {
+                if (kept.Contains(url)) continue;
+                while (strings.GetKeys().Any(k => k.Equals(AdditionalUrlFieldPrefix + "_" + n, StringComparison.OrdinalIgnoreCase))) n++;
+                strings.Set(AdditionalUrlFieldPrefix + "_" + n, new KeePassLib.Security.ProtectedString(false, url));
+                changed = true;
+            }
+            return changed;
         }
 
         // Speicherorte von KeePassFerry: Einstellungen je Eintrag und je Datenbank (benutzerdefinierte Daten)

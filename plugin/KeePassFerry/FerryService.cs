@@ -344,9 +344,7 @@ namespace KeePassFerry
 
             List<string> URLs = new List<string>(3);
             URLs.Add(pwe.Strings.ReadSafe("URL"));
-            if (conf.AltUrls != null)
-                URLs.AddRange(conf.AltUrls);
-            URLs.AddRange(pwe.AdditionalUrlStrings());
+            URLs.AddRange(Extensions.AllAdditionalUrls(pwe.Strings, conf));
 
             foreach (string entryURL in URLs)
             {
@@ -579,13 +577,11 @@ namespace KeePassFerry
 
             List<string> destURLs = new List<string>();
             destURLs.Add(destination.Strings.ReadSafe("URL"));
-            if (destConfig.AltUrls != null)
-                destURLs.AddRange(destConfig.AltUrls);
+            destURLs.AddRange(Extensions.AllAdditionalUrls(destination.Strings, destConfig));
 
             List<string> sourceURLs = new List<string>();
             sourceURLs.Add(source.Strings.ReadSafe("URL"));
-            if (sourceConfig.AltUrls != null)
-                sourceURLs.AddRange(sourceConfig.AltUrls);
+            sourceURLs.AddRange(Extensions.AllAdditionalUrls(source.Strings, sourceConfig));
 
             switch (urlMergeMode)
             {
@@ -616,13 +612,10 @@ namespace KeePassFerry
             // These might not have changed but meh
             destination.Strings.Set("URL",
                 new ProtectedString(_host.Database.MemoryProtection.ProtectUrl, destURLs[0]));
-            // Adressen aus Zeichenfolgenfeldern (KP2A_URL …) bleiben in ihren Feldern und werden nicht zusätzlich
-            // in die Liste kopiert, wenn die Erweiterung sie beim Speichern zurückschickt
-            List<string> fromStringFields = destination.AdditionalUrlStrings();
+            // Zusätzliche Adressen stehen in den Feldern KP2A_URL_n (Extensions.SetAdditionalUrls); die frühere Liste
+            // in den eigenen Einstellungen wird dabei geleert
+            Extensions.SetAdditionalUrls(destination.Strings, destURLs.GetRange(1, destURLs.Count - 1));
             destConfig.AltUrls = new string[0];
-            if (destURLs.Count > 1)
-                destConfig.AltUrls = destURLs.GetRange(1, destURLs.Count - 1)
-                    .Where(u => !fromStringFields.Contains(u)).ToArray();
 
             destination.SetFerryConfig(destConfig);
             destination.Touch(true);

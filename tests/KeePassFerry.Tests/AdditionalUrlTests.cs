@@ -89,5 +89,83 @@ namespace KeePassFerry.Tests
             Assert.AreEqual(MatchAccuracy.Best, Match(entry, "https://auth.fandom.com/signin", MatchAccuracyMethod.Exact));
             Assert.AreEqual(MatchAccuracy.None, Match(entry, "https://auth.fandom.com/register", MatchAccuracyMethod.Exact));
         }
+
+        // ---------- Schreiben in KP2A_URL_n ----------
+
+        private static Dictionary<string, string> UrlFields(PwEntry entry)
+        {
+            var d = new Dictionary<string, string>();
+            foreach (KeyValuePair<string, ProtectedString> kv in entry.Strings)
+                if (Extensions.IsAdditionalUrlFieldName(kv.Key)) d[kv.Key] = kv.Value.ReadString();
+            return d;
+        }
+
+        [TestMethod]
+        public void Set_WritesNumberedUnprotectedFields_AsKeepass2AndroidDoes()
+        {
+            PwEntry entry = Entry("https://example.com");
+            Assert.IsTrue(Extensions.SetAdditionalUrls(entry.Strings, new[] { "https://a.example.com", " https://b.example.com ", "https://a.example.com", "", "two words" }));
+            Dictionary<string, string> fields = UrlFields(entry);
+            Assert.AreEqual(2, fields.Count);
+            Assert.AreEqual("https://a.example.com", fields["KP2A_URL_1"]);
+            Assert.AreEqual("https://b.example.com", fields["KP2A_URL_2"]);
+            Assert.IsFalse(entry.Strings.Get("KP2A_URL_1").IsProtected);
+            Assert.AreEqual("https://example.com", entry.Strings.ReadSafe(PwDefs.UrlField), "Main URL untouched");
+        }
+
+        [TestMethod]
+        public void Set_KeepsUnchangedFields_RemovesDeleted_AddsNewInFreeSlot()
+        {
+            PwEntry entry = Entry("https://example.com",
+                "KP2A_URL_1", "https://keep.example.com",
+                "KP2A_URL_2", "https://remove.example.com",
+                "URL2", "https://natmsg.example.com",
+                "URL note", "see the wiki page");
+            Assert.IsTrue(Extensions.SetAdditionalUrls(entry.Strings, new[] { "https://keep.example.com", "https://natmsg.example.com", "https://new.example.com" }));
+            Dictionary<string, string> fields = UrlFields(entry);
+            Assert.AreEqual("https://keep.example.com", fields["KP2A_URL_1"]);
+            Assert.AreEqual("https://natmsg.example.com", fields["URL2"], "Field of another program keeps its name");
+            Assert.AreEqual("https://new.example.com", fields["KP2A_URL_2"], "Freed slot is reused");
+            Assert.AreEqual("see the wiki page", fields["URL note"], "Text fields are not touched");
+            Assert.AreEqual(4, fields.Count);
+        }
+
+        [TestMethod]
+        public void Set_SameList_ChangesNothing()
+        {
+            PwEntry entry = Entry("https://example.com", "KP2A_URL_1", "https://a.example.com", "URL2", "https://b.example.com");
+            Assert.IsFalse(Extensions.SetAdditionalUrls(entry.Strings, new[] { "https://b.example.com", "https://a.example.com" }));
+            Assert.IsFalse(Extensions.SetAdditionalUrls(Entry("https://example.com").Strings, new string[0]));
+        }
+
+        [TestMethod]
+        public void Set_EmptyList_RemovesAllAddressFields()
+        {
+            PwEntry entry = Entry("https://example.com", "KP2A_URL", "https://a.example.com", "kp2a_url_7", "https://b.example.com");
+            Assert.IsTrue(Extensions.SetAdditionalUrls(entry.Strings, null));
+            Assert.AreEqual(0, UrlFields(entry).Count);
+        }
+
+        [TestMethod]
+        public void Set_RemovesDuplicateFieldsWithSameAddress()
+        {
+            PwEntry entry = Entry("https://example.com", "KP2A_URL_1", "https://a.example.com", "KP2A_URL_2", "https://a.example.com");
+            Assert.IsTrue(Extensions.SetAdditionalUrls(entry.Strings, new[] { "https://a.example.com" }));
+            Assert.AreEqual(1, UrlFields(entry).Count);
+        }
+
+        [TestMethod]
+        public void LegacyListAndFields_AreReadTogether_AndMoveToFieldsOnSave()
+        {
+            PwEntry entry = Entry("https://example.com", "KP2A_URL_1", "https://field.example.com");
+            var conf = new EntryConfigv2 { AltUrls = new[] { "https://legacy.example.com", "https://field.example.com" } };
+            List<string> all = Extensions.AllAdditionalUrls(entry.Strings, conf);
+            CollectionAssert.AreEqual(new[] { "https://legacy.example.com", "https://field.example.com" }, all);
+            Assert.IsTrue(FerryService.BestMatchAccuracyForAnyURL(entry, conf, "https://legacy.example.com/x",
+                URLSummary.FromURL("https://legacy.example.com/x"), MatchAccuracyMethod.Hostname) >= MatchAccuracy.HostnameAndPort);
+
+            Extensions.SetAdditionalUrls(entry.Strings, all);
+            CollectionAssert.AreEquivalent(all, entry.AdditionalUrlStrings());
+        }
     }
 }
