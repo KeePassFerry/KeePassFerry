@@ -17,8 +17,11 @@ export class FerryURL {
     public get isIPAddress(): boolean {
         return this._isIPAddress;
     }
+    // Name der Website für Vergleiche ("gleiche Seite?"). Ohne registrierbare Domain zählt der Hostname selbst:
+    // IP-Adressen, "localhost" und Geräte im Heimnetz ohne Endung (z. B. http://nas/) sind sonst namenlos, und
+    // Hinweise wie "Passwort aktualisieren?" erschienen dort nie
     public get domainOrIPAddress(): string {
-        return this._domain ?? (this._isIPAddress ? this._url.hostname : "");
+        return this._domain || this._url.hostname || "";
     }
 
     public get domainWithPort(): string {
