@@ -20,16 +20,16 @@ export async function reconcileURLs(oldUrls: string[], submittedUrl?: string) {
         return { urls: oldUrls, showWarning: false };
     }
 
-    // A Domain match, regardless of the existing entry's configuration
+    // Eine Adresse des Eintrags (Hauptadresse oder zusätzliche) gehört schon zu dieser Website: Adressen unverändert
+    // lassen. Früher ersetzte die Seite des abgeschickten Formulars (z. B. "Passwort ändern") die Hauptadresse; ein
+    // geändertes Passwort ändert aber nicht, wo man sich anmeldet (Bitwarden ändert beim Aktualisieren nur das
+    // Passwort: apps/browser/src/autofill/background/notification.background.ts)
     if (
         oldUrls.some(
             url => FerryURL.fromString(url)?.domainOrIPAddress === compareURLDomainOrIPAddress
         )
     ) {
-        return {
-            urls: [compareUrl].concat(oldUrls.slice(1)),
-            showWarning: false
-        };
+        return { urls: oldUrls, showWarning: false };
     }
 
     if (!submittedUrl) {
