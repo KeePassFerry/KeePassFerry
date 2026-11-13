@@ -199,7 +199,7 @@ import { supplementEntryState, supplementExistingEntry } from "./supplementEntry
 import { reconcileURLs } from "./reconcileURLs";
 import { databaseLabel } from "../common/databaseLabel";
 import type { Database } from "../common/model/Database";
-import { fetchFavicon, getFaviconUrl } from "./favicon";
+import { fetchFavicon, getFaviconSource } from "./favicon";
 import { autoRecoveryTimeMs, manualRecoveryPromptTimeMs, tooltipDelay } from "../common/Timings";
 import { SaveEntryResult } from "../common/SaveEntryResult";
 import { Field } from "../common/model/Field";
@@ -413,13 +413,14 @@ export default {
             }
         }
 
-        const favIconUrl = await getFaviconUrl();
-        if (!favIconUrl) return;
-        const favicon = await fetchFavicon(favIconUrl);
+        const faviconSource = await getFaviconSource();
+        if (!faviconSource?.favIconUrl) return;
+        const favicon = await fetchFavicon(faviconSource.favIconUrl);
         if (!favicon) return;
 
         const updatedSaveState = Object.assign({}, JSON.parse(JSON.stringify(this.saveState)));
         updatedSaveState.favicon = favicon;
+        updatedSaveState.faviconPageUrl = faviconSource.pageUrl;
         this.updateSaveState(updatedSaveState);
     },
     methods: {

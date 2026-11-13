@@ -545,6 +545,19 @@ namespace KeePassFerry
             return pwd.RootGroup;
         }
 
+        /// <summary>
+        /// Symbol beim Aktualisieren: Ein eigenes Symbol des Eintrags bleibt. Nur ein Eintrag mit dem Standard-Schlüssel
+        /// bekommt ein mitgeschicktes Website-Symbol; ohne Symbol in der Anfrage bleibt alles, wie es ist (#43)
+        /// </summary>
+        internal static void MergeIcon(PwEntry destination, PwEntry source)
+        {
+            bool destinationHasOwnIcon = !destination.CustomIconUuid.Equals(PwUuid.Zero) || destination.IconId != PwIcon.Key;
+            bool sourceHasIcon = !source.CustomIconUuid.Equals(PwUuid.Zero) || source.IconId != PwIcon.Key;
+            if (destinationHasOwnIcon || !sourceHasIcon) return;
+            destination.IconId = source.IconId;
+            destination.CustomIconUuid = source.CustomIconUuid;
+        }
+
         private void MergeEntries(PwEntry destination, PwEntry source, int urlMergeMode, PwDatabase db)
         {
             // We're updating the entry so can always convert the entry to v2 config format
@@ -561,8 +574,7 @@ namespace KeePassFerry
             destination.Strings.Set("Title", new ProtectedString(
                 _host.Database.MemoryProtection.ProtectTitle, source.Strings.ReadSafe("Title")));
             destConfig.HttpRealm = sourceConfig.HttpRealm;
-            destination.IconId = source.IconId;
-            destination.CustomIconUuid = source.CustomIconUuid;
+            MergeIcon(destination, source);
             destination.Strings.Set("UserName", new ProtectedString(
                 _host.Database.MemoryProtection.ProtectUserName, source.Strings.ReadSafe("UserName")));
             destination.Strings.Set("Password", new ProtectedString(

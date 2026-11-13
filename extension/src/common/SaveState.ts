@@ -9,4 +9,6 @@ export class SaveState {
     lastActiveAt?: Date;
     showURLMismatchWarning: boolean;
     favicon?: string;
+    // Adresse der Seite, von der das Website-Symbol stammt (nur dazu passende Einträge bekommen es, #43)
+    faviconPageUrl?: string;
 }

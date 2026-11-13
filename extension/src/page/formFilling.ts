@@ -4,6 +4,7 @@ import { FilledField } from "./FilledField";
 import { PanelStub, PanelStubOptions } from "./PanelStub";
 import { FormUtils } from "./formsUtils";
 import { isOffPage } from "./visibility";
+import { autofillFieldCount } from "./autofillFieldCount";
 import { FormSaving } from "./formSaving";
 import { sameFieldTarget } from "../common/fieldLocators";
 import { FerryFieldIcon } from "./ferryFieldIcon";
@@ -1135,11 +1136,13 @@ export class FormFilling {
                     this.Logger.info(
                         "Our selected entry is not relevant enough to exceed our threshold so will not be auto-filled."
                     );
+                    pageDiag("kein automatisches ausfüllen", { grund: "punkte", punkte: Math.round(matchingLogin.relevanceScore) });
                     matchingLogin = null;
                 } else if (matchingLogin.lowFieldMatchRatio) {
                     this.Logger.info(
                         "Our selected entry has a low field match ratio so will not be auto-filled."
                     );
+                    pageDiag("kein automatisches ausfüllen", { grund: "zu wenige passende felder" });
                     matchingLogin = null;
                 }
             }
@@ -1839,13 +1842,14 @@ export class FormFilling {
         const loginFieldCount = entry.fields.filter(
             f => f.locators[0].id || f.locators[0].name || f.value
         ).length;
-        const formFieldCountForAutofill = passwordFields
-            .concat(otherFields)
-            .filter(
-                f =>
-                    (f.field.type === "password" || f.field.type === "text") &&
-                    (f.field.locators[0].id || f.field.locators[0].name)
-            ).length;
+        const formFieldCountForAutofill = autofillFieldCount(
+            passwordFields.concat(otherFields).map(f => ({
+                type: f.field.type,
+                id: f.field.locators[0].id,
+                name: f.field.locators[0].name
+            })),
+            [...(visibleFieldCache.password ?? []), ...(visibleFieldCache.other ?? [])]
+        );
         const loginFieldCountForAutofill = entry.fields.filter(
             f =>
                 (f.type === "password" || f.type === "text") &&

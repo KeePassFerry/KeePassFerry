@@ -110,6 +110,18 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
             const existingOrTemporaryUuid = sourceEntry.uuid;
             const dbFileName = sourceEntry.database.fileName;
             const parentGroupUuid: string = sourceEntry.parentGroup.uuid;
+            // Website-Symbol nur, wenn es von derselben Website stammt wie der Eintrag; danach verwerfen, damit es
+            // nicht an einem später gespeicherten Eintrag einer anderen Seite landet (#43)
+            const saveState = ferry.store.state.saveState;
+            const faviconDomain = FerryURL.fromString(saveState.faviconPageUrl ?? "")?.domainOrIPAddress;
+            const entryDomain = FerryURL.fromString(sourceEntry.URLs?.[0] ?? "")?.domainOrIPAddress;
+            const favicon =
+                configManager.current.saveFavicons && saveState.favicon && sameSite(faviconDomain, entryDomain)
+                    ? saveState.favicon
+                    : null;
+            if (saveState.favicon || saveState.faviconPageUrl) {
+                ferry.store.updateSaveState({ ...saveState, favicon: null, faviconPageUrl: null });
+            }
 
             // shallow clone so we don't impact the values we have to wipe out below
             // The plugin has particular expectations about some Entry properties.
@@ -123,10 +135,10 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
                     // We will rarely have access to the favicon data at the time the initial
                     // Entry is created for editing in the popup so set it at this much later
                     // point instead.
-                    icon: configManager.current.saveFavicons
+                    icon: favicon
                         ? {
                               version: 1,
-                              iconImageData: ferry.store.state.saveState.favicon
+                              iconImageData: favicon
                           }
                         : null
                 })

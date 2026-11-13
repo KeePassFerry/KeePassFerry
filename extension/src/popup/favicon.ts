@@ -22,12 +22,14 @@ export function fetchFavicon(url): Promise<string> {
     });
 }
 
-export async function getFaviconUrl() {
+// Website-Symbol des aktiven Tabs und die Adresse der Seite, zu der es gehört
+export async function getFaviconSource(): Promise<{ favIconUrl: string; pageUrl: string }> {
     for (let i = 0; i < 45; i++) {
         const tab = (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
         if (tab) {
-            return tab.favIconUrl;
+            return { favIconUrl: tab.favIconUrl, pageUrl: tab.url };
         }
-        sleep(1000);
+        await sleep(1000);
     }
+    return null;
 }
