@@ -19,6 +19,7 @@ import { Action } from "../common/Action";
 import { configManager } from "../common/ConfigManager";
 import { Entry } from "../common/model/Entry";
 import { entryWithNewPassword } from "../common/passwordUpdate";
+import { tabFaviconPng } from "./tabFavicon";
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
 import { ferry } from "./KF";
 import { pageStateOf } from "./pageState";
@@ -260,6 +261,16 @@ function dropSupersededSubmission(tabId: number, url: string, username: string) 
     if (supersedesSubmission(previous, { url, username })) removeSubmission(tabId, item);
 }
 
+// Website-Symbol des Tabs, wenn die Seite zur Website des Eintrags gehört und Symbole gespeichert werden sollen
+async function sameSiteFavicon(tabId: number, entryUrl: string): Promise<string> {
+    if (!configManager.current.saveFavicons) return null;
+    const tab = await chrome.tabs.get(tabId).catch(() => null);
+    const pageDomain = FerryURL.fromString(tab?.url ?? "")?.domainOrIPAddress;
+    const entryDomain = FerryURL.fromString(entryUrl ?? "")?.domainOrIPAddress;
+    if (!tab?.favIconUrl || !sameSite(pageDomain, entryDomain)) return null;
+    return tabFaviconPng(tab.favIconUrl);
+}
+
 // Neues Passwort eines vorhandenen Eintrags ohne Bearbeiten-Fenster übernehmen. Geändert wird nur das Passwort, das
 // alte bleibt in der Chronik des Eintrags. false: nichts gespeichert (kein Ziel, Eintrag nicht gefunden, Datenbank
 // gesperrt oder schreibgeschützt, Fehler) – dann öffnet der Aufrufer wie bisher das Popup.
@@ -272,7 +283,7 @@ async function updatePasswordDirectly(tabId: number): Promise<boolean> {
     try {
         const found = await findEntryForEdit(target.uuid, target.dbFileName);
         if (!found) return false;
-        const entry = entryWithNewPassword(new Entry(found), password);
+        const entry = entryWithNewPassword(new Entry(found), password, await sameSiteFavicon(tabId, found.URLs?.[0]));
         let saved = false;
         ferry.store.updateEntryUpdateStartedAtTimestamp(Date.now());
         await ferry.updateLogin(entry, target.uuid, target.dbFileName, () => {

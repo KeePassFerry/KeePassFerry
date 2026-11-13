@@ -39,4 +39,10 @@ describe("Passwort direkt aktualisieren", () => {
         expect(updated.uuid).not.toBe("u1");
         expect(updated.parentGroup).toBeNull();
     });
+
+    it("schickt das bisherige Symbol nicht mit, ein Website-Symbol nur wenn übergeben", () => {
+        const original = new Entry({ ...entry(), icon: { version: 1, iconImageData: "ALT" } });
+        expect(entryWithNewPassword(original, "neu").icon.iconImageData).toBe("");
+        expect(entryWithNewPassword(original, "neu", "SEITE").icon.iconImageData).toBe("SEITE");
+    });
 });

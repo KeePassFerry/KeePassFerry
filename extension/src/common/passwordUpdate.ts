@@ -5,11 +5,12 @@ import { Locator } from "./model/Locator";
 /*
 passwordUpdate.ts: "Aktualisieren" im Seitenhinweis "Neues Passwort erkannt" speichert direkt, ohne Bearbeiten-Fenster.
 Geändert wird nur das Passwort des Eintrags; Titel, Benutzername, Adressen und übrige Felder bleiben, wie sie sind
-(das alte Passwort legt KeePass in der Chronik des Eintrags ab).
+(das alte Passwort legt KeePass in der Chronik des Eintrags ab). Ein mitgeschicktes Website-Symbol übernimmt das
+Plugin nur bei Einträgen mit dem Standard-Schlüssel (#43).
 */
 
 // Kopie des Eintrags mit neuem Passwort, in der Form, die das Plugin beim Aktualisieren erwartet
-export function entryWithNewPassword(entry: Entry, password: string): Entry {
+export function entryWithNewPassword(entry: Entry, password: string, favicon: string = null): Entry {
     const fields = (entry.fields ?? []).map(f => new Field({ ...f }));
     const index = fields.findIndex(f => f.name === "KeePass password");
     const target = index >= 0 ? index : fields.findIndex(f => f.type === "password");
@@ -27,7 +28,7 @@ export function entryWithNewPassword(entry: Entry, password: string): Entry {
             parentGroup: undefined,
             uuid: null,
             database: undefined,
-            icon: null
+            icon: favicon ? { version: 1, iconImageData: favicon } : null
         })
     );
 }
