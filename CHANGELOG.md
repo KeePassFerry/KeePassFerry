@@ -2,7 +2,7 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.35 – 2026-11-13
 
 - Additional addresses of an entry are now stored in string fields of the entry, as other KeePass apps do (#41):
   `KP2A_URL_1`, `KP2A_URL_2` … (Keepass2Android, KeePassXC). They are visible on the "Advanced" tab of the entry and
@@ -603,7 +603,7 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.35 – 2026-11-13
 
 - Zusätzliche Adressen eines Eintrags stehen jetzt in Zeichenfolgenfeldern des Eintrags, wie bei anderen
   KeePass-Programmen (#41): `KP2A_URL_1`, `KP2A_URL_2` … (Keepass2Android, KeePassXC). Sie sind im Reiter „Erweitert“

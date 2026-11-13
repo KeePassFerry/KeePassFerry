@@ -1980,6 +1980,22 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_35_1_title": {
+        "message": "Passwort mit einem Klick aktualisieren",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_35_1_text": {
+        "message": "Erkennt KeePassFerry ein geändertes Passwort, speichert „Aktualisieren“ es jetzt sofort, ohne Bearbeiten-Fenster. Geändert wird nur das Passwort; das alte bleibt in der Chronik des Eintrags, die Adresse bleibt unverändert.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_35_2_title": {
+        "message": "Zusätzliche Adressen als Felder",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_35_2_text": {
+        "message": "Zusätzliche Adressen eines Eintrags stehen jetzt in Feldern des Eintrags (KP2A_URL_1 …), wie bei KeePassXC und Keepass2Android. Vorhandene Felder dieser Art und Felder, die mit „URL“ beginnen, werden mitgelesen. Dafür ist das neue Plugin nötig.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_34_1_title": {
         "message": "Genauigkeit je Eintrag",
         "description": "KeePassFerry"

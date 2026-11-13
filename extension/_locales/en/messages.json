@@ -1980,6 +1980,22 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_35_1_title": {
+    "message": "Update a password with one click",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_35_1_text": {
+    "message": "When KeePassFerry detects a changed password, \"Update\" now saves it right away, without the edit window. Only the password changes; the old one stays in the entry's history and the address stays as it is.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_35_2_title": {
+    "message": "Additional addresses as fields",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_35_2_text": {
+    "message": "Additional addresses of an entry are now stored in fields of the entry (KP2A_URL_1 …), as KeePassXC and Keepass2Android do. Existing fields of this kind and fields starting with \"URL\" are read as well. This needs the new plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_34_1_title": {
     "message": "Match accuracy per entry",
     "description": "KeePassFerry"
