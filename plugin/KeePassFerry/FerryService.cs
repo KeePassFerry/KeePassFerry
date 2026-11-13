@@ -346,6 +346,7 @@ namespace KeePassFerry
             URLs.Add(pwe.Strings.ReadSafe("URL"));
             if (conf.AltUrls != null)
                 URLs.AddRange(conf.AltUrls);
+            URLs.AddRange(pwe.AdditionalUrlStrings());
 
             foreach (string entryURL in URLs)
             {
@@ -615,9 +616,13 @@ namespace KeePassFerry
             // These might not have changed but meh
             destination.Strings.Set("URL",
                 new ProtectedString(_host.Database.MemoryProtection.ProtectUrl, destURLs[0]));
+            // Adressen aus Zeichenfolgenfeldern (KP2A_URL …) bleiben in ihren Feldern und werden nicht zusätzlich
+            // in die Liste kopiert, wenn die Erweiterung sie beim Speichern zurückschickt
+            List<string> fromStringFields = destination.AdditionalUrlStrings();
             destConfig.AltUrls = new string[0];
             if (destURLs.Count > 1)
-                destConfig.AltUrls = destURLs.GetRange(1, destURLs.Count - 1).ToArray();
+                destConfig.AltUrls = destURLs.GetRange(1, destURLs.Count - 1)
+                    .Where(u => !fromStringFields.Contains(u)).ToArray();
 
             destination.SetFerryConfig(destConfig);
             destination.Touch(true);

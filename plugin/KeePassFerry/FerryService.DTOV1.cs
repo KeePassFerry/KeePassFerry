@@ -54,6 +54,8 @@ namespace KeePassFerry
 
             if (conf.AltUrls != null)
                 URLs.AddRange(conf.AltUrls);
+            foreach (string fieldUrl in pwe.AdditionalUrlStrings())
+                if (!URLs.Contains(fieldUrl)) URLs.Add(fieldUrl);
 
             bool dbDefaultPlaceholderHandlingEnabled =
                 db.GetFerryConfig().DefaultPlaceholderHandling == PlaceholderHandling.Enabled;

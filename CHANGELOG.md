@@ -4,6 +4,9 @@ English · [Deutsch](#deutsch)
 
 ## Unreleased
 
+- Additional addresses of an entry are also read from string fields, as other KeePass apps store them (#41):
+  `KP2A_URL`, `KP2A_URL_1` … (Keepass2Android, KeePassXC) and fields whose name starts with `URL` (KeePassNatMsg,
+  e.g. `URL2`). Databases used with these apps work without entering the addresses again. Needs the new plugin.
 - Automated tests for the KeePass plugin, the host and the encrypted channel, run on every push, pull request and
   release (#36): cryptography against published test vectors, handshake and pairing over a real pipe, rejection of
   tampered, replayed and malformed messages, passkey data and signatures, and the extension's channel client against
@@ -593,6 +596,10 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 ## Unveröffentlicht
 
+- Zusätzliche Adressen eines Eintrags werden auch aus Zeichenfolgenfeldern gelesen, wie andere KeePass-Programme sie
+  ablegen (#41): `KP2A_URL`, `KP2A_URL_1` … (Keepass2Android, KeePassXC) und Felder, deren Name mit `URL` beginnt
+  (KeePassNatMsg, z. B. `URL2`). Datenbanken, die mit diesen Programmen genutzt werden, funktionieren ohne erneutes
+  Eintragen der Adressen. Braucht das neue Plugin.
 - Automatische Tests für das KeePass-Plugin, den Host und den verschlüsselten Kanal, bei jedem Push, Pull Request und
   Release (#36): Kryptografie gegen veröffentlichte Testvektoren, Handshake und Kopplung über eine echte Pipe, Abweisen
   manipulierter, wiederholter und fehlerhafter Nachrichten, Passkey-Daten und -Signaturen sowie der Kanal-Client der

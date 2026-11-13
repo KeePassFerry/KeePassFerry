@@ -13,6 +13,28 @@ namespace KeePassFerry
 {
     public static class Extensions
     {
+        /// <summary>
+        /// Zusätzliche Adressen aus Zeichenfolgenfeldern des Eintrags (Issue #41), wie andere KeePass-Programme sie
+        /// ablegen: "KP2A_URL", "KP2A_URL_1" … (Keepass2Android, KeePassXC) und Felder, deren Name mit "URL" beginnt
+        /// (KeePassNatMsg, z. B. "URL2"). Das Standardfeld "URL" selbst zählt nicht dazu. Nur Werte ohne Leerraum.
+        /// </summary>
+        public static List<string> AdditionalUrlStrings(this PwEntry entry)
+        {
+            var result = new List<string>();
+            foreach (KeyValuePair<string, KeePassLib.Security.ProtectedString> field in entry.Strings)
+            {
+                string name = field.Key;
+                if (name == PwDefs.UrlField) continue;
+                if (!name.StartsWith("KP2A_URL", StringComparison.OrdinalIgnoreCase)
+                    && !name.StartsWith("URL", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                string value = field.Value.ReadString().Trim();
+                if (value.Length == 0 || value.Any(char.IsWhiteSpace)) continue;
+                if (!result.Contains(value)) result.Add(value);
+            }
+            return result;
+        }
+
         // Speicherorte von KeePassFerry: Einstellungen je Eintrag und je Datenbank (benutzerdefinierte Daten)
         internal const string EntryConfigKey = "KeePassFerry.Entry";
         internal const string DatabaseConfigKey = "KeePassFerry.Config";
