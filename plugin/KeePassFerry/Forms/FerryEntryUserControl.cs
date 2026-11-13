@@ -231,6 +231,8 @@ namespace KeePassFerry.Forms
             toolTipRealm.SetToolTip(textBoxRealm, realmTooltip);
             toolTipRealm.SetToolTip(labelRealm, realmTooltip);
             _loaded = true;
+            // Reiter wird (wieder) angezeigt: Im Reiter "Erweitert" können Adressfelder inzwischen geändert worden sein
+            VisibleChanged += delegate { if (Visible) RefreshAdditionalUrlsFromStrings(); };
         }
 
         // Übersetzte Texte sind länger als die englischen Designer-Texte: Reiter "Allgemein" untereinander anordnen,
@@ -523,6 +525,16 @@ namespace KeePassFerry.Forms
             UpdateFerryConfig(_conf);
         }
         
+
+        private void RefreshAdditionalUrlsFromStrings()
+        {
+            if (!_loaded) return;
+            List<string> current = Extensions.AllAdditionalUrls(_strings, _conf);
+            if (current.Count == listNormalURLs.Count && !current.Except(listNormalURLs).Any()) return;
+            listNormalURLs = current;
+            listView1.Items.Clear();
+            ReadURLStrings();
+        }
 
         private void ReadURLStrings()
         {
