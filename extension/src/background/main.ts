@@ -237,6 +237,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 return true;
             });
             break;
+        case "copyText":
+            // Liste am Feld: Benutzername, Passwort oder Feld kopieren (aus demselben Grund hier wie der Einmalcode)
+            work = typeof msg.text === "string" && msg.text ? copyStringToClipboard(msg.text).then(() => true) : Promise.resolve(false);
+            break;
         case "getOtpSetup":
             work = getOtpSetupForPopup(ferry.foregroundTabId);
             break;

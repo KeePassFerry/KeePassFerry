@@ -169,8 +169,11 @@ export class MatchedLoginsPanel {
         const rows: { icon: string; label: string; fill: () => void | Promise<void>; copy: () => Promise<void> }[] = [];
         const fillValue = (value: string) => () =>
             this.myPort.postMessage({ action: Action.FillPanelTarget, frameId: this.parentFrameId, fillValue: value, filledEntry: ref } as AddonMessage);
+        // Im Hintergrund kopieren wie den Einmalcode: Die Liste schließt sich danach, das Kopieren darf nicht an ihrem
+        // iframe hängen (sonst ging es mal und mal nicht). Nur wenn der Hintergrund nicht antwortet, hier kopieren.
         const copyValue = (value: string) => async () => {
-            await copyStringToClipboard(value);
+            const copied = await chrome.runtime.sendMessage({ keepassferry: "copyText", text: value }).catch(() => false);
+            if (!copied) await copyStringToClipboard(value);
             this.close();
         };
         const user = Entry.getUsernameField(entry);

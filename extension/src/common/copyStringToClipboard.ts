@@ -38,6 +38,11 @@ export async function copyStringToClipboard(value: string) {
 }
 
 async function mv3ClipboardWorkaround(value: string) {
+    // Es darf nur ein Hilfsdokument geben, und es schließt sich nach dem Kopieren selbst. Folgt das nächste Kopieren
+    // sofort, ist das alte noch offen und das Anlegen scheitert: kurz warten, bis es weg ist.
+    for (let i = 0; i < 20 && (await chrome.offscreen.hasDocument?.()); i++) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+    }
     await chrome.offscreen.createDocument({
         url: chrome.runtime.getURL("lib/copyToClipboard.html"),
         reasons: [chrome.offscreen.Reason.CLIPBOARD],
