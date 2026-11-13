@@ -560,7 +560,7 @@
     "description": "KeePassFerry save notice (password of an existing entry changed); $1 is the username or entry title"
   },
   "updateNotice_save": {
-    "message": "Update …",
+    "message": "Update",
     "description": "KeePassFerry save notice (password of an existing entry changed)"
   },
   "otp_code_tip": {

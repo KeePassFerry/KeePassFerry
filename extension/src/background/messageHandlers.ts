@@ -18,12 +18,13 @@ import { FerryNotification } from "../common/FerryNotification";
 import { Action } from "../common/Action";
 import { configManager } from "../common/ConfigManager";
 import { Entry } from "../common/model/Entry";
+import { entryWithNewPassword } from "../common/passwordUpdate";
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
 import { ferry } from "./KF";
 import { pageStateOf } from "./pageState";
 import { commandManager } from "./commands";
 import { openEntryInPopup } from "./popupEdit";
-import { onContextField } from "./selectionSave";
+import { findEntryForEdit, onContextField } from "./selectionSave";
 
 
 // callbacks for messaging / ports
@@ -245,6 +246,44 @@ function dropSupersededSubmission(tabId: number, url: string, username: string) 
     if (!item?.submittedData) return;
     const previous = { url: item.submittedData.url, username: submittedCredentials(item.submittedData.fields ?? []).username };
     if (supersedesSubmission(previous, { url, username })) removeSubmission(tabId, item);
+}
+
+// Neues Passwort eines vorhandenen Eintrags ohne Bearbeiten-Fenster übernehmen. Geändert wird nur das Passwort, das
+// alte bleibt in der Chronik des Eintrags. false: nichts gespeichert (kein Ziel, Eintrag nicht gefunden, Datenbank
+// gesperrt oder schreibgeschützt, Fehler) – dann öffnet der Aufrufer wie bisher das Popup.
+async function updatePasswordDirectly(tabId: number): Promise<boolean> {
+    const item = ferry.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
+    const target = item?.submittedData?.updateTarget;
+    const password = submittedCredentials(item?.submittedData?.fields ?? []).password;
+    if (!target || !password || !ferry.store.state.connected) return false;
+    if (ferry.store.state.KeePassDatabases.find(d => d.fileName === target.dbFileName)?.readOnly) return false;
+    try {
+        const found = await findEntryForEdit(target.uuid, target.dbFileName);
+        if (!found) return false;
+        const entry = entryWithNewPassword(new Entry(found), password);
+        let saved = false;
+        ferry.store.updateEntryUpdateStartedAtTimestamp(Date.now());
+        await ferry.updateLogin(entry, target.uuid, target.dbFileName, () => {
+            saved = true;
+            // Erst das Angebot zurückziehen (schließt den Hinweis), dann die Bestätigung zeigen
+            removeSubmission(tabId, item);
+            if (!configManager.current.hideConfirmationAfterSave) {
+                try {
+                    ferry.tabStates.get(tabId)?.framePorts?.get(0)?.postMessage({
+                        action: Action.ShowSavedNotice,
+                        savedEntryTitle: entry.title
+                    } as AddonMessage);
+                } catch (e) {
+                    // Seite lädt gerade neu
+                }
+            }
+        });
+        diag("hintergrund", "passwort direkt aktualisiert", { gespeichert: saved });
+        return saved;
+    } catch (e) {
+        FerryLog.warn("Could not update the password directly: " + e);
+        return false;
+    }
 }
 
 // "Passwort aktualisieren" kam nicht, weil das Anmeldeformular stehen blieb: Anmeldung fehlgeschlagen, das eingegebene
@@ -529,6 +568,8 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         // Popup einmalig mit ?save=1 öffnen, damit es direkt im Speichern-Dialog startet.
         // Der anfragende Tab ist der Vordergrund-Tab (nach einem Neustart ist der Wert sonst noch leer).
         ferry.foregroundTabId = this.sender.tab.id;
+        // "Neues Passwort erkannt" → "Aktualisieren": direkt speichern, ohne Bearbeiten-Fenster (Michael, 13.11.)
+        if (await updatePasswordDirectly(this.sender.tab.id)) return;
         try {
             await chrome.action.setPopup({ popup: "dist/popup/index.html?save=1" });
             await chrome.action.openPopup();

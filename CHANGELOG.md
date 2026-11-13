@@ -14,6 +14,12 @@ English · [Deutsch](#deutsch)
   release (#36): cryptography against published test vectors, handshake and pairing over a real pipe, rejection of
   tampered, replayed and malformed messages, passkey data and signatures, and the extension's channel client against
   the plugin. Details and what is not covered: `tests/README.md`. No change for users.
+- "New password detected": "Update" now saves right away, without opening the edit window. Only the password of the
+  entry changes; title, user name, addresses and other fields stay as they are, the old password remains in the
+  entry's history. The main address of an entry is no longer replaced by the page on which the password was changed.
+- The save and update notices also appear on hosts without a domain ending (e.g. `localhost`).
+- List at a field: copying the user name, password or a field is now done in the background like the one-time code.
+  Before, it sometimes did not arrive in the clipboard because the list closed first.
 
 ## 1.0.34 – 2026-11-12
 
@@ -610,6 +616,13 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
   Release (#36): Kryptografie gegen veröffentlichte Testvektoren, Handshake und Kopplung über eine echte Pipe, Abweisen
   manipulierter, wiederholter und fehlerhafter Nachrichten, Passkey-Daten und -Signaturen sowie der Kanal-Client der
   Erweiterung gegen das Plugin. Einzelheiten und was nicht abgedeckt ist: `tests/README.md`. Für Nutzer ändert sich nichts.
+- „Neues Passwort erkannt“: „Aktualisieren“ speichert jetzt sofort, ohne das Bearbeiten-Fenster zu öffnen. Geändert wird
+  nur das Passwort des Eintrags; Titel, Benutzername, Adressen und übrige Felder bleiben, das alte Passwort steht weiter
+  in der Chronik des Eintrags. Die Hauptadresse eines Eintrags wird nicht mehr durch die Seite ersetzt, auf der das
+  Passwort geändert wurde.
+- Die Hinweise zum Speichern und Aktualisieren erscheinen auch auf Hosts ohne Domain-Endung (z. B. `localhost`).
+- Liste am Feld: Benutzername, Passwort oder ein Feld werden jetzt im Hintergrund kopiert wie der Einmalcode. Vorher kam
+  der Wert manchmal nicht in der Zwischenablage an, weil sich die Liste vorher schloss.
 
 ## 1.0.34 – 2026-11-12
 
