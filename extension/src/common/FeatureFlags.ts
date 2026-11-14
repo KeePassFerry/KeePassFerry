@@ -26,6 +26,8 @@ export const OPTIONS_DIALOG_FEATURE = "KEEPASSFERRY_OPTIONS_DIALOG";
 export const DIAG_FOLDER_FEATURE = "KEEPASSFERRY_DIAG_FOLDER";
 // Ablaufdatum der Einträge (expiryTime) und neues Ablaufdatum beim Speichern (newExpiryTime)
 export const EXPIRY_FEATURE = "KEEPASSFERRY_EXPIRY";
+// Neuer Passkey-Eintrag in einer gewählten Gruppe (PasskeyCreateInGroup)
+export const PASSKEY_GROUP_FEATURE = "KEEPASSFERRY_PASSKEY_GROUP";
 
 // true, wenn das Plugin mindestens diese Version meldet
 export function pluginVersionAtLeast(features: string[], min: string): boolean {

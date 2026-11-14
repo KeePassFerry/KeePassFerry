@@ -2,6 +2,10 @@ import { Port } from "../common/port";
 import { Action } from "../common/Action";
 import type { AddonMessage } from "../common/AddonMessage";
 import { showPasskeyDialog, type DialogItem } from "./PasskeyDialog";
+import { pageDiag } from "./ferryDiagPage";
+
+// Hinweise aus der Seitenwelt fürs Diagnoseprotokoll; nur bekannte Texte, die Seite kann sonst beliebiges schicken
+const NOTES = ["passkey an browser: kein es256", "passkey an browser: nur externer schlüssel verlangt"];
 
 /*
 PasskeyBridge.ts: Brücke zwischen der Seitenwelt (webauthnMain.ts) und dem Hintergrund.
@@ -73,6 +77,10 @@ export class PasskeyBridge {
             document.getElementById("keepassferry-passkey-dialog")?.remove();
             return;
         }
+        if (d.type === "note") {
+            if (NOTES.includes(d.text)) pageDiag(d.text);
+            return;
+        }
         if (d.type === "signal") {
             if (["unknown", "allAccepted", "userDetails"].includes(d.kind)) this.handleSignal(d.kind, d.payload).catch(() => undefined);
             return;
@@ -141,23 +149,65 @@ export class PasskeyBridge {
                 ],
                 warning: c.hasPasskey ? $STR("passkey_replace_warning") : undefined
             }));
-            items.push({ key: NEW_ENTRY, title: $STR("passkey_new_entry"), subtitle: prep.rpName || prep.rpId });
-            const dialog = await showPasskeyDialog({
-                heading: $STR("passkey_create_heading"),
-                subheading: [prep.rpName || prep.rpId, prep.userName].filter(Boolean).join(" · "),
-                question: $STR("passkey_create_question"),
-                items,
-                selectedKey: items[0].key,
-                primaryLabel: item => (item.warning ? $STR("passkey_replace") : $STR("passkey_save"))
+            // Neuer Eintrag: Gruppe wie beim Speichern einer Anmeldung (gefragt oder die gemerkte, dann hier angezeigt)
+            const groups: any[] = prep.groups ?? [];
+            const preferredGroup = groups.find(g => g.key === prep.preferredGroup) ?? groups[0];
+            const askGroup = groups.length > 0 && !!prep.askGroup;
+            const groupLabel = (g: any) => g.label;
+            items.push({
+                key: NEW_ENTRY,
+                title: $STR("passkey_new_entry"),
+                subtitle: preferredGroup && !askGroup ? $STR("passkey_group_prefix") + " " + groupLabel(preferredGroup) : prep.rpName || prep.rpId
             });
-            if (dialog.action !== "ok") {
-                this.background("cancel", { prepareId: prep.prepareId });
-                return { result: dialog.action === "fallback" ? "fallback" : "cancel" };
+            let selectedKey = items[0].key;
+            let choice: any = null;
+            while (!choice) {
+                const dialog = await showPasskeyDialog({
+                    heading: $STR("passkey_create_heading"),
+                    subheading: [prep.rpName || prep.rpId, prep.userName].filter(Boolean).join(" · "),
+                    question: $STR("passkey_create_question"),
+                    items,
+                    selectedKey,
+                    primaryLabel: item =>
+                        item.warning ? $STR("passkey_replace") : item.key === NEW_ENTRY && askGroup ? $STR("passkey_next") : $STR("passkey_save")
+                });
+                if (dialog.action !== "ok") {
+                    this.background("cancel", { prepareId: prep.prepareId });
+                    return { result: dialog.action === "fallback" ? "fallback" : "cancel" };
+                }
+                selectedKey = dialog.key;
+                const chosen = (prep.candidates ?? []).find((c: any) => c.dbFileName + "|" + c.uuid === dialog.key);
+                if (chosen) {
+                    choice = { uuid: chosen.uuid, dbFileName: chosen.dbFileName, overwrite: !!chosen.hasPasskey };
+                } else if (!preferredGroup) {
+                    choice = { uuid: "", dbFileName: prep.databases?.[0]?.fileName ?? "" };
+                } else if (!askGroup) {
+                    choice = { uuid: "", dbFileName: preferredGroup.dbFileName, groupUuid: preferredGroup.uuid };
+                } else {
+                    const groupDialog = await showPasskeyDialog({
+                        heading: $STR("passkey_create_heading"),
+                        subheading: [prep.rpName || prep.rpId, prep.userName].filter(Boolean).join(" · "),
+                        question: $STR("passkey_group_question"),
+                        items: groups.map(g => ({
+                            key: g.key,
+                            title: g.name,
+                            subtitle: "",
+                            depth: g.depth,
+                            parentKey: g.parentKey,
+                            hasChildren: g.hasChildren
+                        })),
+                        tree: true,
+                        selectedKey: preferredGroup.key,
+                        primaryLabel: () => $STR("passkey_save"),
+                        cancelLabel: $STR("passkey_back"),
+                        showFallback: false,
+                        compact: true
+                    });
+                    const group = groupDialog.action === "ok" ? groups.find(g => g.key === groupDialog.key) : null;
+                    // "Zurück" (oder Esc): wieder die Auswahl des Eintrags
+                    if (group) choice = { uuid: "", dbFileName: group.dbFileName, groupUuid: group.uuid };
+                }
             }
-            const chosen = (prep.candidates ?? []).find((c: any) => c.dbFileName + "|" + c.uuid === dialog.key);
-            const choice = chosen
-                ? { uuid: chosen.uuid, dbFileName: chosen.dbFileName, overwrite: !!chosen.hasPasskey }
-                : { uuid: "", dbFileName: prep.databases?.[0]?.fileName ?? "" };
             const done = await this.background("finish", { prepareId: prep.prepareId, choice });
             return done.result === "ok" ? done : { result: "fallback" };
         }

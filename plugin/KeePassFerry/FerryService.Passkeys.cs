@@ -73,7 +73,7 @@ namespace KeePassFerry
             var result = new List<PasskeyInfo>();
             foreach (PwDatabase db in _host.MainWindow.DocumentManager.GetOpenDatabases())
             {
-                foreach (PwEntry e in db.RootGroup.GetEntries(true))
+                foreach (PwEntry e in GetRootPwGroup(db).GetEntries(true))
                 {
                     if ((db.RecycleBinEnabled && IsInRecycleBin(db, e)) || IsHiddenExpired(e)) continue;
                     bool rpMatch = string.Equals(e.Strings.ReadSafe(FieldRelyingParty), rpId, StringComparison.OrdinalIgnoreCase);
@@ -98,7 +98,7 @@ namespace KeePassFerry
             var result = new List<PasskeyInfo>();
             foreach (PwDatabase db in _host.MainWindow.DocumentManager.GetOpenDatabases())
             {
-                foreach (PwEntry e in db.RootGroup.GetEntries(true))
+                foreach (PwEntry e in GetRootPwGroup(db).GetEntries(true))
                 {
                     if ((db.RecycleBinEnabled && IsInRecycleBin(db, e)) || IsHiddenExpired(e)) continue;
                     if (!string.Equals(e.Strings.ReadSafe(FieldRelyingParty), rpId, StringComparison.OrdinalIgnoreCase)) continue;
@@ -119,6 +119,23 @@ namespace KeePassFerry
         public PasskeyCreateResult PasskeyCreate(string rpId, string rpName, string userIdB64Url, string userName,
             string origin, string targetUuid, string dbFileName, bool overwrite)
         {
+            return CreatePasskey(rpId, rpName, userIdB64Url, userName, origin, targetUuid, dbFileName, overwrite, null);
+        }
+
+        /// <summary>
+        /// Wie PasskeyCreate; ein neuer Eintrag kommt in die Gruppe groupUuid (innerhalb der für den Browser
+        /// freigegebenen Gruppe), leer → Gruppe "Passkeys". Gruppe nicht gefunden → status "notfound"
+        /// </summary>
+        [JsonRpcMethod]
+        public PasskeyCreateResult PasskeyCreateInGroup(string rpId, string rpName, string userIdB64Url, string userName,
+            string origin, string targetUuid, string dbFileName, bool overwrite, string groupUuid)
+        {
+            return CreatePasskey(rpId, rpName, userIdB64Url, userName, origin, targetUuid, dbFileName, overwrite, groupUuid);
+        }
+
+        private PasskeyCreateResult CreatePasskey(string rpId, string rpName, string userIdB64Url, string userName,
+            string origin, string targetUuid, string dbFileName, bool overwrite, string groupUuid)
+        {
             if (!EnsureDBisOpen()) return new PasskeyCreateResult { status = "error" };
             if (string.IsNullOrEmpty(rpId) || string.IsNullOrEmpty(userIdB64Url)) return new PasskeyCreateResult { status = "error" };
 
@@ -132,6 +149,13 @@ namespace KeePassFerry
                 if (entry == null) return new PasskeyCreateResult { status = "notfound" };
                 if (!string.IsNullOrEmpty(entry.Strings.ReadSafe(FieldCredentialId)) && !overwrite)
                     return new PasskeyCreateResult { status = "exists" };
+            }
+
+            PwGroup targetGroup = null;
+            if (entry == null)
+            {
+                targetGroup = string.IsNullOrEmpty(groupUuid) ? PasskeyGroup(db) : FindSharedGroup(db, groupUuid);
+                if (targetGroup == null) return new PasskeyCreateResult { status = "notfound" };
             }
 
             byte[] credentialId = new byte[32];
@@ -154,7 +178,7 @@ namespace KeePassFerry
                 entry.Strings.Set(PwDefs.UserNameField, new ProtectedString(false, userName ?? ""));
                 entry.Strings.Set(PwDefs.PasswordField, new ProtectedString(true, ""));
                 entry.Strings.Set(PwDefs.UrlField, new ProtectedString(false, string.IsNullOrEmpty(origin) ? "https://" + rpId : origin));
-                PasskeyGroup(db).AddEntry(entry, true);
+                targetGroup.AddEntry(entry, true);
             }
             else
             {
@@ -370,14 +394,39 @@ namespace KeePassFerry
             return host == rp || host.EndsWith("." + rp, StringComparison.Ordinal);
         }
 
+        // Gruppe "Passkeys" innerhalb der für den Browser freigegebenen Gruppe (ohne Freigabe: Wurzel der Datenbank)
         private PwGroup PasskeyGroup(PwDatabase db)
         {
+            PwGroup root = GetRootPwGroup(db);
             var uuid = new PwUuid(PasskeyGroupUuid.ToByteArray());
-            PwGroup g = db.RootGroup.FindGroup(uuid, true);
+            PwGroup g = root.FindGroup(uuid, true);
             if (g != null) return g;
             g = new PwGroup(true, true, "Passkeys", PwIcon.Key);
             g.Uuid = uuid;
-            db.RootGroup.AddGroup(g, true);
+            root.AddGroup(g, true);
+            return g;
+        }
+
+        // Gruppe mit dieser UUID innerhalb der freigegebenen Gruppe (sie selbst eingeschlossen), nicht im Papierkorb
+        private PwGroup FindSharedGroup(PwDatabase db, string groupUuid)
+        {
+            PwUuid uuid;
+            try
+            {
+                uuid = new PwUuid(MemUtil.HexStringToByteArray(groupUuid));
+            }
+            catch
+            {
+                return null;
+            }
+            PwGroup root = GetRootPwGroup(db);
+            PwGroup g = root.Uuid.Equals(uuid) ? root : root.FindGroup(uuid, true);
+            if (g == null) return null;
+            if (db.RecycleBinEnabled)
+            {
+                for (PwGroup p = g; p != null; p = p.ParentGroup)
+                    if (p.Uuid.Equals(db.RecycleBinUuid)) return null;
+            }
             return g;
         }
 

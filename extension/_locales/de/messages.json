@@ -687,6 +687,22 @@
         "message": "In welchem Eintrag soll der Passkey gespeichert werden?",
         "description": "KeePassFerry passkeys"
     },
+    "passkey_group_question": {
+        "message": "In welcher Gruppe soll der neue Eintrag angelegt werden?",
+        "description": "KeePassFerry"
+    },
+    "passkey_next": {
+        "message": "Weiter",
+        "description": "KeePassFerry"
+    },
+    "passkey_back": {
+        "message": "Zurück",
+        "description": "KeePassFerry"
+    },
+    "passkey_group_prefix": {
+        "message": "Gruppe:",
+        "description": "KeePassFerry"
+    },
     "passkey_new_entry": {
         "message": "Neuen Eintrag anlegen",
         "description": "KeePassFerry passkeys"

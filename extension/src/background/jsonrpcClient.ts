@@ -404,6 +404,11 @@ export class jsonrpcClient {
         return this.passkeyRpc("PasskeyCreate", [rpId, rpName, userId, userName, origin, targetUuid, dbFileName, overwrite]);
     }
 
+    // Plugin mit PASSKEY_GROUP_FEATURE: neuer Eintrag in der Gruppe groupUuid
+    passkeyCreateInGroup(rpId: string, rpName: string, userId: string, userName: string, origin: string, targetUuid: string, dbFileName: string, overwrite: boolean, groupUuid: string) {
+        return this.passkeyRpc("PasskeyCreateInGroup", [rpId, rpName, userId, userName, origin, targetUuid, dbFileName, overwrite, groupUuid]);
+    }
+
     passkeyGetAssertion(uuid: string, dbFileName: string, rpId: string, clientDataHash: string) {
         return this.passkeyRpc("PasskeyGetAssertion", [uuid, dbFileName, rpId, clientDataHash]);
     }

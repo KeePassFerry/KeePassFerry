@@ -3,6 +3,7 @@ PasskeyDialog.ts: Dialog in der Seite (geschlossener Shadow DOM) für Passkeys.
 - Erstellen: Eintrag wählen, in dem der Passkey gespeichert wird (vorausgewählt der passende), oder neuer Eintrag
 - Anmelden: Passkey wählen
 Knöpfe: Hauptaktion, "Abbrechen", "Anderes Gerät verwenden" (gibt die Anfrage an den Browser/Windows weiter).
+Nur echte Eingaben (isTrusted) wählen aus oder bestätigen; von Seitenskripten ausgelöste Ereignisse zählen nicht.
 */
 
 export interface DialogItem {
@@ -11,6 +12,10 @@ export interface DialogItem {
     subtitle: string;
     badges?: { text: string; tone: "green" | "amber" }[];
     warning?: string;
+    // Baumansicht (Gruppen): Ebene, übergeordneter Eintrag, hat Untereinträge
+    depth?: number;
+    parentKey?: string;
+    hasChildren?: boolean;
 }
 
 export interface DialogOptions {
@@ -23,6 +28,11 @@ export interface DialogOptions {
     cancelLabel?: string;
     // false: kein "Anderes Gerät verwenden"
     showFallback?: boolean;
+    // Lange Liste einzeiliger Einträge (Gruppen): niedrigere Zeilen, Liste mit begrenzter Höhe
+    compact?: boolean;
+    // Einträge als aufklappbarer Baum wie im Explorer (depth/parentKey/hasChildren); aufgeklappt ist anfangs die
+    // oberste Ebene und der Weg zum vorausgewählten Eintrag
+    tree?: boolean;
     danger?: boolean;
 }
 
@@ -84,6 +94,19 @@ const STYLE = `
     .item:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
     .radio { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 2px solid #94a3b8; box-sizing: border-box; }
     .item.selected .radio { border-color: #1d4ed8; background: radial-gradient(circle, #1d4ed8 42%, transparent 46%); }
+    .list.compact { gap: 4px; max-height: min(330px, 45vh); }
+    .list.compact .item { padding: 6px 12px; border-radius: 9px; }
+    .list.compact .subtitle:empty { display: none; }
+    .list.tree .item { gap: 8px; }
+    .twisty {
+        width: 18px; height: 18px; flex: none; display: flex; align-items: center; justify-content: center;
+        border-radius: 5px; color: #64748b; cursor: pointer;
+    }
+    .twisty:hover { background: #e2e8f0; color: #0f172a; }
+    .twisty svg { transition: transform 0.12s; }
+    .twisty.open svg { transform: rotate(90deg); }
+    .twisty.leaf { visibility: hidden; }
+    .folder { flex: none; color: #d97706; }
     .single .radio { display: none; }
     .single .item { cursor: default; }
     .text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
@@ -131,8 +154,28 @@ const STYLE = `
         button.secondary { background: #1f2937; color: #f1f5f9; }
         button.link { color: #93c5fd; }
         .warning { background: #422006; color: #fde68a; border-color: #78350f; }
+        .twisty { color: #94a3b8; }
+        .twisty:hover { background: #1f2937; color: #f1f5f9; }
+        .folder { color: #fbbf24; }
     }
 `;
+
+function svgIcon(d: string, size: number): SVGSVGElement {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", String(size));
+    svg.setAttribute("height", String(size));
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.append(path);
+    return svg as SVGSVGElement;
+}
 
 export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
     document.getElementById(HOST_ID)?.remove();
@@ -212,6 +255,28 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
 
         list.setAttribute("role", "radiogroup");
         if (opts.items.length === 1) list.classList.add("single");
+        if (opts.compact) list.classList.add("compact");
+        if (opts.tree) list.classList.add("tree");
+
+        // Baum: aufgeklappte Einträge; sichtbar ist ein Eintrag, wenn alle übergeordneten aufgeklappt sind
+        const byKey = new Map(opts.items.map(i => [i.key, i]));
+        const expanded = new Set<string>(opts.items.filter(i => !i.depth).map(i => i.key));
+        for (let p = byKey.get(selected?.parentKey ?? ""); p; p = byKey.get(p.parentKey ?? "")) expanded.add(p.key);
+        const twisties = new Map<string, HTMLSpanElement>();
+        const isVisible = (item: DialogItem) => {
+            for (let p = byKey.get(item.parentKey ?? ""); p; p = byKey.get(p.parentKey ?? "")) {
+                if (!expanded.has(p.key)) return false;
+            }
+            return true;
+        };
+        const applyTree = () => {
+            if (!opts.tree) return;
+            for (const item of opts.items) {
+                buttons.get(item.key).style.display = isVisible(item) ? "" : "none";
+                twisties.get(item.key)?.classList.toggle("open", expanded.has(item.key));
+            }
+        };
+
         for (const item of opts.items) {
             const b = document.createElement("button");
             b.type = "button";
@@ -228,8 +293,30 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
             s.className = "subtitle";
             s.textContent = item.subtitle;
             text.append(t, s);
-            b.append(radio, text);
-            b.title = item.title + "\n" + item.subtitle;
+            if (opts.tree) {
+                b.style.paddingLeft = 8 + (item.depth ?? 0) * 18 + "px";
+                const twisty = document.createElement("span");
+                twisty.className = "twisty" + (item.hasChildren ? "" : " leaf");
+                twisty.append(svgIcon("M9 6l6 6-6 6", 14));
+                twisty.addEventListener("click", e => {
+                    e.stopPropagation();
+                    if (!e.isTrusted || !item.hasChildren) return;
+                    if (expanded.has(item.key)) expanded.delete(item.key);
+                    else expanded.add(item.key);
+                    // Zugeklappt mit der Auswahl darin: der zugeklappte Eintrag wird ausgewählt
+                    if (selected && !isVisible(selected)) selected = item;
+                    applyTree();
+                    refresh();
+                });
+                twisty.addEventListener("dblclick", e => e.stopPropagation());
+                twisties.set(item.key, twisty);
+                const folder = svgIcon("M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", 16);
+                folder.classList.add("folder");
+                b.append(twisty, radio, folder, text);
+            } else {
+                b.append(radio, text);
+            }
+            b.title = item.subtitle ? item.title + "\n" + item.subtitle : item.title;
             if (item.badges?.length) {
                 const badges = document.createElement("span");
                 badges.className = "badges";
@@ -241,11 +328,14 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
                 }
                 text.append(badges);
             }
-            b.addEventListener("click", () => {
+            b.addEventListener("click", e => {
+                if (!e.isTrusted) return;
                 selected = item;
                 refresh();
             });
-            if (!opts.danger) b.addEventListener("dblclick", () => finish({ action: "ok", key: item.key }));
+            if (!opts.danger) {
+                b.addEventListener("dblclick", e => e.isTrusted && finish({ action: "ok", key: item.key }));
+            }
             buttons.set(item.key, b);
             list.append(b);
         }
@@ -261,6 +351,7 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
             resolve(result);
         };
         const onKey = (e: KeyboardEvent) => {
+            if (!e.isTrusted) return;
             if (e.key === "Escape") {
                 e.preventDefault();
                 e.stopPropagation();
@@ -271,11 +362,11 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
                 finish({ action: "ok", key: selected.key });
             }
         };
-        primary.addEventListener("click", () => selected && finish({ action: "ok", key: selected.key }));
-        cancel.addEventListener("click", () => finish({ action: "cancel" }));
-        fallback.addEventListener("click", () => finish({ action: "fallback" }));
+        primary.addEventListener("click", e => e.isTrusted && selected && finish({ action: "ok", key: selected.key }));
+        cancel.addEventListener("click", e => e.isTrusted && finish({ action: "cancel" }));
+        fallback.addEventListener("click", e => e.isTrusted && finish({ action: "fallback" }));
         backdrop.addEventListener("click", e => {
-            if (e.target === backdrop) finish({ action: "cancel" });
+            if (e.isTrusted && e.target === backdrop) finish({ action: "cancel" });
         });
         document.addEventListener("keydown", onKey, true);
 
@@ -303,7 +394,10 @@ export function showPasskeyDialog(opts: DialogOptions): Promise<DialogResult> {
         } catch (e) {
             // Ohne Top Layer (sehr alte Browser): wie bisher als feste Ebene mit höchstem z-index
         }
+        applyTree();
         refresh();
+        // Vorauswahl in einer langen Liste sichtbar machen
+        if (selected) buttons.get(selected.key)?.scrollIntoView?.({ block: "nearest" });
         // Bei Entfernen-Rückfragen steht der Fokus auf "Behalten"
         (opts.danger ? cancel : primary).focus();
     });

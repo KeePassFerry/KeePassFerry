@@ -5,6 +5,8 @@ import { FerryLog } from "../common/Logger";
 import { Entry } from "../common/model/Entry";
 import { utils } from "../common/utils";
 import { diag } from "./ferryDiag";
+import { PASSKEY_GROUP_FEATURE } from "../common/FeatureFlags";
+import { groupKey, passkeyGroupChoices } from "../common/passkeyGroups";
 
 /*
 passkeys.ts: Hintergrund-Teil der Passkey-Unterstützung.
@@ -25,6 +27,8 @@ interface PasskeyContext {
     challenge: string;
     user?: { id: string; name: string; displayName: string };
     allowedUuids?: Set<string>;
+    // Gruppen, in denen ein neuer Eintrag angelegt werden darf (Datei|UUID); leer: Plugin ohne Gruppenwahl
+    allowedGroups?: Set<string>;
     at: number;
 }
 
@@ -134,22 +138,45 @@ async function ensureUnlocked(tabId: number, url: string): Promise<boolean> {
     return ferry.unlockAndWait(tabId, url);
 }
 
+// Ergebnis jeder Passkey-Anfrage im Diagnoseprotokoll (grund: warum sie an den Browser bzw. Windows weitergeht)
 export async function preparePasskey(sender: chrome.runtime.MessageSender, kind: "create" | "get", payload: any) {
+    const res: any = await preparePasskeyRequest(sender, kind, payload);
+    let seite = "";
+    try {
+        seite = new URL(sender.url ?? "").hostname;
+    } catch (e) {
+        // ohne Adresse
+    }
+    diag("hintergrund", "passkey-anfrage", {
+        art: kind,
+        seite,
+        ergebnis: res.result,
+        grund: res.grund,
+        kandidaten: res.candidates?.length ?? res.passkeys?.length,
+        erlaubt: res.erlaubt,
+        vorhanden: res.vorhanden,
+        gruppen: res.groups?.length,
+        gruppeFragen: res.askGroup
+    });
+    return res;
+}
+
+async function preparePasskeyRequest(sender: chrome.runtime.MessageSender, kind: "create" | "get", payload: any) {
     // Einstellung "Passkeys mit KeePassFerry" aus: Anfrage geht an Browser bzw. Windows
-    if (configManager.current.ferryPasskeys === false) return { result: "fallback" };
+    if (configManager.current.ferryPasskeys === false) return { result: "fallback", grund: "einstellung aus" };
     const frameUrl = sender.url ?? "";
     let origin: URL;
     try {
         origin = new URL(frameUrl);
     } catch (e) {
-        return { result: "fallback" };
+        return { result: "fallback", grund: "keine frame-adresse" };
     }
     const rpId: string = (kind === "create" ? payload?.rp?.id : payload?.rpId) || origin.hostname;
     if (!(await rpIdPermitted(frameUrl, rpId))) {
         diag("hintergrund", "passkey rp-id abgelehnt", { art: kind, rpId, seite: origin.hostname });
         return { result: "security" };
     }
-    if (!(await ensureUnlocked(sender.tab.id, frameUrl))) return { result: "fallback" };
+    if (!(await ensureUnlocked(sender.tab.id, frameUrl))) return { result: "fallback", grund: "keepass nicht verbunden oder gesperrt" };
 
     let topOrigin = origin.origin;
     try {
@@ -182,8 +209,21 @@ export async function preparePasskey(sender: chrome.runtime.MessageSender, kind:
                 if (existing?.length > 0) return { result: "excluded" };
             }
             const candidates = await createCandidates(ctx, frameUrl);
+            const features = ferry.rpc.pluginClient.nativeSessionManager.features() ?? [];
+            const choices = features.includes(PASSKEY_GROUP_FEATURE)
+                ? passkeyGroupChoices(
+                      ferry.store.state.KeePassDatabases as any,
+                      ferry.store.state.ActiveKeePassDatabaseIndex,
+                      configManager.current.mruGroup,
+                      configManager.current.rememberMRUGroup
+                  )
+                : { groups: [], preferredKey: "", ask: false };
+            ctx.allowedGroups = new Set(choices.groups.map(g => g.key));
             contexts.set(id, ctx);
             return {
+                groups: choices.groups,
+                preferredGroup: choices.preferredKey,
+                askGroup: choices.ask,
                 result: "choose",
                 prepareId: id,
                 rpId,
@@ -196,13 +236,17 @@ export async function preparePasskey(sender: chrome.runtime.MessageSender, kind:
 
         const allow: string[] = Array.isArray(payload?.allowCredentials) ? payload.allowCredentials : [];
         const passkeys = (await ferry.rpc.passkeyFind(rpId, allow)) ?? [];
-        if (passkeys.length === 0) return { result: "fallback" };
+        if (passkeys.length === 0) {
+            // Für die Diagnose: gibt es Passkeys dieser Website, die nur nicht in der Liste der Seite stehen?
+            const all = allow.length > 0 ? ((await ferry.rpc.passkeyFind(rpId, [])) ?? []).length : 0;
+            return { result: "fallback", grund: allow.length > 0 && all > 0 ? "passkey nicht in der liste der seite" : "kein passkey in keepass", erlaubt: allow.length, vorhanden: all };
+        }
         ctx.allowedUuids = new Set(passkeys.map(p => p.dbFileName + "|" + p.uuid));
         contexts.set(id, ctx);
         return { result: "choose", prepareId: id, rpId, passkeys };
     } catch (e) {
         FerryLog.warn("Passkey prepare failed: " + e);
-        return { result: "fallback" };
+        return { result: "fallback", grund: "fehler: " + e };
     }
 }
 
@@ -239,7 +283,19 @@ async function createCandidates(ctx: PasskeyContext, frameUrl: string) {
     return list.slice(0, 12).map(c => ({ ...c, lastUsed: c.dbFileName + "|" + c.uuid === lastKey }));
 }
 
+// Ergebnis des Speicherns bzw. Signierens im Diagnoseprotokoll
 export async function finishPasskey(sender: chrome.runtime.MessageSender, prepareId: string, choice: any) {
+    const kind = contexts.get(prepareId)?.kind;
+    const res: any = await finishPasskeyRequest(sender, prepareId, choice);
+    diag("hintergrund", "passkey-abschluss", {
+        art: kind,
+        ergebnis: res.result,
+        ziel: choice?.uuid ? "vorhandener eintrag" : choice?.groupUuid ? "neuer eintrag in gewählter gruppe" : "neuer eintrag"
+    });
+    return res;
+}
+
+async function finishPasskeyRequest(sender: chrome.runtime.MessageSender, prepareId: string, choice: any) {
     const ctx = contexts.get(prepareId);
     if (!ctx || ctx.tabId !== sender.tab.id || Date.now() - ctx.at > 10 * 60 * 1000) return { result: "fallback" };
 
@@ -253,13 +309,24 @@ export async function finishPasskey(sender: chrome.runtime.MessageSender, prepar
 
     try {
         if (ctx.kind === "create") {
-            const res = await ferry.rpc.passkeyCreate(
-                ctx.rpId, ctx.rpName, ctx.user.id, ctx.user.name || ctx.user.displayName, ctx.origin,
-                choice?.uuid ?? "", choice?.dbFileName ?? ferry.store.state.KeePassDatabases[0]?.fileName ?? "", !!choice?.overwrite
-            );
+            // Neuer Eintrag in einer gewählten Gruppe: nur eine der beim Vorbereiten angebotenen
+            const group = !choice?.uuid && choice?.groupUuid ? groupKey(choice.dbFileName ?? "", choice.groupUuid) : null;
+            if (group && !ctx.allowedGroups?.has(group)) return { result: "error" };
+            const userName = ctx.user.name || ctx.user.displayName;
+            const dbFileName = choice?.dbFileName ?? ferry.store.state.KeePassDatabases[0]?.fileName ?? "";
+            const res = group
+                ? await ferry.rpc.passkeyCreateInGroup(ctx.rpId, ctx.rpName, ctx.user.id, userName, ctx.origin, "", dbFileName, false, choice.groupUuid)
+                : await ferry.rpc.passkeyCreate(ctx.rpId, ctx.rpName, ctx.user.id, userName, ctx.origin, choice?.uuid ?? "", dbFileName, !!choice?.overwrite);
             if (res?.status === "exists") return { result: "exists" };
             if (res?.status !== "ok") return { result: "error" };
             contexts.delete(prepareId);
+            // Gruppe als Vorauswahl merken wie beim Speichern einer neuen Anmeldung
+            if (group) {
+                if (!configManager.current.mruGroup) configManager.current.mruGroup = {};
+                configManager.current.mruGroup[dbFileName] = choice.groupUuid;
+                configManager.current.mruGroup["{<{{<<ferry-primary>>}}>}"] = choice.groupUuid;
+                configManager.save();
+            }
             rememberEntry(ctx, res.entryUuid, choice?.dbFileName);
             return { result: "ok", credential: { ...res, clientDataJSON: b64url(clientDataBytes) } };
         }

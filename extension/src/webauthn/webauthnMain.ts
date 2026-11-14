@@ -74,6 +74,13 @@ Bedingte Anfragen (mediation: "conditional", Passkey-Vorschläge im Benutzerfeld
         });
     }
 
+    // Eintrag im Diagnoseprotokoll über das Inhaltsskript (ohne Inhalte der Anfrage)
+    function note(text: string) {
+        waitForBridge(1500).then(ok => {
+            if (ok) window.postMessage({ channel: CHANNEL, dir: "toBridge", type: "note", text }, window.location.origin);
+        });
+    }
+
     function toBytes(src: BufferSource): Uint8Array {
         if (src instanceof ArrayBuffer) return new Uint8Array(src);
         return new Uint8Array(src.buffer, src.byteOffset, src.byteLength);
@@ -173,8 +180,14 @@ Bedingte Anfragen (mediation: "conditional", Passkey-Vorschläge im Benutzerfeld
         const pk = options?.publicKey;
         if (!pk) return nativeCreate(options);
         try {
-            if (!(pk.pubKeyCredParams ?? []).some(p => p.type === "public-key" && p.alg === -7)) return nativeCreate(options);
-            if (pk.authenticatorSelection?.authenticatorAttachment === "cross-platform") return nativeCreate(options);
+            if (!(pk.pubKeyCredParams ?? []).some(p => p.type === "public-key" && p.alg === -7)) {
+                note("passkey an browser: kein es256");
+                return nativeCreate(options);
+            }
+            if (pk.authenticatorSelection?.authenticatorAttachment === "cross-platform") {
+                note("passkey an browser: nur externer schlüssel verlangt");
+                return nativeCreate(options);
+            }
             if (!(await waitForBridge(1500))) return nativeCreate(options);
             const res = await ask("create", {
                 rp: { id: pk.rp?.id ?? null, name: pk.rp?.name ?? "" },
