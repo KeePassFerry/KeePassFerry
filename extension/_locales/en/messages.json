@@ -1996,6 +1996,22 @@
     "message": "These passwords appear in known data breaches. Change them on the website and enter the new password in the entry.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_37_1_title": {
+    "message": "Passkey: choose the group",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_37_1_text": {
+    "message": "When you create a new entry for a passkey, you now choose its group as when saving a login, in a collapsible group tree. The last used group is preselected. Needs the new plugin.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_37_2_title": {
+    "message": "Order from KeePass",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_37_2_text": {
+    "message": "When several entries match a page equally well, they now appear in their order from KeePass instead of alphabetically. Needs the new plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_36_1_title": {
     "message": "Your own icons stay",
     "description": "KeePassFerry"

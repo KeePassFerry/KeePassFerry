@@ -2,6 +2,18 @@
 
 English · [Deutsch](#deutsch)
 
+## 1.0.37 – 2026-11-14
+
+- Security: the in-page passkey dialog only accepts real input from the user. Before, a script on the page could
+  confirm the preselected passkey by sending a synthetic Enter key (reported privately, GHSA-3v3v-566f-2q4x).
+  Clicks, double-click and Escape are checked the same way.
+- Passkeys: a new entry for a passkey now asks for its group like a new login does, in a collapsible group tree with
+  the last used group preselected (no question when "remember group" is on). Passkeys are only looked up and created
+  within the group shared with the browser. Needs the new plugin.
+- Entries that match a page equally well keep their order from KeePass instead of being sorted by title (#44). Needs
+  the new plugin.
+- Diagnostic log: passkey requests and their outcome.
+
 ## 1.0.36 – 2026-11-13
 
 - Updating an entry no longer replaces its icon (#43). An icon you chose yourself, or the one set when the entry was
@@ -612,6 +624,18 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## 1.0.37 – 2026-11-14
+
+- Sicherheit: Der Passkey-Dialog auf der Seite nimmt nur noch echte Eingaben an. Bisher konnte ein Skript der Seite
+  den vorausgewählten Passkey mit einem künstlichen Enter bestätigen (privat gemeldet, GHSA-3v3v-566f-2q4x). Klicks,
+  Doppelklick und Escape werden genauso geprüft.
+- Passkeys: Ein neuer Eintrag für einen Passkey fragt jetzt wie eine neue Anmeldung nach der Gruppe, in einem
+  aufklappbaren Gruppenbaum mit der zuletzt benutzten Gruppe vorausgewählt (keine Frage bei „Gruppe merken“). Passkeys
+  werden nur noch in der für den Browser freigegebenen Gruppe gesucht und angelegt. Dafür ist das neue Plugin nötig.
+- Gleich gut passende Einträge behalten ihre Reihenfolge aus KeePass, statt nach Titel sortiert zu werden (#44). Dafür
+  ist das neue Plugin nötig.
+- Diagnoseprotokoll: Passkey-Anfragen und ihr Ergebnis.
 
 ## 1.0.36 – 2026-11-13
 

@@ -1996,6 +1996,22 @@
         "message": "Diese Passwörter tauchen in bekannten Datenlecks auf. Ändere sie auf der Website und trage das neue Passwort im Eintrag ein.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_37_1_title": {
+        "message": "Passkey: Gruppe wählen",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_37_1_text": {
+        "message": "Legst du für einen Passkey einen neuen Eintrag an, wählst du die Gruppe jetzt wie beim Speichern einer Anmeldung, in einem aufklappbaren Gruppenbaum. Die zuletzt benutzte Gruppe ist vorausgewählt. Dafür ist das neue Plugin nötig.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_37_2_title": {
+        "message": "Reihenfolge aus KeePass",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_37_2_text": {
+        "message": "Passen mehrere Einträge gleich gut zur Seite, erscheinen sie jetzt in ihrer Reihenfolge aus KeePass statt alphabetisch. Dafür ist das neue Plugin nötig.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_36_1_title": {
         "message": "Eigene Symbole bleiben",
         "description": "KeePassFerry"
