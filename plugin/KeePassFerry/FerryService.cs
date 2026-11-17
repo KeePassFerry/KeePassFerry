@@ -208,13 +208,9 @@ namespace KeePassFerry
             {
                 gf.InitEx(pg, false, _host.MainWindow.ClientIcons, _host.Database);
 
-                gf.BringToFront();
                 gf.ShowInTaskbar = true;
-
-                _host.MainWindow.Focus();
-                gf.TopMost = true;
-                gf.Focus();
-                gf.Activate();
+                // Nur beim Öffnen vor den Browser holen; dauerhaft TopMost verdeckt sonst die Unterdialoge von KeePass
+                gf.Shown += delegate { FerryForeground.Bring(gf); };
                 if (gf.ShowDialog() == DialogResult.OK)
                     saveDB(db);
             }
@@ -229,14 +225,10 @@ namespace KeePassFerry
                 // Datenbank des Eintrags, nicht die aktive (bei mehreren offenen Datenbanken sonst falsche Symbole/Vorschläge)
                 ef.InitEx(pe, PwEditMode.EditExistingEntry, db ?? _host.Database, _host.MainWindow.ClientIcons, false, false);
 
-                ef.BringToFront();
                 ef.ShowInTaskbar = true;
-
-                _host.MainWindow.Focus();
-                ef.TopMost = true;
-                ef.Focus();
-                ef.Activate();
-
+                // Nur beim Öffnen vor den Browser holen. Dauerhaft TopMost legte die Unterdialoge von KeePass (z. B.
+                // Stringfeld bearbeiten im Reiter "Erweitert") hinter das Fenster, KeePass hing dann
+                ef.Shown += delegate { FerryForeground.Bring(ef); };
                 if (ef.ShowDialog() == DialogResult.OK)
                     saveDB(db);
             }
