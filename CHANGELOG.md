@@ -2,8 +2,19 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.40 – 2026-11-17
 
+- A browser is paired with KeePass for the first time only while a database is unlocked (pointed out by CennoxX).
+  If every database is locked, KeePass first offers to unlock it and then shows the verification code; already
+  paired browsers connect as before. Needs the new plugin.
+- After a declined pairing or a cancelled unlock the extension no longer asks again on its own every minute. The
+  popup says what happened and offers "Connect again"; after a decline it shows how long KeePass still refuses a
+  new pairing from this browser.
+- Values of protected KeePass fields (for example a PIN stored as a protected string field) are masked in the popup
+  like the password and can be shown with the eye button (#50). Needs the new plugin.
+- The entry and group editors opened from the browser no longer stay on top of everything: the "Edit" dialog on the
+  "Advanced" tab is no longer hidden behind them, which made KeePass unusable. Needs the new plugin.
+- The setup and the README link to KeePassFerry on Firefox Add-ons (#34).
 - More code fields are recognised by their name, for example `wpOATHToken` (Wikipedia), `app_otp` or `pin1` (#49, thanks
   to CennoxX). General names such as `code` or `pin` still count only when the page talks about two-factor login.
 
@@ -651,8 +662,20 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.40 – 2026-11-17
 
+- Ein Browser wird nur noch mit KeePass gekoppelt, solange eine Datenbank entsperrt ist (Hinweis von CennoxX). Sind
+  alle Datenbanken gesperrt, bietet KeePass zuerst das Entsperren an und zeigt danach den Prüfcode; bereits gekoppelte
+  Browser verbinden sich wie bisher. Dafür ist das neue Plugin nötig.
+- Nach einer abgelehnten Kopplung oder einem abgebrochenen Entsperren fragt die Erweiterung nicht mehr von selbst jede
+  Minute erneut. Das Popup sagt, was passiert ist, und bietet „Erneut verbinden“ an; nach einer Ablehnung zeigt es,
+  wie lange KeePass noch keine neue Kopplung dieses Browsers annimmt.
+- Werte geschützter KeePass-Felder (z. B. eine PIN als geschütztes Stringfeld) sind im Popup wie das Passwort
+  verdeckt und lassen sich mit dem Augen-Knopf anzeigen (#50). Dafür ist das neue Plugin nötig.
+- Aus dem Browser geöffnete Eintrags- und Gruppendialoge bleiben nicht mehr über allem: Der Dialog „Bearbeiten“ im
+  Reiter „Erweitert“ verschwindet nicht mehr dahinter, wodurch KeePass nicht mehr bedienbar war. Dafür ist das neue
+  Plugin nötig.
+- Setup und README verweisen auf KeePassFerry bei Firefox Add-ons (#34).
 - Mehr Codefelder werden an ihrem Namen erkannt, z. B. `wpOATHToken` (Wikipedia), `app_otp` oder `pin1` (#49, danke an
   CennoxX). Allgemeine Namen wie `code` oder `pin` zählen weiter nur, wenn die Seite von Zwei-Faktor-Anmeldung spricht.
 

@@ -2048,6 +2048,22 @@
         "message": "Einträge und Gruppen erscheinen in der Reihenfolge, in der sie in KeePass stehen: bei gleich gut passenden Treffern, in der Suche und in der Gruppenauswahl. Dafür ist das neue Plugin nötig.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_40_1_title": {
+        "message": "Erste Kopplung nur entsperrt",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_40_1_text": {
+        "message": "Ein neuer Browser wird nur noch gekoppelt, wenn KeePass entsperrt ist. Lehnst du ab oder brichst das Entsperren ab, fragt KeePassFerry nicht mehr von selbst nach; im Popup gibt es dafür „Erneut verbinden“. Dafür ist das neue Plugin nötig.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_40_2_title": {
+        "message": "Geschützte Felder verdeckt",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_40_2_text": {
+        "message": "Geschützte Stringfelder, z. B. eine PIN, sind im Popup jetzt verdeckt wie das Passwort; mit dem Augen-Knopf siehst du sie. Dafür ist das neue Plugin nötig.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_39_1_title": {
         "message": "Einmalcode in Kästchen",
         "description": "KeePassFerry"

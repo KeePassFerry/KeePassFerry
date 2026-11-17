@@ -2048,6 +2048,22 @@
     "message": "Entries and groups appear in the order they have in KeePass: for equally good matches, in the search and in the group picker. Needs the new plugin.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_40_1_title": {
+    "message": "First pairing only when unlocked",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_40_1_text": {
+    "message": "A new browser is paired only while KeePass is unlocked. If you decline or cancel the unlock, KeePassFerry no longer asks again on its own; use \"Connect again\" in the popup instead. Needs the new plugin.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_40_2_title": {
+    "message": "Protected fields hidden",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_40_2_text": {
+    "message": "Protected string fields, such as a PIN, are now masked in the popup like the password; the eye button shows them. Needs the new plugin.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_39_1_title": {
     "message": "One-time code in boxes",
     "description": "KeePassFerry"
