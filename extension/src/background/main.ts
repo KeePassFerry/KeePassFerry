@@ -350,6 +350,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case "fillField":
             work = fillPageField(ferry.foregroundTabId, msg.kind, msg.uuid, msg.dbFileName, msg.value);
             break;
+        case "retryPairing":
+            ferry.rpc.pluginClient.nativeSessionManager.retryPairing();
+            work = Promise.resolve(true);
+            break;
         case "resetPairing":
             // Alte Kopplung zuerst in KeePass entfernen (Plugin ab 1.0.19), sonst sammeln sie sich in den Optionen an
             work = ferry.rpc

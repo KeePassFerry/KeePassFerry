@@ -242,7 +242,7 @@ namespace KeePassFerry
             SecureChannel channel;
             using (new Timer(_ => transport.Close(), null, HandshakeTimeoutMs, Timeout.Infinite))
                 channel = SecureChannel.Accept(transport, _plugin.FerryIdentity,
-                    FerryClientConnection.FeaturesOfferedToClients, _plugin.ConfirmFerryPairing);
+                    FerryClientConnection.FeaturesOfferedToClients, _plugin.ConfirmFerryPairing, _plugin.FerryPairingNeedsUnlock);
             if (channel == null)
             {
                 Log("Secure channel handshake failed or pairing declined");

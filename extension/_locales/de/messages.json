@@ -660,7 +660,7 @@
         "description": "KeePassFerry secure channel"
     },
     "pairing_denied": {
-        "message": "Die Kopplung wurde in KeePass abgelehnt. KeePassFerry fragt in einer Minute erneut.",
+        "message": "Die Kopplung wurde in KeePass abgelehnt. Über „Erneut verbinden“ im Popup kannst du es noch einmal versuchen.",
         "description": "KeePassFerry secure channel"
     },
     "security_warning_title": {
@@ -842,6 +842,38 @@
     "ferry_status_no_host_hint": {
         "message": "Installiere das KeePassFerry-Plugin in KeePass und starte KeePass einmal, damit sich die Verbindung einrichtet.",
         "description": "KeePassFerry settings"
+    },
+    "ferry_status_pairing_unlock": {
+        "message": "KeePass ist gesperrt",
+        "description": "KeePassFerry"
+    },
+    "ferry_status_pairing_unlock_hint": {
+        "message": "Zum ersten Verbinden muss KeePass entsperrt sein. Entsperre KeePass und klicke auf „Erneut verbinden“; danach zeigt KeePass den Prüfcode.",
+        "description": "KeePassFerry"
+    },
+    "ferry_status_pairing_denied": {
+        "message": "Kopplung abgelehnt",
+        "description": "KeePassFerry"
+    },
+    "ferry_status_pairing_denied_hint": {
+        "message": "Die Verbindung zu diesem Browser wurde in KeePass abgelehnt. Über „Erneut verbinden“ kannst du es noch einmal versuchen.",
+        "description": "KeePassFerry"
+    },
+    "ferry_pairing_retry": {
+        "message": "Erneut verbinden",
+        "description": "KeePassFerry"
+    },
+    "ferry_status_pairing_wait_hint": {
+        "message": "Nach einer Ablehnung nimmt KeePass eine Weile keine neue Kopplung dieses Browsers an. „Erneut verbinden“ ist in $1 wieder möglich.",
+        "description": "KeePassFerry"
+    },
+    "ferry_status_connecting": {
+        "message": "Verbinde mit KeePass …",
+        "description": "KeePassFerry"
+    },
+    "ferry_status_connecting_hint": {
+        "message": "Ist KeePass gesperrt, entsperre es zuerst. Danach zeigt KeePass den Prüfcode.",
+        "description": "KeePassFerry"
     },
     "ferry_status_not_running": {
         "message": "KeePass läuft nicht",

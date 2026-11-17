@@ -212,11 +212,15 @@ export class pluginClient {
         this.showConnectionMessage($STRF("pairing_message", [display]), undefined, false);
     }
 
-    showChannelProblem(kind: "denied" | "serverKeyChanged" | "pairingNeedsUpdate" | "error") {
+    showChannelProblem(kind: "denied" | "needsUnlock" | "serverKeyChanged" | "pairingNeedsUpdate" | "error") {
         chrome.notifications.clear("keepassferry-pairing");
-        if (kind === "denied") {
-            this.showConnectionMessage($STR("pairing_denied"));
-        } else if (kind === "serverKeyChanged") {
+        // Kopplung abgelehnt oder KeePass blieb gesperrt: Popup und Einstellungen zeigen Hinweis und "Erneut verbinden";
+        // eine Meldung darüber würde diese Ansicht im Popup verdecken. Auch die Meldung mit dem Prüfcode entfernen
+        if (kind === "needsUnlock" || kind === "denied") {
+            ferry.removeUserNotifications((notification: FerryNotification) => notification.name != "ferry-connection-message");
+            return;
+        }
+        if (kind === "serverKeyChanged") {
             createOsNotification("keepassferry-security", {
                 type: "basic",
                 iconUrl: chrome.runtime.getURL("/assets/images/128.png"),

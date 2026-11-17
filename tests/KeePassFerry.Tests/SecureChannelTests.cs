@@ -89,6 +89,61 @@ namespace KeePassFerry.Tests
         }
 
         [TestMethod]
+        public void NewClient_WhileDatabaseLocked_IsDeniedWithoutCode()
+        {
+            // Koppeln nur mit entsperrter Datenbank: kein Prüfcode, Ablehnung mit Grund "unlock", nicht gekoppelt
+            using (var pipe = new PipePair())
+            using (CngKey key = TestFerryClient.NewIdentity())
+            using (var client = new TestFerryClient(pipe, key))
+            {
+                Task<SecureChannel> server = Task.Run(() =>
+                {
+                    SecureChannel channel = SecureChannel.Accept(pipe.Transport, _identity, ServerFeatures, Dialog, () => true);
+                    if (channel == null) pipe.Transport.Close();
+                    return channel;
+                });
+                client.SendHello();
+                client.ReadServerHello();
+                client.SendAuth();
+                var frame = client.ReadFrame();
+                Assert.IsNull(Result(server));
+                Assert.AreEqual("denied", (string)frame["ferry"]);
+                Assert.AreEqual("unlock", (string)frame["reason"]);
+                Assert.AreEqual(0, _shownCodes.Count);
+                Assert.IsFalse(_identity.IsClientPaired(client.ClientId, client.ClientPub));
+            }
+        }
+
+        [TestMethod]
+        public void PairedClient_WhileDatabaseLocked_StillConnects()
+        {
+            // Eine bestehende Kopplung verbindet sich wie bisher; die Abfrage gilt nur für neue Kopplungen
+            using (CngKey key = TestFerryClient.NewIdentity())
+            {
+                string clientId = Guid.NewGuid().ToString();
+                using (var pipe = new PipePair())
+                using (var client = new TestFerryClient(pipe, key, clientId))
+                {
+                    Task<SecureChannel> server = Accept(pipe);
+                    Assert.AreEqual("pairing", client.Handshake());
+                    Assert.IsNotNull(Result(server));
+                }
+                using (var pipe = new PipePair())
+                using (var client = new TestFerryClient(pipe, key, clientId))
+                {
+                    Task<SecureChannel> server = Task.Run(() =>
+                    {
+                        SecureChannel channel = SecureChannel.Accept(pipe.Transport, _identity, ServerFeatures, Dialog, () => true);
+                        if (channel == null) pipe.Transport.Close();
+                        return channel;
+                    });
+                    Assert.AreEqual("ready", client.Handshake());
+                    Assert.IsNotNull(Result(server));
+                }
+            }
+        }
+
+        [TestMethod]
         public void LegacyClientWithoutCommit_UsesV1Code()
         {
             using (var pipe = new PipePair())
@@ -204,6 +259,22 @@ namespace KeePassFerry.Tests
                     }
                 }
                 Assert.AreEqual(1, _shownCodes.Count, "Second attempt within the cooldown must not open the dialog");
+
+                // Während der Ruhezeit: Ablehnung mit Grund "wait", ohne vorher einen Prüfcode anzukündigen
+                using (var pipe = new PipePair())
+                using (var client = new TestFerryClient(pipe, key, clientId))
+                {
+                    Task<SecureChannel> server = Accept(pipe);
+                    client.SendHello();
+                    client.ReadServerHello();
+                    client.SendAuth();
+                    var frame = client.ReadFrame();
+                    Assert.IsNull(Result(server));
+                    Assert.AreEqual("denied", (string)frame["ferry"]);
+                    Assert.AreEqual("wait", (string)frame["reason"]);
+                    int seconds = Convert.ToInt32(frame["seconds"]);
+                    Assert.IsTrue(seconds > 100 && seconds <= 120, "Remaining cooldown: " + seconds);
+                }
                 Assert.IsFalse(_identity.IsClientPaired(clientId, new byte[65]));
             }
         }

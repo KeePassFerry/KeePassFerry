@@ -64,12 +64,12 @@ v-if="news && !newLeaks.length && !otpPending && !showSaveRecovery" class="ferry
                 <path d="M18 72 H110 L97 94 Q95 97 91 97 H37 Q33 97 31 94 Z" fill="#22c55e" />
                 <path d="M20 108 q 8.8 -7 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0 t 17.6 0" fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linecap="round" />
             </svg>
-                    <div class="ferry-empty-title">
-                        {{ !connected ? $i18n("ferry_status_not_running") : noDatabaseLoaded ? $i18n("ferry_status_no_database") : $i18n("ferry_status_locked") }}
-                    </div>
-                    <div class="ferry-empty-text">
-                        {{ !connected ? $i18n("ferry_status_not_running_hint") : noDatabaseLoaded ? $i18n("ferry_popup_no_database_hint") : $i18n("ferry_popup_locked_hint") }}
-                    </div>
+                    <div class="ferry-empty-title">{{ $i18n(emptyState[0]) }}</div>
+                    <div class="ferry-empty-text">{{ $i18n(emptyState[1], emptyState[2]) }}</div>
+                    <v-btn v-if="!connected && pairingStopped" color="primary" variant="flat" class="mt-5" @click="retryPairing">
+                        <template #prepend><tabler-refresh class="ferry-ico" /></template>
+                        {{ $i18n("ferry_pairing_retry") }}
+                    </v-btn>
                     <v-btn v-if="showStartKeePass" color="primary" variant="flat" class="mt-5" @click="startKeePass">
                         <template #prepend><tabler-app-window class="ferry-ico" /></template>
                         {{ $i18n("ferry_popup_start_keepass") }}
@@ -242,6 +242,15 @@ export default {
             saveLastActiveAt: null,
             showSaveWhere: false,
             canStartKeePass: false,
+            // Erstkopplung abgelehnt ("denied") oder KeePass blieb gesperrt ("unlock"): Knopf "Erneut verbinden"
+            pairingStopped: null as string,
+            // Prüfcode einer laufenden Erstkopplung
+            pairingCode: null as string,
+            // Ende der Ruhezeit nach einer Ablehnung (ms) und Uhr für den Countdown
+            pairingRetryAt: 0,
+            // Handshake läuft (z. B. KeePass wartet auf die Entsperr-Abfrage)
+            connecting: false,
+            now: Date.now(),
             displayWhereReason: null,
             preferredGroupUuid: "",
 
@@ -313,6 +322,31 @@ export default {
             return this.openDatabases.length > 0 || this.showOpenKeePassButton;
         },
         // KeePass läuft nicht, der Helfer kann es aber starten: Knopf in der Mitte
+        // Überschrift und Hinweis, wenn keine Einträge gezeigt werden können
+        emptyState: function (): [string, string, string[]?] {
+            if (!this.connected) {
+                // Kopplung läuft: Prüfcode wie auf der Einstellungsseite
+                if (this.pairingCode) {
+                    const code = this.pairingCode.length === 6 ? this.pairingCode.slice(0, 3) + " " + this.pairingCode.slice(3) : this.pairingCode;
+                    return ["ferry_status_pairing", "ferry_status_pairing_hint", [code]];
+                }
+                if (this.pairingStopped === "unlock") return ["ferry_status_pairing_unlock", "ferry_status_pairing_unlock_hint"];
+                if (this.connecting) return ["ferry_status_connecting", "ferry_status_connecting_hint"];
+                if (this.pairingStopped === "denied" || this.pairingStopped === "wait") {
+                    // Ruhezeit nach einer Ablehnung: Restzeit herunterzählen, danach der normale Hinweis
+                    const left = Math.ceil((this.pairingRetryAt - this.now) / 1000);
+                    if (left > 0) {
+                        const time = Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+                        return ["ferry_status_pairing_denied", "ferry_status_pairing_wait_hint", [time]];
+                    }
+                    return ["ferry_status_pairing_denied", "ferry_status_pairing_denied_hint"];
+                }
+                return ["ferry_status_not_running", "ferry_status_not_running_hint"];
+            }
+            return this.noDatabaseLoaded
+                ? ["ferry_status_no_database", "ferry_popup_no_database_hint"]
+                : ["ferry_status_locked", "ferry_popup_locked_hint"];
+        },
         showStartKeePass: function (): boolean {
             return !this.connected && this.canStartKeePass;
         },
@@ -386,9 +420,13 @@ export default {
         this.refreshOpenTips();
 
         // Wurde die Schlüssel-Auswahl ohne Speichern geschlossen, hier erneut anbieten
-        chrome.runtime.sendMessage({ keepassferry: "connectionStatus" })
-            .then(s => (this.canStartKeePass = !!s?.canStartKeePass))
-            .catch(() => undefined);
+        // Verbindungszustand laufend nachlesen, solange keine Verbindung besteht (Kopplung, Entsperr-Abfrage,
+        // Ablehnung, Ruhezeit); jede Sekunde, damit auch der Countdown weiterläuft
+        this.refreshConnectionStatus();
+        window.setInterval(() => {
+            this.now = Date.now();
+            if (!this.connected) this.refreshConnectionStatus();
+        }, 1000);
         chrome.runtime.sendMessage({ keepassferry: "getOtpSetupSummary" })
             .then(s => (this.otpPending = s ?? null))
             .catch(() => undefined);
@@ -508,6 +546,22 @@ export default {
         discardOtpSetup: function () {
             this.otpPending = null;
             chrome.runtime.sendMessage({ keepassferry: "discardOtpSetup" }).catch(() => undefined);
+        },
+        retryPairing: function () {
+            this.pairingStopped = null;
+            this.connecting = true;
+            chrome.runtime.sendMessage({ keepassferry: "retryPairing" }).catch(() => undefined);
+        },
+        refreshConnectionStatus: function () {
+            chrome.runtime.sendMessage({ keepassferry: "connectionStatus" })
+                .then(s => {
+                    this.canStartKeePass = !!s?.canStartKeePass;
+                    this.pairingStopped = s?.pairingStopped ?? null;
+                    this.pairingCode = s?.pairingCode ?? null;
+                    this.pairingRetryAt = s?.pairingRetryAt ?? 0;
+                    this.connecting = !!s?.connecting;
+                })
+                .catch(() => undefined);
         },
         showOptions: () => {
             chrome.runtime.openOptionsPage();

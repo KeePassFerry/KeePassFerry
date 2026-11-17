@@ -12,6 +12,8 @@ type Status = {
     connected: boolean;
     paired: boolean;
     pairingCode: string;
+    pairingStopped?: "denied" | "unlock" | "wait";
+    pairingRetryAt?: number;
     blockedUntil: number;
     hostError: string;
     databases: string[];
@@ -168,6 +170,16 @@ async function refreshStatus() {
         tone = "warn";
         t = $STR("ferry_status_locked");
         d = $STR("ferry_status_locked_hint");
+    } else if (s.pairingStopped) {
+        tone = "warn";
+        t = $STR(s.pairingStopped === "unlock" ? "ferry_status_pairing_unlock" : "ferry_status_pairing_denied");
+        const left = Math.ceil(((s.pairingRetryAt ?? 0) - Date.now()) / 1000);
+        d =
+            s.pairingStopped === "unlock"
+                ? $STR("ferry_status_pairing_unlock_hint")
+                : left > 0
+                  ? $STRF("ferry_status_pairing_wait_hint", [Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0")])
+                  : $STR("ferry_status_pairing_denied_hint");
     } else if (s.blockedUntil > 0) {
         tone = "warn";
         t = $STR("ferry_status_blocked");

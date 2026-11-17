@@ -18,6 +18,8 @@ laufen darüber unveränderte JSON-RPC-Nachrichten; Kees alte SRP-Kopplung wird 
 export const NATIVE_HOST_NAME = "keepassferry";
 
 const RECONNECT_DELAY_MS = 5000;
+// Gestoppte Erstkopplung in chrome.storage.session (überdauert einen Neustart des Service Workers, endet mit dem Browser)
+const PAIRING_STOP_KEY = "ferryPairingStopped";
 
 export interface NativeSessionCallbacks {
     onOpening: () => boolean;
@@ -25,7 +27,7 @@ export interface NativeSessionCallbacks {
     onClose: () => void;
     onMessage: (obj: any) => void;
     onPairingCode: (code: string) => void;
-    onProblem: (kind: "denied" | "serverKeyChanged" | "pairingNeedsUpdate" | "error") => void;
+    onProblem: (kind: "denied" | "needsUnlock" | "serverKeyChanged" | "pairingNeedsUpdate" | "error") => void;
     clientFeatures: () => string[];
 }
 
@@ -55,6 +57,11 @@ export class NativeSessionManager {
     public connectionProhibitedUntil = new Date(0);
     // Prüfcode, solange KeePass auf die Bestätigung der Kopplung wartet
     private pendingPairingCode: string = null;
+    // Erstkopplung abgelehnt ("denied") oder Datenbank blieb gesperrt ("unlock"): kein neuer Versuch von selbst,
+    // erst über "Erneut verbinden" (retryPairing) oder nach einem Neustart der Erweiterung
+    private pairingStopped: "denied" | "unlock" | "wait" = null;
+    // Ruhezeit nach einer Ablehnung: ab dann nimmt KeePass wieder eine Kopplung an (ms seit 1970, 0 = unbekannt)
+    private pairingRetryAt = 0;
     public lastHostError: string = null;
 
     constructor(private cb: NativeSessionCallbacks) {}
@@ -87,12 +94,32 @@ export class NativeSessionManager {
     }
 
     startup() {
-        this.connectHost();
+        // Wurde die Kopplung vor einem Neustart des Service Workers gestoppt, nicht von selbst erneut fragen
+        const restore = chrome.storage.session?.get(PAIRING_STOP_KEY).catch(() => undefined) ?? Promise.resolve(undefined);
+        restore.then(r => {
+            const saved = r?.[PAIRING_STOP_KEY];
+            if (saved && !this.pairingStopped && !this.port) {
+                this.pairingStopped = saved.reason;
+                this.pairingRetryAt = saved.retryAt ?? 0;
+                FerryLog.info("Pairing stays stopped after a restart: " + saved.reason);
+            }
+            this.connectHost();
+        });
+    }
+
+    private setPairingStopped(reason: "denied" | "unlock" | "wait", retryAt: number) {
+        this.pairingStopped = reason;
+        this.pairingRetryAt = retryAt;
+        const store = chrome.storage.session;
+        if (!store) return;
+        (reason ? store.set({ [PAIRING_STOP_KEY]: { reason, retryAt } }) : store.remove(PAIRING_STOP_KEY)).catch(() => undefined);
     }
 
     private connectHost() {
         this.reconnectTimer = null;
         if (this.port) return;
+        // Gestoppte Kopplung: kein Host, kein Timer, bis "Erneut verbinden"
+        if (this.pairingStopped) return;
         if (this.connectionProhibitedUntil.getTime() > Date.now()) {
             this.scheduleReconnect();
             return;
@@ -124,7 +151,7 @@ export class NativeSessionManager {
     }
 
     private scheduleReconnect() {
-        if (this.reconnectTimer !== null) return;
+        if (this.reconnectTimer !== null || this.pairingStopped) return;
         const wait = Math.max(RECONNECT_DELAY_MS, this.connectionProhibitedUntil.getTime() - Date.now());
         this.reconnectTimer = self.setTimeout(() => this.connectHost(), wait);
     }
@@ -169,12 +196,14 @@ export class NativeSessionManager {
                 }
             },
             onPairingCode: code => {
+                this.setPairingStopped(null, 0);
                 this.pendingPairingCode = code;
                 this.cb.onPairingCode(code);
             },
             onReady: features => {
                 if (this.channel !== channel) return;
                 this.pendingPairingCode = null;
+                this.setPairingStopped(null, 0);
                 FerryLog.info("Secure channel to KeePass established");
                 this.keePassConnected = true;
                 this._features = features;
@@ -184,11 +213,18 @@ export class NativeSessionManager {
                 if (this.channel !== channel) return;
                 this.cb.onMessage({ protocol: "jsonrpc", jsonrpc: text, encryptionNotRequired: true });
             },
-            onDenied: () => {
-                FerryLog.warn("KeePass declined the pairing");
-                // Nicht sofort erneut fragen
-                this.connectionProhibitedUntil = new Date(Date.now() + 60000);
-                this.cb.onProblem("denied");
+            onDenied: (reason, seconds) => {
+                // Abgelehnt oder Entsperren abgebrochen: nicht von selbst erneut fragen (KeePass würde sonst immer wieder
+                // eine Abfrage zeigen), erst über "Erneut verbinden"
+                // "wait": KeePass nimmt kurz nach einer Ablehnung keine neue Kopplung dieses Browsers an
+                const stopped = reason === "unlock" || reason === "wait" ? reason : "denied";
+                // Nach einer Ablehnung im Dialog beginnt die Ruhezeit von 2 Minuten; bei "wait" nennt KeePass die Restzeit
+                this.setPairingStopped(
+                    stopped,
+                    reason === "wait" && seconds > 0 ? Date.now() + seconds * 1000 : stopped === "denied" ? Date.now() + 120000 : 0
+                );
+                FerryLog.warn("KeePass declined the pairing: " + stopped);
+                this.cb.onProblem(reason === "unlock" ? "needsUnlock" : "denied");
                 this.closeSession();
             },
             onSecurityError: reason => {
@@ -294,14 +330,32 @@ export class NativeSessionManager {
             connected: this.isActive(),
             paired: await this.store.isPaired(),
             pairingCode: this.isActive() ? null : this.pendingPairingCode,
-            blockedUntil: this.connectionProhibitedUntil.getTime() > Date.now() ? this.connectionProhibitedUntil.getTime() : 0,
+            pairingStopped: this.isActive() ? null : this.pairingStopped,
+            // Handshake läuft, KeePass hat noch nicht geantwortet (z. B. wartet auf die Entsperr-Abfrage)
+            connecting: !this.isActive() && this.channel !== null && !this.pendingPairingCode,
+            pairingRetryAt: this.pairingRetryAt > Date.now() ? this.pairingRetryAt : 0,
+            blockedUntil: this.pairingStopped ? 0 : this.connectionProhibitedUntil.getTime() > Date.now() ? this.connectionProhibitedUntil.getTime() : 0,
             hostError: this.lastHostError
         };
+    }
+
+    // "Erneut verbinden" nach abgelehnter Kopplung oder gesperrter Datenbank
+    retryPairing() {
+        FerryLog.info("Pairing retried by the user");
+        this.setPairingStopped(null, 0);
+        this.connectionProhibitedUntil = new Date(0);
+        this.closeSession();
+        if (this.reconnectTimer !== null) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+        this.connectHost();
     }
 
     // Kopplung zurücksetzen und sofort neu verbinden (KeePass fragt dann erneut mit Prüfcode)
     async resetPairing() {
         await this.store.reset();
+        this.setPairingStopped(null, 0);
         this.connectionProhibitedUntil = new Date(0);
         this.closeSession();
         if (this.reconnectTimer !== null) {

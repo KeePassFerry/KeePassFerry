@@ -56,9 +56,11 @@ namespace KeePassFerry
         /// <summary>
         /// Führt den Handshake als Server aus. Gibt null zurück, wenn er scheitert oder die Kopplung abgelehnt wird.
         /// confirmPairing(clientName, code) zeigt den Prüfcode in KeePass an und liefert den gewählten Namen, bei Ablehnung null.
+        /// pairingNeedsUnlock() wird vor einer neuen Kopplung gefragt: true = keine entsperrte Datenbank, die Kopplung wird
+        /// ohne Prüfcode mit Grund "unlock" abgelehnt.
         /// </summary>
         public static SecureChannel Accept(PipeClientTransport raw, FerryIdentity identity, string[] serverFeatures,
-            Func<string, string, string> confirmPairing)
+            Func<string, string, string> confirmPairing, Func<bool> pairingNeedsUnlock = null)
         {
             var channel = new SecureChannel(raw);
             try
@@ -130,12 +132,36 @@ namespace KeePassFerry
 
                 if (!identity.IsClientPaired(clientId, clientPub))
                 {
-                    var pairing = new JsonObject();
-                    pairing["ferry"] = "pairing";
-                    raw.Send(JsonConvert.ExportToString(pairing));
+                    // Koppeln nur mit entsperrter Datenbank (Hinweis von CennoxX): sonst ablehnen, bevor ein Prüfcode erscheint
+                    if (pairingNeedsUnlock != null && pairingNeedsUnlock())
+                    {
+                        var needsUnlock = new JsonObject();
+                        needsUnlock["ferry"] = "denied";
+                        needsUnlock["reason"] = "unlock";
+                        raw.Send(JsonConvert.ExportToString(needsUnlock));
+                        return null;
+                    }
+
+                    // Kurz nach einer Ablehnung (oder während eine andere Kopplung läuft) gar nicht erst einen Prüfcode
+                    // ankündigen, sondern mit Grund "wait" ablehnen
+                    if (!identity.TryBeginPairing(clientId))
+                    {
+                        var wait = new JsonObject();
+                        wait["ferry"] = "denied";
+                        wait["reason"] = "wait";
+                        wait["seconds"] = identity.PairingCooldownSeconds(clientId);
+                        raw.Send(JsonConvert.ExportToString(wait));
+                        return null;
+                    }
 
                     string code = sasNonce != null ? PairingCodeV2(th, sasNonce) : PairingCode(th);
-                    if (!identity.TryBeginPairing(clientId) || !ConfirmAndEnd(identity, clientId, ref name, code, confirmPairing))
+                    Action announce = () =>
+                    {
+                        var pairing = new JsonObject();
+                        pairing["ferry"] = "pairing";
+                        raw.Send(JsonConvert.ExportToString(pairing));
+                    };
+                    if (!ConfirmAndEnd(identity, clientId, ref name, code, confirmPairing, announce))
                     {
                         var denied = new JsonObject();
                         denied["ferry"] = "denied";
@@ -159,11 +185,13 @@ namespace KeePassFerry
             }
         }
 
-        private static bool ConfirmAndEnd(FerryIdentity identity, string clientId, ref string name, string code, Func<string, string, string> confirmPairing)
+        private static bool ConfirmAndEnd(FerryIdentity identity, string clientId, ref string name, string code,
+            Func<string, string, string> confirmPairing, Action announce)
         {
             bool accepted = false;
             try
             {
+                announce();
                 string chosen = confirmPairing(name, code);
                 accepted = chosen != null;
                 if (accepted) name = chosen;
@@ -396,6 +424,18 @@ namespace KeePassFerry
                 if (_pairingInProgress) return false;
                 _pairingInProgress = true;
                 return true;
+            }
+        }
+
+        // Restliche Ruhezeit nach einer Ablehnung in Sekunden (0: keine; läuft gerade eine andere Kopplung, ebenfalls 0)
+        public int PairingCooldownSeconds(string clientId)
+        {
+            lock (_pairingLock)
+            {
+                DateTime declined;
+                if (!_declinedAt.TryGetValue(clientId, out declined)) return 0;
+                double left = (declined + TimeSpan.FromMinutes(2) - DateTime.UtcNow).TotalSeconds;
+                return left > 0 ? (int)Math.Ceiling(left) : 0;
             }
         }
 

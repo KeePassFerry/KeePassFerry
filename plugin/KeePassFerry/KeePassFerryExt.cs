@@ -813,6 +813,12 @@ Technical detail: " + ex.Message);
             {
                 _host.MainWindow.Invoke((MethodInvoker)delegate
                 {
+                    // Zwischen Entsperren und Kopplungsdialog könnte KeePass wieder gesperrt worden sein
+                    if (!AnyDatabaseUnlocked())
+                    {
+                        if (logger != null) logger.WriteLine("Pairing refused: no unlocked database");
+                        return;
+                    }
                     using (var form = new Forms.FerryPairingForm(clientName, code))
                         if (form.ShowDialog(_host.MainWindow) == DialogResult.OK) chosen = form.ChosenName;
                 });
@@ -824,6 +830,68 @@ Technical detail: " + ex.Message);
             }
             if (chosen != null) SaveConfigSoon();
             return chosen;
+        }
+
+        /// <summary>
+        /// Vor einer neuen Kopplung: Koppeln nur mit entsperrter Datenbank. Wer koppelt, muss das Master-Passwort kennen;
+        /// sonst könnte jemand an einem PC mit gesperrtem KeePass einen fremden Browser koppeln, der nach dem nächsten
+        /// Entsperren unbemerkt Zugriff hätte (Hinweis von CennoxX; KeePassXC verlangt ebenfalls eine entsperrte
+        /// Datenbank). Bei gesperrter Datenbank den normalen Entsperr-Weg anstoßen (RequestUnlock, Windows Hello im
+        /// Vordergrund) und auf das Ergebnis warten: entsperrt = weiter zur Kopplung, abgebrochen = ablehnen. Läuft auf dem
+        /// Pipe-Thread (der Handshake darf bis zu 5 Minuten dauern). true = Kopplung ablehnen.
+        /// </summary>
+        internal bool FerryPairingNeedsUnlock()
+        {
+            if (IsAnyDatabaseUnlocked()) return false;
+            if (_RPCService == null) return true;
+
+            string result = _RPCService.RequestUnlock();
+            if (logger != null) logger.WriteLine("Pairing needs an unlocked database, unlock: " + result);
+            if (result == "notLocked")
+            {
+                // Weder gesperrte noch zuletzt benutzte Datenbank: erklären, was zu tun ist
+                _host.MainWindow.BeginInvoke((MethodInvoker)delegate
+                {
+                    MessageService.ShowInfo(FerryText.T(
+                        "Ein Browser möchte sich mit KeePassFerry verbinden.\n\nÖffne zuerst deine Datenbank in KeePass und klicke dann im Browser auf „Erneut verbinden“.",
+                        "A browser wants to connect to KeePassFerry.\n\nOpen your database in KeePass first, then click \"Connect again\" in the browser."));
+                });
+                return true;
+            }
+
+            // Auf die Schlüsselabfrage warten (höchstens 3 Minuten)
+            DateTime until = DateTime.UtcNow.AddMinutes(3);
+            Thread.Sleep(500);
+            while (DateTime.UtcNow < until)
+            {
+                if (IsAnyDatabaseUnlocked()) return false;
+                if (!_RPCService.UnlockInProgress) break;
+                Thread.Sleep(300);
+            }
+            bool unlocked = IsAnyDatabaseUnlocked();
+            if (!unlocked && logger != null) logger.WriteLine("Pairing refused: database stays locked");
+            return !unlocked;
+        }
+
+        private bool IsAnyDatabaseUnlocked()
+        {
+            bool unlocked = false;
+            try
+            {
+                _host.MainWindow.Invoke((MethodInvoker)delegate { unlocked = AnyDatabaseUnlocked(); });
+            }
+            catch (Exception ex)
+            {
+                if (logger != null) logger.WriteLine("Pairing unlock check failed: " + ex.Message);
+            }
+            return unlocked;
+        }
+
+        private bool AnyDatabaseUnlocked()
+        {
+            foreach (PwDocument doc in _host.MainWindow.DocumentManager.Documents)
+                if (doc.Database != null && doc.Database.IsOpen) return true;
+            return false;
         }
 
         public void InvokeMainThread(Delegate method, params object[] args)

@@ -660,7 +660,7 @@
     "description": "KeePassFerry secure channel"
   },
   "pairing_denied": {
-    "message": "The pairing was declined in KeePass. KeePassFerry will ask again in one minute.",
+    "message": "The pairing was declined in KeePass. Use \"Connect again\" in the popup to try once more.",
     "description": "KeePassFerry secure channel"
   },
   "security_warning_title": {
@@ -842,6 +842,38 @@
   "ferry_status_no_host_hint": {
     "message": "Install the KeePassFerry plugin in KeePass and start KeePass once so the connection can be set up.",
     "description": "KeePassFerry settings"
+  },
+  "ferry_status_pairing_unlock": {
+    "message": "KeePass is locked",
+    "description": "KeePassFerry"
+  },
+  "ferry_status_pairing_unlock_hint": {
+    "message": "KeePass must be unlocked to connect for the first time. Unlock KeePass and click \"Connect again\"; KeePass then shows the verification code.",
+    "description": "KeePassFerry"
+  },
+  "ferry_status_pairing_denied": {
+    "message": "Pairing declined",
+    "description": "KeePassFerry"
+  },
+  "ferry_status_pairing_denied_hint": {
+    "message": "The connection to this browser was declined in KeePass. Click \"Connect again\" to try once more.",
+    "description": "KeePassFerry"
+  },
+  "ferry_pairing_retry": {
+    "message": "Connect again",
+    "description": "KeePassFerry"
+  },
+  "ferry_status_pairing_wait_hint": {
+    "message": "After a decline, KeePass accepts no new pairing from this browser for a while. \"Connect again\" works again in $1.",
+    "description": "KeePassFerry"
+  },
+  "ferry_status_connecting": {
+    "message": "Connecting to KeePass …",
+    "description": "KeePassFerry"
+  },
+  "ferry_status_connecting_hint": {
+    "message": "If KeePass is locked, unlock it first. KeePass then shows the verification code.",
+    "description": "KeePassFerry"
   },
   "ferry_status_not_running": {
     "message": "KeePass is not running",

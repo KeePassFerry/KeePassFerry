@@ -740,6 +740,8 @@ namespace KeePassFerry
     public partial class FerryService
     {
         private volatile bool _ferryUnlockInProgress;
+        // Eine von KeePassFerry angestoßene Schlüsselabfrage ist offen (Kopplung wartet auf das Ergebnis)
+        internal bool UnlockInProgress { get { return _ferryUnlockInProgress; } }
         private System.Windows.Forms.Timer _unlockWatchTimer;
 
         // Nach einem Entsperr-Anstoß 8 s lang (alle 0,3 s): Windows-Hello-Abfrage oder KeePass-Dialog nach vorne holen.

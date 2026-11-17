@@ -28,7 +28,8 @@ export interface FerryChannelEvents {
     onReady(serverFeatures: string[]): void;
     onPairingCode(code: string): void;
     onMessage(text: string): void;
-    onDenied(): void;
+    // reason "unlock": KeePass koppelt erst mit entsperrter Datenbank
+    onDenied(reason?: string, seconds?: number): void;
     onSecurityError(reason: string): void;
 }
 
@@ -177,7 +178,10 @@ export class FerryChannelClient {
                 return;
             case "denied":
                 this.state = "closed";
-                this.events.onDenied();
+                this.events.onDenied(
+                    typeof frame.reason === "string" ? frame.reason : undefined,
+                    typeof frame.seconds === "number" ? frame.seconds : undefined
+                );
                 return;
             case "m":
                 await this.onEncrypted(frame);
