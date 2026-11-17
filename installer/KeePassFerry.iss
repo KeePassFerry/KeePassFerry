@@ -12,7 +12,7 @@
 ; Store-Seiten der Erweiterung; leer = (noch) nicht im Store, Häkchen erscheint dann nicht
 #define EdgeStoreUrl "https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg"
 #define ChromeStoreUrl "https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga"
-#define FirefoxStoreUrl ""
+#define FirefoxStoreUrl "https://addons.mozilla.org/firefox/addon/keepassferry/"
 
 [Setup]
 AppId={{6E0F2F4B-6C55-4B6E-9A8E-4E4C1F1E8A2D}

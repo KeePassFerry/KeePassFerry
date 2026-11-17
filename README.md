@@ -19,6 +19,8 @@
   <a href="https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg"><b>Get it for Microsoft Edge</b></a>
   &nbsp;·&nbsp;
   <a href="https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga"><b>Get it for Google Chrome</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://addons.mozilla.org/firefox/addon/keepassferry/"><b>Get it for Firefox</b></a>
 </p>
 
 <p align="center">🇩🇪 <a href="#deutsch">Deutsche Beschreibung weiter unten</a></p>
@@ -99,7 +101,7 @@ Browser extension ──native messaging──▶ KeePassFerryHost.exe ──nam
 ## Requirements
 
 - Windows 10/11, KeePass Password Safe 2.48 or newer (tested with 2.61.1), .NET Framework 4.8
-- Microsoft Edge or Google Chrome (other Chromium browsers and Firefox are not tested yet)
+- Microsoft Edge, Google Chrome or Firefox 128 or newer (other Chromium browsers are not tested yet)
 
 ## Installation
 
@@ -110,8 +112,9 @@ Browser extension ──native messaging──▶ KeePassFerryHost.exe ──nam
    folder of KeePass while KeePass is closed.
 2. Start KeePass and open your database. KeePass reports new plugin versions through its own update check.
 3. Install the browser extension from
-   [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg) or the
-   [Chrome Web Store](https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga).
+   [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg), the
+   [Chrome Web Store](https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga) or
+   [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/keepassferry/).
 4. When the browser connects for the first time, KeePass and the browser show the same six-digit code. Give the pairing
    a name if you like and click **Connect** in KeePass only if both codes match.
 
@@ -251,7 +254,7 @@ Browser-Erweiterung ──Native Messaging──▶ KeePassFerryHost.exe ──N
 ### Voraussetzungen
 
 - Windows 10/11, KeePass Password Safe 2.48 oder neuer (getestet mit 2.61.1), .NET Framework 4.8
-- Microsoft Edge oder Google Chrome (andere Chromium-Browser und Firefox sind noch nicht getestet)
+- Microsoft Edge, Google Chrome oder Firefox ab Version 128 (andere Chromium-Browser sind noch nicht getestet)
 
 ### Installation
 
@@ -261,8 +264,9 @@ Browser-Erweiterung ──Native Messaging──▶ KeePassFerryHost.exe ──N
    *Einstellungen → Apps*. Alternativ entpackst du bei geschlossenem KeePass den Ordner `KeePassFerry` aus
    `KeePassFerry-Plugin-<Version>.zip` in den Ordner `Plugins` von KeePass.
 2. KeePass starten und die Datenbank öffnen. Neue Plugin-Versionen meldet KeePass über seine eigene Update-Prüfung.
-3. Die Erweiterung aus [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg)
-   oder dem [Chrome Web Store](https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga) installieren.
+3. Die Erweiterung aus [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ghkhbdnhojpeibdjdlgojfdjhedapmhg),
+   dem [Chrome Web Store](https://chromewebstore.google.com/detail/fhciciajogahdkbmeliechblahlhpmga) oder
+   [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/keepassferry/) installieren.
 4. Beim ersten Verbinden zeigen KeePass und der Browser denselben sechsstelligen Code. Gib der Kopplung auf Wunsch einen
    Namen und klicke in KeePass nur dann auf **Verbinden**, wenn beide Codes übereinstimmen.
 
