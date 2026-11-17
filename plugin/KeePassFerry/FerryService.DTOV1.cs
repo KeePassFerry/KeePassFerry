@@ -122,8 +122,12 @@ namespace KeePassFerry
                 {
                     if (!string.IsNullOrEmpty(ffValue))
                     {
-                        formFieldList.Add(new FormField(htmlName, displayName, derefValue, htmlType, htmlId, ff.Page,
-                            ff.PlaceholderHandling.GetValueOrDefault(PlaceholderHandling.Default)));
+                        var formField = new FormField(htmlName, displayName, derefValue, htmlType, htmlId, ff.Page,
+                            ff.PlaceholderHandling.GetValueOrDefault(PlaceholderHandling.Default));
+                        // Wert aus einem geschützten Feld des Eintrags (Stringfeld, Benutzername, Passwort): verdeckt anzeigen (#50)
+                        var source = ff.ValuePath != "." && !string.IsNullOrEmpty(ff.ValuePath) ? pwe.Strings.Get(ff.ValuePath) : null;
+                        formField.Protected = source != null && source.IsProtected;
+                        formFieldList.Add(formField);
                     }
                 }
                 else

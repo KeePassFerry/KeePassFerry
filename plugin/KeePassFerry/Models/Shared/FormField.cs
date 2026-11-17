@@ -11,6 +11,8 @@ namespace KeePassFerry.Models.Shared
         public string Id;
         public int Page;
         public PlaceholderHandling PlaceholderHandling;
+        // Der Wert stammt aus einem in KeePass geschützten Feld: die Erweiterung zeigt ihn verdeckt (#50)
+        public bool Protected;
 
         public FormField() { }
 

@@ -30,6 +30,9 @@ export class Field {
     // tracks the most recent value we want to reset to in cases where the user has that possibility
     readonly resetValue: string;
 
+    // Wert stammt aus einem in KeePass geschützten Feld: verdeckt anzeigen wie ein Passwort (#50)
+    readonly isProtected?: boolean;
+
     constructor(field: Partial<Field>) {
         this.name = field.name || "";
         this.value = field.value || "";
@@ -37,6 +40,7 @@ export class Field {
         this.uuid = field.uuid || utils.newGUID();
         this.type = field.type || "text";
         this.locators = field.locators || [];
+        this.isProtected = !!field.isProtected;
     }
 
     private static getDisplayValueInternal(
@@ -47,7 +51,7 @@ export class Field {
         if (field.type === "boolean") {
             return field.value === "KEEPASSFERRY_CHECKED_TRUE" ? $STR("enabled") : $STR("disabled");
         } else {
-            return field.type === "password" && !revealPasswords
+            return (field.type === "password" || field.isProtected) && !revealPasswords
                 ? replacementIfProtected
                 : field.value;
         }
@@ -152,6 +156,7 @@ export class Field {
             uuid: utils.newGUID(),
             value: f.value,
             resetValue: f.value,
+            isProtected: !!f.protected,
             type: type,
             locators: [
                 new Locator({

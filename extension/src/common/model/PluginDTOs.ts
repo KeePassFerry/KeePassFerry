@@ -138,6 +138,9 @@ export class FieldDto {
     type: FormFieldTypeDTO;
 
     page: number;
+
+    // Plugin ab 1.0.40: Wert stammt aus einem in KeePass geschützten Feld (#50)
+    protected?: boolean;
 }
 
 export enum FormFieldTypeDTO {

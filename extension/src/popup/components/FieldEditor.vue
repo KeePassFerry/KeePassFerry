@@ -19,7 +19,7 @@
                     <v-tooltip location="top" activator="parent">{{ $i18n("ferry_reset_value") }}</v-tooltip>
                 </button>
                 <button
-                    v-if="field.type === 'password' && !removed" type="button" class="ferry-ib"
+                    v-if="(field.type === 'password' || field.isProtected) && !removed" type="button" class="ferry-ib"
                     :aria-label="revealed ? $i18n('ferry_generator_hide') : $i18n('ferry_generator_show')"
                     @click="revealed = !revealed">
                     <tabler-eye-off v-if="revealed" class="ferry-ico" />
@@ -72,7 +72,8 @@ export default {
     }),
     computed: {
         renderType: function () {
-            if (this.field.type === "password") {
+            // In KeePass geschützte Werte (#50) wie Passwörter verdeckt, mit Anzeigen-Knopf
+            if (this.field.type === "password" || this.field.isProtected) {
                 return this.revealed ? "text" : "password";
             }
             return this.field.type;

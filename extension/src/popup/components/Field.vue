@@ -1,22 +1,22 @@
 <template>
     <div v-if="useful" class="ferry-row">
         <span class="ferry-row-icon">
-            <tabler-lock v-if="field.type === 'password'" class="ferry-ico" />
+            <tabler-lock v-if="secret" class="ferry-ico" />
             <tabler-user v-else-if="kind === 'username'" class="ferry-ico" />
             <tabler-text-caption v-else class="ferry-ico" />
         </span>
         <!-- Eigene Felder (z. B. aus einem Stringfeld) mit Namen darüber, wie unter "Im Eintrag gespeichert" -->
         <span v-if="label" class="ferry-row-value ferry-row-labelled">
             <span class="ferry-row-label">{{ label }}</span>
-            <span class="ferry-row-sub" :class="{ secret: field.type === 'password' && !revealed }">{{ displayValue }}</span>
+            <span class="ferry-row-sub" :class="{ secret: secret && !revealed }">{{ displayValue }}</span>
             <v-tooltip location="bottom" activator="parent">{{ tooltip }}</v-tooltip>
         </span>
-        <span v-else class="ferry-row-value" :class="{ secret: field.type === 'password' && !revealed }">
+        <span v-else class="ferry-row-value" :class="{ secret: secret && !revealed }">
             {{ displayValue }}
             <v-tooltip location="bottom" activator="parent">{{ tooltip }}</v-tooltip>
         </span>
         <button
-            v-if="field.type === 'password'" type="button" class="ferry-ib"
+            v-if="secret" type="button" class="ferry-ib"
             :aria-label="revealed ? $i18n('ferry_generator_hide') : $i18n('ferry_generator_show')" @click="toggleReveal">
             <tabler-eye-off v-if="revealed" class="ferry-ico" />
             <tabler-eye v-else class="ferry-ico" />
@@ -54,6 +54,10 @@ export default {
     computed: {
         displayValue: function () {
             return Field.getDisplayValue(this.field, this.revealed);
+        },
+        // Passwortfeld der Seite oder in KeePass geschützter Wert (#50)
+        secret: function (): boolean {
+            return this.field.type === "password" || !!this.field.isProtected;
         },
         tooltip: function () {
             return Field.getDisplayTooltip(this.field, this.revealed);
