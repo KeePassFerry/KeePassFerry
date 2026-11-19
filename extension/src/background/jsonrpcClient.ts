@@ -482,6 +482,7 @@ export class jsonrpcClient {
                 }
             }
         }
+        diag("hintergrund", "datenbanken abgefragt", { sitzungen: sessionResponses.length, offeneDbs: dbs.length });
         ferry.updateKeePassDatabases(dbs);
     }
 

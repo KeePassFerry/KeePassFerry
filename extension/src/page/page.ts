@@ -367,6 +367,7 @@ if (document.body) {
             if (m.action == Action.ShowSaveNotice) {
                 // Passwort eines vorhandenen Eintrags geändert: "aktualisieren?" statt "speichern?"
                 if (m.saveNoticeUpdateFor) offerPasswordUpdateNotice(m.saveNoticeUpdateFor);
+                else if (m.saveNoticeLoginSite) showSaveNotice("login", null, { title: $STR("saveNotice_title"), text: $STRF("saveNotice_text_site", [m.saveNoticeLoginSite]) });
                 else showSaveNotice();
             }
 

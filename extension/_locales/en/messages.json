@@ -535,6 +535,10 @@
     "message": "Save login in KeePass?",
     "description": "KeePassFerry save notice"
   },
+  "saveNotice_text_site": {
+    "message": "The credentials you just entered on $1 are not saved in KeePass yet.",
+    "description": "KeePassFerry"
+  },
   "saveNotice_text": {
     "message": "The login details you just entered are not saved in KeePass yet.",
     "description": "KeePassFerry save notice"

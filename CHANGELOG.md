@@ -2,6 +2,12 @@
 
 English · [Deutsch](#deutsch)
 
+## Unreleased
+
+- The save notice is no longer lost when a login page redirects to another website, as with a separate sign-in
+  service (for example mvg.de → login.muenchen.de → mvg.de). Up to two minutes after submitting, the notice also
+  appears on the website the tab returns to and names the website where the credentials were entered.
+
 ## 1.0.40 – 2026-11-17
 
 - A browser is paired with KeePass for the first time only while a database is unlocked (pointed out by CennoxX).
@@ -661,6 +667,13 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## Unveröffentlicht
+
+- Der Speichern-Hinweis geht nicht mehr verloren, wenn eine Anmeldeseite auf eine andere Website weiterleitet, etwa
+  bei einem eigenen Anmeldedienst (z. B. mvg.de → login.muenchen.de → mvg.de). Bis zwei Minuten nach dem Absenden
+  erscheint er auch auf der Website, zu der der Tab zurückkehrt, und nennt die Website, auf der die Zugangsdaten
+  eingegeben wurden.
 
 ## 1.0.40 – 2026-11-17
 

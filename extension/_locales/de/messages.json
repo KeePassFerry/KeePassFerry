@@ -535,6 +535,10 @@
         "message": "Zugangsdaten in KeePass speichern?",
         "description": "KeePassFerry save notice"
     },
+    "saveNotice_text_site": {
+        "message": "Die soeben bei $1 eingegebenen Zugangsdaten sind noch nicht in KeePass gespeichert.",
+        "description": "KeePassFerry"
+    },
     "saveNotice_text": {
         "message": "Die soeben eingegebenen Zugangsdaten sind noch nicht in KeePass gespeichert.",
         "description": "KeePassFerry save notice"

@@ -34,6 +34,8 @@ import BackgroundStore from "~/store/BackgroundStore";
 import { Mutation } from "~/store/Mutation";
 import { FerryBrowserActionIconConfiguration } from "../common/FerryBrowserActionIconConfiguration";
 
+// Speichern-Hinweis auf einer anderen Website nur so lange nach dem Absenden (Weiterleitung nach der Anmeldung)
+const CROSS_SITE_SAVE_NOTICE_MS = 2 * 60 * 1000;
 const SAVE_BADGE_COLOR = "#16a34a";
 // Windows-Benachrichtigung zu einem Hinweis im Popup: ein Klick darauf öffnet das Popup (main.ts)
 export const OPEN_POPUP_NOTIFICATION_PREFIX = "keepassferry-note-";
@@ -539,14 +541,20 @@ class Ferry {
         if (!item || item.noticeDismissed) return;
         if (!this.store.state.connected || this.store.state.KeePassDatabases.length === 0) return;
         const top = this.tabStates.get(tabId)?.framePorts?.get(0);
-        // Nur auf derselben Website anbieten, nicht auf einer anderen Seite, die später im selben Tab geöffnet wird
+        // Auf derselben Website anbieten; auf einer anderen nur kurz nach dem Absenden (Weiterleitung nach einer
+        // Anmeldung über einen fremden Anmeldedienst, z. B. mvg.de → login.muenchen.de → mvg.de), dann mit dem Namen
+        // der Anmeldeseite. Nicht auf einer Seite, die später im selben Tab geöffnet wird.
         const site = (url: string) => FerryURL.fromString(url ?? "")?.domainOrIPAddress;
-        if (!sameSite(site(item.submittedData?.url), site(top?.sender?.url ?? top?.sender?.tab?.url))) return;
+        const loginSite = site(item.submittedData?.url);
+        const foreign = !sameSite(loginSite, site(top?.sender?.url ?? top?.sender?.tab?.url));
+        if (foreign && !(Date.now() - new Date(item.creationDate).getTime() < CROSS_SITE_SAVE_NOTICE_MS)) return;
+        if (foreign) diag("hintergrund", "speichern-hinweis nach weiterleitung", { anmeldeseite: loginSite });
         try {
             // Passwort eines vorhandenen Eintrags geändert: Hinweis "aktualisieren?" mit Benutzername bzw. Titel
             top?.postMessage({
                 action: Action.ShowSaveNotice,
-                saveNoticeUpdateFor: item.submittedData?.updateTarget?.label
+                saveNoticeUpdateFor: item.submittedData?.updateTarget?.label,
+                saveNoticeLoginSite: foreign ? loginSite : undefined
             } as AddonMessage);
         } catch (e) {
             // Seite lädt gerade neu; der Hinweis kommt beim nächsten Verbinden
@@ -1157,6 +1165,7 @@ class Ferry {
         }
 
         if (!refresh) return;
+        diag("hintergrund", "keepass signal", { signal: sig });
 
         const now = new Date().getTime();
         if (refresh) {

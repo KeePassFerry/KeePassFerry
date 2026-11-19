@@ -68,6 +68,8 @@ export interface AddonMessage {
     otpIssuer?: string;
     // ShowSaveNotice: Passwort eines vorhandenen Eintrags geändert (Benutzername bzw. Titel des Eintrags)
     saveNoticeUpdateFor?: string;
+    // ShowSaveNotice nach Weiterleitung auf eine andere Website: Website, auf der die Anmeldung abgeschickt wurde
+    saveNoticeLoginSite?: string;
     // ShowExpiryNotice: abgelaufen oder bald ablaufend, fertige Überschrift und Zeile darunter
     expiryNotice?: { expired: boolean; title: string; text: string };
     // ShowSavedNotice: Titel des gespeicherten Eintrags
