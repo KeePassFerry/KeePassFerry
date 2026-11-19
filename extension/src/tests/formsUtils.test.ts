@@ -87,3 +87,20 @@ describe("getFormFields", () => {
         expect(findUsernameField().id).toBe("email");
     });
 });
+
+// #51: Zählerstand-Formular mit Kontakt-E-Mail, ohne Passwort- und Benutzerfeld
+describe("form without a username field", () => {
+    it("does not take the first text field as the username", () => {
+        document.body.innerHTML = `
+            <form action="page.php">
+                <input class="sch_input" maxlength="9" id="sch_1303678_num_1" name="sch_1303678_num_1" type="text">
+                <input class="sch_input" maxlength="9" id="sch_1370385_num_2" name="sch_1370385_num_2" type="text">
+                <input class="sch_input" maxlength="9" id="sch_1370386_num_3" name="sch_1370386_num_3" type="text">
+                <input name="mobile" type="tel">
+                <input name="email" type="email">
+            </form>`;
+        const result = new FormUtils(logger).getFormFields(document.forms[0], false, 50);
+        expect(result.pwFields).toEqual([]);
+        expect(result.actualUsernameIndex).toBe(-1);
+    });
+});

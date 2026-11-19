@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zählerstände – Spielwiese</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="kopf">
+        <a class="marke" href="index.html">Spielwiese</a>
+        <nav>
+            <a href="index.html">Übersicht</a>
+            <a href="login.html">Anmelden</a>
+            <a href="registrieren.html">Registrieren</a>
+            <a href="konto.html">Kundenkonto</a>
+        </nav>
+        <span id="angemeldet" class="status"></span>
+    </header>
+    <p class="warnung">Nur zum Testen auf diesem Rechner – hier keine echten Zugangsdaten eingeben.</p>
+    <main>
+        <!-- #51: Zählerstände mit Kontakt-Telefon und -E-Mail, ohne Passwort- und Benutzerfeld. Das Feld "email" steht
+             auf der eingebauten Liste von Anmelde-Feldnamen; trotzdem darf KeePassFerry hier nichts von selbst eintragen -->
+        <section class="karte">
+            <h1>Zählerstände übermitteln</h1>
+            <form action="konto.html" method="get">
+                <label for="sch_1303678_num_1">Warmwasser, m³</label>
+                <input class="sch_input" maxlength="9" id="sch_1303678_num_1" name="sch_1303678_num_1" type="text">
+                <label for="sch_1370385_num_2">Kaltwasser Küche, m³</label>
+                <input class="sch_input" maxlength="9" id="sch_1370385_num_2" name="sch_1370385_num_2" type="text">
+                <label for="sch_1370386_num_3">Kaltwasser Bad, m³</label>
+                <input class="sch_input" maxlength="9" id="sch_1370386_num_3" name="sch_1370386_num_3" type="text">
+                <label for="mobile">Telefon für Rückfragen</label>
+                <input type="tel" id="mobile" name="mobile">
+                <label for="email">E-Mail für Rückfragen</label>
+                <input type="email" id="email" name="email">
+                <div><button type="submit">Zählerstände senden</button></div>
+            </form>
+        </section>
+    </main>
+    <script src="spielwiese.js"></script>
+</body>
+</html>

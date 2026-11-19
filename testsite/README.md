@@ -27,6 +27,8 @@ entstehen lassen. Beispielkonto beim ersten Besuch: `demo@spielwiese.test` / `St
 | Vertippt | Mit falschem Passwort anmelden (das Formular erscheint wieder) | kein Aktualisieren-Hinweis |
 | Passwort im Kundenkonto ändern | Kundenkonto → Passwort ändern | Aktualisieren-Hinweis für den vorhandenen Eintrag |
 | Anmeldung ohne Neuladen | „Anmelden ohne Neuladen“ | Hinweise erscheinen, sobald das Formular verschwunden ist |
+| Formular ohne Passwortfeld (#47) | „Kundennummer“; im Eintrag der Spielwiese ein Feld mit ID `kdnr` oder Name `kundennummer` | Kundennummer wird nur mit diesem Feld eingetragen |
+| Kein Anmeldeformular (#51) | „Zählerstände“ öffnen, Eintrag der Spielwiese vorhanden | kein Feld wird von selbst ausgefüllt, auch nicht das erste Zählerfeld |
 | Zwei Schritte | „Anmelden in zwei Schritten“ (Passwortseite ohne Benutzerfeld) | wie bei der klassischen Anmeldung |
 | Online-Banking mit Sternchen | „Online-Banking“ mit `4711000123` / `Bank-Start1`, Eintrag in KeePass vorhanden | kein „Neues Passwort erkannt“ (die Seite ersetzt das Passwort nach dem Absenden durch Sternchen, bevor die Erweiterung es liest) |
 | Zwei-Faktor einrichten | Kundenkonto → Zwei-Faktor als Link, QR-Bild oder QR-SVG | „Zwei-Faktor-Schlüssel gefunden“; nach dem Speichern trägt die Erweiterung den Bestätigungscode ein |

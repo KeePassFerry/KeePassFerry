@@ -157,7 +157,8 @@ export class FormUtils {
         this.Logger.debug("usernameIndex: " + usernameIndex);
 
         let otherCount = 0;
-        let actualUsernameIndex = 0;
+        // -1: kein Benutzerfeld erkannt (nicht einfach das erste Textfeld nehmen, #51)
+        let actualUsernameIndex = -1;
 
         // separate the field data into appropriate variables
         for (let i = 0; i < allFields.length; i++) {

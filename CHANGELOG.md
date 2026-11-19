@@ -7,6 +7,8 @@ English · [Deutsch](#deutsch)
 - The save notice is no longer lost when a login page redirects to another website, as with a separate sign-in
   service (for example mvg.de → login.muenchen.de → mvg.de). Up to two minutes after submitting, the notice also
   appears on the website the tab returns to and names the website where the credentials were entered.
+- Forms without a password and without a username field, such as a meter reading form with a contact e-mail, no
+  longer get the user name filled into their first text field (#51).
 
 ## 1.0.40 – 2026-11-17
 
@@ -674,6 +676,8 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
   bei einem eigenen Anmeldedienst (z. B. mvg.de → login.muenchen.de → mvg.de). Bis zwei Minuten nach dem Absenden
   erscheint er auch auf der Website, zu der der Tab zurückkehrt, und nennt die Website, auf der die Zugangsdaten
   eingegeben wurden.
+- Formulare ohne Passwort- und Benutzerfeld, etwa für Zählerstände mit einer Kontakt-E-Mail, bekommen den Benutzernamen
+  nicht mehr ins erste Textfeld eingetragen (#51).
 
 ## 1.0.40 – 2026-11-17
 

@@ -4,6 +4,7 @@ import { resolve } from "path";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { findOtpTarget, isOtpField } from "../page/OtpFields";
 import { isUsernameField } from "../page/loginFields";
+import { FormUtils } from "../page/formsUtils";
 
 /*
 archivedPages.test.ts: Gegencheck der Felderkennung mit archivierten Problemseiten (seiten-analysen/faelle.json,
@@ -83,6 +84,11 @@ describe.skipIf(faelle.length === 0)("Archivierte Problemseiten", () => {
             });
             const actual = inputs.map(einordnen);
             expect(actual).toEqual(fall.formular.map(f => f.erwartet));
+            // Benutzerfeld des ganzen Formulars: das als benutzer erwartete Feld, sonst keins (#51)
+            const scan = new FormUtils({ debug: () => {} } as any).getFormFields(form, false, 50);
+            const user = scan.actualUsernameIndex < 0 ? null : scan.otherFields[scan.actualUsernameIndex].DOMelement.id;
+            const expectedUser = fall.formular.findIndex(f => f.erwartet === "benutzer");
+            expect(user).toBe(expectedUser < 0 ? null : "f" + expectedUser);
             if (fall.codeziel) expect((findOtpTarget() ?? []).map(el => el.name)).toEqual(fall.codeziel);
             vi.restoreAllMocks();
         });
