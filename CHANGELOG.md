@@ -2,7 +2,7 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.41 – 2026-11-20
 
 - The save notice is no longer lost when a login page redirects to another website, as with a separate sign-in
   service (for example mvg.de → login.muenchen.de → mvg.de). Up to two minutes after submitting, the notice also
@@ -670,7 +670,7 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.41 – 2026-11-20
 
 - Der Speichern-Hinweis geht nicht mehr verloren, wenn eine Anmeldeseite auf eine andere Website weiterleitet, etwa
   bei einem eigenen Anmeldedienst (z. B. mvg.de → login.muenchen.de → mvg.de). Bis zwei Minuten nach dem Absenden

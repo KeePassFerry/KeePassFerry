@@ -2052,6 +2052,14 @@
     "message": "Entries and groups appear in the order they have in KeePass: for equally good matches, in the search and in the group picker. Needs the new plugin.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_41_1_title": {
+    "message": "Save after a redirect",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_41_1_text": {
+    "message": "If a login page redirects to another website, the save notice stays and names the website where you signed in.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_40_1_title": {
     "message": "First pairing only when unlocked",
     "description": "KeePassFerry"

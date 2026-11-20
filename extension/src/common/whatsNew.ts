@@ -16,6 +16,10 @@ export interface NewsItem {
 // Neueste Version zuerst
 export const WHATS_NEW: { version: string; items: NewsItem[] }[] = [
     {
+        version: "1.0.41",
+        items: [{ icon: "key", key: "ferry_news_1_0_41_1" }]
+    },
+    {
         version: "1.0.40",
         items: [
             { icon: "shield-lock", key: "ferry_news_1_0_40_1" },
