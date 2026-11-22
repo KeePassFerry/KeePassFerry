@@ -623,6 +623,9 @@ class Ferry {
     resetBrowserActionColor() {
         // Plakette (keine Datenbank) bleibt, solange der Zustand gilt
         if (this.store.state.connected && this.store.state.KeePassDatabases.length === 0) return;
+        // Noch nicht gespeicherte Zugangsdaten: hervorgehoben, bis gespeichert, aktualisiert oder verworfen
+        // (Öffnen des Popups allein erledigt nichts)
+        if (this.persistentTabStates.get(this.foregroundTabId)?.items?.some(i => i.itemType === "submittedData")) return;
         chrome.action.setIcon({ path: "/assets/images/48.png" });
     }
 

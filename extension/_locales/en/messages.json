@@ -1872,6 +1872,30 @@
     "message": "e.g. Security questions",
     "description": "KeePassFerry"
   },
+  "ferry_pending_save_text_user": {
+    "message": "Login $1 on $2 not saved yet",
+    "description": "KeePassFerry"
+  },
+  "ferry_pending_save_text": {
+    "message": "Login on $1 not saved yet",
+    "description": "KeePassFerry"
+  },
+  "ferry_pending_update_text": {
+    "message": "New password for $1 not saved yet",
+    "description": "KeePassFerry"
+  },
+  "ferry_pending_save": {
+    "message": "Save",
+    "description": "KeePassFerry"
+  },
+  "ferry_pending_update": {
+    "message": "Update",
+    "description": "KeePassFerry"
+  },
+  "ferry_pending_discard": {
+    "message": "Discard",
+    "description": "KeePassFerry"
+  },
   "ferry_otp_pending": {
     "message": "Two-factor key found for $1",
     "description": "KeePassFerry"

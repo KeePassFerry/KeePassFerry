@@ -46,6 +46,18 @@ v-if="news && !newLeaks.length && !otpPending && !showSaveRecovery" class="ferry
                         <v-tooltip location="start" activator="parent">{{ $i18n("close") }}</v-tooltip>
                     </button>
                 </div>
+                <!-- Erkannte Zugangsdaten, auf der Seite mit "Jetzt nicht" weggeklickt: hier speichern, aktualisieren oder verwerfen -->
+                <div v-if="pendingSave" class="ferry-note ferry-pending-save">
+                    <tabler-device-floppy class="ferry-ico" />
+                    <span class="ferry-note-text">{{ pendingSave.text }}</span>
+                    <v-btn size="small" variant="text" color="primary" :loading="pendingSaveBusy" @click="pendingSaveStart">
+                        {{ pendingSave.update ? $i18n("ferry_pending_update") : $i18n("ferry_pending_save") }}
+                    </v-btn>
+                    <button type="button" class="ferry-ib" :aria-label="$i18n('ferry_pending_discard')" @click="pendingSaveDiscard">
+                        <tabler-x class="ferry-ico" />
+                        <v-tooltip location="start" activator="parent">{{ $i18n("ferry_pending_discard") }}</v-tooltip>
+                    </button>
+                </div>
                 <div v-if="otpPending && databaseIsOpen && !showSaveStart" class="ferry-note">
                     <tabler-shield-lock class="ferry-ico" />
                     <span class="ferry-note-text">{{ $i18n("ferry_otp_pending", [otpPending.issuer]) }}</span>
@@ -127,7 +139,7 @@ v-if="showSaveWhere" :display-reason="displayWhereReason"
                 </button>
                 <v-spacer />
                 <button
-v-show="showSearchPanel && !showSaveRecovery" type="button" class="ferry-ib" :class="hasSubmittedData ? 'pulse-button' : ''"
+v-show="showSearchPanel && !showSaveRecovery" type="button" class="ferry-ib"
                     :aria-label="$i18n('create_new_entry')" @click="saveStart">
                     <tabler-plus class="ferry-ico" />
                     <v-tooltip location="top" activator="parent">{{ $i18n("create_new_entry") }}</v-tooltip>
@@ -197,6 +209,8 @@ import { SaveState } from "../common/SaveState";
 import { Entry } from "../common/model/Entry";
 import { supplementEntryState, supplementExistingEntry } from "./supplementEntryState";
 import { reconcileURLs } from "./reconcileURLs";
+import { displayDomains } from "../common/displayDomain";
+import { submittedCredentials } from "../common/submittedLogin";
 import { databaseLabel } from "../common/databaseLabel";
 import type { Database } from "../common/model/Database";
 import { fetchFavicon, getFaviconSource } from "./favicon";
@@ -264,6 +278,8 @@ export default {
             showNews: false,
             // Noch nicht gespeicherter Zwei-Faktor-Schlüssel der aktuellen Seite
             otpPending: null as { issuer: string },
+            pendingSaveBusy: false,
+            pendingSaveDiscarded: false,
             news: null as { version: string; items: unknown[] },
             // Seit dem letzten "Verstanden" neu gefundene Lecks; geöffnete Liste
             newLeaks: [] as Leak[],
@@ -375,6 +391,28 @@ export default {
         },
         hasSubmittedData: function () {
             return (this.saveState as SaveState)?.submittedData?.fields?.length > 0;
+        },
+        // Noch nicht gespeicherte Zugangsdaten dieses Tabs (Seite: "Jetzt nicht"). Nicht während des Speicherns,
+        // nicht bei offenen ungespeicherten Änderungen im Speichern-Dialog und nicht ohne geöffnete Datenbank
+        pendingSave: function () {
+            if (!this.hasSubmittedData || this.pendingSaveDiscarded || !this.databaseIsOpen) return null;
+            if (this.showSaveStart || this.showSaveRecovery) return null;
+            const sd = (this.saveState as SaveState).submittedData;
+            let host = "";
+            try {
+                host = new URL(sd.url).hostname;
+            } catch (e) {
+                // ohne gültige Adresse: nur der Text ohne Website
+            }
+            const site = displayDomains(host);
+            if (sd.updateTarget) {
+                return { update: true, text: this.$i18n("ferry_pending_update_text", [sd.updateTarget.label || site]) };
+            }
+            const user = submittedCredentials(sd.fields ?? []).username;
+            return {
+                update: false,
+                text: user ? this.$i18n("ferry_pending_save_text_user", [user, site]) : this.$i18n("ferry_pending_save_text", [site])
+            };
         }
     },
     watch: {
@@ -542,6 +580,31 @@ export default {
         dismissNews: async function () {
             this.news = null;
             await markNewsSeen();
+        },
+        // Aktualisieren: wie auf der Seite direkt speichern; geht das nicht, den Eintrag im Bearbeiten-Fenster öffnen.
+        // Speichern: Speichern-Dialog mit den erkannten Daten
+        pendingSaveStart: async function () {
+            const target = (this.saveState as SaveState).submittedData?.updateTarget;
+            if (!target) {
+                await this.saveStart();
+                return;
+            }
+            this.pendingSaveBusy = true;
+            try {
+                const saved = await chrome.runtime.sendMessage({ keepassferry: "updatePasswordDirectly" }).catch(() => false);
+                if (saved) {
+                    this.pendingSaveDiscarded = true;
+                    window.close();
+                    return;
+                }
+                await this.updateStart(target);
+            } finally {
+                this.pendingSaveBusy = false;
+            }
+        },
+        pendingSaveDiscard: function () {
+            this.pendingSaveDiscarded = true;
+            chrome.runtime.sendMessage({ keepassferry: "discardSubmission" }).catch(() => undefined);
         },
         discardOtpSetup: function () {
             this.otpPending = null;
@@ -962,14 +1025,4 @@ button.ferry-status:disabled { cursor: default; }
     max-width: 290px;
 }
 
-.pulse-button {
-    animation: pulse 0.5s 2 cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.25s reverse;
-}
-@keyframes pulse {
-    0% { transform: scale(1); }
-    25% { transform: scale(1.25); }
-    50% { transform: scale(1); }
-    75% { transform: scale(0.85); }
-    100% { transform: scale(1); }
-}
 </style>

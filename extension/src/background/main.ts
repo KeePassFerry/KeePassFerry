@@ -18,7 +18,7 @@ import { NetworkAuth, onNetworkRequestCompleted, onNetworkRequestFailed } from "
 import { pageStateOf } from "./pageState";
 import { appleChangePasswordUrl, changePasswordUrl } from "./changePassword";
 import { forgetExpiryNotice } from "./expiryNotice";
-import { startPluginUpdate } from "./messageHandlers";
+import { discardSubmission, startPluginUpdate, updatePasswordDirectly } from "./messageHandlers";
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
 
 function appleChangePasswordUrlFor(entryUrl: string): string {
@@ -246,6 +246,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             break;
         case "getOtpSetupSummary":
             work = getOtpSetupSummary(ferry.foregroundTabId);
+            break;
+        case "discardSubmission":
+            // Popup: Hinweis "Nicht gespeichert" verworfen
+            discardSubmission(ferry.foregroundTabId);
+            work = Promise.resolve(true);
+            break;
+        case "updatePasswordDirectly":
+            // Popup: neues Passwort eines vorhandenen Eintrags übernehmen wie mit "Aktualisieren" auf der Seite
+            work = updatePasswordDirectly(ferry.foregroundTabId);
             break;
         case "discardOtpSetup":
             forgetOtpSetup(ferry.foregroundTabId);

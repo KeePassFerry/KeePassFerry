@@ -1872,6 +1872,30 @@
         "message": "z. B. Sicherheitsfragen",
         "description": "KeePassFerry"
     },
+    "ferry_pending_save_text_user": {
+        "message": "Anmeldung $1 auf $2 noch nicht gespeichert",
+        "description": "KeePassFerry"
+    },
+    "ferry_pending_save_text": {
+        "message": "Anmeldung auf $1 noch nicht gespeichert",
+        "description": "KeePassFerry"
+    },
+    "ferry_pending_update_text": {
+        "message": "Neues Passwort für $1 noch nicht übernommen",
+        "description": "KeePassFerry"
+    },
+    "ferry_pending_save": {
+        "message": "Speichern",
+        "description": "KeePassFerry"
+    },
+    "ferry_pending_update": {
+        "message": "Aktualisieren",
+        "description": "KeePassFerry"
+    },
+    "ferry_pending_discard": {
+        "message": "Verwerfen",
+        "description": "KeePassFerry"
+    },
     "ferry_otp_pending": {
         "message": "Zwei-Faktor-Schlüssel für $1 gefunden",
         "description": "KeePassFerry"

@@ -2,6 +2,14 @@
 
 English · [Deutsch](#deutsch)
 
+## Unreleased
+
+- Popup: login data you dismissed with "Not now" on the page is now shown at the top of the popup as "Login … not
+  saved yet" (or "New password for … not saved yet") with "Save" / "Update" and "Discard". Before, the only hint was
+  the highlighted toolbar icon and a short pulse of the "+" button. "Update" saves the new password directly, as on
+  the page. The toolbar icon stays highlighted until the login data is saved, updated or discarded; opening the
+  popup alone no longer resets it.
+
 ## 1.0.41 – 2026-11-20
 
 - The save notice is no longer lost when a login page redirects to another website, as with a separate sign-in
@@ -669,6 +677,15 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 ---
 
 # Deutsch
+
+## Unveröffentlicht
+
+- Popup: Mit „Jetzt nicht“ auf der Seite weggeklickte Zugangsdaten stehen jetzt oben im Popup als „Anmeldung … noch
+  nicht gespeichert“ (bzw. „Neues Passwort für … noch nicht übernommen“) mit „Speichern“ bzw. „Aktualisieren“ und
+  „Verwerfen“. Bisher wiesen nur das hervorgehobene Symbol in der Leiste und ein kurzes Pulsieren des „+“-Knopfs darauf
+  hin. „Aktualisieren“ übernimmt das neue Passwort direkt, wie auf der Seite.
+  Das Symbol in der Leiste bleibt hervorgehoben, bis die Zugangsdaten gespeichert, aktualisiert oder verworfen sind;
+  das Öffnen des Popups allein setzt es nicht mehr zurück.
 
 ## 1.0.41 – 2026-11-20
 

@@ -166,6 +166,7 @@ export async function browserPopupMessageHandler(this: chrome.runtime.Port, msg:
                         .get(tabId)
                         .items.filter(item => item.itemType !== "submittedData");
                 }
+                ferry.configureBrowserActionIcon();
             };
 
             if (msg.action === Action.UpdateEntry) {
@@ -307,7 +308,7 @@ async function sameSiteFavicon(tabId: number, entryUrl: string): Promise<string>
 // Neues Passwort eines vorhandenen Eintrags ohne Bearbeiten-Fenster übernehmen. Geändert wird nur das Passwort, das
 // alte bleibt in der Chronik des Eintrags. false: nichts gespeichert (kein Ziel, Eintrag nicht gefunden, Datenbank
 // gesperrt oder schreibgeschützt, Fehler) – dann öffnet der Aufrufer wie bisher das Popup.
-async function updatePasswordDirectly(tabId: number): Promise<boolean> {
+export async function updatePasswordDirectly(tabId: number): Promise<boolean> {
     const item = ferry.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
     const target = item?.submittedData?.updateTarget;
     const password = submittedCredentials(item?.submittedData?.fields ?? []).password;
@@ -349,6 +350,13 @@ function dropFailedPasswordUpdate(tabId: number) {
     if (item?.submittedData?.updateTarget) removeSubmission(tabId, item);
 }
 
+
+// Popup: noch nicht gespeicherte Zugangsdaten des Tabs ("Jetzt nicht" auf der Seite) verwerfen
+export function discardSubmission(tabId: number) {
+    const item = ferry.persistentTabStates.get(tabId)?.items?.find(i => i.itemType === "submittedData");
+    if (item) removeSubmission(tabId, item);
+    ferry.store.updateSubmittedData(null);
+}
 
 function removeSubmission(tabId: number, item: PersistentDataItem) {
     const state = ferry.persistentTabStates.get(tabId);
