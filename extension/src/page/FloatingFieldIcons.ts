@@ -10,6 +10,7 @@ verdeckte oder unsichtbare Felder bekommen kein Symbol.
 
 import { fieldFrameRect } from "./fieldFrame";
 import { isVisible } from "./visibility";
+import { shieldFromPage } from "./pageShield";
 
 const HOST_TAG = "keepassferry-field-icons";
 // Kleiner sind nur versteckte Felder (z. B. 1×1 px "nur für Screenreader"); Einzelziffern-Kästchen sind größer
@@ -313,6 +314,8 @@ export class FloatingFieldIcons {
                    border-radius: 4px; background: rgba(33, 33, 33, 0.92); color: #fff;
                    font: 12px/1.4 "Segoe UI", system-ui, sans-serif; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); }`;
         this.root.append(style);
+        // Klick aufs Symbol schließt keine Dialoge der Seite, in denen das Feld steht (#53)
+        shieldFromPage(this.host, true);
         document.documentElement.appendChild(this.host);
         window.addEventListener("scroll", this.onViewportChange, { capture: true, passive: true });
         window.addEventListener("resize", this.onViewportChange, { passive: true });

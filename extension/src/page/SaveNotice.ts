@@ -1,6 +1,7 @@
 import { Port } from "../common/port";
 import { Action } from "../common/Action";
 import type { AddonMessage } from "../common/AddonMessage";
+import { shieldFromPage } from "./pageShield";
 
 /*
 SaveNotice.ts zeigt oben rechts in der Seite einen Hinweis mit zwei Knöpfen. Eigener Shadow DOM,
@@ -220,6 +221,8 @@ export function showSaveNotice(kind: NoticeKind = "login", detail?: string, fixe
 
     box.append(head, text, buttons);
     shadow.append(style, box);
+    // Klicks in den Hinweis schließen keine Dialoge der Seite (#53); Fokus bleibt in der Seite (keine Eingabefelder)
+    shieldFromPage(host, true);
     document.body.appendChild(host);
 
     clearTimeout(hideTimer);

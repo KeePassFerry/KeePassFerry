@@ -35,3 +35,32 @@ describe("hideSaveNotice", () => {
         expect(notice()).toBeNull();
     });
 });
+
+// #53: Dialoge der Seite schließen sich bei pointerdown/mousedown/focusin außerhalb; der Hinweis zählt nicht als außerhalb
+describe("Hinweis und Ereignisse der Seite", () => {
+    it("lässt Zeiger- und Fokusereignisse nicht zur Seite durch, Klicks schon", () => {
+        const seen: string[] = [];
+        const types = ["pointerdown", "mousedown", "mouseup", "focusin", "click"];
+        for (const t of types) {
+            document.addEventListener(t, () => seen.push("document " + t));
+            document.addEventListener(t, () => seen.push("document capture " + t), true);
+        }
+        showSaveNotice("otp", "Testseite");
+        const host = notice();
+        for (const t of types) {
+            host.dispatchEvent(new Event(t, { bubbles: true, composed: true, cancelable: true }));
+        }
+        expect(seen).toEqual(["document capture click", "document click"]);
+    });
+
+    it("verhindert bei mousedown den Fokuswechsel, außerhalb des Hinweises nicht", () => {
+        showSaveNotice("otp", "Testseite");
+        const onHint = new Event("mousedown", { bubbles: true, composed: true, cancelable: true });
+        notice().dispatchEvent(onHint);
+        expect(onHint.defaultPrevented).toBe(true);
+
+        const elsewhere = new Event("mousedown", { bubbles: true, composed: true, cancelable: true });
+        document.body.dispatchEvent(elsewhere);
+        expect(elsewhere.defaultPrevented).toBe(false);
+    });
+});

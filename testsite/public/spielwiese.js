@@ -174,6 +174,46 @@ Schlüssel und otpauth-URIs entstehen nur hier im Skript, nie im HTML der Seiten
         el.hidden = !text;
     }
 
+    // Karte als schwebendes Fenster über der Seite, das sich wie übliche Dialog-Bibliotheken bei einem Klick oder
+    // Fokuswechsel außerhalb schließt (pointerdown/focusin am Dokument, Ziel nicht im Fenster); Knopf öffnet es wieder
+    function schwebendesFenster(karte) {
+        const ebene = document.createElement("div");
+        ebene.className = "fenster-ebene";
+        karte.replaceWith(ebene);
+        ebene.appendChild(karte);
+        karte.classList.add("fenster");
+        const oeffnen = document.createElement("button");
+        oeffnen.type = "button";
+        oeffnen.textContent = "Zwei-Faktor-Fenster öffnen";
+        oeffnen.hidden = true;
+        ebene.before(oeffnen);
+        const protokoll = document.createElement("p");
+        protokoll.className = "leise";
+        oeffnen.after(protokoll);
+        const schliessen = grund => {
+            if (ebene.hidden) return;
+            ebene.hidden = true;
+            oeffnen.hidden = false;
+            protokoll.textContent = "Fenster geschlossen: " + grund;
+        };
+        const draussen = e => !karte.contains(e.target);
+        document.addEventListener("pointerdown", e => {
+            if (draussen(e)) schliessen("Klick außerhalb (pointerdown auf " + beschreibe(e.target) + ")");
+        });
+        document.addEventListener("focusin", e => {
+            if (draussen(e)) schliessen("Fokus außerhalb (focusin auf " + beschreibe(e.target) + ")");
+        });
+        oeffnen.addEventListener("click", () => {
+            ebene.hidden = false;
+            oeffnen.hidden = true;
+            protokoll.textContent = "";
+        });
+    }
+
+    function beschreibe(el) {
+        return el && el.tagName ? el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") : String(el);
+    }
+
     function parameter(name) {
         return new URLSearchParams(location.search).get(name);
     }
@@ -517,6 +557,7 @@ Schlüssel und otpauth-URIs entstehen nur hier im Skript, nie im HTML der Seiten
             $("#qr-svg").replaceChildren(qrSvg(window.SPIELWIESE_QR.rows, 5));
         }
         if (konto(benutzer).otpSecret) zeigeHinweis("Für dieses Konto ist schon ein Schlüssel aktiv; er wird ersetzt.");
+        if (parameter("fenster")) schwebendesFenster($(".karte"));
         $("form").addEventListener("submit", async e => {
             e.preventDefault();
             if (!(await codeGueltig(secret, $("#code").value))) return zeigeFehler("Der Code stimmt nicht.");

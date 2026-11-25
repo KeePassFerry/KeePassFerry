@@ -742,7 +742,8 @@ namespace KeePassFerry
                 {
                     PwEntry matchedLogin = GetRootPwGroup(db).FindEntry(pwuuid, true);
 
-                    if (matchedLogin == null)
+                    // Wie die Suche nach Adressen: Einträge im Papierkorb gibt es für den Browser nicht mehr
+                    if (matchedLogin == null || EntryIsInRecycleBin(matchedLogin, db))
                         continue;
 
                     Entry[] logins = new Entry[1];
@@ -1209,7 +1210,8 @@ namespace KeePassFerry
                 {
                     PwEntry matchedLogin = GetRootPwGroup(db).FindEntry(pwuuid, true);
 
-                    if (matchedLogin == null)
+                    // Wie die Suche nach Adressen: Einträge im Papierkorb gibt es für den Browser nicht mehr
+                    if (matchedLogin == null || EntryIsInRecycleBin(matchedLogin, db))
                         continue;
 
                     var logins = new Entry2[1];

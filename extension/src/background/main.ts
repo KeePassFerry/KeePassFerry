@@ -1,5 +1,5 @@
 import { diag } from "./ferryDiag";
-import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, forgetOtpSetup } from "./otpSetup";
+import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, createOtpEntry, forgetOtpSetup } from "./otpSetup";
 import { parseOtpauth } from "../common/otpauth";
 import { forgetAutoFill } from "./otpRepeat";
 import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
@@ -263,6 +263,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case "applyOtpSetup":
             work = applyOtpSetup(ferry.foregroundTabId, msg.uuid, msg.dbFileName, !!msg.overwrite);
             break;
+        case "createOtpEntry":
+            work = createOtpEntry(ferry.foregroundTabId, msg.title ?? "", msg.fields ?? [], msg.dbFileName ?? "", msg.groupUuid ?? "");
+            break;
         case "getSelectionSave":
             work = getSelectionSaveForPopup(ferry.foregroundTabId);
             break;
@@ -342,7 +345,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             work = ferry.rpc.updateEntryText(msg.uuid, msg.dbFileName, msg.name ?? "", msg.value ?? "", !!msg.toNotes);
             break;
         case "moveEntryToRecycleBin":
-            work = ferry.rpc.moveEntryToRecycleBin(msg.uuid, msg.dbFileName);
+            work = ferry.rpc.moveEntryToRecycleBin(msg.uuid, msg.dbFileName).then(result => {
+                // Gelöschter Eintrag ist nicht mehr "zuletzt benutzt": sonst zeigt das Popup ihn über die ID weiter an
+                if (result === "recycled") {
+                    for (const state of ferry.persistentTabStates.values()) {
+                        if (state.lastFilledEntry?.uuid === msg.uuid) state.lastFilledEntry = null;
+                    }
+                }
+                return result;
+            });
             break;
         case "setEntryFieldProtection":
             work = ferry.rpc.setEntryFieldProtection(msg.uuid, msg.dbFileName, msg.name ?? "", !!msg.protect);

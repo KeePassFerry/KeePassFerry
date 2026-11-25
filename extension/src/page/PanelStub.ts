@@ -1,6 +1,7 @@
 import { configManager } from "../common/ConfigManager";
 import { fieldFrameRect } from "./fieldFrame";
 import { setValue } from "./OtpFields";
+import { shieldFromPage } from "./pageShield";
 
 export class PanelStubOptions {
     id: string;
@@ -152,6 +153,9 @@ export class PanelStub {
         );
         iframe.src = `${template}?parentFrameId=${this.parentFrameId}&autoCloseTime=${this.options.autoCloseTime}&panel=${this.options.name}&theme=${configManager.activeTheme}${this.extraQuery}`;
 
+        // Fokus im Panel (iframe) schließt keine Dialoge der Seite (#53); Klicks im iframe erreicht die Seite ohnehin
+        // nicht. Fokus nicht festhalten: im Panel wird getippt
+        shieldFromPage(this.container, false);
         const bodyElements = document.getElementsByTagName("body");
         if (bodyElements && bodyElements.length > 0) {
             bodyElements[0].appendChild(this.container);

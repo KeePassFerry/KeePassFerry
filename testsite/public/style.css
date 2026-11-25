@@ -93,6 +93,11 @@ button[type="submit"], .haupt {
 
 .leise { color: var(--leise); font-size: 14px; }
 
+/* 2fa-einrichten.html?fenster=1: schwebendes Fenster, schließt bei Klick daneben */
+.fenster-ebene { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); display: flex; align-items: center; justify-content: center; z-index: 10; }
+.fenster-ebene[hidden] { display: none; }
+.karte.fenster { width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; margin: 0; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); }
+
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rand); vertical-align: top; }
 td button { margin: 0 6px 6px 0; padding: 3px 8px; font-size: 13px; }

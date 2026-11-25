@@ -1,6 +1,13 @@
 <template>
     <v-app>
-        <v-main>
+        <!-- Neuer Eintrag (#54): dasselbe Bearbeiten-Fenster wie beim Hinzufügen einer Markierung; angelegt wird erst
+             mit "Speichern", danach kommt der Schlüssel hinein -->
+        <div v-if="editing" class="ferry-shell">
+            <main class="ferry-body">
+                <Save1stParty :create-on-save="createOnSave" @cancel-clicked="cancelEditor" @saved-additions-only="resetSaveState" />
+            </main>
+        </div>
+        <v-main v-else>
             <div v-if="done" class="otp-done">
                 <tabler-circle-check class="ferry-ico done-icon"/>
                 <div>
@@ -70,6 +77,22 @@
                             </span>
                         </button>
                         <div v-if="shownEntries.length === 0" class="empty">{{ $i18n("otpSetup_none") }}</div>
+                        <button
+                            type="button"
+                            class="item"
+                            :class="{ selected: newEntry }"
+                            :aria-pressed="newEntry"
+                            @click="selectNew"
+                        >
+                            <span class="tile"><tabler-plus class="ferry-ico" /></span>
+                            <span class="text">
+                                <span class="item-title">{{ $i18n("selSave_newEntry") }}</span>
+                                <span class="item-user">{{ setup.issuer || setup.domain }}</span>
+                            </span>
+                            <span class="check">
+                                <tabler-circle-check v-if="newEntry" class="ferry-ico"/>
+                            </span>
+                        </button>
                     </div>
 
                     <v-alert v-if="selected?.hasTotp" type="warning" variant="tonal" density="compact" class="mt-3">
@@ -85,11 +108,11 @@
                             color="primary"
                             variant="flat"
                             rounded="lg"
-                            :disabled="!selected"
+                            :disabled="!selected && !newEntry"
                             :loading="saving"
-                            @click="save"
+                            @click="newEntry ? openNewEntryEditor() : save()"
                         >
-                            {{ selected?.hasTotp ? $i18n("otpSetup_replace") : $i18n("otpSetup_save") }}
+                            {{ newEntry ? $i18n("selSave_next") : selected?.hasTotp ? $i18n("otpSetup_replace") : $i18n("otpSetup_save") }}
                         </v-btn>
                     </div>
                 </template>
@@ -99,10 +122,15 @@
 </template>
 
 <script lang="ts">
-import { mapState } from "pinia";
+import { mapActions, mapState } from "pinia";
 import useStore from "../store";
 import { SearcherAll } from "../common/SearcherAll";
 import { configManager } from "../common/ConfigManager";
+import Save1stParty from "./components/Save1stParty.vue";
+import { supplementEntryState } from "./supplementEntryState";
+import { SaveState } from "../common/SaveState";
+import { Entry } from "../common/model/Entry";
+import { Field } from "../common/model/Field";
 
 // Popup-Ansicht "Zwei-Faktor-Schlüssel speichern": Eintrag wählen (Vorschläge oder Suche) und speichern.
 // Das Secret selbst sieht das Popup nie; Speichern läuft über den Hintergrund zum KeePass-Plugin.
@@ -116,23 +144,28 @@ interface Candidate {
 }
 
 export default {
+    components: { Save1stParty },
     data: () => ({
         loading: true,
         setup: null as {
             issuer: string;
             account: string;
             domain: string;
+            origin: string;
             candidates: Candidate[];
             lastFilledUuid: string;
         },
         query: "",
         selected: null as Candidate,
+        newEntry: false,
+        editing: false,
+        createOnSave: null as (group: { uuid: string; dbFileName: string }) => Promise<{ uuid: string; dbFileName: string }>,
         saving: false,
         error: false,
         done: false
     }),
     computed: {
-        ...mapState(useStore, ["KeePassDatabases", "ActiveKeePassDatabaseIndex"]),
+        ...mapState(useStore, ["KeePassDatabases", "ActiveKeePassDatabaseIndex", "saveState"]),
         subtitle: function () {
             const parts = [this.setup.issuer || this.setup.domain, this.setup.account].filter(Boolean);
             return parts.join(" · ");
@@ -171,16 +204,87 @@ export default {
         if (byAccount && this.setup) {
             this.setup.candidates = [byAccount, ...c.filter(x => x !== byAccount)];
         }
-        this.selected = c.find(x => x.uuid === this.setup.lastFilledUuid) ?? byAccount ?? (c.length === 1 ? c[0] : null);
+        this.selected = c.find(x => x.uuid === this.setup?.lastFilledUuid) ?? byAccount ?? (c.length === 1 ? c[0] : null);
+        // Kein Eintrag für die Seite: "Neuer Eintrag" ist vorausgewählt
+        this.newEntry = !!this.setup && c.length === 0;
         this.loading = false;
     },
     methods: {
+        ...mapActions(useStore, ["updateSaveState"]),
         isSelected: function (c: Candidate) {
-            return this.selected?.uuid === c.uuid && this.selected?.dbFileName === c.dbFileName;
+            return !this.newEntry && this.selected?.uuid === c.uuid && this.selected?.dbFileName === c.dbFileName;
         },
         select: function (c: Candidate) {
             this.selected = c;
+            this.newEntry = false;
             this.error = false;
+        },
+        selectNew: function () {
+            this.selected = null;
+            this.newEntry = true;
+            this.error = false;
+        },
+        // Neuer Eintrag nur im Popup (Titel = Anbieter aus dem QR-Code, Benutzername = Konto, Adresse = Ursprung der
+        // Seite, aktive Datenbank); KeePass bekommt ihn erst mit "Speichern", Abbrechen hinterlässt nichts
+        openNewEntryEditor: function () {
+            const dbs = (this.KeePassDatabases as any[]).filter(d => !d.readOnly);
+            const active = (this.KeePassDatabases as any[])[this.ActiveKeePassDatabaseIndex];
+            const db = active && !active.readOnly ? active : dbs[0];
+            if (!db) {
+                this.error = true;
+                return;
+            }
+            const entry = new Entry({
+                title: this.setup.issuer || this.setup.domain,
+                URLs: [this.setup.origin],
+                fields: [
+                    new Field({ name: "KeePass username", type: "text", value: this.setup.account ?? "" }),
+                    new Field({ name: "KeePass password", type: "password", value: "" })
+                ],
+                // Nur Kennung der Datenbank, nicht der ganze Baum (der Bearbeiten-Zustand wird an den Hintergrund verteilt)
+                database: { name: db.name, fileName: db.fileName, root: { uuid: db.root?.uuid } } as any
+            });
+            this.createOnSave = async (group: { uuid: string; dbFileName: string }) => {
+                const e = (this.saveState as SaveState).newEntry;
+                const created = await chrome.runtime.sendMessage({
+                    keepassferry: "createOtpEntry",
+                    title: e.title,
+                    fields: e.fields.map(f => ({ name: f.name, type: f.type, value: f.value })),
+                    dbFileName: group.dbFileName,
+                    groupUuid: group.uuid
+                });
+                // Gewählte Gruppe merken wie beim normalen Speichern (Vorauswahl beim nächsten Mal)
+                if (created) {
+                    if (!configManager.current.mruGroup) configManager.current.mruGroup = {};
+                    configManager.current.mruGroup[group.dbFileName] = group.uuid;
+                    configManager.current.mruGroup["{<{{<<ferry-primary>>}}>}"] = group.uuid;
+                    configManager.save();
+                }
+                return created;
+            };
+            const ss = this.saveState as SaveState;
+            const updated = Object.assign({}, ss);
+            updated.newEntry = supplementEntryState(entry, { ...ss, submittedData: null }, entry.URLs);
+            updated.showURLMismatchWarning = false;
+            updated.titleResetValue = entry.title;
+            updated.lastActiveAt = new Date();
+            this.updateSaveState(updated);
+            this.editing = true;
+        },
+        // Bearbeiten-Zustand zurücksetzen wie App.vue saveDiscard, damit das normale Popup nicht "Bearbeiten" wieder öffnet
+        resetSaveState: function () {
+            const updated = Object.assign({}, JSON.parse(JSON.stringify(this.saveState as SaveState)));
+            updated.newEntry = new Entry({});
+            updated.titleResetValue = null;
+            updated.lastActiveAt = null;
+            updated.showURLMismatchWarning = false;
+            updated.favicon = null;
+            this.updateSaveState(updated);
+        },
+        // Abbrechen im Bearbeiten-Fenster: zurück zur Auswahl, der gefundene Schlüssel bleibt vorgemerkt
+        cancelEditor: function () {
+            this.resetSaveState();
+            this.editing = false;
         },
         save: async function () {
             if (!this.selected) return;

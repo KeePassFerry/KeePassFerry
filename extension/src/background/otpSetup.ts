@@ -4,6 +4,8 @@ import { FerryURL } from "../common/FerryURL";
 import { Action } from "../common/Action";
 import { FerryLog } from "../common/Logger";
 import { Entry } from "../common/model/Entry";
+import { Field } from "../common/model/Field";
+import { Locator } from "../common/model/Locator";
 import type { AddonMessage } from "../common/AddonMessage";
 import { diag } from "./ferryDiag";
 import { rememberAutoFill } from "./otpRepeat";
@@ -431,13 +433,68 @@ export async function getOtpSetupForPopup(tabId: number) {
             hasTotp: !!totp?.code
         });
     }
+    let origin = setup.url;
+    try {
+        origin = new URL(setup.url).origin + "/";
+    } catch (e) {
+        // ungültige Adresse: unverändert übernehmen
+    }
     return {
         issuer: setup.issuer,
         account: setup.account,
         domain: setup.domain,
+        origin,
         candidates,
         lastFilledUuid: last && sameSite(last.domain, setup.domain) ? last.uuid : null
     };
+}
+
+// Benutzername und Passwort aus dem Bearbeiten-Fenster als Felder für AddLogin: leere weglassen, Benutzername zuerst
+// (das erste Feld ist für das Plugin der Benutzername), jedes mit Locator (daraus liest Field.toPluginFieldDTO den Typ)
+export function newEntryFields(fields: Partial<Field>[]): Field[] {
+    return (fields ?? [])
+        .filter(f => (f.value ?? "") !== "")
+        .sort((a, b) => Number(a.type === "password") - Number(b.type === "password"))
+        .map(f => {
+            const type = f.type === "password" ? "password" : "text";
+            return new Field({ name: f.name, value: f.value, type, locators: [new Locator({ type })] });
+        });
+}
+
+// Noch kein Eintrag für die Seite (#54): neuen Eintrag mit Titel, Benutzername und Passwort aus dem Bearbeiten-Fenster
+// in der gewählten Gruppe anlegen (Adresse = Ursprung der Seite), dann den Schlüssel hineinschreiben wie bei einem
+// gewählten Eintrag. Erst "Speichern" im Fenster ruft das auf; Abbrechen hinterlässt nichts.
+export async function createOtpEntry(
+    tabId: number,
+    title: string,
+    fields: Partial<Field>[],
+    dbFileName: string,
+    groupUuid: string
+): Promise<{ uuid: string; dbFileName: string }> {
+    await restored;
+    const setup = pending.get(tabId);
+    const db = ferry.store.state.KeePassDatabases.find(d => d.fileName === dbFileName && !d.readOnly);
+    if (!setup || !db) return null;
+    let origin = setup.url;
+    try {
+        origin = new URL(setup.url).origin + "/";
+    } catch (e) {
+        // ungültige Adresse: unverändert übernehmen
+    }
+    const created = await ferry.rpc.addLogin(
+        new Entry({
+            title: (title ?? "").trim() || setup.issuer || setup.domain,
+            URLs: [origin],
+            fields: newEntryFields(fields)
+        }),
+        groupUuid || null,
+        db.fileName
+    );
+    if (!created) return null;
+    const target = { uuid: created.uuid, dbFileName: created.database?.fileName ?? db.fileName };
+    const result = await applyOtpSetup(tabId, target.uuid, target.dbFileName, false);
+    await ferry.refreshAfterEntryChange();
+    return result.status === "ok" ? target : null;
 }
 
 // Schlüssel in den gewählten Eintrag schreiben; bei Erfolg den ersten Code in die Seite eintragen

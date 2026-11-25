@@ -4,6 +4,14 @@ English · [Deutsch](#deutsch)
 
 ## Unreleased
 
+- Two-factor setup: if there is no entry for the site yet, "New entry for this page" creates one (title, user name,
+  password, group) and saves the key into it in one step (#54). It is preselected when no entry matches.
+- Clicking the KeePassFerry notice, a field icon or the entry list on a page no longer closes the page's own pop-up
+  windows (e.g. a two-factor setup dialog) as a "click outside" (#53). Before, the one-time code from the field icon
+  ended up in a dialog that had just closed.
+- An entry moved to the recycle bin no longer appears in the popup as the entry last used on the site. Requires the
+  plugin of this version for entries deleted in KeePass itself.
+
 - Popup: login data you dismissed with "Not now" on the page is now shown at the top of the popup as "Login … not
   saved yet" (or "New password for … not saved yet") with "Save" / "Update" and "Discard". Before, the only hint was
   the highlighted toolbar icon and a short pulse of the "+" button. "Update" saves the new password directly, as on
@@ -679,6 +687,15 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 # Deutsch
 
 ## Unveröffentlicht
+
+- Zwei-Faktor-Einrichtung: Gibt es für die Website noch keinen Eintrag, legt „Neuer Eintrag für diese Seite“ einen an
+  (Titel, Benutzername, Passwort, Gruppe) und speichert den Schlüssel in einem Schritt darin (#54). Passt kein
+  Eintrag, ist das vorausgewählt.
+- Ein Klick auf den KeePassFerry-Hinweis, ein Feldsymbol oder die Eintragsliste auf einer Seite schließt deren eigene
+  Fenster (z. B. einen Dialog zur Zwei-Faktor-Einrichtung) nicht mehr als „Klick außerhalb“ (#53). Bisher landete der
+  Einmalcode vom Feldsymbol in einem Dialog, der gerade zugegangen war.
+- Ein in den Papierkorb verschobener Eintrag erscheint im Popup nicht mehr als zuletzt auf der Website benutzter
+  Eintrag. Für in KeePass selbst gelöschte Einträge ist das Plugin dieser Version nötig.
 
 - Popup: Mit „Jetzt nicht“ auf der Seite weggeklickte Zugangsdaten stehen jetzt oben im Popup als „Anmeldung … noch
   nicht gespeichert“ (bzw. „Neues Passwort für … noch nicht übernommen“) mit „Speichern“ bzw. „Aktualisieren“ und
