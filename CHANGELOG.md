@@ -4,6 +4,13 @@ English · [Deutsch](#deutsch)
 
 ## Unreleased
 
+- Two-factor keys work in KeePass itself (#55): setting up a key now writes it both as `otp` (read and written by
+  KeePassXC, KeePassDX, Keepass2Android, KeePassium) and as KeePass's own `TimeOtp-*` fields, so Ctrl+T, Ctrl+Shift+T
+  and `{TIMEOTP}` work. When a database is opened and before it is saved, the plugin keeps both in step: a missing
+  format is added, and if the key was changed in one place (for example on the phone), the other is updated. Which one
+  changed is known from a marker on the entry, otherwise from the entry history. Nothing is removed, and every change
+  keeps the previous state in the history. Steam codes and codes with more than 8 digits stay in `otp` only, because
+  KeePass can't compute them. Requires the plugin of this version.
 - Passwords are no longer sent to pages in advance (#56). When a page opens, KeePass now returns the matching entries
   without passwords and protected values; the extension fetches them only when filling, copying or showing the chosen
   entry. Before, the passwords of all matching entries were in the page's memory as long as it was open, even if none
@@ -698,6 +705,14 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 ## Unveröffentlicht
 
+- Zwei-Faktor-Schlüssel funktionieren in KeePass selbst (#55): Beim Einrichten schreibt KeePassFerry den Schlüssel
+  jetzt als `otp` (das lesen und schreiben KeePassXC, KeePassDX, Keepass2Android, KeePassium) und in KeePass' eigene
+  Felder `TimeOtp-*`, damit funktionieren Strg+T, Strg+Umschalt+T und `{TIMEOTP}`. Beim Öffnen und vor dem Speichern
+  einer Datenbank hält das Plugin beide gleich: Ein fehlendes Format wird ergänzt, und wurde der Schlüssel an einer
+  Stelle geändert (z. B. am Handy), wird die andere nachgezogen. Welche geändert wurde, zeigt ein Merker am Eintrag,
+  sonst die Chronik. Es wird nichts gelöscht, und jede Änderung behält den vorherigen Stand in der Chronik.
+  Steam-Codes und Codes mit mehr als 8 Stellen bleiben nur in `otp`, weil KeePass sie nicht berechnen kann.
+  Benötigt das Plugin dieser Version.
 - Passwörter gehen nicht mehr vorab an Seiten (#56). Öffnet sich eine Seite, liefert KeePass die passenden Einträge
   jetzt ohne Passwörter und geschützte Werte; die Erweiterung holt sie erst beim Ausfüllen, Kopieren oder Anzeigen des
   gewählten Eintrags. Bisher lagen die Passwörter aller passenden Einträge im Speicher der Seite, solange sie offen

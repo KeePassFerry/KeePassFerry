@@ -440,6 +440,11 @@ export class jsonrpcClient {
         return this.passkeyRpc("FerryDiagLog", [lines]);
     }
 
+    // Schalter "Diagnoseprotokoll" an das Plugin: es schreibt eigene Zeilen nur, wenn er an ist (ältere Plugins: null)
+    setDiagnostics(enabled: boolean): Promise<boolean> {
+        return this.passkeyRpc("SetDiagnostics", [enabled]);
+    }
+
     passkeyRemove(uuid: string, dbFileName: string, rpId: string, credentialId: string): Promise<string> {
         return this.passkeyRpc("PasskeyRemove", [uuid, dbFileName, rpId, credentialId]);
     }

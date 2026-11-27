@@ -8,6 +8,7 @@ import { utils } from "../common/utils";
 import BackgroundStore from "~/store/BackgroundStore";
 import { ferry } from "./KF";
 import { createOsNotification } from "../common/osNotification";
+import { reportDiagSwitch } from "./ferryDiag";
 
 /*
 pluginClient.ts: JSON-RPC zum KeePassFerry-Plugin über Native Messaging.
@@ -184,6 +185,7 @@ export class pluginClient {
             return;
         }
         this.onConnectStartup();
+        reportDiagSwitch(true);
         // Der Store aktualisiert nur die Erweiterung: ein älteres Plugin um ein Update bitten, nach dem Update den
         // Hinweis wieder entfernen
         if (pluginUpdateAvailable(features)) this.showPluginUpdateNotice();

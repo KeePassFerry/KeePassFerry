@@ -14,6 +14,23 @@ export function diagEnabled(): boolean {
     return !!configManager.current?.ferryDiagnostics;
 }
 
+// Schalter an das Plugin melden: beim Verbinden und wenn er sich ändert. Das Plugin schreibt eigene Zeilen
+// (z. B. Abgleich der Zwei-Faktor-Formate) nur bei eingeschaltetem Diagnosemodus
+let reportedSwitch: boolean = null;
+
+export function reportDiagSwitch(force = false) {
+    const on = diagEnabled();
+    if (!force && reportedSwitch === on) return;
+    reportedSwitch = on;
+    ferry?.rpc?.setDiagnostics(on).catch(() => {
+        reportedSwitch = null;
+    });
+}
+
+export function watchDiagSwitch() {
+    configManager.addChangeListener(() => reportDiagSwitch());
+}
+
 export function diag(source: string, event: string, data?: Record<string, unknown>) {
     if (!diagEnabled()) return;
     let json = "";

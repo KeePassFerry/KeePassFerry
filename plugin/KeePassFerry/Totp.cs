@@ -84,9 +84,14 @@ namespace KeePassFerry
         // Schlüssel aus TimeOtp-Secret (UTF-8), -Hex, -Base32 oder -Base64
         private static byte[] NativeSecret(PwEntry entry)
         {
-            string s = entry.Strings.ReadSafe("TimeOtp-Secret");
+            return NativeSecret(entry.Strings);
+        }
+
+        internal static byte[] NativeSecret(KeePassLib.Collections.ProtectedStringDictionary strings)
+        {
+            string s = strings.ReadSafe("TimeOtp-Secret");
             if (!string.IsNullOrEmpty(s)) return Encoding.UTF8.GetBytes(s);
-            s = entry.Strings.ReadSafe("TimeOtp-Secret-Hex").Replace(" ", "");
+            s = strings.ReadSafe("TimeOtp-Secret-Hex").Replace(" ", "");
             if (!string.IsNullOrEmpty(s))
             {
                 if (s.Length % 2 != 0) return null;
@@ -95,9 +100,9 @@ namespace KeePassFerry
                     if (!byte.TryParse(s.Substring(i * 2, 2), System.Globalization.NumberStyles.HexNumber, null, out hex[i])) return null;
                 return hex;
             }
-            s = entry.Strings.ReadSafe("TimeOtp-Secret-Base32");
+            s = strings.ReadSafe("TimeOtp-Secret-Base32");
             if (!string.IsNullOrEmpty(s)) return Base32Decode(s);
-            s = entry.Strings.ReadSafe("TimeOtp-Secret-Base64");
+            s = strings.ReadSafe("TimeOtp-Secret-Base64");
             if (!string.IsNullOrEmpty(s))
             {
                 try { return Convert.FromBase64String(s.Trim()); }
@@ -188,7 +193,7 @@ namespace KeePassFerry
             return sb.ToString();
         }
 
-        private static Dictionary<string, string> ParseQuery(string uri)
+        internal static Dictionary<string, string> ParseQuery(string uri)
         {
             var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             int q = uri.IndexOf('?');

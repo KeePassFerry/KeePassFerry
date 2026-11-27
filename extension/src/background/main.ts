@@ -1,4 +1,4 @@
-import { diag } from "./ferryDiag";
+import { diag, watchDiagSwitch } from "./ferryDiag";
 import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, createOtpEntry, forgetOtpSetup } from "./otpSetup";
 import { parseOtpauth } from "../common/otpauth";
 import { forgetAutoFill } from "./otpRepeat";
@@ -78,6 +78,7 @@ async function ensureStarted() {
         // Useful for interactive debugging:
         // window.FerryPersistentLogger.init(configManager.current.logLevel >= 4);
         FerryLog.attachConfig(configManager.current);
+        watchDiagSwitch();
         await showReleaseNotesAfterUpdate();
         resolveInitialised(await ferry.init());
         hasInitialised = true;

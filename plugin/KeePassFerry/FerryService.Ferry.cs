@@ -35,10 +35,10 @@ namespace KeePassFerry
         }
 
         /// <summary>
-        /// Schreibt eine otpauth-URI (KeePassXC-Format) in das Feld "otp" eines bestehenden Eintrags.
+        /// Schreibt eine otpauth-URI (KeePassXC-Format) in das Feld "otp" eines bestehenden Eintrags und denselben
+        /// Schlüssel in die KeePass-eigenen Felder TimeOtp-* (Strg+T, {TIMEOTP}; #55). Kann KeePass ihn nicht (Steam,
+        /// mehr als 8 Stellen), werden alte TimeOtp-* entfernt, damit nicht zwei verschiedene Schlüssel im Eintrag stehen.
         /// Vorher wandert der alte Stand in die Eintragshistorie. Ein vorhandenes TOTP wird nur mit overwrite ersetzt.
-        /// Vorhandene KeePass-eigene Felder (TimeOtp-*) werden dabei entfernt: sonst stünden zwei verschiedene Schlüssel
-        /// im Eintrag ({TIMEOTP}/Strg+T in KeePass nähmen den alten, Browser und Apps den neuen aus "otp").
         /// Ergebnis: status "ok" (mit erstem Code), "exists", "invalid" oder "notfound".
         /// </summary>
         [JsonRpcMethod]
@@ -63,10 +63,9 @@ namespace KeePassFerry
 
             entry.CreateBackup(db);
             entry.Strings.Set(Totp.OtpField, new ProtectedString(true, uri));
-            var nativeTotp = new List<string>();
-            foreach (KeyValuePair<string, ProtectedString> kv in entry.Strings)
-                if (kv.Key.StartsWith("TimeOtp-", StringComparison.Ordinal)) nativeTotp.Add(kv.Key);
-            foreach (string name in nativeTotp) entry.Strings.Remove(name);
+            OtpSync.OtpParams p = OtpSync.FromUri(uri);
+            if (!OtpSync.WriteNative(entry.Strings, p)) OtpSync.RemoveNative(entry.Strings);
+            entry.CustomData.Set(OtpSync.SyncedKey, OtpSync.Fingerprint(p));
             entry.Touch(true);
             _host.MainWindow.BeginInvoke(new dlgSaveDB(saveDB), db);
 
@@ -809,6 +808,28 @@ namespace KeePassFerry
         internal static string DefaultDiagnosticLogPath()
         {
             return System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KeePassFerry", "diagnose.log");
+        }
+
+        // Diagnosemodus der Erweiterung (SetDiagnostics): eigene Zeilen des Plugins nur, wenn er eingeschaltet ist
+        private const string DiagnosticsEnabledKey = "KeePassFerry.DiagnosticsEnabled";
+
+        /// <summary>Die Erweiterung meldet ihren Schalter "Diagnoseprotokoll" (beim Verbinden und bei jeder Änderung)</summary>
+        [JsonRpcMethod]
+        public bool SetDiagnostics(bool enabled)
+        {
+            _host.CustomConfig.SetBool(DiagnosticsEnabledKey, enabled);
+            return true;
+        }
+
+        internal bool DiagnosticsEnabled
+        {
+            get { return _host.CustomConfig.GetBool(DiagnosticsEnabledKey, false); }
+        }
+
+        /// <summary>Zeile des Plugins selbst ins Diagnoseprotokoll, nur bei eingeschaltetem Diagnosemodus</summary>
+        internal void PluginDiag(string line)
+        {
+            if (DiagnosticsEnabled) FerryDiagLog(new[] { line });
         }
 
         private string DiagnosticLogPath()

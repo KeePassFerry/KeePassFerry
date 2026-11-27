@@ -647,10 +647,10 @@ Technical detail: " + ex.Message);
             // Nach dem Kee-Import: auch von dort übernommene Genauigkeiten sollen in den Optionen landen
             int accuracyChanges = MatchAccuracySettings.ImportOnce(openedDb);
             if (accuracyChanges > 0 && RPCService != null)
-                RPCService.FerryDiagLog(new[] { "plugin genauigkeit übernommen {\"aenderungen\":" + accuracyChanges + "}" });
+                RPCService.PluginDiag("plugin genauigkeit übernommen {\"aenderungen\":" + accuracyChanges + "}");
             if (keeImported)
             {
-                if (RPCService != null) RPCService.FerryDiagLog(new[] { "plugin kee-import " + importSummary });
+                if (RPCService != null) RPCService.PluginDiag("plugin kee-import " + importSummary);
                 if (!wasModified)
                     _host.MainWindow.BeginInvoke(new MethodInvoker(delegate
                     {
@@ -659,7 +659,34 @@ Technical detail: " + ex.Message);
                     }));
             }
 
+            // Zwei-Faktor-Formate abgleichen (#55): Änderungen vom Handy sind gleich in KeePass (Strg+T) da; gespeichert
+            // wird mit dem nächsten Speichern, das Plugin speichert dafür nicht selbst
+            SyncOtpFormats(openedDb, "öffnen", true);
+
             SignalAllManagedRPCClients(Signal.DATABASE_OPEN);
+        }
+
+        private void SyncOtpFormats(PwDatabase db, string trigger, bool refreshUi)
+        {
+            try
+            {
+                int changed = OtpSync.SyncDatabase(db);
+                // Stand beim Öffnen (nur Anzahlen), nur bei eingeschaltetem Diagnosemodus
+                if (refreshUi && RPCService != null && RPCService.DiagnosticsEnabled && OtpSync.IsActive(db))
+                    RPCService.PluginDiag("plugin otp stand " + OtpSync.Summary(db));
+                if (changed == 0) return;
+                if (RPCService != null)
+                    RPCService.PluginDiag("plugin otp abgeglichen {\"ausloeser\":\"" + trigger + "\",\"eintraege\":" + changed + "}");
+                if (refreshUi)
+                    _host.MainWindow.BeginInvoke(new MethodInvoker(delegate
+                    {
+                        _host.MainWindow.UpdateUI(false, null, false, null, true, null, true);
+                    }));
+            }
+            catch (Exception ex)
+            {
+                if (RPCService != null) RPCService.PluginDiag("plugin otp abgleich fehler {\"art\":\"" + ex.GetType().Name + "\"}");
+            }
         }
 
 
@@ -672,6 +699,9 @@ Technical detail: " + ex.Message);
 
         private void OnKPDBSaving(object sender, FileSavingEventArgs e)
         {
+            // Vor dem Schreiben: in KeePass geänderte Schlüssel (OTP-Generator-Einstellungen, Eintrag bearbeiten) gehen
+            // so auch als "otp" an die Apps (#55)
+            SyncOtpFormats(e.Database, "speichern", false);
             SignalAllManagedRPCClients(Signal.DATABASE_SAVING);
         }
 
