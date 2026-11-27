@@ -4,6 +4,10 @@ English · [Deutsch](#deutsch)
 
 ## Unreleased
 
+- Test builds: every change on `main` that passes the tests is published as a pre-release "Test build (main)", with a
+  guide in `TESTING.md`. KeePass options, "Addresses and browsers": "Allow the test version of the extension" lets an
+  extension loaded unpacked in Edge or Chrome connect (it still has to pair). Needs the new plugin.
+
 - New entry from the two-factor selection or from "Add … to entry": if the popup closes before saving (for example
   when switching to another window), clicking the toolbar icon in that tab returns to the same editor with everything
   entered so far, and "Save" creates the entry. Before, the popup showed "Edit entry" and "Save" did nothing (#54).
@@ -713,6 +717,10 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 # Deutsch
 
 ## Unveröffentlicht
+
+- Testversionen: Jede Änderung auf `main`, die die Tests besteht, erscheint als Vorab-Release „Test build (main)“, mit
+  Anleitung in `TESTING.md`. KeePass-Optionen, „Adressen und Browser“: „Testversion der Erweiterung zulassen“ lässt eine
+  in Edge oder Chrome entpackt geladene Erweiterung verbinden (sie muss sich trotzdem koppeln). Braucht das neue Plugin.
 
 - Neuer Eintrag aus der Zwei-Faktor-Auswahl oder aus „… zu Eintrag hinzufügen“: Schließt sich das Popup vor dem
   Speichern (z. B. beim Wechsel in ein anderes Fenster), führt ein Klick auf das Symbol in diesem Tab zurück in

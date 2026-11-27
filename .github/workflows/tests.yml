@@ -4,6 +4,7 @@
 #   Kopplung über eine echte Named Pipe, Passkey-Daten und -Signaturen, Wegwerf-Datenbank; dazu der echte TypeScript-Client
 #   der Erweiterung gegen den echten Plugin-Server. Ohne KeePass-Oberfläche, nur mit erzeugten Schlüsseln und Testdaten.
 # Was hier nicht abgedeckt ist, steht in tests/README.md.
+# Nach bestandenen Tests (nicht bei Pull Requests) zusätzlich ein Testbuild als Artefakt, siehe TESTING.md.
 name: Tests
 
 on:
@@ -75,4 +76,85 @@ jobs:
           KPF_REQUIRE_INTEROP: "1"
         run: |
           dotnet test tests/KeePassFerry.Tests -c Release --nologo --logger "console;verbosity=normal"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      # Testbuild zum Ausprobieren vor dem nächsten Release (Anleitung: TESTING.md). Nur nach bestandenen Tests und nicht
+      # bei Pull Requests. Feste Adressen ohne Anmeldung: Vorab-Release "testing" (Pre-release, nie "latest"), das jeder
+      # Push auf main ersetzt. Unsigniert; Store, Setup-Link (releases/latest) und Update-Prüfung (version.txt) unberührt
+      - name: Testbuild schnüren
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        run: |
+          $sha = "${{ github.sha }}".Substring(0, 7)
+          $pkg = (Get-Content extension/package.json -Raw | ConvertFrom-Json).version
+          "TESTBUILD=$pkg-dev-$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          $out = "testbuild"
+          $plug = "$out/KeePassFerry"
+          New-Item -ItemType Directory -Force $plug | Out-Null
+          $bin = "plugin/KeePassFerry/bin/Release"
+          foreach ($f in "KeePassFerry.dll", "Jayrock.dll", "Jayrock.Json.dll") { Copy-Item "$bin/$f" $plug }
+          # Host (über die Tests gebaut), falls er sich geändert hat
+          $hostBin = "host/KeePassFerryHost/bin/Release/net48"
+          if (Test-Path "$hostBin/KeePassFerryHost.exe") { Copy-Item "$hostBin/KeePassFerryHost.exe", "$hostBin/KeePassFerryHost.exe.config" $plug }
+          Push-Location extension
+          npm run build-chrome:prod
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Pop-Location
+          Copy-Item extension/extension "$out/extension-chrome-edge" -Recurse
+          Push-Location extension
+          npm run build-firefox:prod
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Pop-Location
+          Copy-Item extension/extension "$out/extension-firefox" -Recurse
+          Get-ChildItem $out -Recurse -Filter *.map | Remove-Item
+          # Je ein Zip zum Herunterladen; der Inhalt der Erweiterungs-Zips liegt direkt im Wurzelordner (zum Entpacken
+          # und "Entpackt laden" bzw. in Firefox manifest.json auswählen)
+          Compress-Archive -Path $plug -DestinationPath "$out/KeePassFerry-Testbuild-Plugin.zip"
+          Compress-Archive -Path "$out/extension-chrome-edge/*" -DestinationPath "$out/KeePassFerry-Testbuild-Chrome-Edge.zip"
+          Compress-Archive -Path "$out/extension-firefox/*" -DestinationPath "$out/KeePassFerry-Testbuild-Firefox.zip"
+
+      # Weitergabe an den Job, der veröffentlicht (dieser Job bleibt nur lesend)
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: github.event_name != 'pull_request'
+        with:
+          name: testbuild
+          path: testbuild/KeePassFerry-Testbuild-*.zip
+          retention-days: 1
+
+  # Vorab-Release "testing" mit den Testbuild-Zips (nur Push auf main). Einziger Job mit Schreibrecht
+  publish-testbuild:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: testbuild
+          path: testbuild
+
+      - name: Vorab-Release "testing" aktualisieren
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $sha = "${{ github.sha }}"
+          $notes = @"
+          Test build of ``main`` at $($sha.Substring(0, 7)) ($(Get-Date -Format 'yyyy-MM-dd HH:mm') UTC), replaced with every change. Not signed, not a release.
+
+          How to install it: [TESTING.md](https://github.com/${{ github.repository }}/blob/main/TESTING.md)
+          "@
+          gh release view testing *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create testing --prerelease --latest=false --title "Test build (main)" --notes $notes --target $sha
+          } else {
+            # Tag auf den neuen Stand, Beschreibung ersetzen
+            gh api -X PATCH "repos/$env:GH_REPO/git/refs/tags/testing" -f sha=$sha -F force=true | Out-Null
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            gh release edit testing --prerelease --latest=false --title "Test build (main)" --notes $notes
+          }
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          gh release upload testing --clobber (Get-ChildItem testbuild -Filter "KeePassFerry-Testbuild-*.zip").FullName
           if ($LASTEXITCODE) { exit $LASTEXITCODE }

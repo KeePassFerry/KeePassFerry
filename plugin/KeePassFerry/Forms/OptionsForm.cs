@@ -30,6 +30,7 @@ namespace KeePassFerry.Forms
         private readonly ListView _clients;
         private readonly Button _unpair;
         private readonly Button _rename;
+        private readonly CheckBox _allowDevExtension;
         private readonly CheckedListBox _hibpDbs;
         private readonly RadioButton _accuracyDomain;
         private readonly RadioButton _accuracyHostname;
@@ -208,7 +209,7 @@ namespace KeePassFerry.Forms
                 MultiSelect = false,
                 HeaderStyle = ColumnHeaderStyle.Nonclickable,
                 Location = new Point(12, 24),
-                Size = new Size(504, 124)
+                Size = new Size(504, 96)
             };
             _clients.Columns.Add(FerryText.T("Browser", "Browser"), 220);
             _clients.Columns.Add(FerryText.T("Gekoppelt am", "Paired on"), 130);
@@ -221,7 +222,7 @@ namespace KeePassFerry.Forms
             _rename = new Button
             {
                 Text = FerryText.T("Umbenennen", "Rename"),
-                Location = new Point(12, 156),
+                Location = new Point(12, 126),
                 Size = new Size(100, 28),
                 Enabled = false
             };
@@ -229,7 +230,7 @@ namespace KeePassFerry.Forms
             _unpair = new Button
             {
                 Text = FerryText.T("Kopplung aufheben", "Remove pairing"),
-                Location = new Point(118, 156),
+                Location = new Point(118, 126),
                 Size = new Size(130, 28),
                 Enabled = false
             };
@@ -237,13 +238,21 @@ namespace KeePassFerry.Forms
             var pairedHint = new Label
             {
                 AutoSize = false,
-                Location = new Point(256, 152),
-                Size = new Size(260, 40),
+                Location = new Point(256, 122),
+                Size = new Size(260, 36),
                 ForeColor = Color.DimGray,
                 Text = FerryText.T("Nach dem Aufheben muss sich der Browser neu koppeln und den Prüfcode bestätigen.",
                     "After removing, the browser has to pair again and confirm the verification code.")
             };
             paired.Controls.AddRange(new Control[] { _clients, _rename, _unpair, pairedHint });
+            // Entpackt geladene Erweiterung (Testbuild, TESTING.md) hat in Chrome/Edge eine eigene ID; nur zum Testen
+            _allowDevExtension = NewCheckBox(paired, 164, FerryText.T(
+                "Testversion der Erweiterung zulassen (entpackt geladen, Chrome/Edge)",
+                "Allow the test version of the extension (loaded unpacked, Chrome/Edge)"));
+            _allowDevExtension.Checked = host.CustomConfig.GetBool(NativeHostRegistration.AllowDevExtensionConfigKey, false);
+            new ToolTip { AutoPopDelay = 20000 }.SetToolTip(_allowDevExtension, FerryText.T(
+                "Nur einschalten, wenn du eine Testversion ausprobierst. Auch sie muss sich koppeln und den Prüfcode in KeePass bestätigen lassen.",
+                "Only turn this on while you try a test version. It still has to pair and have the verification code confirmed in KeePass."));
 
             var version = new Label
             {
@@ -485,6 +494,12 @@ namespace KeePassFerry.Forms
             MatchAccuracySettings.Save(
                 _accuracyExact.Checked ? MatchAccuracyMethod.Exact : _accuracyHostname.Checked ? MatchAccuracyMethod.Hostname : MatchAccuracyMethod.Domain,
                 overrides);
+            if (_allowDevExtension.Checked != NativeHostRegistration.AllowDevExtension)
+            {
+                _host.CustomConfig.SetBool(NativeHostRegistration.AllowDevExtensionConfigKey, _allowDevExtension.Checked);
+                NativeHostRegistration.AllowDevExtension = _allowDevExtension.Checked;
+                NativeHostRegistration.Register();
+            }
             _host.MainWindow.Invoke((MethodInvoker)delegate { _host.MainWindow.SaveConfig(); });
             // Verbundene Browser laden Einträge und Vorwarnung neu
             _plugin.SignalAllManagedRPCClients(KeePassFerry.Models.DataExchange.Signal.DATABASE_SELECTED);
