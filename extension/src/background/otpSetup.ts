@@ -416,7 +416,7 @@ export async function getOtpSetupForPopup(tabId: number) {
     const candidates: OtpSetupCandidate[] = [];
     const seen = new Set<string>();
     const last = ferry.persistentTabStates.get(tabId)?.lastFilledEntry;
-    const found: Entry[] = (await ferry.rpc.findLogins(setup.url, null, null, null, null, null)) ?? [];
+    const found: Entry[] = (await ferry.rpc.findLogins(setup.url, null, null, null, null, null, true)) ?? [];
     const ordered = last && sameSite(last.domain, setup.domain)
         ? [...found.filter(e => e.uuid === last.uuid), ...found.filter(e => e.uuid !== last.uuid)]
         : found;

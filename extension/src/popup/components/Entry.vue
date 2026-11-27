@@ -52,7 +52,7 @@
                 <v-tooltip location="bottom" activator="parent">{{ expanded ? $i18n("ferry_hide_details") : $i18n("ferry_show_details") }}</v-tooltip>
             </button>
         </div>
-        <div v-if="expanded && entrySummary.fullDetails" class="ferry-entry-details">
+        <div v-if="expanded && details" class="ferry-entry-details">
             <div class="ferry-entry-actions">
                 <button v-if="hasWebsite" type="button" class="ferry-entry-action" @click.stop="loadInNewTab">
                     <tabler-external-link class="ferry-ico" />
@@ -150,13 +150,19 @@ export default {
         tooltipDelay: tooltipDelay,
         // Adresse zum Passwortändern auf der Website (Apples Liste oder /.well-known/change-password)
         changeUrl: null as string,
-        changeUrlChecked: false
+        changeUrlChecked: false,
+        // Beim Aufklappen geholte Details eines Treffers ohne Passwort (#56)
+        loadedDetails: null as Entry
     }),
     computed: {
+        // Vollständiger Eintrag: aus der Suche bzw. dem Store, sonst beim Aufklappen geholt
+        details: function (): Entry {
+            return ((this.entrySummary as EntrySummary).fullDetails as Entry) ?? this.loadedDetails;
+        },
         hasWebsite: function (): boolean {
             return isWebUrl((this.entrySummary as EntrySummary).url);
         },
-        ...mapState(useStore, ["saveState", "KeePassDatabases"]),
+        ...mapState(useStore, ["saveState", "KeePassDatabases", "searchResults"]),
         // Mehrere Datenbanken offen: in welcher der Eintrag liegt
         databaseLabel: function (): string {
             const dbs = this.KeePassDatabases as Database[];
@@ -171,7 +177,7 @@ export default {
         // Benutzername und Gruppe, auf- und zugeklappt gleich; die Datenbank nur, wenn mehrere offen sind
         subLine: function (): string {
             const e = this.entrySummary as EntrySummary;
-            const group = (e.fullDetails as Entry)?.parentGroup?.path ?? (e.path === "UNKNOWN PATH" ? "" : e.path);
+            const group = (this.details as Entry)?.parentGroup?.path ?? (e.path === "UNKNOWN PATH" ? "" : e.path);
             const username = e.usernameValue === "<no username>" ? "" : e.usernameValue;
             return [username, group, this.databaseLabel].filter(Boolean).join(" · ");
         },
@@ -183,7 +189,7 @@ export default {
             return "0"; //this.isFirstInAList ? "0" : "-1"; // new treeview component needs this to be 0 for everything
         },
         allFields: function () {
-            const e = this.entrySummary.fullDetails as Entry;
+            const e = this.details as Entry;
             return e.fields;
         },
         // Internationale Domains lesbar (Option, Issue #33)
@@ -198,14 +204,14 @@ export default {
             if (!this.entryPathIsLong) {
                 return this.fullEntryPath;
             }
-            const e = this.entrySummary.fullDetails as Entry;
+            const e = this.details as Entry;
             return "... > " + e.parentGroup.path;
         },
         entryPathIsLong: function () {
             return this.fullEntryPath.length > 35;
         },
         fullEntryPath: function () {
-            const e = this.entrySummary.fullDetails as Entry;
+            const e = this.details as Entry;
             return e.database.name + " > " + e.parentGroup.path;
         },
         leakTitle: function () {
@@ -249,7 +255,7 @@ export default {
     methods: {
         // Benutzername- und Passwortzeile können in die Seite eingetragen werden, andere Felder nicht
         fillKind(f) {
-            const e = this.entrySummary.fullDetails as Entry;
+            const e = this.details as Entry;
             if (f.type === "password") return "password";
             return f === Entry.getUsernameField(e) ? "username" : null;
         },
@@ -262,15 +268,29 @@ export default {
         },
         showFullDetails() {
             this.lookupChangeUrl();
-            if (!this.expanded && !this.entrySummary.fullDetails) {
-                Port.postMessage({
-                    findMatches: {
-                        uuid: this.entrySummary.uuid,
-                        DBfilename: this.entrySummary.dbFileName
-                    }
-                } as AddonMessage);
+            if (!this.expanded && !this.details) {
+                if ((this.searchResults ?? []).some(s => s.uuid === this.entrySummary.uuid)) {
+                    // Suchtreffer: Details kommen über den Store (bleiben nach Änderungen an der Datenbank erhalten)
+                    Port.postMessage({
+                        findMatches: {
+                            uuid: this.entrySummary.uuid,
+                            DBfilename: this.entrySummary.dbFileName
+                        }
+                    } as AddonMessage);
+                } else {
+                    // Treffer der Seite (ohne Passwort, #56): Details erst jetzt aus KeePass holen
+                    this.loadDetails();
+                }
             }
             this.expanded = true;
+        },
+        async loadDetails(): Promise<Entry> {
+            if (this.details) return this.details;
+            const raw = await chrome.runtime
+                .sendMessage({ keepassferry: "findEntryForEdit", uuid: this.entrySummary.uuid, dbFileName: this.entrySummary.dbFileName })
+                .catch(() => null);
+            if (raw) this.loadedDetails = new Entry(raw);
+            return this.details;
         },
         hideFullDetails() {
             this.expanded = false;
@@ -298,7 +318,8 @@ export default {
         },
         async editEntry() {
             const ss = this.saveState as SaveState;
-            const entry = this.entrySummary.fullDetails as Entry;
+            const entry = (await this.loadDetails()) as Entry;
+            if (!entry) return;
             const updatedSaveState = Object.assign({}, ss);
             // Gerade abgeschickte Anmeldedaten nur übernehmen, wenn sie von derselben Website stammen (Passwort
             // geändert); sonst ist es reines Bearbeiten: Adressen und Felder bleiben, keine Warnung

@@ -342,6 +342,15 @@ if (document.body) {
                 formFilling.fillAndSubmit(false, null, m.selectedEntryIndex);
             }
 
+            if (m.action == Action.ForgetMatches) {
+                formFilling.forgetMatches();
+            }
+
+            if (m.action == Action.EntrySecrets) {
+                formFilling.onEntrySecrets(m);
+                return;
+            }
+
             if (m.action == Action.ResetForms) {
                 formFilling.removeFieldIconFromAllFields();
                 formSaving.removeAllSubmitHandlers();

@@ -150,7 +150,7 @@ export async function getSelectionSaveForPopup(tabId: number) {
     if (s.field) pending.delete(tabId);
     const last = ferry.persistentTabStates.get(tabId)?.lastFilledEntry;
     const lastUuid = last && sameSite(last.domain, s.domain) ? last.uuid : null;
-    const found: Entry[] = (await ferry.rpc.findLogins(s.url, null, null, null, null, null)) ?? [];
+    const found: Entry[] = (await ferry.rpc.findLogins(s.url, null, null, null, null, null, true)) ?? [];
     const ordered = lastUuid ? [...found.filter(e => e.uuid === lastUuid), ...found.filter(e => e.uuid !== lastUuid)] : found;
     const seen = new Set<string>();
     const candidates = [];

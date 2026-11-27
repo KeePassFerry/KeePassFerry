@@ -69,7 +69,10 @@ namespace KeePassFerry
             "KEEPASSFERRY_DIAG_FOLDER",
 
             // KeePassFerry: neuer Passkey-Eintrag in einer gewählten Gruppe (PasskeyCreateInGroup)
-            "KEEPASSFERRY_PASSKEY_GROUP"
+            "KEEPASSFERRY_PASSKEY_GROUP",
+
+            // KeePassFerry: Suche für Seiten ohne Passwörter und geschützte Werte (FindLoginsWithoutSecrets, #56)
+            "KEEPASSFERRY_FIND_WITHOUT_SECRETS"
         };
 
         // Zusätzlich die Produktversion des Plugins ("KEEPASSFERRY_VERSION_1.2.3"): Die Erweiterung erkennt daran ein

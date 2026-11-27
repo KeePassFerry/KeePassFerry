@@ -56,11 +56,14 @@ export class EntrySummary {
             usernameValue: Entry.getUsernameField(entry)?.value,
             usernameName: Entry.getUsernameField(entry)?.name,
             title: entry.title,
+            // Gruppe auch ohne geladene Details anzeigen (Treffer ohne Passwort, #56)
+            path: entry.parentGroup?.path,
             uRLs: entry.URLs,
             url: entry?.URLs[0],
             uuid: entry.uuid,
             dbFileName: entry.database.fileName,
-            fullDetails: entry,
+            // Ohne Passwort (Treffer für Seiten, #56): Details erst beim Aufklappen aus KeePass holen
+            fullDetails: entry.secretsOmitted ? undefined : entry,
             isPreferredMatch: entry.isPreferredMatch,
             hasNotes: entry.hasNotes,
             attachmentCount: entry.attachmentCount,

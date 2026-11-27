@@ -13,6 +13,8 @@ namespace KeePassFerry.Models.Shared
         public PlaceholderHandling PlaceholderHandling;
         // Der Wert stammt aus einem in KeePass geschützten Feld: die Erweiterung zeigt ihn verdeckt (#50)
         public bool Protected;
+        // Wert vorhanden, aber nicht mitgeschickt (FindLoginsWithoutSecrets, #56): die Erweiterung holt ihn erst beim Ausfüllen
+        public bool ValueOmitted;
 
         public FormField() { }
 

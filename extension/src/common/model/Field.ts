@@ -33,6 +33,9 @@ export class Field {
     // Wert stammt aus einem in KeePass geschützten Feld: verdeckt anzeigen wie ein Passwort (#50)
     readonly isProtected?: boolean;
 
+    // Wert vorhanden, aber nicht mitgeschickt (Suche für Seiten ohne Passwörter, #56): erst beim Ausfüllen holen
+    readonly valueOmitted?: boolean;
+
     constructor(field: Partial<Field>) {
         this.name = field.name || "";
         this.value = field.value || "";
@@ -41,6 +44,7 @@ export class Field {
         this.type = field.type || "text";
         this.locators = field.locators || [];
         this.isProtected = !!field.isProtected;
+        this.valueOmitted = !!field.valueOmitted;
     }
 
     private static getDisplayValueInternal(
@@ -157,6 +161,7 @@ export class Field {
             value: f.value,
             resetValue: f.value,
             isProtected: !!f.protected,
+            valueOmitted: !!f.valueOmitted,
             type: type,
             locators: [
                 new Locator({

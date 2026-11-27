@@ -23,6 +23,8 @@ import { findInputsInOpenShadowRoots, isHostedInForm } from "./shadowDom";
 import { httpsEntryOnHttpPage } from "../common/insecurePage";
 import { isEditable } from "./OtpFields";
 import { pageDiag } from "./ferryDiagPage";
+import { utils } from "../common/utils";
+import { fieldHasValue } from "../common/secrets";
 
 interface ScoreMatrix {
     score: number;
@@ -524,7 +526,11 @@ export class FormFilling {
         return this.fillMatchedFields(fieldScoreMatrix, dataFields, formFields, automated);
     }
 
+    // Zählt neue Suchen und das Verwerfen der Treffer: ein Ausfüllen, das auf Werte wartet, bricht danach ab
+    private matchGeneration = 0;
+
     private initMatchResult(behaviour: FindMatchesBehaviour) {
+        this.matchGeneration++;
         //TODO:5: #6 create new object might cause issues with multi-page or submit behaviour? if not, this would be neater:
         // matchResult = new MatchResult();
         this.matchResult.UUID = "";
@@ -1024,7 +1030,7 @@ export class FormFilling {
     // It's possible to fill and submit a entry with a specific uuid but
     // that process is now centered on the findMatches function. This function just
     // takes the results of that (which may include a specific entry to fill and submit to a specific form)
-    fillAndSubmit(automated: boolean, formIndex?: number, entryIndex?: number) {
+    async fillAndSubmit(automated: boolean, formIndex?: number, entryIndex?: number) {
         this.Logger.debug(
             "fillAndSubmit started. automated: " +
                 automated +
@@ -1290,6 +1296,18 @@ export class FormFilling {
                         action.submit = false;
                         this.hiddenLoginPending = true;
                     }
+                }
+
+                // Erst jetzt, für genau diesen Eintrag, Passwort und geschützte Werte holen (#56)
+                if ((action.fill || matchResult.mustAutoFillForm) && matchingLogin.secretsOmitted) {
+                    const generation = this.matchGeneration;
+                    const full = await this.requestEntrySecrets(matchingLogin);
+                    // Inzwischen neu gesucht, gesperrt oder keine Werte erhalten: nichts eintragen
+                    if (!full || generation !== this.matchGeneration) {
+                        pageDiag("ausfüllen abgebrochen", { grund: full ? "neue suche" : "keine werte" });
+                        return;
+                    }
+                    matchingLogin = full;
                 }
 
                 if (action.fill || matchResult.mustAutoFillForm) {
@@ -1887,8 +1905,9 @@ export class FormFilling {
             .concat(otherFields)
             .filter(f => f.field.locators[0].id || f.field.locators[0].name || f.field.value)
             .length;
+        // fieldHasValue: weggelassene Passwörter (#56) zählen wie vorhandene
         const loginFieldCount = entry.fields.filter(
-            f => f.locators[0].id || f.locators[0].name || f.value
+            f => f.locators[0].id || f.locators[0].name || fieldHasValue(f)
         ).length;
         const formFieldCountForAutofill = autofillFieldCount(
             passwordFields.concat(otherFields).map(f => ({
@@ -1901,7 +1920,7 @@ export class FormFilling {
         const loginFieldCountForAutofill = entry.fields.filter(
             f =>
                 (f.type === "password" || f.type === "text") &&
-                (f.locators[0].id || f.locators[0].name || f.value)
+                (f.locators[0].id || f.locators[0].name || fieldHasValue(f))
         ).length;
 
         const formMatchedFieldCountForAutofill =
@@ -2067,6 +2086,47 @@ export class FormFilling {
 
     public removeFieldIconFromAllFields() {
         this.fieldIcon.removeFieldIconFromAllFields();
+    }
+
+    // Treffer kommen ohne Passwort und geschützte Werte (#56): zum Ausfüllen die Werte des gewählten Eintrags beim
+    // Hintergrund holen. Er gibt sie nur für Treffer dieses Frames heraus. null = nicht erhalten (gesperrt, Zeitüberschreitung)
+    private secretsRequests = new Map<string, (entry: Entry) => void>();
+
+    private requestEntrySecrets(entry: Entry): Promise<Entry> {
+        if (!entry?.secretsOmitted) return Promise.resolve(entry);
+        const id = utils.newGUID();
+        return new Promise<Entry>(resolve => {
+            const timer = window.setTimeout(() => {
+                this.secretsRequests.delete(id);
+                resolve(null);
+            }, 10000);
+            this.secretsRequests.set(id, full => {
+                window.clearTimeout(timer);
+                this.secretsRequests.delete(id);
+                // Werte übernehmen, alles andere (Bewertung, Reihenfolge, Vorzug) vom Treffer behalten
+                resolve(full ? new Entry({ ...entry, fields: full.fields, secretsOmitted: false }) : null);
+            });
+            this.myPort.postMessage({
+                action: Action.RequestEntrySecrets,
+                secretsRequestId: id,
+                filledEntry: { uuid: entry.uuid, dbFileName: entry.database.fileName }
+            } as AddonMessage);
+        });
+    }
+
+    public onEntrySecrets(m: AddonMessage) {
+        const done = this.secretsRequests.get(m.secretsRequestId);
+        if (done) done(m.entrySecrets ? new Entry(m.entrySecrets) : null);
+    }
+
+    // KeePass gesperrt oder getrennt (#56): geholte Einträge mit Passwörtern nicht weiter festhalten; die Seite sucht
+    // nach dem Entsperren neu
+    public forgetMatches() {
+        this.matchGeneration++;
+        // Je Formular leeren statt die Liste: Zugriffe über den Formular-Index finden dann eine leere Liste
+        this.matchResult.entries = (this.matchResult.entries ?? []).map(() => []);
+        this.matchResult.allMatchingLogins = [];
+        this.matchResult.UUID = "";
     }
 
     // Datenbank gesperrt: Gesperrt-Symbol an erkannten Anmeldefeldern, Klick entsperrt

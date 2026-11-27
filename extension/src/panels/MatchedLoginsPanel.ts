@@ -165,6 +165,14 @@ export class MatchedLoginsPanel {
     private async showActions(entry: Entry, usernameDisplayValue: string) {
         const list = document.getElementById("Ferry-MatchedLoginsList");
         if (!list || document.getElementById("Ferry-EntryActions")) return;
+        // Treffer kommen ohne Passwort (#56): Werte erst für die Aktionsansicht dieses einen Eintrags holen
+        if (entry.secretsOmitted) {
+            const raw = await chrome.runtime
+                .sendMessage({ keepassferry: "findEntryForEdit", uuid: entry.uuid, dbFileName: entry.database.fileName })
+                .catch(() => null);
+            if (!raw || document.getElementById("Ferry-EntryActions")) return;
+            entry = new Entry({ ...entry, fields: new Entry(raw).fields, secretsOmitted: false });
+        }
         const ref = { uuid: entry.uuid, dbFileName: entry.database.fileName };
         const rows: { icon: string; label: string; fill: () => void | Promise<void>; copy: () => Promise<void> }[] = [];
         const fillValue = (value: string) => () =>

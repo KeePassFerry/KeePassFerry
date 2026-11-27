@@ -702,6 +702,36 @@ namespace KeePassFerry
         /// <param name="freeTextSearch">A string to search for in all entries. E.g. title, username (may change)</param>
         /// /// <param name="username">Limit a search for URL to exact username matches only</param>
         /// <returns>An entry suitable for use by a JSON-RPC client.</returns>
+        /// <summary>
+        /// Wie FindLogins, aber ohne Passwörter und Werte geschützter Felder (#56): Die Erweiterung braucht für Listen,
+        /// Feldsymbole und die Wahl des Eintrags nur Titel, Benutzername und Feldbeschreibungen und holt die Werte des
+        /// gewählten Eintrags erst beim Ausfüllen (FindLogins mit dessen ID). Leere Werte sind als ValueOmitted markiert.
+        /// </summary>
+        [JsonRpcMethod]
+        public Entry[] FindLoginsWithoutSecrets(string[] unsanitisedURLs, string actionURL,
+            string httpRealm, LoginSearchType lst, bool requireFullURLMatches,
+            string uniqueID, string dbFileName, string freeTextSearch, string username)
+        {
+            Entry[] found = FindLogins(unsanitisedURLs, actionURL, httpRealm, lst, requireFullURLMatches,
+                uniqueID, dbFileName, freeTextSearch, username);
+            if (found != null)
+                foreach (Entry e in found) OmitSecrets(e);
+            return found;
+        }
+
+        /// <summary>Passwortfelder und geschützte Felder leeren und als ValueOmitted markieren</summary>
+        internal static void OmitSecrets(Entry entry)
+        {
+            if (entry == null || entry.FormFieldList == null) return;
+            foreach (FormField f in entry.FormFieldList)
+            {
+                if (f == null || string.IsNullOrEmpty(f.Value)) continue;
+                if (f.Type != FormFieldType.FFTpassword && !f.Protected) continue;
+                f.Value = "";
+                f.ValueOmitted = true;
+            }
+        }
+
         [JsonRpcMethod]
         public Entry[] FindLogins(string[] unsanitisedURLs, string actionURL,
             string httpRealm, LoginSearchType lst, bool requireFullURLMatches,

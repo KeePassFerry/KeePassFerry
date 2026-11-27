@@ -18,6 +18,7 @@ import { FerryNotification } from "../common/FerryNotification";
 import { Action } from "../common/Action";
 import { configManager } from "../common/ConfigManager";
 import { Entry } from "../common/model/Entry";
+import { secretsAllowedFor } from "../common/secrets";
 import { entryWithNewPassword } from "../common/passwordUpdate";
 import { tabFaviconPng } from "./tabFavicon";
 import { copyStringToClipboard } from "../common/copyStringToClipboard";
@@ -386,13 +387,15 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         // Gesperrt: die Seite zeigt das Gesperrt-Symbol, erst ein Klick darauf (oder aufs Erweiterungssymbol)
         // entsperrt. Kein Entsperren beim bloßen Öffnen einer Seite (Option dafür in 1.0.15 entfernt, Issue #11)
         ferry.tabStates.get(this.sender.tab.id).frames.get(this.sender.frameId).entries = [];
+        // Ohne Passwörter (#56): die Seite holt die Werte des gewählten Eintrags erst beim Ausfüllen (RequestEntrySecrets)
         const result = await ferry.findLogins(
             msg.findMatches.uri,
             null,
             null,
             null,
             null,
-            null
+            null,
+            true
         );
         const frameState = ferry.tabStates.get(this.sender.tab.id)?.frames.get(this.sender.frameId);
         if (frameState) frameState.urlEntries = result ?? [];
@@ -439,6 +442,22 @@ export async function pageMessageHandler(this: chrome.runtime.Port, msg: AddonMe
         } catch (e) {
             /* whatever */
         }
+    }
+    if (msg.action === Action.RequestEntrySecrets && msg.filledEntry?.uuid) {
+        // Nur Einträge, die der Hintergrund für die Adresse dieses Frames gefunden hat (urlEntries; frame.entries meldet
+        // die Seite selbst): eine Seite kann so nicht beliebige Einträge abfragen. Die Werte gehen nur an den
+        // anfragenden Frame und werden hier nicht behalten
+        const frame = ferry.tabStates.get(this.sender.tab.id)?.frames.get(this.sender.frameId);
+        const ref = msg.filledEntry;
+        const isMatch = (e: Entry) => e.uuid === ref.uuid && e.database?.fileName === ref.dbFileName;
+        const allowed = secretsAllowedFor(frame, ref);
+        let full: Entry = null;
+        if (allowed) {
+            const found: Entry[] = (await ferry.findLogins(null, null, ref.uuid, ref.dbFileName, null, null).catch(() => null)) ?? [];
+            full = found.find(isMatch) ?? null;
+        }
+        diag("hintergrund", "werte zum ausfüllen", { erlaubt: allowed, gefunden: !!full });
+        this.postMessage({ action: Action.EntrySecrets, secretsRequestId: msg.secretsRequestId, entrySecrets: full } as AddonMessage);
     }
     if (msg.entries) {
         //TODO:f: When/how is this msg sent? it might be somewhere we can trigger the browser action button update to display the number of matched items.

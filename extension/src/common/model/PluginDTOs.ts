@@ -141,6 +141,8 @@ export class FieldDto {
 
     // Plugin ab 1.0.40: Wert stammt aus einem in KeePass geschützten Feld (#50)
     protected?: boolean;
+    // FindLoginsWithoutSecrets (#56): Wert vorhanden, aber nicht mitgeschickt
+    valueOmitted?: boolean;
 }
 
 export enum FormFieldTypeDTO {

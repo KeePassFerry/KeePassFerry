@@ -4,19 +4,20 @@ import { FerryLog } from "../common/Logger";
 import { ferry } from "./KF";
 import { Entry } from "../common/model/Entry";
 import { startFieldSave, startSelectionSave } from "./selectionSave";
+import { fieldHasValue } from "../common/secrets";
 
 /*
 Kontextmenü je passendem Eintrag: "Anmeldung ausfüllen" (wie bisher) und, bei Rechtsklick in ein Eingabefeld,
 einzelne Werte gezielt in genau dieses Feld einfügen: Benutzername, Passwort, Einmalcode und eigene Felder des
 Eintrags. Das Menü muss vor dem Rechtsklick stehen: es wird sofort mit den bekannten Feldnamen aufgebaut, die
 Namen eigener Felder werden danach im Hintergrund geholt und das Menü bei Änderungen neu aufgebaut. Es enthält nur
-Feldnamen, Werte eigener Felder und Codes werden erst beim Klick aus KeePass geholt.
+Feldnamen, Werte eigener Felder, Passwörter (#56) und Codes werden erst beim Klick aus KeePass geholt.
 */
 
 type MenuAction =
     | { kind: "login"; frameId: number; index: number }
     | { kind: "value"; value: string }
-    | { kind: "otp" | "custom"; uuid: string; dbFileName: string; name?: string };
+    | { kind: "otp" | "custom" | "password"; uuid: string; dbFileName: string; name?: string };
 
 const ALL_CONTEXTS = ["editable", "frame", "image", "link", "page", "password", "selection"];
 const PAGES = ["http://*/*", "https://*/*"];
@@ -109,6 +110,10 @@ export class KFCommands {
         try {
             if (a.kind === "value") value = a.value;
             else if (a.kind === "otp") value = (await ferry.rpc.getTotp(a.uuid, a.dbFileName))?.code ?? null;
+            else if (a.kind === "password") {
+                const found: Entry[] = (await ferry.findLogins(null, null, a.uuid, a.dbFileName, null, null)) ?? [];
+                value = Entry.getPasswordField(found.find(e => e.uuid === a.uuid))?.value ?? null;
+            }
             else value = await ferry.rpc.getEntryFieldValue(a.uuid, a.dbFileName, a.name);
         } catch (e) {
             FerryLog.warn("Context menu value failed: " + e);
@@ -161,7 +166,7 @@ export class KFCommands {
         if (this.tabUrlLookups.has(tabId) || !KFCommands.databaseOpen()) return;
         this.tabUrlLookups.add(tabId);
         try {
-            const found: Entry[] = (await ferry.findLogins(url, null, null, null, null, null)) ?? [];
+            const found: Entry[] = (await ferry.findLogins(url, null, null, null, null, null, true)) ?? [];
             const before = this.tabUrlEntries.get(tabId);
             this.tabUrlEntries.set(tabId, { url, at: Date.now(), entries: found });
             const ids = (list: Entry[]) => list.map(e => e.uuid).join(",");
@@ -223,18 +228,19 @@ export class KFCommands {
             const parentId = "kf-entry-" + i;
             const username = Entry.getUsernameField(entry)?.value ?? "";
             const title = (entry.title || username || "?") + (entry.title && username ? " (" + username + ")" : "");
-            const password = Entry.getPasswordField(entry)?.value ?? "";
+            // Treffer ohne Passwort (#56): Menüpunkt, wenn eins vorhanden ist; der Wert kommt erst beim Klick aus KeePass
+            const hasPassword = fieldHasValue(Entry.getPasswordField(entry));
             const editable = ["editable", "password"];
             // Ohne erkanntes Formular gibt es nur die Einfüge-Punkte, der Eintrag erscheint dann nur in Eingabefeldern
             this.createMenuItem({ id: parentId, title, contexts: (index >= 0 ? ALL_CONTEXTS : editable) as any, documentUrlPatterns: PAGES });
             if (index >= 0) add(parentId, $STR("ferry_menu_fill_login"), ALL_CONTEXTS, { kind: "login", frameId, index });
 
             const ref = { uuid: entry.uuid, dbFileName: entry.database.fileName };
-            if (username || password || entry.hasOtp || customNames[i].length) {
+            if (username || hasPassword || entry.hasOtp || customNames[i].length) {
                 this.createMenuItem({ id: parentId + "-sep", parentId, type: "separator", contexts: editable as any, documentUrlPatterns: PAGES });
             }
             if (username) add(parentId, $STR("ferry_menu_insert_username"), editable, { kind: "value", value: username });
-            if (password) add(parentId, $STR("ferry_menu_insert_password"), editable, { kind: "value", value: password });
+            if (hasPassword) add(parentId, $STR("ferry_menu_insert_password"), editable, { kind: "password", ...ref });
             if (entry.hasOtp) add(parentId, $STR("ferry_menu_insert_otp"), editable, { kind: "otp", ...ref });
             for (const name of customNames[i]) add(parentId, name, editable, { kind: "custom", ...ref, name });
         });

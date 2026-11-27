@@ -13,6 +13,7 @@ import BackgroundStore from "../store/BackgroundStore";
 import { ferry } from "./KF";
 import { FerryURL } from "../common/FerryURL";
 import { hostInDomains, relatedDomains } from "../common/relatedDomains";
+import { FIND_WITHOUT_SECRETS_FEATURE, omitSecrets } from "../common/secrets";
 
 /*
 jsonrpcClient provides a JSON-RPC client and method proxies for
@@ -136,7 +137,9 @@ export class jsonrpcClient {
         uuid: string,
         dbFileName: string,
         freeText: string,
-        username: string
+        username: string,
+        // Für Seiten, Listen und Menüs (#56): ohne Passwörter und geschützte Werte; die holt erst das Ausfüllen
+        withoutSecrets = false
     ) {
         if (this.store.state.KeePassDatabases.length <= 0) {
             return [];
@@ -169,9 +172,12 @@ export class jsonrpcClient {
             return [];
         }
 
+        // Plugin ohne die Methode: wie bisher suchen und die Werte unten gleich nach dem Empfang entfernen
+        const pluginOmits = withoutSecrets && sessionManagers.every(sm => sm.features().includes(FIND_WITHOUT_SECRETS_FEATURE));
+        const method = pluginOmits ? "FindLoginsWithoutSecrets" : "FindLogins";
         const request = async (urls: string[]): Promise<Entry[]> => {
             const started = Date.now();
-            const sessionResponses = await this.pluginClient.request(sessionManagers, "FindLogins", [
+            const sessionResponses = await this.pluginClient.request(sessionManagers, method, [
                 urls,
                 null,
                 httpRealm,
@@ -186,7 +192,12 @@ export class jsonrpcClient {
             for (const sessionResponse of sessionResponses) {
                 if (sessionResponse.resultWrapper?.result?.[0]) {
                     const db = DatabaseSummary.fromPluginDatabaseSummaryDTO(sessionResponse.resultWrapper.result[0].db);
-                    found.push(...sessionResponse.resultWrapper.result.map((res: EntryDto) => Entry.fromPluginEntryDTO(res, db)));
+                    found.push(
+                        ...sessionResponse.resultWrapper.result.map((res: EntryDto) => {
+                            const entry = Entry.fromPluginEntryDTO(res, db);
+                            return withoutSecrets ? omitSecrets(entry) : entry;
+                        })
+                    );
                 }
             }
             diag("hintergrund", "suche in keepass", { ms: Date.now() - started, adressen: urls.length, eintrag: !!uuid, treffer: found.length });

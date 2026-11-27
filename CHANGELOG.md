@@ -4,6 +4,14 @@ English · [Deutsch](#deutsch)
 
 ## Unreleased
 
+- Passwords are no longer sent to pages in advance (#56). When a page opens, KeePass now returns the matching entries
+  without passwords and protected values; the extension fetches them only when filling, copying or showing the chosen
+  entry. Before, the passwords of all matching entries were in the page's memory as long as it was open, even if none
+  of them was used. Only entries found for that page can be fetched this way. Requires the plugin of this version for
+  the full effect; with an older plugin the extension removes the values right after receiving them.
+- When KeePass is locked, all databases are closed or KeePass exits, the extension now discards the entries it fetched
+  for open pages, including their passwords, in the background and in every tab. Before, they stayed in memory until
+  the page was left. Pages search again after unlocking (#56).
 - Plugin: with KeePass set to its built-in English, the plugin now uses English too, even on a German Windows.
   Before, it fell back to the Windows language (#57).
 - Two-factor setup: if there is no entry for the site yet, "New entry for this page" creates one (title, user name,
@@ -690,6 +698,15 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 ## Unveröffentlicht
 
+- Passwörter gehen nicht mehr vorab an Seiten (#56). Öffnet sich eine Seite, liefert KeePass die passenden Einträge
+  jetzt ohne Passwörter und geschützte Werte; die Erweiterung holt sie erst beim Ausfüllen, Kopieren oder Anzeigen des
+  gewählten Eintrags. Bisher lagen die Passwörter aller passenden Einträge im Speicher der Seite, solange sie offen
+  war, auch wenn keiner davon benutzt wurde. Abrufen lassen sich so nur Einträge, die für diese Seite gefunden wurden.
+  Die volle Wirkung braucht das Plugin dieser Version; mit einem älteren Plugin entfernt die Erweiterung die Werte
+  gleich nach dem Empfang.
+- Wird KeePass gesperrt, werden alle Datenbanken geschlossen oder wird KeePass beendet, verwirft die Erweiterung jetzt
+  die für offene Seiten geholten Einträge samt Passwörtern, im Hintergrund und in allen Tabs. Bisher blieben sie im
+  Arbeitsspeicher, bis die Seite verlassen wurde. Nach dem Entsperren suchen die Seiten neu (#56).
 - Plugin: Ist KeePass auf das eingebaute Englisch eingestellt, ist das Plugin jetzt auch auf einem deutschen Windows
   englisch. Bisher galt dann die Windows-Sprache (#57).
 - Zwei-Faktor-Einrichtung: Gibt es für die Website noch keinen Eintrag, legt „Neuer Eintrag für diese Seite“ einen an

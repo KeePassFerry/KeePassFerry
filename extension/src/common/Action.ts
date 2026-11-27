@@ -20,6 +20,11 @@ export const enum Action {
     OtpSetupCandidate = "otpSetupCandidate",
     ShowOtpSetupNotice = "showOtpSetupNotice",
     HideOtpSetupNotice = "hideOtpSetupNotice",
+    // KeePass gesperrt/getrennt: geholte Einträge (mit Passwörtern) in der Seite verwerfen (#56)
+    ForgetMatches = "forgetMatches",
+    // Seite -> Hintergrund: Werte (Passwort, geschützte Felder) eines Treffers zum Ausfüllen holen; Antwort EntrySecrets (#56)
+    RequestEntrySecrets = "requestEntrySecrets",
+    EntrySecrets = "entrySecrets",
     OpenOtpSetupPopup = "openOtpSetupPopup",
     DismissOtpSetup = "dismissOtpSetup",
     QueryUnlocked = "queryUnlocked",

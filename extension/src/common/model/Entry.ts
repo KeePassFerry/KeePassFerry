@@ -68,6 +68,8 @@ export class Entry {
     isPreferredMatch?: boolean;
     // Nur über eine zugehörige Domain gefunden (z. B. Eintrag für outlook.com auf login.live.com): diese Domain
     relatedDomain?: string;
+    // Passwort bzw. geschützte Werte nicht enthalten (Suche für Seiten, #56): vor dem Ausfüllen oder Anzeigen holen
+    readonly secretsOmitted: boolean;
 
     constructor(e: Partial<Entry>) {
         this.alwaysAutoFill = e.alwaysAutoFill || false;
@@ -98,6 +100,7 @@ export class Entry {
         this.entryIndex = e.entryIndex;
         this.isPreferredMatch = e.isPreferredMatch;
         this.relatedDomain = e.relatedDomain;
+        this.secretsOmitted = !!e.secretsOmitted || this.fields.some(f => f.valueOmitted);
     }
 
     public static getUsernameField(entry: Entry) {

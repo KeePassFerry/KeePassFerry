@@ -640,6 +640,7 @@ class Ferry {
     // Temporarily disable KeePassFerry. Used (for e.g.) when KeePass is shut down.
     _pauseFerry() {
         FerryLog.debug("Pausing KeePassFerry.");
+        this.forgetMatchedEntries();
         this.store.updateKeePassDatabases([]);
         this.store.updateActiveKeePassDatabaseIndex(-1);
         this.store.updateConnected(false);
@@ -715,13 +716,13 @@ class Ferry {
             const last = this.persistentTabStates.get(tabId)?.lastFilledEntry;
             const domain = FerryURL.fromString(tab.url)?.domainOrIPAddress;
             if (last && sameSite(last.domain, domain)) {
-                const lastEntries: Entry[] = (await timeout(this.rpc.findLogins(tab.url, null, last.uuid, last.dbFileName, null, null))) ?? [];
+                const lastEntries: Entry[] = (await timeout(this.rpc.findLogins(tab.url, null, last.uuid, last.dbFileName, null, null, true))) ?? [];
                 // Abfrage über die ID filtert im Plugin nicht: abgelaufene bei "Ausblenden" hier aussortieren
                 const expired = (e: Entry) => expiryState(e.expiryTime, 0)?.kind === "expired";
                 const hideExpired = lastEntries.some(expired) && (await this.rpc.getHideExpired().catch(() => false));
                 result.push(...lastEntries.filter(e => e.uuid === last.uuid && !(hideExpired && expired(e))));
             }
-            const found: Entry[] = (await timeout(this.rpc.findLogins(tab.url, null, null, null, null, null))) ?? [];
+            const found: Entry[] = (await timeout(this.rpc.findLogins(tab.url, null, null, null, null, null, true))) ?? [];
             for (const e of found) if (!result.some(r => r.uuid === e.uuid)) result.push(e);
             // Seiten großer Anbieter (z. B. Microsoft) passen mit zugehörigen Domains zu vielen Einträgen; die Liste scrollt
             return result.slice(0, 30);
@@ -765,6 +766,7 @@ class Ferry {
         const sameDatabases =
             this.store.state.KeePassDatabases.map(db => db.fileName).join("|") ===
             newDatabases.map(db => db.fileName).join("|");
+        if (newDatabases.length === 0 && this.store.state.KeePassDatabases.length > 0) this.forgetMatchedEntries();
 
         this.store.updateConnected(true);
         this.store.updateConnectedNative(this.rpc.nativeSessionIsActive);
@@ -842,6 +844,25 @@ class Ferry {
                     port.postMessage({ action: Action.DetectForms } as AddonMessage);
                 } catch (e) {
                     // Tab ist weg
+                }
+            });
+        });
+    }
+
+    // KeePass gesperrt, alle Datenbanken geschlossen oder getrennt (#56): die für Seiten geholten Einträge (mit
+    // Passwörtern) im Hintergrund und in allen Tabs und Frames verwerfen. Nach dem Entsperren sucht die Seite neu.
+    // Abgeschickte, noch nicht gespeicherte Anmeldungen bleiben: das sind Eingaben des Nutzers, kein Datenbankinhalt
+    forgetMatchedEntries() {
+        this.tabStates.forEach(ts => {
+            ts.frames.forEach(frame => {
+                frame.entries = [];
+                frame.urlEntries = [];
+            });
+            ts.framePorts.forEach(port => {
+                try {
+                    port.postMessage({ action: Action.ForgetMatches } as AddonMessage);
+                } catch (e) {
+                    // Frame ist weg
                 }
             });
         });
@@ -1039,7 +1060,7 @@ class Ferry {
         }
     }
 
-    async findLogins(fullURL, httpRealm, uuid, dbFileName, freeText, username) {
+    async findLogins(fullURL, httpRealm, uuid, dbFileName, freeText, username, withoutSecrets = false) {
         try {
             return this.rpc.findLogins(
                 fullURL,
@@ -1047,7 +1068,8 @@ class Ferry {
                 uuid,
                 dbFileName,
                 freeText,
-                username
+                username,
+                withoutSecrets
             );
         } catch (e) {
             FerryLog.error(
