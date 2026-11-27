@@ -1901,7 +1901,7 @@
         "description": "KeePassFerry"
     },
     "ferry_otp_pending_open": {
-        "message": "In Eintrag speichern",
+        "message": "Speichern …",
         "description": "KeePassFerry"
     },
     "ferry_otp_pending_discard": {

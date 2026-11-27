@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import { createApp, h } from "vue";
+import { createPinia } from "pinia";
 import EntryAddition from "../popup/components/EntryAddition.vue";
 import { requestExtraEdit } from "../popup/extras";
 
@@ -19,6 +20,8 @@ describe("EntryAddition: Sprung aus der Vorschau", () => {
         document.body.appendChild(host);
         const app = createApp(EntryAddition, { uuid: "u1", dbFileName: "db.kdbx", title: "Titel" });
         app.config.globalProperties.$i18n = (k: string) => k;
+        // Entwurf von "Hinzufügen" liegt im Store (#54)
+        app.use(createPinia());
         for (const name of STUBS) app.component(name, { render: () => h("div") });
         app.mount(host);
         return {

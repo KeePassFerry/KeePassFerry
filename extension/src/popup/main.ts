@@ -48,10 +48,11 @@ async function start() {
                 },
                 // ?otp=1: aus dem Seitenhinweis "Zwei-Faktor-Schlüssel gefunden" geöffnet,
                 // ?selection=1: aus dem Kontextmenü "„…“ zu Eintrag hinzufügen"
-                render: () => new URLSearchParams(window.location.search).get("otp") === "1"
-                    ? h(OtpSetup)
-                    : new URLSearchParams(window.location.search).get("selection") === "1"
-                    ? h(SelectionSave)
+                // Begonnener neuer Eintrag in diesem Tab (resumeCreate, #54): zurück in dasselbe Fenster
+                render: () => new URLSearchParams(window.location.search).get("otp") === "1" || m.resumeCreate === "otp"
+                    ? h(OtpSetup, { resume: m.resumeCreate === "otp" })
+                    : new URLSearchParams(window.location.search).get("selection") === "1" || m.resumeCreate === "selection"
+                    ? h(SelectionSave, { resume: m.resumeCreate === "selection" })
                     : h(App, {
                         matchedEntries: !m.entries ? null : m.entries,
                         siteEntries: (m as any).siteEntries ?? null,

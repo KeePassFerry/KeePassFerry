@@ -4,6 +4,15 @@ English · [Deutsch](#deutsch)
 
 ## Unreleased
 
+- New entry from the two-factor selection or from "Add … to entry": if the popup closes before saving (for example
+  when switching to another window), clicking the toolbar icon in that tab returns to the same editor with everything
+  entered so far, and "Save" creates the entry. Before, the popup showed "Edit entry" and "Save" did nothing (#54).
+- If the popup closes while choosing an entry for a two-factor key or a selection, clicking the toolbar icon in that tab
+  returns there. The chosen group and everything under "Add" (open, typed, staged, removed) are kept as well, also
+  when editing an existing entry. "Cancel" or saving ends this. The popup button now reads "Save …", as on the page.
+- The toolbar icon stays highlighted while something is still to be saved: on the current tab login data dismissed
+  with "Not now", a detected two-factor key or a new entry that hasn't been saved yet; in every tab, like the search,
+  an entry being edited that was neither saved nor cancelled. The icon is now updated when switching tabs.
 - Two-factor keys work in KeePass itself (#55): setting up a key now writes it both as `otp` (read and written by
   KeePassXC, KeePassDX, Keepass2Android, KeePassium) and as KeePass's own `TimeOtp-*` fields, so Ctrl+T, Ctrl+Shift+T
   and `{TIMEOTP}` work. When a database is opened and before it is saved, the plugin keeps both in step: a missing
@@ -705,6 +714,18 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 ## Unveröffentlicht
 
+- Neuer Eintrag aus der Zwei-Faktor-Auswahl oder aus „… zu Eintrag hinzufügen“: Schließt sich das Popup vor dem
+  Speichern (z. B. beim Wechsel in ein anderes Fenster), führt ein Klick auf das Symbol in diesem Tab zurück in
+  dasselbe Bearbeiten-Fenster mit allen Eingaben, und „Speichern“ legt den Eintrag an. Bisher stand dort „Eintrag
+  bearbeiten“, und „Speichern“ tat nichts (#54).
+- Schließt sich das Popup während der Auswahl eines Eintrags für einen Zwei-Faktor-Schlüssel oder eine Markierung,
+  führt ein Klick auf das Symbol in diesem Tab dorthin zurück. Erhalten bleiben auch die gewählte Gruppe und alles
+  unter „Hinzufügen“ (offen, Eingaben, Vorgemerktes, Entferntes), auch beim Bearbeiten eines vorhandenen Eintrags.
+  „Abbrechen“ oder Speichern beendet das. Der Knopf im Popup heißt jetzt „Speichern …“, wie auf der Seite.
+- Das Symbol in der Leiste bleibt hervorgehoben, solange noch etwas zu speichern ist: im aktuellen Tab mit „Jetzt
+  nicht“ weggeklickte Zugangsdaten, ein gefundener Zwei-Faktor-Schlüssel oder ein noch nicht gespeicherter neuer
+  Eintrag; in jedem Tab, wie die Suche, ein angefangenes Bearbeiten, das weder gespeichert noch abgebrochen wurde.
+  Beim Wechsel des Tabs wird das Symbol jetzt neu bestimmt.
 - Zwei-Faktor-Schlüssel funktionieren in KeePass selbst (#55): Beim Einrichten schreibt KeePassFerry den Schlüssel
   jetzt als `otp` (das lesen und schreiben KeePassXC, KeePassDX, Keepass2Android, KeePassium) und in KeePass' eigene
   Felder `TimeOtp-*`, damit funktionieren Strg+T, Strg+Umschalt+T und `{TIMEOTP}`. Beim Öffnen und vor dem Speichern

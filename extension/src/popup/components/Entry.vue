@@ -251,6 +251,8 @@ export default {
     mounted() {
         this.lookupChangeUrl(true);
         if (this.expanded) this.lookupChangeUrl();
+        // Startet aufgeklappt (erster Treffer der Seite), Details aber noch nicht da (Treffer ohne Passwort, #56): holen
+        if (this.expanded && !this.details) this.requestDetails();
     },
     methods: {
         // Benutzername- und Passwortzeile können in die Seite eingetragen werden, andere Felder nicht
@@ -268,21 +270,22 @@ export default {
         },
         showFullDetails() {
             this.lookupChangeUrl();
-            if (!this.expanded && !this.details) {
-                if ((this.searchResults ?? []).some(s => s.uuid === this.entrySummary.uuid)) {
-                    // Suchtreffer: Details kommen über den Store (bleiben nach Änderungen an der Datenbank erhalten)
-                    Port.postMessage({
-                        findMatches: {
-                            uuid: this.entrySummary.uuid,
-                            DBfilename: this.entrySummary.dbFileName
-                        }
-                    } as AddonMessage);
-                } else {
-                    // Treffer der Seite (ohne Passwort, #56): Details erst jetzt aus KeePass holen
-                    this.loadDetails();
-                }
-            }
+            if (!this.expanded && !this.details) this.requestDetails();
             this.expanded = true;
+        },
+        requestDetails() {
+            if ((this.searchResults ?? []).some(s => s.uuid === this.entrySummary.uuid)) {
+                // Suchtreffer: Details kommen über den Store (bleiben nach Änderungen an der Datenbank erhalten)
+                Port.postMessage({
+                    findMatches: {
+                        uuid: this.entrySummary.uuid,
+                        DBfilename: this.entrySummary.dbFileName
+                    }
+                } as AddonMessage);
+            } else {
+                // Treffer der Seite (ohne Passwort, #56): Details erst jetzt aus KeePass holen
+                this.loadDetails();
+            }
         },
         async loadDetails(): Promise<Entry> {
             if (this.details) return this.details;
@@ -335,6 +338,9 @@ export default {
                 updatedSaveState.showURLMismatchWarning = false;
             }
             updatedSaveState.titleResetValue = entry.title;
+            // Bearbeiten im normalen Popup: kein begonnener neuer Eintrag aus 2FA/Kontextmenü mehr (#54)
+            updatedSaveState.pendingCreate = null;
+            updatedSaveState.additionDraft = null;
             updatedSaveState.lastActiveAt = new Date();
             //TODO: Confirm that we don't have to roundtrip JSON here too
 //            this.updateSaveState(JSON.parse(JSON.stringify(updatedSaveState)));

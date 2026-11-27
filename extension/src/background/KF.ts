@@ -1,4 +1,5 @@
-import { offerPendingOtpSetup, recheckPendingOtpSetups } from "./otpSetup";
+import { hasPendingOtpSetup, offerPendingOtpSetup, otpSetupViewing, recheckPendingOtpSetups } from "./otpSetup";
+import { selectionViewing } from "./selectionSave";
 import { sameSite } from "../common/relatedDomains";
 import { LoginCandidate, SubmittedLoginMatch, matchSubmittedLogin, submittedCredentials } from "../common/submittedLogin";
 import { expiryState } from "../common/expiry";
@@ -33,6 +34,7 @@ import { SaveEntryResult } from "../common/SaveEntryResult";
 import BackgroundStore from "~/store/BackgroundStore";
 import { Mutation } from "~/store/Mutation";
 import { FerryBrowserActionIconConfiguration } from "../common/FerryBrowserActionIconConfiguration";
+import { manualRecoveryPromptTimeMs } from "../common/Timings";
 
 // Speichern-Hinweis auf einer anderen Website nur so lange nach dem Absenden (Weiterleitung nach der Anmeldung)
 const CROSS_SITE_SAVE_NOTICE_MS = 2 * 60 * 1000;
@@ -148,6 +150,8 @@ class Ferry {
                             this?.store?.updateCurrentSearchTerm(null);
                             this?.store?.updateSearchResults(null);
                         }, configManager.current.currentSearchTermTimeout * 1000);
+                        // Popup zu, z. B. weil das Fenster gewechselt wurde: ein begonnener neuer Eintrag hebt das Symbol hervor
+                        this.configureBrowserActionIcon();
                     });
 
                     let submittedData: any = null;
@@ -181,6 +185,16 @@ class Ferry {
                     const connectMessage = {
                         initialState: this.store.state
                     } as AddonMessage;
+                    // Begonnener neuer Eintrag in diesem Tab (#54): das Popup geht zurück in dasselbe Fenster
+                    const pendingCreate = this.store.state.saveState?.pendingCreate;
+                    if (pendingCreate && pendingCreate.tabId === this.foregroundTabId && this.store.state.saveState.lastActiveAt) {
+                        connectMessage.resumeCreate = pendingCreate.kind;
+                    } else if (otpSetupViewing(this.foregroundTabId)) {
+                        // Auswahl war offen, Popup hat sich von selbst geschlossen: dorthin zurück
+                        connectMessage.resumeCreate = "otp";
+                    } else if (selectionViewing(this.foregroundTabId)) {
+                        connectMessage.resumeCreate = "selection";
+                    }
 
                     if (matchedLogins.entries) {
                         connectMessage.entries = matchedLogins.entries;
@@ -358,19 +372,35 @@ class Ferry {
         this.store.updateNotifications(this.store.state.notifications.filter(unlessTrue));
     }
 
+    // Im Tab ist etwas zu speichern, bis es gespeichert oder verworfen ist (Öffnen des Popups allein erledigt nichts):
+    // weggeklickte Zugangsdaten, ein gefundener Zwei-Faktor-Schlüssel oder ein begonnener neuer Eintrag (#54)
+    hasOpenSaveItem(tabId: number): boolean {
+        if (this.persistentTabStates.get(tabId)?.items?.some(i => i.itemType === "submittedData")) return true;
+        if (hasPendingOtpSetup(tabId)) return true;
+        const ss = this.store?.state?.saveState;
+        const pc = ss?.pendingCreate;
+        if (pc) return pc.tabId === tabId && !!ss.lastActiveAt;
+        // Angefangenes Bearbeiten gilt wie die Suche in jedem Tab
+        return this.editInProgress();
+    }
+
+    // Angefangenes Bearbeiten im normalen Popup, weder gespeichert noch abgebrochen: das Popup stellt es wieder her
+    // (bis 2 Minuten direkt, bis 1 Stunde auf Nachfrage), so lange gilt es als offen
+    editInProgress(): boolean {
+        const ss = this.store?.state?.saveState;
+        if (!ss?.lastActiveAt) return false;
+        const lastActive = new Date(ss.lastActiveAt).getTime();
+        if (!(lastActive > Date.now() - manualRecoveryPromptTimeMs)) return false;
+        // Gespeichert (das Popup setzt den Zustand erst beim nächsten Öffnen zurück)
+        const saved = this.store.state.saveEntryResult;
+        if ((saved?.result === "created" || saved?.result === "updated") && new Date(saved.receivedAt).getTime() >= lastActive) return false;
+        return true;
+    }
+
     configureBrowserActionIcon() {
         const actionConfig = new FerryBrowserActionIconConfiguration();
 
-        actionConfig.saveAvailable = false;
-        if (this.persistentTabStates.get(this.foregroundTabId)) {
-            this.persistentTabStates
-                .get(this.foregroundTabId)
-                .items.forEach(item => {
-                    if (item.itemType === "submittedData") {
-                        actionConfig.saveAvailable = true;
-                    }
-                });
-        }
+        actionConfig.saveAvailable = this.hasOpenSaveItem(this.foregroundTabId);
 
         actionConfig.matchedEntries = 0;
         //TODO:f: Support number of matched entries on the icon if we can find a way to ensure the data in the store or
@@ -623,9 +653,8 @@ class Ferry {
     resetBrowserActionColor() {
         // Plakette (keine Datenbank) bleibt, solange der Zustand gilt
         if (this.store.state.connected && this.store.state.KeePassDatabases.length === 0) return;
-        // Noch nicht gespeicherte Zugangsdaten: hervorgehoben, bis gespeichert, aktualisiert oder verworfen
-        // (Öffnen des Popups allein erledigt nichts)
-        if (this.persistentTabStates.get(this.foregroundTabId)?.items?.some(i => i.itemType === "submittedData")) return;
+        // Noch offen zu speichern: hervorgehoben, bis gespeichert, aktualisiert oder verworfen
+        if (this.hasOpenSaveItem(this.foregroundTabId)) return;
         chrome.action.setIcon({ path: "/assets/images/48.png" });
     }
 
@@ -948,6 +977,8 @@ class Ferry {
                 fileName: entry.database.fileName,
                 uuid: entry.uuid
             } as SaveEntryResult);
+            // Bearbeiten ist damit erledigt: Symbol nicht mehr hervorheben
+            this.configureBrowserActionIcon();
             return true;
         }
     }

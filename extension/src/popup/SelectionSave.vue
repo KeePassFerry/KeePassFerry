@@ -121,6 +121,7 @@ import { SaveState } from "../common/SaveState";
 import { Entry } from "../common/model/Entry";
 import type { Field } from "../common/model/Field";
 import { addPageField } from "./addPageField";
+import { currentTabId } from "./currentTab";
 
 // Popup-Ansicht "„…“ zu Eintrag hinzufügen": Eintrag wählen (der im Tab zuletzt benutzte wird direkt geöffnet),
 // dann das bekannte Bearbeiten-Fenster mit aufgeklapptem "Hinzufügen" und der Markierung als Inhalt.
@@ -135,6 +136,8 @@ interface Candidate {
 
 export default {
     components: { Save1stParty },
+    // resume: über das Symbol geöffnet, um einen begonnenen neuen Eintrag fortzusetzen (#54)
+    props: { resume: { type: Boolean, default: false } },
     data: () => ({
         loading: true,
         setup: null as {
@@ -185,6 +188,31 @@ export default {
             this.setup = null;
         }
         const c = this.setup?.candidates ?? [];
+        // Begonnener neuer Eintrag (Popup war zu, #54): mit den Eingaben im Bearbeiten-Fenster weitermachen.
+        // Markierung inzwischen weg (zu alt, verworfen): Zustand verwerfen und das normale Popup zeigen
+        if (this.resume) {
+            const pendingCreate = (this.saveState as SaveState)?.pendingCreate?.kind === "selection";
+            if (!this.setup || this.setup.problem) {
+                if (pendingCreate) this.resetSaveState();
+                window.location.reload();
+                return;
+            }
+            chrome.runtime.sendMessage({ keepassferry: "popupView", kind: "selection", on: true }).catch(() => undefined);
+            if (pendingCreate) {
+                this.newEntry = true;
+                this.createOnSave = this.makeCreateOnSave();
+                // Markierung wieder unter "Hinzufügen" (das Fenster hält sie nur, solange es offen ist)
+                if (!this.setup.field) requestAddition((this.saveState as SaveState).newEntry.uuid, this.setup.text);
+                this.editing = true;
+            }
+            this.loading = false;
+            return;
+        }
+        // Schließt sich das Popup von selbst (Tab/Fenster gewechselt), öffnet das Symbol in diesem Tab diese Ansicht
+        // wieder (#54); "Abbrechen" und Speichern beenden das (der Fund wird dabei verworfen)
+        if (this.setup && !this.setup.problem && !this.setup.field) {
+            chrome.runtime.sendMessage({ keepassferry: "popupView", kind: "selection", on: true }).catch(() => undefined);
+        }
         const last = c.find(x => x.uuid === this.setup.lastFilledUuid);
         if (last) {
             // Eben im Tab benutzt: das ist fast immer der richtige Eintrag; das Bearbeiten-Fenster zeigt ihn oben an
@@ -229,7 +257,12 @@ export default {
                 // Nur Kennung der Datenbank, nicht der ganze Baum (der Bearbeiten-Zustand wird an den Hintergrund verteilt)
                 database: { name: db.name, fileName: db.fileName, root: { uuid: db.root?.uuid } } as any
             });
-            this.createOnSave = async (group: { uuid: string; dbFileName: string }) => {
+            this.createOnSave = this.makeCreateOnSave();
+            this.showEditor(entry, true);
+        },
+        // Speichern im Bearbeiten-Fenster: Eintrag in der gewählten Gruppe anlegen, danach das Hinzugefügte hinein
+        makeCreateOnSave: function () {
+            return async (group: { uuid: string; dbFileName: string }) => {
                 const e = (this.saveState as SaveState).newEntry;
                 const created = await chrome.runtime.sendMessage({
                     keepassferry: "createSelectionEntry",
@@ -246,7 +279,6 @@ export default {
                 }
                 return created;
             };
-            this.showEditor(entry);
         },
         // Wie der Stift am Eintrag (Entry.vue editEntry), ohne abgeschickte Anmeldedaten
         openEditor: async function (c: { uuid: string; dbFileName: string }) {
@@ -262,7 +294,7 @@ export default {
             }
             this.opening = false;
         },
-        showEditor: function (entry: Entry) {
+        showEditor: async function (entry: Entry, isNew = false) {
             const ss = this.saveState as SaveState;
             const updated = Object.assign({}, ss);
             const field: Field = this.setup.field;
@@ -271,6 +303,10 @@ export default {
             updated.showURLMismatchWarning = false;
             updated.titleResetValue = entry.title;
             updated.lastActiveAt = new Date();
+            // Neuer Eintrag: schließt sich das Popup, geht es in diesem Tab hierher zurück (#54)
+            const tabId = await currentTabId();
+            updated.pendingCreate = isNew ? { kind: "selection", tabId } : null;
+            updated.additionDraft = null;
             if (!field) requestAddition(entry.uuid, this.setup.text);
             this.updateSaveState(updated);
             this.editing = true;
@@ -283,6 +319,8 @@ export default {
             updated.lastActiveAt = null;
             updated.showURLMismatchWarning = false;
             updated.favicon = null;
+            updated.pendingCreate = null;
+            updated.additionDraft = null;
             this.updateSaveState(updated);
         },
         finish: function () {

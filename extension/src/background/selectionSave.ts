@@ -31,9 +31,21 @@ interface PendingSelection {
     pageTitle: string;
     domain: string;
     at: number;
+    // Auswahl im Popup war offen (#54): schließt es sich von selbst, öffnet das Symbol in diesem Tab sie wieder
+    viewing?: boolean;
 }
 
 const pending = new Map<number, PendingSelection>();
+
+export function setSelectionViewing(tabId: number, on: boolean) {
+    const s = pending.get(tabId);
+    if (s) s.viewing = on;
+}
+
+export function selectionViewing(tabId: number): boolean {
+    const s = pending.get(tabId);
+    return !!s?.viewing && !s.problem && Date.now() - s.at <= MAX_AGE_MS;
+}
 
 // Markierung im Frame: in Eingabefeldern aus dem Feldwert (getSelection liefert dort nichts), sonst die Seitenmarkierung
 async function readSelection(tabId: number, frameId: number, fallback: string): Promise<string> {

@@ -131,6 +131,7 @@ import { supplementEntryState } from "./supplementEntryState";
 import { SaveState } from "../common/SaveState";
 import { Entry } from "../common/model/Entry";
 import { Field } from "../common/model/Field";
+import { currentTabId } from "./currentTab";
 
 // Popup-Ansicht "Zwei-Faktor-Schlüssel speichern": Eintrag wählen (Vorschläge oder Suche) und speichern.
 // Das Secret selbst sieht das Popup nie; Speichern läuft über den Hintergrund zum KeePass-Plugin.
@@ -145,6 +146,8 @@ interface Candidate {
 
 export default {
     components: { Save1stParty },
+    // resume: über das Symbol geöffnet, um einen begonnenen neuen Eintrag fortzusetzen (#54)
+    props: { resume: { type: Boolean, default: false } },
     data: () => ({
         loading: true,
         setup: null as {
@@ -208,6 +211,25 @@ export default {
         // Kein Eintrag für die Seite: "Neuer Eintrag" ist vorausgewählt
         this.newEntry = !!this.setup && c.length === 0;
         this.loading = false;
+
+        // Schließt sich das Popup von selbst (Tab/Fenster gewechselt), öffnet das Symbol in diesem Tab diese Ansicht
+        // wieder (#54); "Abbrechen" und Speichern beenden das
+        if (this.setup) chrome.runtime.sendMessage({ keepassferry: "popupView", kind: "otp", on: true }).catch(() => undefined);
+
+        // Begonnener neuer Eintrag (Popup war zu): mit den Eingaben im Bearbeiten-Fenster weitermachen.
+        // Fund inzwischen weg (gespeichert, verworfen, zu alt): Zustand verwerfen und das normale Popup zeigen
+        if (this.resume) {
+            const pendingCreate = (this.saveState as SaveState)?.pendingCreate?.kind === "otp";
+            if (pendingCreate && this.setup) {
+                this.newEntry = true;
+                this.selected = null;
+                this.createOnSave = this.makeCreateOnSave();
+                this.editing = true;
+            } else if (!this.setup) {
+                if (pendingCreate) this.resetSaveState();
+                window.location.reload();
+            }
+        }
     },
     methods: {
         ...mapActions(useStore, ["updateSaveState"]),
@@ -226,7 +248,7 @@ export default {
         },
         // Neuer Eintrag nur im Popup (Titel = Anbieter aus dem QR-Code, Benutzername = Konto, Adresse = Ursprung der
         // Seite, aktive Datenbank); KeePass bekommt ihn erst mit "Speichern", Abbrechen hinterlässt nichts
-        openNewEntryEditor: function () {
+        openNewEntryEditor: async function () {
             const dbs = (this.KeePassDatabases as any[]).filter(d => !d.readOnly);
             const active = (this.KeePassDatabases as any[])[this.ActiveKeePassDatabaseIndex];
             const db = active && !active.readOnly ? active : dbs[0];
@@ -244,7 +266,22 @@ export default {
                 // Nur Kennung der Datenbank, nicht der ganze Baum (der Bearbeiten-Zustand wird an den Hintergrund verteilt)
                 database: { name: db.name, fileName: db.fileName, root: { uuid: db.root?.uuid } } as any
             });
-            this.createOnSave = async (group: { uuid: string; dbFileName: string }) => {
+            this.createOnSave = this.makeCreateOnSave();
+            const ss = this.saveState as SaveState;
+            const updated = Object.assign({}, ss);
+            updated.newEntry = supplementEntryState(entry, { ...ss, submittedData: null }, entry.URLs);
+            updated.showURLMismatchWarning = false;
+            updated.titleResetValue = entry.title;
+            updated.lastActiveAt = new Date();
+            // Schließt sich das Popup (z. B. Fenster gewechselt), geht es in diesem Tab hierher zurück (#54)
+            updated.pendingCreate = { kind: "otp", tabId: await currentTabId() };
+            updated.additionDraft = null;
+            this.updateSaveState(updated);
+            this.editing = true;
+        },
+        // Speichern im Bearbeiten-Fenster: Eintrag in der gewählten Gruppe anlegen, Schlüssel hineinschreiben
+        makeCreateOnSave: function () {
+            return async (group: { uuid: string; dbFileName: string }) => {
                 const e = (this.saveState as SaveState).newEntry;
                 const created = await chrome.runtime.sendMessage({
                     keepassferry: "createOtpEntry",
@@ -262,14 +299,6 @@ export default {
                 }
                 return created;
             };
-            const ss = this.saveState as SaveState;
-            const updated = Object.assign({}, ss);
-            updated.newEntry = supplementEntryState(entry, { ...ss, submittedData: null }, entry.URLs);
-            updated.showURLMismatchWarning = false;
-            updated.titleResetValue = entry.title;
-            updated.lastActiveAt = new Date();
-            this.updateSaveState(updated);
-            this.editing = true;
         },
         // Bearbeiten-Zustand zurücksetzen wie App.vue saveDiscard, damit das normale Popup nicht "Bearbeiten" wieder öffnet
         resetSaveState: function () {
@@ -279,6 +308,8 @@ export default {
             updated.lastActiveAt = null;
             updated.showURLMismatchWarning = false;
             updated.favicon = null;
+            updated.pendingCreate = null;
+            updated.additionDraft = null;
             this.updateSaveState(updated);
         },
         // Abbrechen im Bearbeiten-Fenster: zurück zur Auswahl, der gefundene Schlüssel bleibt vorgemerkt
@@ -314,7 +345,9 @@ export default {
             }
             this.saving = false;
         },
-        close: function () {
+        // "Abbrechen": bewusst geschlossen, das Symbol öffnet danach wieder das normale Popup (der Fund bleibt dort)
+        close: async function () {
+            await chrome.runtime.sendMessage({ keepassferry: "popupView", kind: "otp", on: false }).catch(() => undefined);
             window.close();
         }
     }

@@ -155,6 +155,9 @@ import { decodeOtpQr } from "../otpQr";
 import {
     canOpenExternally, formatSize, takeAddition, takeExtraEdit, isImageName, loadAttachment, loadFieldValue, openAttachmentExternally, openNotesExternally, saveBlob
 } from "../extras";
+import { mapActions, mapState } from "pinia";
+import useStore from "../../store";
+import type { AdditionDraft, SaveState } from "../../common/SaveState";
 
 // "Hinzufügen" im Bearbeiten-Fenster: Wiederherstellungscode, Zwei-Faktor-Schlüssel, Notiz, eigenes Feld oder Bild.
 // Hinzugefügtes und Entferntes wird nur vorgemerkt (Liste "Im Eintrag" mit Neu/Wird entfernt) und erst mit
@@ -217,6 +220,9 @@ export default {
         // Kurz hervorgehobene Zeile (Sprung aus der Bildvorschau: dort z. B. löschen)
         highlighted: null as string,
         editValue: "",
+        // Entwurf (#54): Änderungen vorhandener Zeilen, angewendet sobald diese geladen sind; Zeitgeber fürs Merken
+        pendingChanges: [] as { key: string; removed?: boolean; newValue?: string; newProtect?: boolean }[],
+        draftTimer: null as ReturnType<typeof setTimeout>,
         preview: { open: false, title: "", blob: null as Blob, text: null as string, external: false, editKey: null as string }
     }),
     computed: {
@@ -246,6 +252,23 @@ export default {
             if (this.kind === "custom" || this.kind === "recovery") return !!(this.name ?? "").trim();
             return true;
         },
+        ...mapState(useStore, ["saveState"]),
+        draft: function (): AdditionDraft {
+            return {
+                uuid: this.uuid,
+                adding: this.adding,
+                kind: this.kind,
+                name: this.name,
+                value: this.value,
+                protect: this.protect,
+                imageName: this.imageName,
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                staged: (this.staged as Row[]).map(({ blob, ...rest }) => ({ ...rest })),
+                changes: (this.existing as Row[])
+                    .filter(r => r.removed || r.newValue !== undefined || r.newProtect !== undefined)
+                    .map(r => ({ key: r.key, removed: r.removed, newValue: r.newValue, newProtect: r.newProtect }))
+            };
+        },
         hasChanges: function (): boolean {
             return this.staged.length > 0 || this.existing.some(r => r.removed || r.newValue !== undefined || r.newProtect !== undefined);
         },
@@ -260,9 +283,28 @@ export default {
     watch: {
         hasChanges: function (v: boolean) {
             this.$emit("changed", v);
+        },
+        // Entwurf in den Bearbeiten-Zustand: übersteht ein Schließen des Popups (Tab-/Fensterwechsel, #54)
+        draft: {
+            deep: true,
+            handler: function () {
+                clearTimeout(this.draftTimer);
+                this.draftTimer = setTimeout(() => this.saveDraft(), 250);
+            }
         }
     },
     mounted: function () {
+        // Entwurf von vorher (Popup war zu): wiederherstellen statt neu zu beginnen
+        const d = (this.saveState as SaveState)?.additionDraft;
+        if (d && d.uuid === this.uuid) {
+            this.restoreDraft(d);
+            if (!this.notCreatedYet) this.loadExisting();
+            chrome.runtime
+                .sendMessage({ keepassferry: "connectionStatus" })
+                .then(s => (this.protectionSupported = !!s?.fieldProtection))
+                .catch(() => undefined);
+            return;
+        }
         // Aus dem Kontextmenü mit markiertem Text gekommen: "Hinzufügen" gleich offen, Text als Inhalt, Art frei wählbar
         const text = takeAddition(this.uuid);
         if (text) {
@@ -278,6 +320,40 @@ export default {
             .catch(() => undefined);
     },
     methods: {
+        ...mapActions(useStore, ["updateSaveState"]),
+        // Nur während einer Bearbeitung (lastActiveAt gesetzt) und nur bei Änderung
+        saveDraft: function () {
+            const ss = this.saveState as SaveState;
+            if (!ss?.lastActiveAt) return;
+            const draft = this.draft as AdditionDraft;
+            if (JSON.stringify(ss.additionDraft ?? null) === JSON.stringify(draft)) return;
+            const updated = Object.assign({}, JSON.parse(JSON.stringify(ss))) as SaveState;
+            updated.additionDraft = draft;
+            this.updateSaveState(updated);
+        },
+        restoreDraft: function (d: AdditionDraft) {
+            this.kind = d.kind || "custom";
+            this.name = d.name ?? "";
+            this.value = d.value ?? "";
+            this.protect = !!d.protect;
+            this.imageName = d.imageName ?? "";
+            this.keepValueOnKindChange = !!this.value;
+            this.staged = (d.staged ?? []).map(r => {
+                const row = { ...r } as unknown as Row;
+                // Bild: Vorschau aus den gemerkten Daten neu erzeugen
+                if (row.type === "attachment" && row.data) {
+                    try {
+                        const bytes = Uint8Array.from(atob(row.data), c => c.charCodeAt(0));
+                        row.blob = new Blob([bytes], { type: "image/jpeg" });
+                    } catch (e) {
+                        // ohne Vorschau
+                    }
+                }
+                return row;
+            });
+            this.pendingChanges = d.changes ?? [];
+            if (d.adding) this.openAdd();
+        },
         uriFor: function (v: string): string {
             const t = (v ?? "").trim();
             if (OTPAUTH_RE.test(t)) return t;
@@ -387,6 +463,15 @@ export default {
                 for (const a of r?.attachments ?? []) {
                     list.push({ key: "a:" + a.name, type: "attachment", name: a.name, sub: formatSize(a.size) });
                 }
+                // Vorgemerkte Änderungen aus dem Entwurf (Popup war zu) wieder anwenden
+                for (const c of this.pendingChanges as AdditionDraft["changes"]) {
+                    const row = list.find(x => x.key === c.key);
+                    if (!row) continue;
+                    if (c.removed) row.removed = true;
+                    if (c.newValue !== undefined) row.newValue = c.newValue;
+                    if (c.newProtect !== undefined) row.newProtect = c.newProtect;
+                }
+                this.pendingChanges = [];
                 this.existing = list;
                 // Aus der Vorschau des aufgeklappten Eintrags mit dem Stift gekommen: gleich bearbeiten
                 const pendingKey = takeExtraEdit(this.uuid);

@@ -302,7 +302,9 @@ export default {
             if (this.createOnSave) {
                 const active = (this.KeePassDatabases as Database[])[this.ActiveKeePassDatabaseIndex];
                 const activeDb = active && !active.readOnly ? active : dbs[0];
-                this.setTargetGroup(preferredGroupUuid) || this.setTargetGroup(activeDb?.root?.uuid);
+                // Fortgesetzt (Popup war zu, #54): die vorher gewählte Gruppe
+                const chosen = (this.saveState as SaveState).pendingCreate?.groupUuid;
+                this.setTargetGroup(chosen) || this.setTargetGroup(preferredGroupUuid) || this.setTargetGroup(activeDb?.root?.uuid);
             }
             if (this.preferToSkipWhere) {
                 this.preferredDb = preferredDb;
@@ -337,7 +339,15 @@ export default {
             return false;
         },
         pickGroup: function (item: GroupListItem) {
-            if (this.setTargetGroup(item.id)) this.groupPickerOpen = false;
+            if (!this.setTargetGroup(item.id)) return;
+            this.groupPickerOpen = false;
+            // Gewählte Gruppe im Bearbeiten-Zustand merken: übersteht ein Schließen des Popups (#54)
+            const ss = this.saveState as SaveState;
+            if (ss.pendingCreate) {
+                const updated = Object.assign({}, JSON.parse(JSON.stringify(ss))) as SaveState;
+                updated.pendingCreate = { ...updated.pendingCreate, groupUuid: item.id };
+                this.updateSaveState(updated);
+            }
         },
         nextClicked: function () {
             this.applyPendingRemovals();

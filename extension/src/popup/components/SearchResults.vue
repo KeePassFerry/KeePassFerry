@@ -11,13 +11,14 @@ v-for="(match, index) of filteredMatches" :key="match.entry.uuid" :ref="setNodes
 " @move-out-of-list="exitList"
 @pref-entry-toggle="onPreferredEntryClick"  />
 
-        <!-- Seite ohne Anmeldeformular: Einträge dieser Website, der zuletzt benutzte aufgeklappt (Einmalcode sichtbar) -->
+        <!-- Seite ohne Anmeldeformular: Einträge dieser Website, der zuletzt benutzte zuerst. Nicht von selbst
+             aufgeklappt: Details mit Passwort kommen erst auf Klick aus KeePass (#56) -->
         <template v-if="siteSummaries.length > 0 && !(filteredMatches && filteredMatches.length > 0)">
             <div class="ferry-caption">{{ $i18n("ferry_popup_this_site") }}</div>
             <Entry
 v-for="(entry, index) of siteSummaries" :key="'site-' + entry.uuid"
                 :entrySummary="entry" :isFirstInAList="index === 0" :dataIndex="index"
-                :start-expanded="index === 0" :no-navigate="true" />
+                :no-navigate="true" />
         </template>
 
         <div v-show="deduplicatedSearchResults && deduplicatedSearchResults.length > 0" class="ferry-caption">

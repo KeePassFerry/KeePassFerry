@@ -322,6 +322,8 @@ export default {
             return "off";
         },
         showSaveStart: function () {
+            // Begonnener neuer Eintrag aus 2FA/Kontextmenü eines anderen Tabs: nicht als "Eintrag bearbeiten" zeigen (#54)
+            if ((this.saveState as SaveState)?.pendingCreate) return false;
             return new Date(this.saveLastActiveAt) > new Date(Date.now() - this.autoRecoveryTimeMs);
         },
         showSaveRecovery: function () {
@@ -329,6 +331,7 @@ export default {
             )} : ${new Date(this.saveLastActiveAt) > new Date(Date.now() - this.manualRecoveryPromptTimeMs)}`);
             return (
                 !this.showSaveStart &&
+                !(this.saveState as SaveState)?.pendingCreate &&
                 new Date(this.saveLastActiveAt) >
                 new Date(Date.now() - this.manualRecoveryPromptTimeMs)
             );
@@ -547,6 +550,9 @@ export default {
             updatedSaveState.newEntry = supplementEntryState(entry, { ...ss, submittedData: null }, entry.URLs);
             updatedSaveState.showURLMismatchWarning = false;
             updatedSaveState.titleResetValue = entry.title;
+            // Bearbeiten im normalen Popup: kein begonnener neuer Eintrag aus 2FA/Kontextmenü mehr (#54)
+            updatedSaveState.pendingCreate = null;
+            updatedSaveState.additionDraft = null;
             updatedSaveState.lastActiveAt = new Date();
             this.updateSaveState(updatedSaveState);
             return true;
@@ -661,6 +667,9 @@ export default {
             const updatedSaveState = Object.assign({}, ss);
             updatedSaveState.newEntry = supplementEntryState(new Entry(entryTemplate), ss);
             updatedSaveState.titleResetValue = updatedSaveState.newEntry.title;
+            // Bearbeiten im normalen Popup: kein begonnener neuer Eintrag aus 2FA/Kontextmenü mehr (#54)
+            updatedSaveState.pendingCreate = null;
+            updatedSaveState.additionDraft = null;
             updatedSaveState.lastActiveAt = new Date();
             updatedSaveState.showURLMismatchWarning = false;
             FerryLog.debug("updating saveState");
@@ -691,6 +700,9 @@ export default {
             const updatedSaveState = Object.assign({}, ss);
             updatedSaveState.newEntry = supplementExistingEntry(entry, ss, urls);
             updatedSaveState.titleResetValue = entry.title;
+            // Bearbeiten im normalen Popup: kein begonnener neuer Eintrag aus 2FA/Kontextmenü mehr (#54)
+            updatedSaveState.pendingCreate = null;
+            updatedSaveState.additionDraft = null;
             updatedSaveState.lastActiveAt = new Date();
             updatedSaveState.showURLMismatchWarning = showWarning;
             this.updateSaveState(updatedSaveState);
@@ -698,6 +710,9 @@ export default {
         saveRecover: function () {
             const ss = JSON.parse(JSON.stringify(this.saveState as SaveState));
             const updatedSaveState = Object.assign({}, ss);
+            // Bearbeiten im normalen Popup: kein begonnener neuer Eintrag aus 2FA/Kontextmenü mehr (#54)
+            updatedSaveState.pendingCreate = null;
+            updatedSaveState.additionDraft = null;
             updatedSaveState.lastActiveAt = new Date();
             this.updateSaveState(updatedSaveState);
 
@@ -709,6 +724,9 @@ export default {
             const updatedSaveState = Object.assign({}, ss);
             updatedSaveState.newEntry = new Entry({});
             updatedSaveState.titleResetValue = null;
+            // Bearbeiten im normalen Popup: kein begonnener neuer Eintrag aus 2FA/Kontextmenü mehr (#54)
+            updatedSaveState.pendingCreate = null;
+            updatedSaveState.additionDraft = null;
             updatedSaveState.lastActiveAt = null;
             updatedSaveState.showURLMismatchWarning = false;
             updatedSaveState.favicon = null;

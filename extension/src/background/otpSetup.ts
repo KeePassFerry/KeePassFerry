@@ -37,6 +37,8 @@ interface PendingOtpSetup {
     documentId?: string;
     // Bei gesperrter oder noch nicht verbundener Datenbank gefunden: noch nicht mit den Einträgen verglichen
     unchecked?: boolean;
+    // Auswahl im Popup war offen (#54): schließt es sich von selbst, öffnet das Symbol in diesem Tab sie wieder
+    viewing?: boolean;
     // Vergleich nach dem Entsperren (gleichzeitige Anfragen warten auf dasselbe Ergebnis)
     check?: Promise<boolean>;
 }
@@ -67,6 +69,8 @@ function persistPending() {
         data[String(tabId)] = rest;
     }
     chrome.storage.session?.set({ [SESSION_KEY]: data }).catch(() => undefined);
+    // Offener Fund hebt das Symbol in der Leiste hervor (hasPendingOtpSetup)
+    ferry?.configureBrowserActionIcon?.();
 }
 
 const restored: Promise<void> = (async () => {
@@ -378,6 +382,27 @@ export async function dismissOtpSetup(tabId: number) {
         setup.dismissed = true;
         persistPending();
     }
+}
+
+// Für das Symbol in der Leiste: im Tab gefundener, noch nicht gespeicherter Schlüssel (auch nach "Später"), solange
+// der Tab auf derselben Domain ist, wie der Hinweis im Popup
+export function hasPendingOtpSetup(tabId: number): boolean {
+    const setup = pending.get(tabId);
+    if (!setup || Date.now() - setup.at > MAX_AGE_MS) return false;
+    const tabUrl = ferry.tabStates.get(tabId)?.url;
+    return !tabUrl || FerryURL.fromString(tabUrl)?.domainOrIPAddress === setup.domain;
+}
+
+export function setOtpSetupViewing(tabId: number, on: boolean) {
+    const setup = pending.get(tabId);
+    if (setup && !!setup.viewing !== on) {
+        setup.viewing = on;
+        persistPending();
+    }
+}
+
+export function otpSetupViewing(tabId: number): boolean {
+    return hasPendingOtpSetup(tabId) && !!pending.get(tabId)?.viewing;
 }
 
 export function forgetOtpSetup(tabId: number) {

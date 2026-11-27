@@ -31,6 +31,8 @@ export interface AddonMessage {
     findMatches?: { uri?: string; uuid?: string; DBfilename?: string; visible?: boolean };
     findMatchesResult?: Entry[];
     // RequestEntrySecrets/EntrySecrets (#56): Kennung der Anfrage und der Treffer mit Werten (null = nicht erlaubt/gefunden)
+    // Popup: begonnenen neuen Eintrag fortsetzen (#54), "otp" = Zwei-Faktor-Auswahl, "selection" = Kontextmenü
+    resumeCreate?: "otp" | "selection";
     secretsRequestId?: string;
     entrySecrets?: Entry;
     // Formulare ohne Passwortfeld: IDs und Namen der Felder, die Einträge dieser Seite ausfüllen (#47)

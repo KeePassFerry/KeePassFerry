@@ -1,8 +1,8 @@
 import { diag, watchDiagSwitch } from "./ferryDiag";
-import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, createOtpEntry, forgetOtpSetup } from "./otpSetup";
+import { getOtpSetupForPopup, getOtpSetupSummary, applyOtpSetup, createOtpEntry, forgetOtpSetup, setOtpSetupViewing } from "./otpSetup";
 import { parseOtpauth } from "../common/otpauth";
 import { forgetAutoFill } from "./otpRepeat";
-import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave } from "./selectionSave";
+import { getSelectionSaveForPopup, createSelectionEntry, findEntryForEdit, forgetSelectionSave, setSelectionViewing } from "./selectionSave";
 import { takePendingEdit } from "./popupEdit";
 import { queryPageFields, fillPageField } from "./pageFields";
 import { ENTRY_RECYCLE_FEATURE, FIELD_PROTECTION_FEATURE, HIBP_CHECK_FEATURE, HIBP_LEAKS_FEATURE, EXPIRY_FEATURE, DIAG_FOLDER_FEATURE, OPTIONS_DIALOG_FEATURE, pluginUpdateAvailable, pluginVersionFrom } from "../common/FeatureFlags";
@@ -122,6 +122,8 @@ function updateForegroundTab(tabId: number) {
     if (ferry && ferry.foregroundTabId !== tabId) {
         // May not have set up KeePassFerry yet
         ferry.foregroundTabId = tabId;
+        // Symbol gilt je Tab: hervorgehoben, wenn in diesem Tab etwas zu speichern ist (sonst bliebe der vorige Tab)
+        ferry.configureBrowserActionIcon?.();
         const ports = ferry.tabStates.get(tabId)?.framePorts;
         if (ports) {
             // May not have set up port yet
@@ -281,6 +283,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             break;
         case "discardSelectionSave":
             forgetSelectionSave(ferry.foregroundTabId);
+            work = Promise.resolve(true);
+            break;
+        case "popupView":
+            // Auswahl im Popup offen (on) bzw. bewusst geschlossen (off): schließt es sich von selbst, öffnet das
+            // Symbol in diesem Tab sie wieder (#54)
+            if (msg.kind === "otp") setOtpSetupViewing(ferry.foregroundTabId, !!msg.on);
+            if (msg.kind === "selection") setSelectionViewing(ferry.foregroundTabId, !!msg.on);
             work = Promise.resolve(true);
             break;
         case "addImageAttachment":
