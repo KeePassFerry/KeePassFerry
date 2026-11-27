@@ -7,7 +7,7 @@ namespace KeePassFerry
 {
     /// <summary>
     /// Sichtbare Texte des Plugins in Deutsch oder Englisch.
-    /// Maßgeblich ist die Sprache von KeePass, ohne Übersetzung die Windows-Sprache.
+    /// Maßgeblich ist die Sprache von KeePass (ohne Sprachdatei Englisch); nur wenn KeePass keine Auskunft gibt, die Windows-Sprache.
     /// Fenster aus dem Designer enthalten die englischen Texte; Localize ersetzt sie bei deutscher Sprache.
     /// </summary>
     internal static class FerryText
@@ -18,10 +18,11 @@ namespace KeePassFerry
             {
                 try
                 {
-                    string kp = KeePass.Program.Translation != null && KeePass.Program.Translation.Properties != null
-                        ? KeePass.Program.Translation.Properties.Iso6391Code
-                        : null;
-                    if (!string.IsNullOrEmpty(kp)) return kp.Equals("de", StringComparison.OrdinalIgnoreCase);
+                    // Eingebautes Englisch (keine Sprachdatei) meldet einen leeren Code: dann Englisch, nicht die
+                    // Windows-Sprache (#57)
+                    if (KeePass.Program.Translation != null && KeePass.Program.Translation.Properties != null)
+                        return (KeePass.Program.Translation.Properties.Iso6391Code ?? "")
+                            .Equals("de", StringComparison.OrdinalIgnoreCase);
                 }
                 catch (Exception)
                 {
