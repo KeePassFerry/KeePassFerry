@@ -2084,6 +2084,38 @@
         "message": "Leitet eine Anmeldeseite auf eine andere Website weiter, bleibt der Speichern-Hinweis erhalten und nennt die Website, auf der du dich angemeldet hast.",
         "description": "KeePassFerry"
     },
+    "ferry_news_1_0_42_1_title": {
+        "message": "Passwörter erst beim Ausfüllen",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_42_1_text": {
+        "message": "Seiten bekommen die Passwörter passender Einträge erst, wenn du ausfüllst oder kopierst. Beim Sperren von KeePass verwirft die Erweiterung alles, was sie für offene Seiten geholt hat.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_42_2_title": {
+        "message": "Einmalcodes auch in KeePass",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_42_2_text": {
+        "message": "Neue Zwei-Faktor-Schlüssel stehen zusätzlich in KeePass' eigenen Feldern, Strg+T funktioniert. Das Plugin hält beide Formate gleich, auch wenn du den Schlüssel am Handy änderst.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_42_3_title": {
+        "message": "Neuer Eintrag beim Einrichten",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_42_3_text": {
+        "message": "Gibt es für eine Website noch keinen Eintrag, legt die Zwei-Faktor-Einrichtung ihn gleich mit an. Schließt sich das Popup zwischendurch, geht es mit einem Klick aufs Symbol dort weiter.",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_42_4_title": {
+        "message": "Nicht vergessen zu speichern",
+        "description": "KeePassFerry"
+    },
+    "ferry_news_1_0_42_4_text": {
+        "message": "Mit „Jetzt nicht“ weggeklickte Zugangsdaten stehen oben im Popup, bis du sie speicherst oder verwirfst.",
+        "description": "KeePassFerry"
+    },
     "ferry_news_1_0_40_1_title": {
         "message": "Erste Kopplung nur entsperrt",
         "description": "KeePassFerry"

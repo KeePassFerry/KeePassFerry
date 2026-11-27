@@ -2084,6 +2084,38 @@
     "message": "If a login page redirects to another website, the save notice stays and names the website where you signed in.",
     "description": "KeePassFerry"
   },
+  "ferry_news_1_0_42_1_title": {
+    "message": "Passwords only when filling",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_42_1_text": {
+    "message": "Pages get the passwords of matching entries only when you fill or copy. When KeePass locks, the extension discards everything it fetched for open pages.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_42_2_title": {
+    "message": "One-time codes in KeePass too",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_42_2_text": {
+    "message": "New two-factor keys are also stored in KeePass's own fields, so Ctrl+T works. The plugin keeps both formats in step, also when you change the key on your phone.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_42_3_title": {
+    "message": "New entry during setup",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_42_3_text": {
+    "message": "If a site has no entry yet, two-factor setup creates one along with the key. If the popup closes on the way, a click on the toolbar icon takes you back.",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_42_4_title": {
+    "message": "Don't forget to save",
+    "description": "KeePassFerry"
+  },
+  "ferry_news_1_0_42_4_text": {
+    "message": "Login data dismissed with \"Not now\" is shown at the top of the popup until you save or discard it.",
+    "description": "KeePassFerry"
+  },
   "ferry_news_1_0_40_1_title": {
     "message": "First pairing only when unlocked",
     "description": "KeePassFerry"

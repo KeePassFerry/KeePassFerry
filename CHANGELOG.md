@@ -2,7 +2,7 @@
 
 English · [Deutsch](#deutsch)
 
-## Unreleased
+## 1.0.42 – 2026-11-27
 
 - Test builds: every change on `main` that passes the tests is published as a pre-release "Test build (main)", with a
   guide in `TESTING.md`. KeePass options, "Addresses and browsers": "Allow the test version of the extension" lets an
@@ -716,7 +716,7 @@ First release of KeePassFerry (fork of Kee 4.1 and KeePassRPC 2.0.2).
 
 # Deutsch
 
-## Unveröffentlicht
+## 1.0.42 – 27.11.2026
 
 - Testversionen: Jede Änderung auf `main`, die die Tests besteht, erscheint als Vorab-Release „Test build (main)“, mit
   Anleitung in `TESTING.md`. KeePass-Optionen, „Adressen und Browser“: „Testversion der Erweiterung zulassen“ lässt eine
